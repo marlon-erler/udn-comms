@@ -1,5 +1,7 @@
 import * as React from "bloatless-react";
 
+import { MessageTab } from "./messageTab";
+import { SettingsTab } from "./settingsTab";
 import { getText } from "./translations";
 
 document.body.prepend(
@@ -14,4 +16,4 @@ document.body.prepend(
     </a>
   </menu>
 );
-document.querySelector("main")!.append();
+document.querySelector("main")!.append(SettingsTab(), MessageTab());
