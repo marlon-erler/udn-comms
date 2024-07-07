@@ -96,9 +96,19 @@
     return translations.en[key];
   }
 
+  // src/messageTab.tsx
+  function MessageTab() {
+    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, getText("messages")));
+  }
+
+  // src/settingsTab.tsx
+  function SettingsTab() {
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab" }, /* @__PURE__ */ createElement("header", null, getText("settings")));
+  }
+
   // src/index.tsx
   document.body.prepend(
-    /* @__PURE__ */ createElement("menu", null, /* @__PURE__ */ createElement("a", { class: "tab-link", href: "settings-tab", active: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), getText("settings")), /* @__PURE__ */ createElement("a", { class: "tab-link", href: "message-tab" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), getText("messages")))
+    /* @__PURE__ */ createElement("menu", null, /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#settings-tab", active: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), getText("settings")), /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#message-tab" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), getText("messages")))
   );
-  document.querySelector("main").append();
+  document.querySelector("main").append(SettingsTab(), MessageTab());
 })();
