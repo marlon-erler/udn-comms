@@ -15,7 +15,7 @@ const englishTranslations = {
   communication: "Communication",
   encryption: "Encryption",
   serverAddress: "Server Address",
-  serverAddressPlaceholder: "ws://192.168.0.69:3000",
+  serverAddressPlaceholder: "wss://192.168.0.69:3000",
   connectToServer: "Connect",
   primaryChannel: "Primary channel",
   channelPlaceholder: "my-channel",
