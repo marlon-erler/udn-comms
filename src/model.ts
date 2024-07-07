@@ -30,23 +30,46 @@ export class Message implements React.Identifiable {
 
 // STATE
 // connection
-export const socketAddress = React.restoreState("socket-address", "");
+export const currentAddress = new React.State("");
+export const serverAddress = React.restoreState("socket-address", "");
 export const isConnected = new React.State(false);
 
-// sending
-let currentChannel: string | undefined = undefined;
-export const primaryChannel = React.restoreState("primary-channel", "");
-export const newAdditionalChannelName = new React.State("");
-export const additionalChannels = React.restoreListState<Channel>(
-  "additional-channels"
+export const cannotConnect = React.createProxyState(
+  [serverAddress, isConnected],
+  () =>
+    serverAddress.value == "" ||
+    (currentAddress.value == serverAddress.value && isConnected.value == true)
 );
+
+// sending
+export const currentPrimaryChannel = new React.State("");
+export const primaryChannel = React.restoreState("primary-channel", "");
+export const newSecondaryChannelName = new React.State("");
+export const secondaryChannels =
+  React.restoreListState<Channel>("secondary-channels");
 export const encryptionKey = React.restoreState("encryption-key", "");
 export const senderName = React.restoreState("sender-name", "");
-export const message = React.restoreState("message", "");
+export const messageBody = React.restoreState("message", "");
+
+export const cannotSetChannel = React.createProxyState(
+  [primaryChannel, currentPrimaryChannel, isConnected],
+  () =>
+    primaryChannel.value == "" ||
+    primaryChannel.value == currentPrimaryChannel.value ||
+    isConnected.value == false
+);
+
+export const cannotAddSecondaryChannel = React.createProxyState(
+  [newSecondaryChannelName],
+  () => newSecondaryChannelName.value == ""
+);
 
 export const cannotSendMessage = React.createProxyState(
-  [primaryChannel, message],
-  () => primaryChannel.value == "" || message.value == ""
+  [currentPrimaryChannel, messageBody, senderName],
+  () =>
+    currentPrimaryChannel.value == "" ||
+    messageBody.value == "" ||
+    senderName.value == ""
 );
 
 // receiving
@@ -54,19 +77,21 @@ export const messages = React.restoreListState<Message>("messages");
 
 // METHODS
 export function connect() {
-  UDN.connect(socketAddress.value);
+  if (cannotConnect.value == true) return;
+  currentAddress.value = serverAddress.value;
+  UDN.connect(serverAddress.value);
 }
 
-export function send() {
+export function sendMessage() {
   if (cannotSendMessage.value == true) return;
 
   // get channels
-  const additionalChannelNames: string[] = [
-    ...additionalChannels.value.values(),
+  const secondaryChannelNames: string[] = [
+    ...secondaryChannels.value.values(),
   ].map((channel) => channel.channelName);
   const allChannelNames: string[] = [
     primaryChannel.value,
-    ...additionalChannelNames,
+    ...secondaryChannelNames,
   ];
 
   // create object
@@ -74,28 +99,37 @@ export function send() {
   const messageObject = new Message(
     joinedChannelName,
     senderName.value,
-    message.value,
+    messageBody.value,
     new Date().toISOString()
   );
   const messageString = JSON.stringify(messageObject);
 
+  // send
   UDN.sendMessage(joinedChannelName, messageString);
+
+  // clear
+  messageBody.value = "";
 }
 
 export function setChannel(): void {
-  if (currentChannel != undefined) {
-    UDN.unsubscribe(currentChannel);
+  if (cannotSetChannel.value == true) return;
+
+  if (currentPrimaryChannel != undefined) {
+    UDN.unsubscribe(currentPrimaryChannel.value);
   }
   UDN.subscribe(primaryChannel.value);
 }
 
-export function addAdditionalChannel(): void {
-  const channelObject = new Channel(newAdditionalChannelName.value);
-  additionalChannels.add(channelObject);
+export function addSecondaryChannel(): void {
+  if (cannotAddSecondaryChannel.value == true) return;
+
+  const channelObject = new Channel(newSecondaryChannelName.value);
+  secondaryChannels.add(channelObject);
+  newSecondaryChannelName.value = "";
 }
 
-export function removeAdditionalChannel(channel: Channel): void {
-  additionalChannels.remove(channel);
+export function removeSecondaryChannel(channel: Channel): void {
+  secondaryChannels.remove(channel);
 }
 
 // LISTENERS
@@ -104,7 +138,7 @@ UDN.onconnect = () => {
 };
 
 UDN.onmessage = (data) => {
-  if (data.subscribed && data.messageChannel) {
+  if (data.subscribed != undefined && data.messageChannel != undefined) {
     return handleSubscriptionConfirmation(data.messageChannel, data.subscribed);
   } else if (data.messageBody) {
     handleMessage(data.messageBody);
@@ -120,8 +154,9 @@ function handleSubscriptionConfirmation(
   channel: string,
   isSubscribed: boolean
 ): void {
+  console.log(channel, isSubscribed);
   if (isSubscribed == true) {
-    currentChannel = channel;
+    currentPrimaryChannel.value = channel;
   }
 }
 
