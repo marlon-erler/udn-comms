@@ -45,6 +45,9 @@ export class Message implements React.Identifiable {
 export const currentAddress = new React.State("");
 export const serverAddress = React.restoreState("socket-address", "");
 export const isConnected = new React.State(false);
+export const connectionMessage = React.createProxyState([serverAddress], () =>
+  translation.connectedTo(serverAddress.value)
+);
 
 export const cannotConnect = React.createProxyState(
   [serverAddress, currentAddress, isConnected],

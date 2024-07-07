@@ -1,5 +1,6 @@
 import * as React from "bloatless-react";
 
+import { connectionMessage } from "../model";
 import { translation } from "../translations";
 
 export function ConnectionStatusView() {
@@ -9,7 +10,7 @@ export function ConnectionStatusView() {
         <b>{translation.connectionStatus}</b>
         <span
           class="success connected-only"
-          subscribe:innerText={translation.connectedTo}
+          subscribe:innerText={connectionMessage}
         ></span>
         <span class="error disconnected-only">{translation.disconnected}</span>
       </div>

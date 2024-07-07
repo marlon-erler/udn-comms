@@ -6,10 +6,7 @@ const englishTranslations = {
   // general
   setInput: "Set",
   connectionStatus: "Connection status",
-  connectedTo: React.createProxyState(
-    [],
-    () => `Connected to ${currentAddress}`
-  ),
+  connectedTo: (server: string) => `Connected to "${server}"`,
   disconnected: "Disconnected",
 
   // settings

@@ -349,6 +349,45 @@
     }
   };
 
+  // src/translations.ts
+  var englishTranslations = {
+    // general
+    setInput: "Set",
+    connectionStatus: "Connection status",
+    connectedTo: (server) => `Connected to "${server}"`,
+    disconnected: "Disconnected",
+    // settings
+    settings: "Settings",
+    connection: "Connection",
+    communication: "Communication",
+    encryption: "Encryption",
+    serverAddress: "Server Address",
+    serverAddressPlaceholder: "ws://192.168.0.69:3000",
+    connectToServer: "Connect",
+    primaryChannel: "Primary channel",
+    channelPlaceholder: "my-channel",
+    addSecondaryChannel: "Add secondary channel",
+    removeSecondaryChannel: "Remove secondary channel",
+    newSecondaryChannelPlaceholder: "Add secondary channel",
+    encryptionKey: "Encryption key",
+    encryptionKeyPlaceholder: "1jg028ej40d",
+    showEncryptionKey: "Show encryption key",
+    yourName: "Your Name",
+    yourNamePlaceholder: "Jane Doe",
+    // messages
+    messages: "Messages",
+    composerPlaceholder: "Type a message...",
+    sendMessage: "Send",
+    clearHistory: "Clear history",
+    encryptionUnavailableTitle: "Encryption is not available",
+    encryptionUnavailableMessage: "Encryption is not available on insecure contexts. Obtain this app via HTTPS or continue without encryption"
+  };
+  var allTranslations = {
+    en: englishTranslations
+  };
+  var language = navigator.language.substring(0, 2);
+  var translation = allTranslations[language] ?? allTranslations.en;
+
   // src/model.ts
   var UDN = new UDNFrontend();
   var Channel = class {
@@ -369,6 +408,10 @@
   var currentAddress = new State("");
   var serverAddress = restoreState("socket-address", "");
   var isConnected = new State(false);
+  var connectionMessage = createProxyState(
+    [serverAddress],
+    () => translation.connectedTo(serverAddress.value)
+  );
   var cannotConnect = createProxyState(
     [serverAddress, currentAddress, isConnected],
     () => serverAddress.value == "" || currentAddress.value == serverAddress.value && isConnected.value == true
@@ -499,48 +542,6 @@
       return encryptionData;
     }
   }
-
-  // src/translations.ts
-  var englishTranslations = {
-    // general
-    setInput: "Set",
-    connectionStatus: "Connection status",
-    connectedTo: createProxyState(
-      [],
-      () => `Connected to ${currentAddress}`
-    ),
-    disconnected: "Disconnected",
-    // settings
-    settings: "Settings",
-    connection: "Connection",
-    communication: "Communication",
-    encryption: "Encryption",
-    serverAddress: "Server Address",
-    serverAddressPlaceholder: "ws://192.168.0.69:3000",
-    connectToServer: "Connect",
-    primaryChannel: "Primary channel",
-    channelPlaceholder: "my-channel",
-    addSecondaryChannel: "Add secondary channel",
-    removeSecondaryChannel: "Remove secondary channel",
-    newSecondaryChannelPlaceholder: "Add secondary channel",
-    encryptionKey: "Encryption key",
-    encryptionKeyPlaceholder: "1jg028ej40d",
-    showEncryptionKey: "Show encryption key",
-    yourName: "Your Name",
-    yourNamePlaceholder: "Jane Doe",
-    // messages
-    messages: "Messages",
-    composerPlaceholder: "Type a message...",
-    sendMessage: "Send",
-    clearHistory: "Clear history",
-    encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Encryption is not available on insecure contexts. Obtain this app via HTTPS or continue without encryption"
-  };
-  var allTranslations = {
-    en: englishTranslations
-  };
-  var language = navigator.language.substring(0, 2);
-  var translation = allTranslations[language] ?? allTranslations.en;
 
   // src/Views/messageComposer.tsx
   function MessageComposer() {
@@ -675,7 +676,7 @@
       "span",
       {
         class: "success connected-only",
-        "subscribe:innerText": translation.connectedTo
+        "subscribe:innerText": connectionMessage
       }
     ), /* @__PURE__ */ createElement("span", { class: "error disconnected-only" }, translation.disconnected)));
   }
