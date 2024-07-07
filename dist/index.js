@@ -106,6 +106,9 @@
       });
       this.callSubscriptions();
     }
+    clear() {
+      this.remove(...this.value.values());
+    }
     // handlers
     handleAddition(handler) {
       this.additionHandlers.add(handler);
@@ -211,10 +214,14 @@
             break;
           }
           case "toggle": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element.toggleAttribute(directiveValue, newValue)
-            );
+            if (value.subscribe) {
+              const state = value;
+              state.subscribe(
+                (newValue) => element.toggleAttribute(directiveValue, newValue)
+              );
+            } else {
+              element.toggleAttribute(directiveValue, value);
+            }
             break;
           }
           case "set": {
@@ -230,6 +237,57 @@
       });
     children.filter((x) => x).forEach((child) => element.append(child));
     return element;
+  }
+
+  // src/cryptUtility.ts
+  var IV_SIZE = 12;
+  var ENCRYPTION_ALG = "AES-GCM";
+  function encode(string) {
+    return new TextEncoder().encode(string);
+  }
+  function decode(array) {
+    return new TextDecoder("utf-8").decode(array);
+  }
+  async function encrypt(iv, key, message) {
+    const arrayBuffer = await window.crypto.subtle.encrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      encode(message)
+    );
+    return new Uint8Array(arrayBuffer);
+  }
+  async function decrypt(iv, key, cyphertext) {
+    const arrayBuffer = await crypto.subtle.decrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      cyphertext
+    );
+    return arrayBufferToString(arrayBuffer);
+  }
+  async function hash(encoded) {
+    return await crypto.subtle.digest("SHA-256", encoded);
+  }
+  function generateIV() {
+    return crypto.getRandomValues(new Uint8Array(IV_SIZE));
+  }
+  async function importKey(passphrase, purpose) {
+    return await crypto.subtle.importKey(
+      "raw",
+      await hash(encode(passphrase)),
+      { name: ENCRYPTION_ALG },
+      false,
+      [purpose]
+    );
+  }
+  function arrayBufferToString(arrayBuffer) {
+    const uInt8Array = new Uint8Array(arrayBuffer);
+    return decode(uInt8Array);
+  }
+  function uInt8ToArray(uInt8Array) {
+    return Array.from(uInt8Array);
+  }
+  function arrayToUint8(array) {
+    return new Uint8Array(array);
   }
 
   // node_modules/udn-frontend/index.ts
@@ -312,14 +370,15 @@
   var serverAddress = restoreState("socket-address", "");
   var isConnected = new State(false);
   var cannotConnect = createProxyState(
-    [serverAddress, isConnected],
+    [serverAddress, currentAddress, isConnected],
     () => serverAddress.value == "" || currentAddress.value == serverAddress.value && isConnected.value == true
   );
+  var encryptionKey = restoreState("encryption-key", "");
+  var isEncryptionUnavailable = window.crypto.subtle == void 0;
   var currentPrimaryChannel = new State("");
   var primaryChannel = restoreState("primary-channel", "");
   var newSecondaryChannelName = new State("");
   var secondaryChannels = restoreListState("secondary-channels");
-  var encryptionKey = restoreState("encryption-key", "");
   var senderName = restoreState("sender-name", "");
   var messageBody = restoreState("message", "");
   var cannotSetChannel = createProxyState(
@@ -338,9 +397,10 @@
   function connect() {
     if (cannotConnect.value == true) return;
     currentAddress.value = serverAddress.value;
+    isConnected.value = false;
     UDN.connect(serverAddress.value);
   }
-  function sendMessage() {
+  async function sendMessage() {
     if (cannotSendMessage.value == true) return;
     const secondaryChannelNames = [
       ...secondaryChannels.value.values()
@@ -349,16 +409,21 @@
       primaryChannel.value,
       ...secondaryChannelNames
     ];
+    const encrypted = await encryptMessage();
+    if (encrypted == void 0) return;
     const joinedChannelName = allChannelNames.join("/");
     const messageObject = new Message(
       joinedChannelName,
       senderName.value,
-      messageBody.value,
+      encrypted,
       (/* @__PURE__ */ new Date()).toISOString()
     );
     const messageString = JSON.stringify(messageObject);
     UDN.sendMessage(joinedChannelName, messageString);
     messageBody.value = "";
+  }
+  function clearMessageHistory() {
+    messages.clear();
   }
   function setChannel() {
     if (cannotSetChannel.value == true) return;
@@ -378,6 +443,7 @@
   }
   UDN.onconnect = () => {
     isConnected.value = true;
+    setChannel();
   };
   UDN.onmessage = (data) => {
     if (data.subscribed != void 0 && data.messageChannel != void 0) {
@@ -390,12 +456,11 @@
     isConnected.value = false;
   };
   function handleSubscriptionConfirmation(channel, isSubscribed) {
-    console.log(channel, isSubscribed);
     if (isSubscribed == true) {
       currentPrimaryChannel.value = channel;
     }
   }
-  function handleMessage(body) {
+  async function handleMessage(body) {
     try {
       const object = JSON.parse(body);
       if (!object.channel || !object.sender || !object.body || !object.isoDate)
@@ -403,11 +468,35 @@
       const messageObject = new Message(
         object.channel,
         object.sender,
-        object.body,
+        await decryptMessage(object.body),
         object.isoDate
       );
       messages.add(messageObject);
     } catch {
+    }
+  }
+  async function encryptMessage() {
+    if (encryptionKey.value == "") return messageBody.value;
+    if (!window.crypto.subtle) return messageBody.value;
+    const iv = generateIV();
+    const key = await importKey(encryptionKey.value, "encrypt");
+    const encryptedArray = await encrypt(iv, key, messageBody.value);
+    const encryptionData = {
+      iv: uInt8ToArray(iv),
+      encryptedArray: uInt8ToArray(encryptedArray)
+    };
+    return btoa(JSON.stringify(encryptionData));
+  }
+  async function decryptMessage(encryptionData) {
+    try {
+      const encrypionData = JSON.parse(atob(encryptionData));
+      const iv = arrayToUint8(encrypionData.iv);
+      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+      const key = await importKey(encryptionKey.value, "decrypt");
+      return await decrypt(iv, key, encryptedArray);
+    } catch (error) {
+      console.error(error);
+      return encryptionData;
     }
   }
 
@@ -417,7 +506,7 @@
     setInput: "Set",
     connectionStatus: "Connection status",
     connectedTo: createProxyState(
-      [currentAddress],
+      [],
       () => `Connected to ${currentAddress}`
     ),
     disconnected: "Disconnected",
@@ -442,7 +531,10 @@
     // messages
     messages: "Messages",
     composerPlaceholder: "Type a message...",
-    sendMessage: "Send"
+    sendMessage: "Send",
+    clearHistory: "Clear history",
+    encryptionUnavailableTitle: "Encryption is not available",
+    encryptionUnavailableMessage: "Encryption is not available on insecure contexts. Obtain this app via HTTPS or continue without encryption"
   };
   var allTranslations = {
     en: englishTranslations
@@ -482,7 +574,14 @@
 
   // src/Tabs/messageTab.tsx
   function MessageTab() {
-    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, translation.messages), ThreadView(), /* @__PURE__ */ createElement("footer", null, MessageComposer()));
+    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, translation.messages, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translation.clearHistory,
+        "on:click": clearMessageHistory
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
+    ))), ThreadView(), /* @__PURE__ */ createElement("footer", null, MessageComposer()));
   }
 
   // src/Views/communicationSection.tsx
@@ -593,9 +692,18 @@
     () => shouldShowKey.value ? "text" : "password"
   );
   function EncryptionSection() {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.encryption), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.encryption), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "error tile margin-bottom",
+        "toggle:hidden": !isEncryptionUnavailable
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("p", null, translation.encryptionUnavailableMessage))
+    ), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
       "input",
       {
+        "toggle:disabled": isEncryptionUnavailable,
         "bind:value": encryptionKey,
         "set:type": inputType,
         placeholder: translation.encryptionKeyPlaceholder

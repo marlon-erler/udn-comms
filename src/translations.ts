@@ -1,13 +1,13 @@
 import * as React from "bloatless-react";
 
-import { currentAddress, primaryChannel } from "./model";
+import { currentAddress } from "./model";
 
 const englishTranslations = {
   // general
   setInput: "Set",
   connectionStatus: "Connection status",
   connectedTo: React.createProxyState(
-    [currentAddress],
+    [],
     () => `Connected to ${currentAddress}`
   ),
   disconnected: "Disconnected",
@@ -34,7 +34,11 @@ const englishTranslations = {
   // messages
   messages: "Messages",
   composerPlaceholder: "Type a message...",
-  sendMessage: "Send"
+  sendMessage: "Send",
+  clearHistory: "Clear history",
+  encryptionUnavailableTitle: "Encryption is not available",
+  encryptionUnavailableMessage:
+    "Encryption is not available on insecure contexts. Obtain this app via HTTPS or continue without encryption",
 };
 
 const allTranslations = {

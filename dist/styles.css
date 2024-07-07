@@ -932,6 +932,10 @@ main {
   overflow-x: scroll;
 }
 
+.tile {
+  word-break: break-word;
+}
+
 /* scrolling */
 main {
   scrollbar-width: none;

@@ -1,6 +1,18 @@
 import * as React from "bloatless-react";
 
+import {
+  arrayToUint8,
+  decode,
+  decrypt,
+  encrypt,
+  generateIV,
+  importKey,
+  splitMergedString,
+  uInt8ToArray,
+} from "./cryptUtility";
+
 import UDNFrontend from "udn-frontend";
+import { translation } from "./translations";
 
 const UDN = new UDNFrontend();
 
@@ -35,11 +47,15 @@ export const serverAddress = React.restoreState("socket-address", "");
 export const isConnected = new React.State(false);
 
 export const cannotConnect = React.createProxyState(
-  [serverAddress, isConnected],
+  [serverAddress, currentAddress, isConnected],
   () =>
     serverAddress.value == "" ||
     (currentAddress.value == serverAddress.value && isConnected.value == true)
 );
+
+// encryption
+export const encryptionKey = React.restoreState("encryption-key", "");
+export const isEncryptionUnavailable = window.crypto.subtle == undefined;
 
 // sending
 export const currentPrimaryChannel = new React.State("");
@@ -47,7 +63,6 @@ export const primaryChannel = React.restoreState("primary-channel", "");
 export const newSecondaryChannelName = new React.State("");
 export const secondaryChannels =
   React.restoreListState<Channel>("secondary-channels");
-export const encryptionKey = React.restoreState("encryption-key", "");
 export const senderName = React.restoreState("sender-name", "");
 export const messageBody = React.restoreState("message", "");
 
@@ -79,10 +94,11 @@ export const messages = React.restoreListState<Message>("messages");
 export function connect() {
   if (cannotConnect.value == true) return;
   currentAddress.value = serverAddress.value;
+  isConnected.value = false;
   UDN.connect(serverAddress.value);
 }
 
-export function sendMessage() {
+export async function sendMessage(): Promise<void> {
   if (cannotSendMessage.value == true) return;
 
   // get channels
@@ -94,12 +110,16 @@ export function sendMessage() {
     ...secondaryChannelNames,
   ];
 
+  // encrypt
+  const encrypted = await encryptMessage();
+  if (encrypted == undefined) return;
+
   // create object
   const joinedChannelName = allChannelNames.join("/");
   const messageObject = new Message(
     joinedChannelName,
     senderName.value,
-    messageBody.value,
+    encrypted,
     new Date().toISOString()
   );
   const messageString = JSON.stringify(messageObject);
@@ -109,6 +129,10 @@ export function sendMessage() {
 
   // clear
   messageBody.value = "";
+}
+
+export function clearMessageHistory() {
+  messages.clear();
 }
 
 export function setChannel(): void {
@@ -135,6 +159,7 @@ export function removeSecondaryChannel(channel: Channel): void {
 // LISTENERS
 UDN.onconnect = () => {
   isConnected.value = true;
+  setChannel();
 };
 
 UDN.onmessage = (data) => {
@@ -154,13 +179,12 @@ function handleSubscriptionConfirmation(
   channel: string,
   isSubscribed: boolean
 ): void {
-  console.log(channel, isSubscribed);
   if (isSubscribed == true) {
     currentPrimaryChannel.value = channel;
   }
 }
 
-function handleMessage(body: string): void {
+async function handleMessage(body: string): Promise<void> {
   try {
     const object: Message = JSON.parse(body);
     if (!object.channel || !object.sender || !object.body || !object.isoDate)
@@ -169,9 +193,39 @@ function handleMessage(body: string): void {
     const messageObject = new Message(
       object.channel,
       object.sender,
-      object.body,
+      await decryptMessage(object.body),
       object.isoDate
     );
     messages.add(messageObject);
   } catch {}
+}
+
+async function encryptMessage(): Promise<string> {
+  if (encryptionKey.value == "") return messageBody.value;
+
+  if (!window.crypto.subtle) return messageBody.value;
+
+  const iv = generateIV();
+  const key = await importKey(encryptionKey.value, "encrypt");
+  const encryptedArray = await encrypt(iv, key, messageBody.value);
+
+  const encryptionData = {
+    iv: uInt8ToArray(iv),
+    encryptedArray: uInt8ToArray(encryptedArray),
+  };
+  return btoa(JSON.stringify(encryptionData));
+}
+
+async function decryptMessage(encryptionData: string): Promise<string> {
+  try {
+    const encrypionData = JSON.parse(atob(encryptionData));
+    const iv = arrayToUint8(encrypionData.iv);
+    const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+
+    const key = await importKey(encryptionKey.value, "decrypt");
+    return await decrypt(iv, key, encryptedArray);
+  } catch (error) {
+    console.error(error);
+    return encryptionData;
+  }
 }
