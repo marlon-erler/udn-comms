@@ -69,9 +69,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     composerPlaceholder: "Escribe un mensaje...",
     sendMessage: "Enviar",
     clearHistory: "Borrar historial",
-    encryptionUnavailableTitle: "Cifrada no disponible",
+    encryptionUnavailableTitle: "Cifrado no disponible",
     encryptionUnavailableMessage:
-      "Obtén esta página por HTTPS para cifrar mensajes o continúa sin cifrado",
+      "Obtén esta página a través de HTTPS para cifrar o continúa sin cifrado",
   },
   de: {
     // general

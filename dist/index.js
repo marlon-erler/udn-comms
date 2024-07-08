@@ -373,7 +373,7 @@
     encryptionKey: "Encryption key",
     encryptionKeyPlaceholder: "1jg028ej40d",
     showEncryptionKey: "Show encryption key",
-    yourName: "Your Name",
+    myName: "My Name",
     yourNamePlaceholder: "Jane Doe",
     // messages
     messages: "Messages",
@@ -385,6 +385,39 @@
   };
   var allTranslations = {
     en: englishTranslations,
+    es: {
+      // general
+      setInput: "OK",
+      connectionStatus: "Estado de Conexi\xF3n",
+      connectedTo: (server) => `Conectado a "${server}"`,
+      disconnected: "Desconectado",
+      // settings
+      settings: "Configuraci\xF3n",
+      connection: "Conexi\xF3n",
+      communication: "Comunicaci\xF3n",
+      encryption: "Cifrado",
+      serverAddress: "Direcci\xF3n del servidor",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Conectar",
+      primaryChannel: "Canal principal",
+      leaveChannel: "Salir",
+      channelPlaceholder: "mi-canal",
+      addSecondaryChannel: "A\xF1adir canal segundario",
+      removeSecondaryChannel: "Eliminar canal segundario",
+      newSecondaryChannelPlaceholder: "A\xF1adir canal segundario",
+      encryptionKey: "Clave de cifrada",
+      encryptionKeyPlaceholder: "1jg028ej40d",
+      showEncryptionKey: "Mostrar clave de cifrado",
+      myName: "Mi nombre",
+      yourNamePlaceholder: "Juan P\xE9rez",
+      // messages
+      messages: "Mensajes",
+      composerPlaceholder: "Escribe un mensaje...",
+      sendMessage: "Enviar",
+      clearHistory: "Borrar historial",
+      encryptionUnavailableTitle: "Cifrado no disponible",
+      encryptionUnavailableMessage: "Obt\xE9n esta p\xE1gina a trav\xE9s de HTTPS para cifrar o contin\xFAa sin cifrado"
+    },
     de: {
       // general
       setInput: "OK",
@@ -408,7 +441,7 @@
       encryptionKey: "Schl\xFCssel",
       encryptionKeyPlaceholder: "1jg028ej40d",
       showEncryptionKey: "Schl\xFCssel anzeigen",
-      yourName: "Mein Name",
+      myName: "Mein Name",
       yourNamePlaceholder: "Max Mustermann",
       // messages
       messages: "Nachrichten",
@@ -645,7 +678,7 @@
     )));
   };
   function CommunicationSection() {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.communication), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.communication), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.myName), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": senderName,
