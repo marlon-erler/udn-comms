@@ -381,10 +381,43 @@
     sendMessage: "Send",
     clearHistory: "Clear history",
     encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Encryption is not available on insecure contexts. Obtain this app via HTTPS or continue without encryption"
+    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption"
   };
   var allTranslations = {
-    en: englishTranslations
+    en: englishTranslations,
+    de: {
+      // general
+      setInput: "OK",
+      connectionStatus: "Verbindungsstatus",
+      connectedTo: (server) => `Verbunden mit "${server}"`,
+      disconnected: "Verbindung getrennt",
+      // settings
+      settings: "Einstellungen",
+      connection: "Verbindung",
+      communication: "Kommunikation",
+      encryption: "Verschl\xFCsselung",
+      serverAddress: "Serveraddresse",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Verbinden",
+      primaryChannel: "Hauptkanal",
+      leaveChannel: "Verlassen",
+      channelPlaceholder: "mein-kanal",
+      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
+      removeSecondaryChannel: "Zweitkanal entfernen",
+      newSecondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
+      encryptionKey: "Schl\xFCssel",
+      encryptionKeyPlaceholder: "1jg028ej40d",
+      showEncryptionKey: "Schl\xFCssel anzeigen",
+      yourName: "Mein Name",
+      yourNamePlaceholder: "Max Mustermann",
+      // messages
+      messages: "Nachrichten",
+      composerPlaceholder: "Neue Nachricht...",
+      sendMessage: "Senden",
+      clearHistory: "Nachrichtenverlauf leeren",
+      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
+      encryptionUnavailableMessage: "Um Nachrichten zu verschl\xFCsseln, lade diese Seite \xFCber HTTPS."
+    }
   };
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
