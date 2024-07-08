@@ -18,6 +18,7 @@ const englishTranslations = {
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
   connectToServer: "Connect",
   primaryChannel: "Primary channel",
+  leaveChannel: "Leave",
   channelPlaceholder: "my-channel",
   addSecondaryChannel: "Add secondary channel",
   removeSecondaryChannel: "Remove secondary channel",

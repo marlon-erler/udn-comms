@@ -362,9 +362,10 @@
     communication: "Communication",
     encryption: "Encryption",
     serverAddress: "Server Address",
-    serverAddressPlaceholder: "ws://192.168.0.69:3000",
+    serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
     primaryChannel: "Primary channel",
+    leaveChannel: "Leave",
     channelPlaceholder: "my-channel",
     addSecondaryChannel: "Add secondary channel",
     removeSecondaryChannel: "Remove secondary channel",
@@ -426,7 +427,11 @@
   var messageBody = restoreState("message", "");
   var cannotSetChannel = createProxyState(
     [primaryChannel, currentPrimaryChannel, isConnected],
-    () => primaryChannel.value == "" || primaryChannel.value == currentPrimaryChannel.value || isConnected.value == false
+    () => primaryChannel.value == "" || isConnected.value == false
+  );
+  var cannotLeaveChannel = createProxyState(
+    [currentPrimaryChannel, isConnected],
+    () => currentPrimaryChannel.value == "" || isConnected.value == false
   );
   var cannotAddSecondaryChannel = createProxyState(
     [newSecondaryChannelName],
@@ -475,6 +480,10 @@
     }
     UDN.subscribe(primaryChannel.value);
   }
+  function leaveChannel() {
+    if (cannotLeaveChannel.value == true) return;
+    UDN.unsubscribe(currentPrimaryChannel.value);
+  }
   function addSecondaryChannel() {
     if (cannotAddSecondaryChannel.value == true) return;
     const channelObject = new Channel(newSecondaryChannelName.value);
@@ -501,6 +510,8 @@
   function handleSubscriptionConfirmation(channel, isSubscribed) {
     if (isSubscribed == true) {
       currentPrimaryChannel.value = channel;
+    } else {
+      currentPrimaryChannel.value = "";
     }
   }
   async function handleMessage(body) {
@@ -615,6 +626,14 @@
         placeholder: translation.channelPlaceholder
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-50",
+        "on:click": leaveChannel,
+        "toggle:disabled": cannotLeaveChannel
+      },
+      translation.leaveChannel
+    ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary width-50",

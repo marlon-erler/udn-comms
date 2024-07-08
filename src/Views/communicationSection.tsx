@@ -4,7 +4,9 @@ import {
   Channel,
   addSecondaryChannel,
   cannotAddSecondaryChannel,
+  cannotLeaveChannel,
   cannotSetChannel,
+  leaveChannel,
   newSecondaryChannelName,
   primaryChannel,
   removeSecondaryChannel,
@@ -69,6 +71,13 @@ export function CommunicationSection() {
         </div>
       </label>
       <div class="flex-row width-input justify-end">
+        <button
+          class="danger width-50"
+          on:click={leaveChannel}
+          toggle:disabled={cannotLeaveChannel}
+        >
+          {translation.leaveChannel}
+        </button>
         <button
           class="primary width-50"
           on:click={setChannel}

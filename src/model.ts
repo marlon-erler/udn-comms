@@ -63,18 +63,23 @@ export const isEncryptionUnavailable = window.crypto.subtle == undefined;
 // sending
 export const currentPrimaryChannel = new React.State("");
 export const primaryChannel = React.restoreState("primary-channel", "");
+
 export const newSecondaryChannelName = new React.State("");
 export const secondaryChannels =
   React.restoreListState<Channel>("secondary-channels");
+
 export const senderName = React.restoreState("sender-name", "");
+
 export const messageBody = React.restoreState("message", "");
 
 export const cannotSetChannel = React.createProxyState(
   [primaryChannel, currentPrimaryChannel, isConnected],
-  () =>
-    primaryChannel.value == "" ||
-    primaryChannel.value == currentPrimaryChannel.value ||
-    isConnected.value == false
+  () => primaryChannel.value == "" || isConnected.value == false
+);
+
+export const cannotLeaveChannel = React.createProxyState(
+  [currentPrimaryChannel, isConnected],
+  () => currentPrimaryChannel.value == "" || isConnected.value == false
 );
 
 export const cannotAddSecondaryChannel = React.createProxyState(
@@ -147,6 +152,12 @@ export function setChannel(): void {
   UDN.subscribe(primaryChannel.value);
 }
 
+export function leaveChannel(): void {
+  if (cannotLeaveChannel.value == true) return;
+
+  UDN.unsubscribe(currentPrimaryChannel.value);
+}
+
 export function addSecondaryChannel(): void {
   if (cannotAddSecondaryChannel.value == true) return;
 
@@ -184,6 +195,8 @@ function handleSubscriptionConfirmation(
 ): void {
   if (isSubscribed == true) {
     currentPrimaryChannel.value = channel;
+  } else {
+    currentPrimaryChannel.value = "";
   }
 }
 
