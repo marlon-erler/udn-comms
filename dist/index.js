@@ -181,6 +181,7 @@
           }
           case "subscribe": {
             if (directiveValue == "children") {
+              element.style.scrollBehavior = "smooth";
               try {
                 const [listState, toElement] = value;
                 listState.handleAddition((newItem) => {
@@ -190,6 +191,7 @@
                     () => child.remove()
                   );
                   element.append(child);
+                  child.scrollIntoView();
                 });
               } catch {
                 throw `error: cannot process subscribe:children directive because ListItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
@@ -419,7 +421,10 @@
       sendMessage: "Enviar",
       clearHistory: "Borrar historial",
       encryptionUnavailableTitle: "Cifrado no disponible",
-      encryptionUnavailableMessage: "Obt\xE9n esta p\xE1gina a trav\xE9s de HTTPS para cifrar o contin\xFAa sin cifrado"
+      encryptionUnavailableMessage: "Obt\xE9n esta p\xE1gina a trav\xE9s de HTTPS para cifrar o contin\xFAa sin cifrado",
+      decryptMessage: "Descifrar mensaje",
+      copyMessage: "Copiar mensaje",
+      deleteMessage: "Eliminar mensaje"
     },
     de: {
       // general
@@ -452,7 +457,10 @@
       sendMessage: "Senden",
       clearHistory: "Nachrichtenverlauf leeren",
       encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
-      encryptionUnavailableMessage: "Um Nachrichten zu verschl\xFCsseln, lade diese Seite \xFCber HTTPS."
+      encryptionUnavailableMessage: "Um Nachrichten zu verschl\xFCsseln, lade diese Seite \xFCber HTTPS.",
+      decryptMessage: "Nachricht entschl\xFCsseln",
+      copyMessage: "Nachricht kopieren",
+      deleteMessage: "Nachricht l\xF6schen"
     }
   };
   var language = navigator.language.substring(0, 2);
