@@ -381,7 +381,9 @@
     sendMessage: "Send",
     clearHistory: "Clear history",
     encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption"
+    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
+    copyMessage: "Copy message",
+    deleteMessage: "Delete message"
   };
   var allTranslations = {
     en: englishTranslations,
@@ -539,6 +541,9 @@
   function clearMessageHistory() {
     messages.clear();
   }
+  function deleteMessage(message) {
+    messages.remove(message);
+  }
   function setChannel() {
     if (cannotSetChannel.value == true) return;
     if (currentPrimaryChannel != void 0) {
@@ -644,10 +649,22 @@
 
   // src/Views/threadView.tsx
   var messageConverter = (message) => {
-    return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, message.sender, "@", message.channel), /* @__PURE__ */ createElement("b", null, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString())));
+    function copyMessage() {
+      navigator.clipboard.writeText(message.body);
+    }
+    function remove() {
+      deleteMessage(message);
+    }
+    return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, message.sender, "@", message.channel), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement("button", { "aria-label": translation.copyMessage, "on:click": copyMessage }, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding" }, /* @__PURE__ */ createElement("b", null, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
   };
   function ThreadView() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column gap", "subscribe:children": [messages, messageConverter] });
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "subscribe:children": [messages, messageConverter]
+      }
+    );
   }
 
   // src/Tabs/messageTab.tsx
@@ -799,15 +816,7 @@
 
   // src/Tabs/settingsTab.tsx
   function SettingsTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.settings), /* @__PURE__ */ createElement("div", null, ConnectionSection(), CommunicationSection(), EncryptionSection(), /* @__PURE__ */ createElement("hr", { class: "mobile-only" }), /* @__PURE__ */ createElement(
-      "a",
-      {
-        href: "#message-tab",
-        class: "mobile-only width-100 flex-row justify-end control-gap"
-      },
-      translation.messages,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.settings), /* @__PURE__ */ createElement("div", null, ConnectionSection(), CommunicationSection(), EncryptionSection()));
   }
 
   // src/index.tsx

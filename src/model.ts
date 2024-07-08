@@ -139,8 +139,12 @@ export async function sendMessage(): Promise<void> {
   messageBody.value = "";
 }
 
-export function clearMessageHistory() {
+export function clearMessageHistory(): void {
   messages.clear();
+}
+
+export function deleteMessage(message: Message): void {
+  messages.remove(message);
 }
 
 export function setChannel(): void {

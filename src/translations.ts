@@ -33,6 +33,8 @@ const englishTranslations = {
   encryptionUnavailableTitle: "Encryption is not available",
   encryptionUnavailableMessage:
     "Obtain this app via HTTPS or continue without encryption",
+  copyMessage: "Copy message",
+  deleteMessage: "Delete message",
 };
 
 const allTranslations: { [key: string]: typeof englishTranslations } = {
