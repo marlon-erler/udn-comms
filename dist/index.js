@@ -811,6 +811,9 @@
   }
 
   // src/index.tsx
+  document.body.prepend(
+    /* @__PURE__ */ createElement("menu", { class: "mobile-only" }, /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#settings-tab", active: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), translation.settings), /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#message-tab" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), translation.messages))
+  );
   document.querySelector("main").append(SettingsTab(), MessageTab());
   document.querySelector("main").classList.add("split");
 })();
