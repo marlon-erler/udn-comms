@@ -734,6 +734,10 @@ header button {
   height: var(--header-height);
 }
 
+.ellipsis {
+  max-width: 100%;
+}
+
 article {
   min-width: 100%;
 }
@@ -928,7 +932,8 @@ menu {
 
 article,
 body,
-main {
+main,
+.ellipsis {
   overflow: hidden;
 }
 
@@ -940,8 +945,17 @@ main {
   overflow-x: scroll;
 }
 
-.tile {
+.ellipsis {
+  text-overflow: ellipsis;
+}
+
+.tile,
+.break-all {
   word-break: break-all;
+}
+
+.ellipsis {
+  white-space: nowrap;
 }
 
 /* scrolling */

@@ -382,6 +382,7 @@
     clearHistory: "Clear history",
     encryptionUnavailableTitle: "Encryption is not available",
     encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
+    decryptMessage: "Decrypt message",
     copyMessage: "Copy message",
     deleteMessage: "Delete message"
   };
@@ -544,6 +545,10 @@
   function deleteMessage(message) {
     messages.remove(message);
   }
+  async function decryptReceivedMessage(message) {
+    message.body = await decryptMessage(message.body);
+    messages.callSubscriptions();
+  }
   function setChannel() {
     if (cannotSetChannel.value == true) return;
     if (currentPrimaryChannel != void 0) {
@@ -649,13 +654,17 @@
 
   // src/Views/threadView.tsx
   var messageConverter = (message) => {
+    const messageBody2 = createProxyState([messages], () => message.body);
     function copyMessage() {
       navigator.clipboard.writeText(message.body);
+    }
+    function decrypt2() {
+      decryptReceivedMessage(message);
     }
     function remove() {
       deleteMessage(message);
     }
-    return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, message.sender, "@", message.channel), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement("button", { "aria-label": translation.copyMessage, "on:click": copyMessage }, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding" }, /* @__PURE__ */ createElement("b", null, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
+    return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, message.sender, "@", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.copyMessage, "on:click": copyMessage }, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "aria-label": translation.decryptMessage, "on:click": decrypt2 }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key")), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { "subscribe:innerText": messageBody2 }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
   };
   function ThreadView() {
     return /* @__PURE__ */ createElement(

@@ -147,6 +147,11 @@ export function deleteMessage(message: Message): void {
   messages.remove(message);
 }
 
+export async function decryptReceivedMessage(message: Message): Promise<void> {
+  message.body = await decryptMessage(message.body);
+  messages.callSubscriptions();
+}
+
 export function setChannel(): void {
   if (cannotSetChannel.value == true) return;
 
