@@ -25,6 +25,11 @@ const englishTranslations = {
   showEncryptionKey: "Show encryption key",
   myName: "My Name",
   yourNamePlaceholder: "Jane Doe",
+  mailbox: "Mailbox",
+  requestMailbox: "Enable",
+  deleteMailbox: "Disable",
+  mailboxExplanation:
+    "If you can't receive messages, they will be kept on the server temporarily",
 
   // messages
   messages: "Messages",
@@ -69,6 +74,11 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     showEncryptionKey: "Mostrar clave de cifrado",
     myName: "Mi nombre",
     yourNamePlaceholder: "Juan Pérez",
+    mailbox: "Buzón",
+    requestMailbox: "Activar",
+    deleteMailbox: "Desactivar",
+    mailboxExplanation:
+      "Si no puedes recibir mensajes, se guardarán temporalmente en el servidor",
 
     // messages
     messages: "Mensajes",
@@ -110,6 +120,11 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     showEncryptionKey: "Schlüssel anzeigen",
     myName: "Mein Name",
     yourNamePlaceholder: "Max Mustermann",
+    mailbox: "Briefkasten",
+    requestMailbox: "Aktivieren",
+    deleteMailbox: "Deaktivieren",
+    mailboxExplanation:
+      "Nachrichten werden temporär auf dem Server gespeichert, wenn du sie nicht empfangen kannst",
 
     // messages
     messages: "Nachrichten",

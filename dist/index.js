@@ -295,14 +295,20 @@
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
     ws;
-    // handlers
+    // HANDLERS
     connectionHandler = () => {
     };
     disconnectionHandler = () => {
     };
     messageHandler = (data) => {
     };
-    // init
+    mailboxHandler = (mailboxId2) => {
+    };
+    mailboxConnectionHandler = (mailboxId2) => {
+    };
+    mailboxDeleteHandler = (mailboxId2) => {
+    };
+    // INIT
     set onconnect(handler) {
       this.connectionHandler = handler;
     }
@@ -312,28 +318,51 @@
     set onmessage(handler) {
       this.messageHandler = handler;
     }
-    // utility methods
+    set onmailboxcreate(handler) {
+      this.mailboxHandler = handler;
+    }
+    set onmailboxconnect(handler) {
+      this.mailboxConnectionHandler = handler;
+    }
+    set onmailboxdelete(handler) {
+      this.mailboxDeleteHandler = handler;
+    }
+    // UTILITY METHODS
     send(messageObject) {
       if (this.ws == void 0) return false;
       const messageString = JSON.stringify(messageObject);
       this.ws.send(messageString);
       return true;
     }
-    // public methods
+    // PUBLIC METHODS
+    // connection
     connect(address) {
-      this.disconnect();
-      this.ws = new WebSocket(address);
-      this.ws.addEventListener("open", this.connectionHandler);
-      this.ws.addEventListener("close", this.disconnectionHandler);
-      this.ws.addEventListener("message", (message) => {
-        const dataString = message.data.toString();
-        const data = JSON.parse(dataString);
-        this.messageHandler(data);
-      });
+      try {
+        this.disconnect();
+        this.ws = new WebSocket(address);
+        this.ws.addEventListener("open", this.connectionHandler);
+        this.ws.addEventListener("close", this.disconnectionHandler);
+        this.ws.addEventListener("message", (message) => {
+          const dataString = message.data.toString();
+          const data = JSON.parse(dataString);
+          if (data.assignedMailboxId) {
+            return this.mailboxHandler(data.assignedMailboxId);
+          } else if (data.connectedMailboxId) {
+            return this.mailboxConnectionHandler(data.connectedMailboxId);
+          } else if (data.deletedMailbox) {
+            return this.mailboxDeleteHandler(data.deletedMailbox);
+          } else {
+            this.messageHandler(data);
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
     }
     disconnect() {
       this.ws?.close();
     }
+    // message
     sendMessage(channel, body) {
       const messageObject = {
         messageChannel: channel,
@@ -341,6 +370,7 @@
       };
       return this.send(messageObject);
     }
+    // subscription
     subscribe(channel) {
       const messageObject = {
         subscribeChannel: channel
@@ -350,6 +380,25 @@
     unsubscribe(channel) {
       const messageObject = {
         unsubscribeChannel: channel
+      };
+      return this.send(messageObject);
+    }
+    // mailbox
+    requestMailbox() {
+      const messageObject = {
+        requestingMailboxSetup: true
+      };
+      return this.send(messageObject);
+    }
+    connectMailbox(mailboxId2) {
+      const messageObject = {
+        requestedMailbox: mailboxId2
+      };
+      return this.send(messageObject);
+    }
+    deleteMailbox(mailboxId2) {
+      const messageObject = {
+        deletingMailbox: mailboxId2
       };
       return this.send(messageObject);
     }
@@ -382,6 +431,10 @@
     showEncryptionKey: "Show encryption key",
     myName: "My Name",
     yourNamePlaceholder: "Jane Doe",
+    mailbox: "Mailbox",
+    requestMailbox: "Enable",
+    deleteMailbox: "Disable",
+    mailboxExplanation: "If you can't receive messages, they will be kept on the server temporarily",
     // messages
     messages: "Messages",
     composerPlaceholder: "Type a message...",
@@ -421,6 +474,10 @@
       showEncryptionKey: "Mostrar clave de cifrado",
       myName: "Mi nombre",
       yourNamePlaceholder: "Juan P\xE9rez",
+      mailbox: "Buz\xF3n",
+      requestMailbox: "Activar",
+      deleteMailbox: "Desactivar",
+      mailboxExplanation: "Si no puedes recibir mensajes, se guardar\xE1n temporalmente en el servidor",
       // messages
       messages: "Mensajes",
       composerPlaceholder: "Escribe un mensaje...",
@@ -458,6 +515,10 @@
       showEncryptionKey: "Schl\xFCssel anzeigen",
       myName: "Mein Name",
       yourNamePlaceholder: "Max Mustermann",
+      mailbox: "Briefkasten",
+      requestMailbox: "Aktivieren",
+      deleteMailbox: "Deaktivieren",
+      mailboxExplanation: "Nachrichten werden tempor\xE4r auf dem Server gespeichert, wenn du sie nicht empfangen kannst",
       // messages
       messages: "Nachrichten",
       composerPlaceholder: "Neue Nachricht...",
@@ -505,14 +566,22 @@
     [serverAddress, currentAddress, isConnected],
     () => serverAddress.value == "" || currentAddress.value == serverAddress.value && isConnected.value == true
   );
+  var mailboxId = restoreState("mailbox-id", "");
+  var isMailboxConnected = new State(false);
+  var cannotRequestMailbox = createProxyState(
+    [isConnected, isMailboxConnected],
+    () => isConnected.value == false || isMailboxConnected.value == true
+  );
+  var cannotDeleteMailbox = createProxyState(
+    [isConnected, mailboxId, isMailboxConnected],
+    () => isConnected.value == false || mailboxId.value == "" || isMailboxConnected.value == false
+  );
   var encryptionKey = restoreState("encryption-key", "");
   var isEncryptionUnavailable = window.crypto.subtle == void 0;
   var currentPrimaryChannel = new State("");
   var primaryChannel = restoreState("primary-channel", "");
   var newSecondaryChannelName = new State("");
   var secondaryChannels = restoreListState("secondary-channels");
-  var senderName = restoreState("sender-name", "");
-  var messageBody = restoreState("message", "");
   var cannotSetChannel = createProxyState(
     [primaryChannel, currentPrimaryChannel, isConnected],
     () => primaryChannel.value == "" || isConnected.value == false
@@ -525,6 +594,8 @@
     [newSecondaryChannelName],
     () => newSecondaryChannelName.value == ""
   );
+  var senderName = restoreState("sender-name", "");
+  var messageBody = restoreState("message", "");
   var cannotSendMessage = createProxyState(
     [currentPrimaryChannel, messageBody, senderName, isConnected],
     () => isConnected.value == false || currentPrimaryChannel.value == "" || messageBody.value == "" || senderName.value == ""
@@ -539,6 +610,12 @@
   function disconnect() {
     if (cannotDisonnect.value == true) return;
     UDN.disconnect();
+  }
+  function requestMailbox() {
+    UDN.requestMailbox();
+  }
+  function deleteMailbox() {
+    UDN.deleteMailbox(mailboxId.value);
   }
   async function sendMessage() {
     if (cannotSendMessage.value == true) return;
@@ -568,10 +645,6 @@
   function deleteMessage(message) {
     messages.remove(message);
   }
-  async function decryptReceivedMessage(message) {
-    message.body = await decryptMessage(message.body);
-    messages.callSubscriptions();
-  }
   function setChannel() {
     if (cannotSetChannel.value == true) return;
     if (currentPrimaryChannel != void 0) {
@@ -592,9 +665,28 @@
   function removeSecondaryChannel(channel) {
     secondaryChannels.remove(channel);
   }
+  async function decryptReceivedMessage(message) {
+    message.body = await decryptMessage(message.body);
+    messages.callSubscriptions();
+  }
   UDN.onconnect = () => {
+    UDN.ws?.addEventListener("message", console.log);
     isConnected.value = true;
     setChannel();
+    if (mailboxId.value != "") {
+      UDN.connectMailbox(mailboxId.value);
+    }
+  };
+  UDN.onmailboxcreate = (id) => {
+    mailboxId.value = id;
+    UDN.connectMailbox(id);
+  };
+  UDN.onmailboxconnect = () => {
+    isMailboxConnected.value = true;
+  };
+  UDN.onmailboxdelete = () => {
+    isMailboxConnected.value = false;
+    mailboxId.value = "";
   };
   UDN.onmessage = (data) => {
     if (data.subscribed != void 0 && data.messageChannel != void 0) {
@@ -605,6 +697,7 @@
   };
   UDN.ondisconnect = () => {
     isConnected.value = false;
+    isMailboxConnected.value = false;
   };
   function handleSubscriptionConfirmation(channel, isSubscribed) {
     if (isSubscribed == true) {
@@ -651,6 +744,9 @@
       console.error(error);
       return encryptionData;
     }
+  }
+  if (serverAddress.value != "") {
+    connect();
   }
 
   // src/Views/messageComposer.tsx
@@ -808,6 +904,23 @@
         "toggle:disabled": cannotConnect
       },
       translation.connectToServer,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.mailbox), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.mailboxExplanation))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-50",
+        "on:click": deleteMailbox,
+        "toggle:disabled": cannotDeleteMailbox
+      },
+      translation.deleteMailbox
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-50",
+        "on:click": requestMailbox,
+        "toggle:disabled": cannotRequestMailbox
+      },
+      translation.requestMailbox,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
     )));
   }

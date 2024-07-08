@@ -61,21 +61,34 @@ export const cannotConnect = React.createProxyState(
     (currentAddress.value == serverAddress.value && isConnected.value == true)
 );
 
+// mailbox
+export const mailboxId = React.restoreState("mailbox-id", "");
+export const isMailboxConnected = new React.State(false);
+
+export const cannotRequestMailbox = React.createProxyState(
+  [isConnected, isMailboxConnected],
+  () => isConnected.value == false || isMailboxConnected.value == true
+);
+
+export const cannotDeleteMailbox = React.createProxyState(
+  [isConnected, mailboxId, isMailboxConnected],
+  () =>
+    isConnected.value == false ||
+    mailboxId.value == "" ||
+    isMailboxConnected.value == false
+);
+
 // encryption
 export const encryptionKey = React.restoreState("encryption-key", "");
 export const isEncryptionUnavailable = window.crypto.subtle == undefined;
 
-// sending
+// channel
 export const currentPrimaryChannel = new React.State("");
 export const primaryChannel = React.restoreState("primary-channel", "");
 
 export const newSecondaryChannelName = new React.State("");
 export const secondaryChannels =
   React.restoreListState<Channel>("secondary-channels");
-
-export const senderName = React.restoreState("sender-name", "");
-
-export const messageBody = React.restoreState("message", "");
 
 export const cannotSetChannel = React.createProxyState(
   [primaryChannel, currentPrimaryChannel, isConnected],
@@ -92,6 +105,11 @@ export const cannotAddSecondaryChannel = React.createProxyState(
   () => newSecondaryChannelName.value == ""
 );
 
+// sending
+export const senderName = React.restoreState("sender-name", "");
+
+export const messageBody = React.restoreState("message", "");
+
 export const cannotSendMessage = React.createProxyState(
   [currentPrimaryChannel, messageBody, senderName, isConnected],
   () =>
@@ -105,18 +123,29 @@ export const cannotSendMessage = React.createProxyState(
 export const messages = React.restoreListState<Message>("messages");
 
 // METHODS
-export function connect() {
+// connection
+export function connect(): void {
   if (cannotConnect.value == true) return;
   currentAddress.value = serverAddress.value;
   isConnected.value = false;
   UDN.connect(serverAddress.value);
 }
 
-export function disconnect() {
+export function disconnect(): void {
   if (cannotDisonnect.value == true) return;
   UDN.disconnect();
 }
 
+// mailbox
+export function requestMailbox(): void {
+  UDN.requestMailbox();
+}
+
+export function deleteMailbox(): void {
+  UDN.deleteMailbox(mailboxId.value);
+}
+
+// messages
 export async function sendMessage(): Promise<void> {
   if (cannotSendMessage.value == true) return;
 
@@ -158,11 +187,7 @@ export function deleteMessage(message: Message): void {
   messages.remove(message);
 }
 
-export async function decryptReceivedMessage(message: Message): Promise<void> {
-  message.body = await decryptMessage(message.body);
-  messages.callSubscriptions();
-}
-
+// channels
 export function setChannel(): void {
   if (cannotSetChannel.value == true) return;
 
@@ -190,10 +215,35 @@ export function removeSecondaryChannel(channel: Channel): void {
   secondaryChannels.remove(channel);
 }
 
+// encryption
+export async function decryptReceivedMessage(message: Message): Promise<void> {
+  message.body = await decryptMessage(message.body);
+  messages.callSubscriptions();
+}
+
 // LISTENERS
 UDN.onconnect = () => {
+  UDN.ws?.addEventListener("message", console.log)
   isConnected.value = true;
   setChannel();
+
+  if (mailboxId.value != "") {
+    UDN.connectMailbox(mailboxId.value);
+  }
+};
+
+UDN.onmailboxcreate = (id) => { 
+  mailboxId.value = id;
+  UDN.connectMailbox(id);
+};
+
+UDN.onmailboxconnect = () => {
+  isMailboxConnected.value = true;
+};
+
+UDN.onmailboxdelete = () => {
+  isMailboxConnected.value = false;
+  mailboxId.value = "";
 };
 
 UDN.onmessage = (data) => {
@@ -206,6 +256,7 @@ UDN.onmessage = (data) => {
 
 UDN.ondisconnect = () => {
   isConnected.value = false;
+  isMailboxConnected.value = false;
 };
 
 // UTILITY
@@ -264,4 +315,9 @@ async function decryptMessage(encryptionData: string): Promise<string> {
     console.error(error);
     return encryptionData;
   }
+}
+
+// INIT
+if (serverAddress.value != "") {
+  connect();
 }
