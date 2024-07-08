@@ -29,7 +29,7 @@ const messageConverter: React.ListItemConverter<Message> = (message) => {
       <div class="flex-column">
         <div class="flex-row justify-apart align-center secondary">
           <span class="padding-h ellipsis">
-            {message.sender}@{message.channel}
+            <b class="info">{message.sender}</b> - {message.channel}
           </span>
           <span class="flex-row">
             <button aria-label={translation.copyMessage} on:click={copyMessage}>
