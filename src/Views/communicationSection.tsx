@@ -49,7 +49,7 @@ export function CommunicationSection() {
       <label class="tile">
         <span class="icon">account_circle</span>
         <div>
-          <span>{translation.yourName}</span>
+          <span>{translation.myName}</span>
           <input
             bind:value={senderName}
             placeholder={translation.yourNamePlaceholder}

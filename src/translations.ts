@@ -1,7 +1,3 @@
-import * as React from "bloatless-react";
-
-import { currentAddress } from "./model";
-
 const englishTranslations = {
   // general
   setInput: "Set",
@@ -26,7 +22,7 @@ const englishTranslations = {
   encryptionKey: "Encryption key",
   encryptionKeyPlaceholder: "1jg028ej40d",
   showEncryptionKey: "Show encryption key",
-  yourName: "Your Name",
+  myName: "My Name",
   yourNamePlaceholder: "Jane Doe",
 
   // messages
@@ -41,6 +37,42 @@ const englishTranslations = {
 
 const allTranslations: { [key: string]: typeof englishTranslations } = {
   en: englishTranslations,
+  es: {
+    // general
+    setInput: "OK",
+    connectionStatus: "Estado de Conexión",
+    connectedTo: (server: string) => `Conectado a "${server}"`,
+    disconnected: "Desconectado",
+
+    // settings
+    settings: "Configuración",
+    connection: "Conexión",
+    communication: "Comunicación",
+    encryption: "Cifrado",
+    serverAddress: "Dirección del servidor",
+    serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    connectToServer: "Conectar",
+    primaryChannel: "Canal principal",
+    leaveChannel: "Salir",
+    channelPlaceholder: "mi-canal",
+    addSecondaryChannel: "Añadir canal segundario",
+    removeSecondaryChannel: "Eliminar canal segundario",
+    newSecondaryChannelPlaceholder: "Añadir canal segundario",
+    encryptionKey: "Clave de cifrada",
+    encryptionKeyPlaceholder: "1jg028ej40d",
+    showEncryptionKey: "Mostrar clave de cifrado",
+    myName: "Mi nombre",
+    yourNamePlaceholder: "Juan Pérez",
+
+    // messages
+    messages: "Mensajes",
+    composerPlaceholder: "Escribe un mensaje...",
+    sendMessage: "Enviar",
+    clearHistory: "Borrar historial",
+    encryptionUnavailableTitle: "Cifrada no disponible",
+    encryptionUnavailableMessage:
+      "Obtén esta página por HTTPS para cifrar mensajes o continúa sin cifrado",
+  },
   de: {
     // general
     setInput: "OK",
@@ -65,7 +97,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     encryptionKey: "Schlüssel",
     encryptionKeyPlaceholder: "1jg028ej40d",
     showEncryptionKey: "Schlüssel anzeigen",
-    yourName: "Mein Name",
+    myName: "Mein Name",
     yourNamePlaceholder: "Max Mustermann",
 
     // messages
