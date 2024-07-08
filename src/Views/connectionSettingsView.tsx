@@ -2,7 +2,9 @@ import * as React from "bloatless-react";
 
 import {
   cannotConnect,
+  cannotDisonnect,
   connect,
+  disconnect,
   serverAddress,
 } from "../model";
 
@@ -23,6 +25,13 @@ export function ConnectionInputView() {
         </div>
       </label>
       <div class="flex-row width-input justify-end">
+        <button
+          class="danger width-50"
+          on:click={disconnect}
+          toggle:disabled={cannotDisonnect}
+        >
+          {translation.disconnect}
+        </button>
         <button
           class="primary width-50"
           on:click={connect}

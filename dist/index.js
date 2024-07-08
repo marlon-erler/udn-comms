@@ -321,6 +321,7 @@
     }
     // public methods
     connect(address) {
+      this.disconnect();
       this.ws = new WebSocket(address);
       this.ws.addEventListener("open", this.connectionHandler);
       this.ws.addEventListener("close", this.disconnectionHandler);
@@ -329,6 +330,9 @@
         const data = JSON.parse(dataString);
         this.messageHandler(data);
       });
+    }
+    disconnect() {
+      this.ws?.close();
     }
     sendMessage(channel, body) {
       const messageObject = {
@@ -366,6 +370,7 @@
     serverAddress: "Server Address",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
+    disconnect: "Disonnect",
     primaryChannel: "Primary channel",
     leaveChannel: "Leave",
     channelPlaceholder: "my-channel",
@@ -404,6 +409,7 @@
       serverAddress: "Direcci\xF3n del servidor",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
       connectToServer: "Conectar",
+      disconnect: "Desconectar",
       primaryChannel: "Canal principal",
       leaveChannel: "Salir",
       channelPlaceholder: "mi-canal",
@@ -440,6 +446,7 @@
       serverAddress: "Serveraddresse",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
       connectToServer: "Verbinden",
+      disconnect: "Trennen",
       primaryChannel: "Hauptkanal",
       leaveChannel: "Verlassen",
       channelPlaceholder: "mein-kanal",
@@ -490,6 +497,10 @@
     [serverAddress],
     () => translation.connectedTo(serverAddress.value)
   );
+  var cannotDisonnect = createProxyState(
+    [isConnected],
+    () => isConnected.value == false
+  );
   var cannotConnect = createProxyState(
     [serverAddress, currentAddress, isConnected],
     () => serverAddress.value == "" || currentAddress.value == serverAddress.value && isConnected.value == true
@@ -515,8 +526,8 @@
     () => newSecondaryChannelName.value == ""
   );
   var cannotSendMessage = createProxyState(
-    [currentPrimaryChannel, messageBody, senderName],
-    () => currentPrimaryChannel.value == "" || messageBody.value == "" || senderName.value == ""
+    [currentPrimaryChannel, messageBody, senderName, isConnected],
+    () => isConnected.value == false || currentPrimaryChannel.value == "" || messageBody.value == "" || senderName.value == ""
   );
   var messages = restoreListState("messages");
   function connect() {
@@ -524,6 +535,10 @@
     currentAddress.value = serverAddress.value;
     isConnected.value = false;
     UDN.connect(serverAddress.value);
+  }
+  function disconnect() {
+    if (cannotDisonnect.value == true) return;
+    UDN.disconnect();
   }
   async function sendMessage() {
     if (cannotSendMessage.value == true) return;
@@ -778,6 +793,14 @@
         placeholder: translation.serverAddressPlaceholder
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-50",
+        "on:click": disconnect,
+        "toggle:disabled": cannotDisonnect
+      },
+      translation.disconnect
+    ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary width-50",

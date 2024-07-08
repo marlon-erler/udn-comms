@@ -49,6 +49,11 @@ export const connectionMessage = React.createProxyState([serverAddress], () =>
   translation.connectedTo(serverAddress.value)
 );
 
+export const cannotDisonnect = React.createProxyState(
+  [isConnected],
+  () => isConnected.value == false
+);
+
 export const cannotConnect = React.createProxyState(
   [serverAddress, currentAddress, isConnected],
   () =>
@@ -88,8 +93,9 @@ export const cannotAddSecondaryChannel = React.createProxyState(
 );
 
 export const cannotSendMessage = React.createProxyState(
-  [currentPrimaryChannel, messageBody, senderName],
+  [currentPrimaryChannel, messageBody, senderName, isConnected],
   () =>
+    isConnected.value == false ||
     currentPrimaryChannel.value == "" ||
     messageBody.value == "" ||
     senderName.value == ""
@@ -104,6 +110,11 @@ export function connect() {
   currentAddress.value = serverAddress.value;
   isConnected.value = false;
   UDN.connect(serverAddress.value);
+}
+
+export function disconnect() {
+  if (cannotDisonnect.value == true) return;
+  UDN.disconnect();
 }
 
 export async function sendMessage(): Promise<void> {

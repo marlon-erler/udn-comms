@@ -949,7 +949,10 @@ main {
   text-overflow: ellipsis;
 }
 
-.tile,
+.tile {
+  word-break: normal;
+}
+
 .break-all {
   word-break: break-all;
 }
