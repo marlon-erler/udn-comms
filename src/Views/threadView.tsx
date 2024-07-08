@@ -44,7 +44,7 @@ const messageConverter: React.ListItemConverter<Message> = (message) => {
           </span>
         </div>
         <div class="flex-column padding-h padding-bottom">
-          <b subscribe:innerText={messageBody}></b>
+          <b class="break-word" subscribe:innerText={messageBody}></b>
           <span class="secondary">
             {new Date(message.isoDate).toLocaleString()}
           </span>
