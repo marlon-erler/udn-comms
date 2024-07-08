@@ -76,6 +76,10 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     encryptionUnavailableTitle: "Cifrado no disponible",
     encryptionUnavailableMessage:
       "Obtén esta página a través de HTTPS para cifrar o continúa sin cifrado",
+
+    decryptMessage: "Descifrar mensaje",
+    copyMessage: "Copiar mensaje",
+    deleteMessage: "Eliminar mensaje",
   },
   de: {
     // general
@@ -112,6 +116,10 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     encryptionUnavailableTitle: "Verschlüsselung nicht möglich",
     encryptionUnavailableMessage:
       "Um Nachrichten zu verschlüsseln, lade diese Seite über HTTPS.",
+
+    decryptMessage: "Nachricht entschlüsseln",
+    copyMessage: "Nachricht kopieren",
+    deleteMessage: "Nachricht löschen",
   },
 };
 
