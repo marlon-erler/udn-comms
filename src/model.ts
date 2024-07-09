@@ -223,7 +223,6 @@ export async function decryptReceivedMessage(message: Message): Promise<void> {
 
 // LISTENERS
 UDN.onconnect = () => {
-  UDN.ws?.addEventListener("message", console.log)
   isConnected.value = true;
   setChannel();
 

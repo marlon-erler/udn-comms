@@ -434,7 +434,7 @@
     mailbox: "Mailbox",
     requestMailbox: "Enable",
     deleteMailbox: "Disable",
-    mailboxExplanation: "If you can't receive messages, they will be kept on the server temporarily",
+    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
     // messages
     messages: "Messages",
     composerPlaceholder: "Type a message...",
@@ -477,7 +477,7 @@
       mailbox: "Buz\xF3n",
       requestMailbox: "Activar",
       deleteMailbox: "Desactivar",
-      mailboxExplanation: "Si no puedes recibir mensajes, se guardar\xE1n temporalmente en el servidor",
+      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
       // messages
       messages: "Mensajes",
       composerPlaceholder: "Escribe un mensaje...",
@@ -518,7 +518,7 @@
       mailbox: "Briefkasten",
       requestMailbox: "Aktivieren",
       deleteMailbox: "Deaktivieren",
-      mailboxExplanation: "Nachrichten werden tempor\xE4r auf dem Server gespeichert, wenn du sie nicht empfangen kannst",
+      mailboxExplanation: "Nachrichten werden tempor\xE4r auf dem Server gespeichert, wenn deine Verbindung getrennt ist",
       // messages
       messages: "Nachrichten",
       composerPlaceholder: "Neue Nachricht...",
@@ -670,7 +670,6 @@
     messages.callSubscriptions();
   }
   UDN.onconnect = () => {
-    UDN.ws?.addEventListener("message", console.log);
     isConnected.value = true;
     setChannel();
     if (mailboxId.value != "") {

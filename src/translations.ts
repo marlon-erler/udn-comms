@@ -29,7 +29,7 @@ const englishTranslations = {
   requestMailbox: "Enable",
   deleteMailbox: "Disable",
   mailboxExplanation:
-    "If you can't receive messages, they will be kept on the server temporarily",
+    "When you're disconnected, messages will be kept on the server temporarily",
 
   // messages
   messages: "Messages",
@@ -78,7 +78,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     requestMailbox: "Activar",
     deleteMailbox: "Desactivar",
     mailboxExplanation:
-      "Si no puedes recibir mensajes, se guardarán temporalmente en el servidor",
+      "Si estás sin conexión, los mensajes se guardarán temporalmente en el servidor",
 
     // messages
     messages: "Mensajes",
@@ -124,7 +124,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     requestMailbox: "Aktivieren",
     deleteMailbox: "Deaktivieren",
     mailboxExplanation:
-      "Nachrichten werden temporär auf dem Server gespeichert, wenn du sie nicht empfangen kannst",
+      "Nachrichten werden temporär auf dem Server gespeichert, wenn deine Verbindung getrennt ist",
 
     // messages
     messages: "Nachrichten",
