@@ -711,8 +711,11 @@
     close: "Close",
     // overview
     overview: "Overview",
+    personal: "You",
     connection: "Connection",
     chats: "Chats",
+    yourName: "Your Name",
+    namePlaceholder: "Jane Doe",
     encryptionUnavailableTitle: "Encryption is not available",
     encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
     serverAddress: "Server Address",
@@ -1007,9 +1010,20 @@
     )));
   }
 
+  // src/Views/personalSection.tsx
+  function PersonalSection() {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.personal), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": senderName,
+        placeholder: translation.namePlaceholder
+      }
+    ))));
+  }
+
   // src/Tabs/overviewTab.tsx
   function OverviewTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), ConnectionSection(), ChatListSection()));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
   }
 
   // src/index.tsx

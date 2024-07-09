@@ -4,6 +4,7 @@ import { isConnected, isEncryptionAvailable } from "../Model/model";
 
 import { ChatListSection } from "../Views/chatListSection";
 import { ConnectionSection } from "../Views/connectionSection";
+import { PersonalSection } from "../Views/personalSection";
 import { translation } from "../translations";
 
 export function OverviewTab() {
@@ -12,7 +13,6 @@ export function OverviewTab() {
       <header>{translation.overview}</header>
 
       <div class="flex-column large-gap">
-        
         <div class="tile error flex-no" toggle:hidden={isEncryptionAvailable}>
           <span class="icon">warning</span>
           <div>
@@ -23,6 +23,7 @@ export function OverviewTab() {
           </div>
         </div>
 
+        {PersonalSection()}
         {ConnectionSection()}
         {ChatListSection()}
       </div>

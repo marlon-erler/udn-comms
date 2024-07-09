@@ -8,8 +8,12 @@ const englishTranslations = {
   // overview
   overview: "Overview",
 
+  personal: "You",
   connection: "Connection",
   chats: "Chats",
+
+  yourName: "Your Name",
+  namePlaceholder: "Jane Doe",
 
   encryptionUnavailableTitle: "Encryption is not available",
   encryptionUnavailableMessage:
