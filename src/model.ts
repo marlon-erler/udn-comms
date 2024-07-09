@@ -146,7 +146,8 @@ export function deleteMailbox(): void {
 }
 
 export function updateMailbox(): void {
-  if (!isMailboxConnected) return;
+  if (!isMailboxConnected || mailboxId.value == "") return;
+
   deleteMailbox();
   requestMailbox();
 }
@@ -201,7 +202,7 @@ export function setChannel(): void {
     UDN.unsubscribe(currentPrimaryChannel.value);
   }
   UDN.subscribe(primaryChannel.value);
-  
+
   updateMailbox();
 }
 
@@ -239,7 +240,7 @@ UDN.onconnect = () => {
   }
 };
 
-UDN.onmailboxcreate = (id) => { 
+UDN.onmailboxcreate = (id) => {
   mailboxId.value = id;
   UDN.connectMailbox(id);
 };

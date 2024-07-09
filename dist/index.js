@@ -617,6 +617,11 @@
   function deleteMailbox() {
     UDN.deleteMailbox(mailboxId.value);
   }
+  function updateMailbox() {
+    if (!isMailboxConnected || mailboxId.value == "") return;
+    deleteMailbox();
+    requestMailbox();
+  }
   async function sendMessage() {
     if (cannotSendMessage.value == true) return;
     const secondaryChannelNames = [
@@ -651,6 +656,7 @@
       UDN.unsubscribe(currentPrimaryChannel.value);
     }
     UDN.subscribe(primaryChannel.value);
+    updateMailbox();
   }
   function leaveChannel() {
     if (cannotLeaveChannel.value == true) return;
