@@ -616,6 +616,7 @@
     false
   );
   var currentAddress = restoreState("current-address", "");
+  var previousAddresses = restoreListState("previous-addresses");
   var cannotDisonnect = createProxyState(
     [isConnected],
     () => isConnected.value == false
@@ -631,6 +632,7 @@
   function connect() {
     if (cannotConnect.value == true) return;
     currentAddress.value = serverAddressInput.value;
+    previousAddresses.add(currentAddress.value);
     isConnected.value = false;
     didRequestConnection.value = true;
     UDN.connect(serverAddressInput.value);
@@ -1082,13 +1084,24 @@
   }
 
   // src/Views/connectionSection.tsx
+  var addressConverter = (address) => {
+    return /* @__PURE__ */ createElement("option", null, address);
+  };
   function ConnectionSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": serverAddressInput,
         "on:enter": connect,
-        placeholder: translation.serverAddressPlaceholder
+        placeholder: translation.serverAddressPlaceholder,
+        list: "previous-addresses"
+      }
+    ), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: "previous-addresses",
+        "children:append": [previousAddresses, addressConverter]
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",

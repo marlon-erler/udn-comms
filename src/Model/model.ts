@@ -15,6 +15,7 @@ export const didRequestConnection = React.restoreState(
   false
 );
 export const currentAddress = React.restoreState("current-address", "");
+export const previousAddresses = React.restoreListState<string>("previous-addresses")
 
 export const cannotDisonnect = React.createProxyState(
   [isConnected],
@@ -39,6 +40,7 @@ export function connect(): void {
   if (cannotConnect.value == true) return;
 
   currentAddress.value = serverAddressInput.value;
+  previousAddresses.add(currentAddress.value);
 
   isConnected.value = false;
   didRequestConnection.value = true;

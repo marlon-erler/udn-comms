@@ -9,12 +9,17 @@ import {
   connect,
   deleteMailbox,
   disconnect,
+  previousAddresses,
   requestMailbox,
   resetAddressInput,
   serverAddressInput,
 } from "../Model/model";
 
 import { translation } from "../translations";
+
+const addressConverter: React.ListItemConverter<string> = (address) => {
+  return <option>{address}</option>;
+};
 
 export function ConnectionSection() {
   return (
@@ -29,7 +34,13 @@ export function ConnectionSection() {
             bind:value={serverAddressInput}
             on:enter={connect}
             placeholder={translation.serverAddressPlaceholder}
+            list="previous-addresses"
           ></input>
+          <datalist
+            hidden
+            id="previous-addresses"
+            children:append={[previousAddresses, addressConverter]}
+          ></datalist>
         </div>
       </label>
       <div class="flex-row width-input justify-end">
