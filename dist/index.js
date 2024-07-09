@@ -641,11 +641,15 @@
   function resetAddressInput() {
     serverAddressInput.value = currentAddress.value;
   }
-  UDN.onconnect = () => {
-    isConnected.value = true;
+  function subscribeChannels() {
     chats.value.forEach((chat) => {
       UDN.subscribe(chat.primaryChannel.value);
     });
+  }
+  UDN.onconnect = () => {
+    isConnected.value = true;
+    subscribeChannels();
+    if (mailboxId.value != "") UDN.connectMailbox(mailboxId.value);
   };
   UDN.onmessage = (data) => {
     chats.value.forEach((chat) => {
@@ -683,6 +687,7 @@
   UDN.onmailboxdelete = () => {
     isMailboxActive.value = false;
     mailboxId.value = "";
+    subscribeChannels();
   };
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");

@@ -56,13 +56,17 @@ export function resetAddressInput(): void {
   serverAddressInput.value = currentAddress.value;
 }
 
-// listeners
-UDN.onconnect = () => {
-  isConnected.value = true;
-
+export function subscribeChannels() {
   chats.value.forEach((chat) => {
     UDN.subscribe(chat.primaryChannel.value);
   });
+}
+
+// listeners
+UDN.onconnect = () => {
+  isConnected.value = true;
+  subscribeChannels();
+  if (mailboxId.value != "") UDN.connectMailbox(mailboxId.value);
 };
 
 UDN.onmessage = (data) => {
@@ -115,6 +119,7 @@ UDN.onmailboxconnect = () => {
 UDN.onmailboxdelete = () => {
   isMailboxActive.value = false;
   mailboxId.value = "";
+  subscribeChannels();
 };
 
 // MISC
