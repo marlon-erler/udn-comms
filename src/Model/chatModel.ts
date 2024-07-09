@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { UDN, chatIds, chats, isConnected, senderName } from "../Model/model";
+import { UDN, chatIds, chats, isConnected, senderName, updateMailbox } from "../Model/model";
 import { decryptString, encryptString } from "../cryptUtility";
 
 import { Message } from "udn-frontend";
@@ -185,6 +185,7 @@ export class Chat {
     if (this.cannotSetChannel.value == true) return;
     this.primaryChannel.value = this.primaryChannelInput.value;
     UDN.subscribe(this.primaryChannel.value);
+    updateMailbox();
   };
 
   undoChannelChange = (): void => {
@@ -213,4 +214,5 @@ export function createChatWithName(name: string): void {
   chatIds.add(newChat.id);
 
   UDN.subscribe(name);
+  updateMailbox();
 }

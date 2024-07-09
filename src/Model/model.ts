@@ -15,7 +15,8 @@ export const didRequestConnection = React.restoreState(
   false
 );
 export const currentAddress = React.restoreState("current-address", "");
-export const previousAddresses = React.restoreListState<string>("previous-addresses")
+export const previousAddresses =
+  React.restoreListState<string>("previous-addresses");
 
 export const cannotDisonnect = React.createProxyState(
   [isConnected],
@@ -106,7 +107,7 @@ export function deleteMailbox(): void {
 
 export function updateMailbox(): void {
   deleteMailbox();
-  updateMailbox();
+  setTimeout(() => requestMailbox(), 10);
 }
 
 UDN.onmailboxcreate = (id) => {

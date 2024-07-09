@@ -473,6 +473,7 @@
       if (this.cannotSetChannel.value == true) return;
       this.primaryChannel.value = this.primaryChannelInput.value;
       UDN.subscribe(this.primaryChannel.value);
+      updateMailbox();
     };
     undoChannelChange = () => {
       this.primaryChannelInput.value = this.primaryChannel.value;
@@ -493,6 +494,7 @@
     newChat.primaryChannelInput.value = name;
     chatIds.add(newChat.id);
     UDN.subscribe(name);
+    updateMailbox();
   }
 
   // node_modules/udn-frontend/index.ts
@@ -680,6 +682,10 @@
   function deleteMailbox() {
     if (cannotDeleteMailbox.value == true) return;
     UDN.deleteMailbox(mailboxId.value);
+  }
+  function updateMailbox() {
+    deleteMailbox();
+    setTimeout(() => requestMailbox(), 10);
   }
   UDN.onmailboxcreate = (id) => {
     mailboxId.value = id;
