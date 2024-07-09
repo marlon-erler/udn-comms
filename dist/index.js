@@ -650,13 +650,15 @@
   function deleteMessage(message) {
     messages.remove(message);
   }
-  function setChannel() {
+  function setChannel(shouldUpdateMailbox = true) {
     if (cannotSetChannel.value == true) return;
     if (currentPrimaryChannel != void 0) {
       UDN.unsubscribe(currentPrimaryChannel.value);
     }
     UDN.subscribe(primaryChannel.value);
-    updateMailbox();
+    if (shouldUpdateMailbox) {
+      updateMailbox();
+    }
   }
   function leaveChannel() {
     if (cannotLeaveChannel.value == true) return;
@@ -677,7 +679,7 @@
   }
   UDN.onconnect = () => {
     isConnected.value = true;
-    setChannel();
+    setChannel(false);
     if (mailboxId.value != "") {
       UDN.connectMailbox(mailboxId.value);
     }
@@ -687,6 +689,7 @@
     UDN.connectMailbox(id);
   };
   UDN.onmailboxconnect = () => {
+    console.log("connected");
     isMailboxConnected.value = true;
   };
   UDN.onmailboxdelete = () => {

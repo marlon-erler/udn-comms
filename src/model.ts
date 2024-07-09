@@ -195,7 +195,7 @@ export function deleteMessage(message: Message): void {
 }
 
 // channels
-export function setChannel(): void {
+export function setChannel(shouldUpdateMailbox: boolean = true): void {
   if (cannotSetChannel.value == true) return;
 
   if (currentPrimaryChannel != undefined) {
@@ -203,7 +203,9 @@ export function setChannel(): void {
   }
   UDN.subscribe(primaryChannel.value);
 
-  updateMailbox();
+  if (shouldUpdateMailbox) {
+    updateMailbox();
+  }
 }
 
 export function leaveChannel(): void {
@@ -233,7 +235,7 @@ export async function decryptReceivedMessage(message: Message): Promise<void> {
 // LISTENERS
 UDN.onconnect = () => {
   isConnected.value = true;
-  setChannel();
+  setChannel(false);
 
   if (mailboxId.value != "") {
     UDN.connectMailbox(mailboxId.value);
@@ -246,6 +248,7 @@ UDN.onmailboxcreate = (id) => {
 };
 
 UDN.onmailboxconnect = () => {
+  console.log("connected")
   isMailboxConnected.value = true;
 };
 
