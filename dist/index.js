@@ -657,6 +657,10 @@
   var isEncryptionUnavailable = window.crypto.subtle == void 0;
   var senderName = restoreState("sender-name", "");
   var selectedChat = new State(void 0);
+  function closeChat() {
+    selectedChat.value = void 0;
+    document.getElementById("settings-tab")?.scrollIntoView();
+  }
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
     connect();
   }
@@ -665,6 +669,7 @@
   var englishTranslations = {
     // general
     setInput: "Set",
+    back: "Back",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -785,99 +790,83 @@
   var translation = allTranslations[language] ?? allTranslations.en;
 
   // src/Views/messageComposer.tsx
-  function MessageComposer() {
-    const composerContent = createProxyState([selectedChat], () => {
-      if (selectedChat.value == void 0) return /* @__PURE__ */ createElement("div", null);
-      const chat = selectedChat.value;
-      return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
-        "input",
-        {
-          class: "width-100 flex-1",
-          style: "max-width: unset",
-          placeholder: translation.composerPlaceholder,
-          "bind:value": chat.composingMessage,
-          "on:enter": chat.sendMessage
-        }
-      ), /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "primary",
-          "on:click": chat.sendMessage,
-          "toggle:disabled": chat.cannotSendMessage
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-      ));
-    });
-    return /* @__PURE__ */ createElement("div", { "children:set": composerContent });
+  function MessageComposer(chat) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "width-100 flex-1",
+        style: "max-width: unset",
+        placeholder: translation.composerPlaceholder,
+        "bind:value": chat.composingMessage,
+        "on:enter": chat.sendMessage
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": chat.sendMessage,
+        "toggle:disabled": chat.cannotSendMessage
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+    ));
   }
 
   // src/Views/threadView.tsx
-  function ThreadView() {
-    const threadViewContent = createProxyState([selectedChat], () => {
-      if (selectedChat.value == void 0)
-        return /* @__PURE__ */ createElement("div", null, translation.noChatSelected);
-      const chat = selectedChat.value;
-      const messageConverter = (message) => {
-        function copyMessage() {
-          navigator.clipboard.writeText(message.body);
-        }
-        function decrypt2() {
-          chat.decryptReceivedMessage(message);
-        }
-        function remove() {
-          chat.deleteMessage(message);
-        }
-        return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.copyMessage,
-            "on:click": copyMessage
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
-        ), /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.decryptMessage,
-            "on:click": decrypt2
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
-        ), /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.deleteMessage,
-            "on:click": remove
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-        ))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": message.body }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
-      };
-      return /* @__PURE__ */ createElement(
-        "div",
+  function ThreadView(chat) {
+    const messageConverter = (message) => {
+      function copyMessage() {
+        navigator.clipboard.writeText(message.body);
+      }
+      function decrypt2() {
+        chat.decryptReceivedMessage(message);
+      }
+      function remove() {
+        chat.deleteMessage(message);
+      }
+      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
+        "button",
         {
-          class: "flex-column gap",
-          "children:append": [chat.messages, messageConverter]
-        }
-      );
-    });
-    return /* @__PURE__ */ createElement("div", { "children:set": threadViewContent });
+          "aria-label": translation.copyMessage,
+          "on:click": copyMessage
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.decryptMessage,
+          "on:click": decrypt2
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
+      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": message.body }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:append": [chat.messages, messageConverter]
+      }
+    );
   }
 
   // src/Tabs/messageTab.tsx
   function MessageTab() {
-    function clearMessageHistory() {
-      selectedChat.value?.clearMessages();
-    }
-    const headerText = createProxyState(
-      [selectedChat],
-      () => selectedChat.value != void 0 ? selectedChat.value.currentChannel : translation.messages
-    );
-    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", { "subscribe:innerText": headerText }), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
-      "button",
-      {
-        "aria-label": translation.clearHistory,
-        "on:click": clearMessageHistory
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
-    ))), ThreadView(), /* @__PURE__ */ createElement("footer", null, MessageComposer()));
+    const messageTabContent = createProxyState([selectedChat], () => {
+      if (selectedChat.value == void 0)
+        return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.noChatSelected));
+      const chat = selectedChat.value;
+      function clearMessageHistory() {
+        chat.clearMessages();
+      }
+      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChat }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.currentChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.clearHistory,
+          "on:click": clearMessageHistory
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
+      ))), ThreadView(chat), /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)));
+    });
+    return /* @__PURE__ */ createElement("div", { "children:set": messageTabContent });
   }
 
   // src/Views/connectionSection.tsx

@@ -1,6 +1,7 @@
 const englishTranslations = {
   // general
   setInput: "Set",
+  back: "Back",
 
   // overview
   overview: "Overview",

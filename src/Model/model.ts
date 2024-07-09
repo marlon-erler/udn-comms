@@ -115,6 +115,11 @@ export const senderName = React.restoreState("sender-name", "");
 
 export const selectedChat = new React.State<Chat | undefined>(undefined);
 
+export function closeChat() {
+  selectedChat.value = undefined;
+  document.getElementById("settings-tab")?.scrollIntoView();
+}
+
 // INIT
 if (serverAddressInput.value != "" && didRequestConnection.value == true) {
   connect();
