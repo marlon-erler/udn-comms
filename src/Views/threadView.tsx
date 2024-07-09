@@ -59,10 +59,12 @@ export function ThreadView(chat: Chat) {
     );
   };
 
-  return (
+  const listElement = (
     <div
       class="flex-column gap"
       children:append={[chat.messages, messageConverter]}
     ></div>
   );
+  chat.messages.handleAddition(() => listElement.scrollTop = listElement.scrollHeight);
+  return listElement;
 }

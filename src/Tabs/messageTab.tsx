@@ -22,37 +22,32 @@ export function MessageTab() {
     function showOptions() {
       isShowingOptions.value = true;
     }
-    function hideOptions() {
-      isShowingOptions.value = false;
-    }
 
-    return (
-      <div>
-        <header class="padding-0">
-          <span class="flex-row align-center">
-            <button aria-label={translation.back} on:click={closeChatView}>
-              <span class="icon">arrow_back</span>
-            </button>
+    return [
+      <header class="padding-0">
+        <span class="flex-row align-center">
+          <button aria-label={translation.back} on:click={closeChatView}>
+            <span class="icon">arrow_back</span>
+          </button>
 
-            <span subscribe:innerText={chat.primaryChannel}></span>
-          </span>
-          <span>
-            <button
-              aria-label={translation.showChatOptions}
-              on:click={showOptions}
-            >
-              <span class="icon">tune</span>
-            </button>
-          </span>
-        </header>
+          <span subscribe:innerText={chat.primaryChannel}></span>
+        </span>
+        <span>
+          <button
+            aria-label={translation.showChatOptions}
+            on:click={showOptions}
+          >
+            <span class="icon">tune</span>
+          </button>
+        </span>
+      </header>,
 
-        {ThreadView(chat)}
-        
-        <footer>{MessageComposer(chat)}</footer>
+      ThreadView(chat),
 
-        {ChatOptionModal(chat, isShowingOptions)}
-      </div>
-    );
+      <footer>{MessageComposer(chat)}</footer>,
+
+      ChatOptionModal(chat, isShowingOptions),
+    ];
   });
 
   return <article id="message-tab" children:set={messageTabContent}></article>;
