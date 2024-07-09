@@ -27,7 +27,7 @@ export function MessageTab() {
     }
 
     return (
-      <article id="message-tab">
+      <div>
         <header class="padding-0">
           <span class="flex-row align-center">
             <button aria-label={translation.back} on:click={closeChatView}>
@@ -45,13 +45,15 @@ export function MessageTab() {
             </button>
           </span>
         </header>
+
         {ThreadView(chat)}
+        
         <footer>{MessageComposer(chat)}</footer>
 
         {ChatOptionModal(chat, isShowingOptions)}
-      </article>
+      </div>
     );
   });
 
-  return <div children:set={messageTabContent}></div>;
+  return <article id="message-tab" children:set={messageTabContent}></article>;
 }

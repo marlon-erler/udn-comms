@@ -704,6 +704,7 @@
   }
   function selectChat(chat) {
     selectedChat.value = chat;
+    document.getElementById("message-tab")?.scrollIntoView();
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
@@ -842,7 +843,7 @@
         placeholder: translation.encryptionKeyPlaceholder,
         "bind:value": chat.encryptionKey
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/messageComposer.tsx
@@ -917,7 +918,7 @@
       function hideOptions() {
         isShowingOptions.value = false;
       }
-      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
         "button",
         {
           "aria-label": translation.showChatOptions,
@@ -926,7 +927,7 @@
         /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
       ))), ThreadView(chat), /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)), ChatOptionModal(chat, isShowingOptions));
     });
-    return /* @__PURE__ */ createElement("div", { "children:set": messageTabContent });
+    return /* @__PURE__ */ createElement("article", { id: "message-tab", "children:set": messageTabContent });
   }
 
   // src/Views/chatListSection.tsx

@@ -147,6 +147,7 @@ export function closeChatView() {
 
 export function selectChat(chat: Chat) {
   selectedChat.value = chat;
+  document.getElementById("message-tab")?.scrollIntoView();
 }
 
 chatIds.value.forEach((id) => chats.add(new Chat(id)));
