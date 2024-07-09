@@ -18,6 +18,11 @@ export function ThreadView(chat: Chat) {
       chat.deleteMessage(message);
     }
 
+    const messageBody = React.createProxyState(
+      [chat.messages],
+      () => message.body
+    );
+
     return (
       <div class="tile width-100 flex-no padding-0">
         <div class="flex-column">
@@ -44,7 +49,7 @@ export function ThreadView(chat: Chat) {
             </span>
           </div>
           <div class="flex-column padding-h padding-bottom">
-            <b class="break-word">{message.body}</b>
+            <b class="break-word" subscribe:innerText={messageBody}></b>
             <span class="secondary">
               {new Date(message.isoDate).toLocaleString()}
             </span>
