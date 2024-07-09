@@ -943,7 +943,8 @@ main,
   overflow: hidden;
 }
 
-article > div {
+article > div,
+.modal main {
   overflow: scroll;
 }
 
@@ -1012,6 +1013,7 @@ main {
   /* size */
   .modal > div {
     height: auto;
+    max-height: 100%;
   }
 
   p,
