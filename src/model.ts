@@ -252,6 +252,7 @@ UDN.onmailboxconnect = () => {
 UDN.onmailboxdelete = () => {
   isMailboxConnected.value = false;
   mailboxId.value = "";
+  setChannel();
 };
 
 UDN.onmessage = (data) => {
