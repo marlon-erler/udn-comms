@@ -2,12 +2,10 @@ import * as React from "bloatless-react";
 
 import {
   arrayToUint8,
-  decode,
   decrypt,
   encrypt,
   generateIV,
   importKey,
-  splitMergedString,
   uInt8ToArray,
 } from "./cryptUtility";
 
