@@ -1,0 +1,215 @@
+import * as React from "bloatless-react";
+
+import { UDN, chatIds, chats, isConnected, senderName } from "../Model/model";
+import { decryptString, encryptString } from "../cryptUtility";
+
+import { Message } from "udn-frontend";
+import { storageKeys } from "../utility";
+
+// TYPES
+// message
+export interface ChatMessage {
+  channel: string;
+  sender: string;
+  body: string;
+  isoDate: string;
+}
+
+// chat
+export class Chat {
+  id: string;
+
+  isSubscribed = new React.State(false);
+  primaryChannel = new React.State("");
+  secondaryChannels: React.ListState<string>;
+
+  encryptionKey: React.State<string>;
+  messages: React.ListState<ChatMessage>;
+
+  composingMessage: React.State<string>;
+  newSecondaryChannelName: React.State<string>;
+  primaryChannelInput: React.State<string>;
+
+  cannotSendMessage: React.State<boolean>;
+  cannotAddSecondaryChannel: React.State<boolean>;
+  cannotSetChannel: React.State<boolean>;
+  cannotUndoChannel: React.State<boolean>;
+
+  // init
+  constructor(id: string = React.UUID()) {
+    this.id = id;
+
+    // channels
+    this.primaryChannel = React.restoreState(
+      storageKeys.primaryChannel(id),
+      ""
+    );
+    this.secondaryChannels = React.restoreListState(
+      storageKeys.secondaryChannels(id)
+    );
+
+    // messaging
+    this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
+    this.messages = React.restoreListState(storageKeys.messages(id));
+
+    // inputs
+    this.composingMessage = React.restoreState(
+      storageKeys.composingMessage(id),
+      ""
+    );
+    this.newSecondaryChannelName = new React.State("");
+    this.primaryChannelInput = new React.State(this.primaryChannel.value);
+
+    // guards
+    this.cannotSendMessage = React.createProxyState(
+      [
+        this.primaryChannel,
+        this.composingMessage,
+        this.isSubscribed,
+        isConnected,
+        senderName,
+      ],
+      () =>
+        this.primaryChannel.value == "" ||
+        this.composingMessage.value == "" ||
+        senderName.value == "" ||
+        this.isSubscribed.value == false ||
+        isConnected.value == false
+    );
+    this.cannotAddSecondaryChannel = React.createProxyState(
+      [this.newSecondaryChannelName],
+      () => this.newSecondaryChannelName.value == ""
+    );
+    this.cannotSetChannel = React.createProxyState(
+      [this.primaryChannelInput, this.primaryChannel],
+      () =>
+        this.primaryChannelInput.value == "" ||
+        this.primaryChannelInput.value == this.primaryChannel.value
+    );
+    this.cannotUndoChannel = React.createProxyState(
+      [this.primaryChannelInput, this.primaryChannel],
+      () => this.primaryChannelInput.value == this.primaryChannel.value
+    );
+  }
+
+  // general
+  deleteSelf = () => {
+    Object.values(storageKeys).forEach((storageKey) => {
+      localStorage.removeItem(storageKey(this.id));
+    });
+
+    chats.remove(this);
+    chatIds.remove(this.id);
+  };
+
+  // handlers
+  onmessage = async (data: Message): Promise<void> => {
+    if (!data.messageChannel) return;
+    const channels = data.messageChannel.split("/");
+    if (channels.indexOf(this.primaryChannel.value) == -1) return;
+
+    if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
+
+    if (!data.messageBody) return;
+    const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+    this.handleMessage({
+      sender,
+      body: await decryptString(body, this.encryptionKey.value),
+      channel,
+      isoDate,
+    });
+  };
+
+  handleSubscription = (isSubscribed: boolean): void => {
+    this.isSubscribed.value = isSubscribed;
+  };
+
+  handleMessage = (chatMessage: ChatMessage): void => {
+    this.messages.add(chatMessage);
+  };
+
+  // messages
+  sendMessage = async (): Promise<void> => {
+    if (this.cannotSendMessage.value == true) return;
+
+    // get channels
+    const secondaryChannelNames: string[] = [
+      ...this.secondaryChannels.value.values(),
+    ];
+    const allChannelNames: string[] = [
+      this.primaryChannel.value,
+      ...secondaryChannelNames,
+    ];
+
+    // encrypt
+    const encrypted =
+      this.encryptionKey.value == ""
+        ? this.composingMessage.value
+        : (await encryptString(
+            this.composingMessage.value,
+            this.encryptionKey.value
+          )) || this.composingMessage.value;
+
+    // create object
+    const joinedChannelName = allChannelNames.join("/");
+    const messageObject: ChatMessage = {
+      channel: joinedChannelName,
+      sender: senderName.value,
+      body: encrypted,
+      isoDate: new Date().toISOString(),
+    };
+    const messageString = JSON.stringify(messageObject);
+
+    // send
+    UDN.sendMessage(joinedChannelName, messageString);
+
+    // clear
+    this.composingMessage.value = "";
+  };
+
+  clearMessages = (): void => {
+    this.messages.clear();
+  };
+
+  deleteMessage = (message: ChatMessage): void => {
+    this.messages.remove(message);
+  };
+
+  decryptReceivedMessage = async (message: ChatMessage): Promise<void> => {
+    message.body = await decryptString(message.body, this.encryptionKey.value);
+    this.messages.callSubscriptions();
+  };
+
+  // channel
+  setChannel = (): void => {
+    if (this.cannotSetChannel.value == true) return;
+    this.primaryChannel.value = this.primaryChannelInput.value;
+    UDN.subscribe(this.primaryChannel.value);
+  };
+
+  undoChannelChange = (): void => {
+    this.primaryChannelInput.value = this.primaryChannel.value;
+  };
+
+  addSecondaryChannel = (): void => {
+    if (this.cannotAddSecondaryChannel.value == true) return;
+
+    this.secondaryChannels.add(this.newSecondaryChannelName.value);
+    this.newSecondaryChannelName.value = "";
+  };
+
+  removeSecondaryChannel = (channel: string): void => {
+    this.secondaryChannels.remove(channel);
+  };
+}
+
+// METHODS
+export function createChatWithName(name: string): void {
+  const newChat = new Chat();
+  chats.add(newChat);
+
+  newChat.primaryChannel.value = name;
+  chatIds.add(newChat.id);
+
+  UDN.subscribe(name);
+}

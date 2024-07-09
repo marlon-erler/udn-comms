@@ -1,23 +1,23 @@
 import * as React from "bloatless-react";
 
-import { cannotSendMessage, messageBody, sendMessage } from "../model";
-
+import { Chat } from "../Model/chatModel";
 import { translation } from "../translations";
 
-export function MessageComposer() {
+export function MessageComposer(chat: Chat) {
   return (
     <div class="flex-row width-100">
+      {" "}
       <input
         class="width-100 flex-1"
         style="max-width: unset"
         placeholder={translation.composerPlaceholder}
-        bind:value={messageBody}
-        on:enter={sendMessage}
+        bind:value={chat.composingMessage}
+        on:enter={chat.sendMessage}
       ></input>
       <button
         class="primary"
-        on:click={sendMessage}
-        toggle:disabled={cannotSendMessage}
+        on:click={chat.sendMessage}
+        toggle:disabled={chat.cannotSendMessage}
       >
         <span class="icon">send</span>
       </button>
