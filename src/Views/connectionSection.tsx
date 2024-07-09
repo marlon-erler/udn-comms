@@ -19,6 +19,8 @@ import { translation } from "../translations";
 export function ConnectionSection() {
   return (
     <div class="flex-column">
+      <h2>{translation.connection}</h2>
+
       <label class="tile">
         <span class="icon">cell_tower</span>
         <div>

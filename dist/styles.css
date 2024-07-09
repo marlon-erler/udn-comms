@@ -214,6 +214,7 @@ SIZES
   --gap-between-tiles: 4px;
   --gap-in-tab-links: 1rem;
   --gap-in-controls: 1.2rem;
+  --large-gap: 2rem;
 
   /* margin */
   --label-top-padding: 0.25rem;
@@ -446,6 +447,10 @@ label.inline,
 
 .gap {
   gap: var(--gap-between-tiles) !important;
+}
+
+.large-gap {
+  gap: var(--large-gap) !important;
 }
 
 header,

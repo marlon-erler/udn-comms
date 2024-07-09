@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { UDN, isConnected, senderName } from "./model";
+import { UDN, isConnected, senderName } from "../Model/model";
 import { decryptString, encryptString } from "../cryptUtility";
 
 import { Message } from "udn-frontend";
@@ -37,6 +37,9 @@ export class Chat {
 
   // init
   constructor(id: string = React.UUID()) {
+    this.id = id;
+
+    // channels
     this.primaryChannelInput = React.restoreState(
       storageKeys.primaryChannel(id),
       ""
@@ -45,6 +48,7 @@ export class Chat {
       storageKeys.secondaryChannels(id)
     );
 
+    // messaging
     this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
     this.messages = React.restoreListState(storageKeys.messages(id));
 
@@ -54,15 +58,16 @@ export class Chat {
     );
     this.newSecondaryChannelName = new React.State("");
 
+    // guards
     this.cannotSendMessage = React.createProxyState(
       [
-        this.primaryChannelInput,
+        this.currentChannel,
         this.composingMessage,
         this.isSubscribed,
         isConnected,
       ],
       () =>
-        this.primaryChannelInput.value == "" ||
+        this.currentChannel.value == "" ||
         this.composingMessage.value == "" ||
         this.isSubscribed.value == false ||
         isConnected.value == false
@@ -108,7 +113,7 @@ export class Chat {
       ...this.secondaryChannels.value.values(),
     ].map((channel) => channel);
     const allChannelNames: string[] = [
-      this.primaryChannelInput.value,
+      this.currentChannel.value,
       ...secondaryChannelNames,
     ];
 
@@ -171,14 +176,16 @@ export class Chat {
 
 // INIT
 const chatIds = React.restoreListState<string>("chat-ids");
-const chatArray = [...chatIds.value.values()].map((id) => new Chat(id));
-export const chats = new React.ListState<Chat>(chatArray);
+export const chats = new React.ListState<Chat>();
+
+chatIds.value.forEach((id) => chats.add(new Chat(id)));
 
 // METHODS
 export function createChatWithName(name: string): void {
   const newChat = new Chat();
-  newChat.primaryChannelInput.value = name;
+  newChat.currentChannel.value = name;
   chatIds.add(newChat.id);
+  chats.add(newChat);
 }
 
 export function removeChat(chat: Chat): void {

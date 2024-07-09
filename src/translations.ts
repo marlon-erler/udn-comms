@@ -7,8 +7,7 @@ const englishTranslations = {
   overview: "Overview",
 
   connection: "Connection",
-  communication: "Communication",
-  encryption: "Encryption",
+  chats: "Chats",
 
   serverAddress: "Server Address",
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
@@ -16,7 +15,13 @@ const englishTranslations = {
   connectToServer: "Connect",
   disconnect: "Disonnect",
   resetAddress: "Reset address",
+
+  newChatPrimaryChannel: "Primary channel",
+  newChatNamePlaceholder: "my-channel",
+  addChat: "Add",
+  removeChat: "Remove chat",
   
+  // messages
   noChatSelected: "No chat selected",
 
   primaryChannel: "Primary channel",

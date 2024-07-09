@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { closeChat, selectedChat } from "../Model/model";
+import { closeChatView, selectedChat } from "../Model/model";
 
 import { MessageComposer } from "../Views/messageComposer";
 import { ThreadView } from "../Views/threadView";
@@ -25,7 +25,7 @@ export function MessageTab() {
       <article id="message-tab">
         <header class="padding-0">
           <span class="flex-row align-center">
-            <button aria-label={translation.back} on:click={closeChat}>
+            <button aria-label={translation.back} on:click={closeChatView}>
               <span class="icon">arrow_back</span>
             </button>
 

@@ -364,6 +364,7 @@
     cannotSetChannel;
     // init
     constructor(id = UUID()) {
+      this.id = id;
       this.primaryChannelInput = restoreState(
         storageKeys.primaryChannel(id),
         ""
@@ -380,12 +381,12 @@
       this.newSecondaryChannelName = new State("");
       this.cannotSendMessage = createProxyState(
         [
-          this.primaryChannelInput,
+          this.currentChannel,
           this.composingMessage,
           this.isSubscribed,
           isConnected
         ],
-        () => this.primaryChannelInput.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
+        () => this.currentChannel.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
       );
       this.cannotAddSecondaryChannel = createProxyState(
         [this.newSecondaryChannelName],
@@ -418,7 +419,7 @@
         ...this.secondaryChannels.value.values()
       ].map((channel) => channel);
       const allChannelNames = [
-        this.primaryChannelInput.value,
+        this.currentChannel.value,
         ...secondaryChannelNames
       ];
       const encrypted = await encryptString(
@@ -463,206 +464,20 @@
     }
   };
   var chatIds = restoreListState("chat-ids");
-  var chatArray = [...chatIds.value.values()].map((id) => new Chat(id));
-  var chats = new ListState(chatArray);
-
-  // node_modules/udn-frontend/index.ts
-  var UDNFrontend = class {
-    ws;
-    // HANDLERS
-    connectionHandler = () => {
-    };
-    disconnectionHandler = () => {
-    };
-    messageHandler = (data) => {
-    };
-    mailboxHandler = (mailboxId2) => {
-    };
-    mailboxConnectionHandler = (mailboxId2) => {
-    };
-    mailboxDeleteHandler = (mailboxId2) => {
-    };
-    // INIT
-    set onconnect(handler) {
-      this.connectionHandler = handler;
-    }
-    set ondisconnect(handler) {
-      this.disconnectionHandler = handler;
-    }
-    set onmessage(handler) {
-      this.messageHandler = handler;
-    }
-    set onmailboxcreate(handler) {
-      this.mailboxHandler = handler;
-    }
-    set onmailboxconnect(handler) {
-      this.mailboxConnectionHandler = handler;
-    }
-    set onmailboxdelete(handler) {
-      this.mailboxDeleteHandler = handler;
-    }
-    // UTILITY METHODS
-    send(messageObject) {
-      if (this.ws == void 0) return false;
-      const messageString = JSON.stringify(messageObject);
-      this.ws.send(messageString);
-      return true;
-    }
-    // PUBLIC METHODS
-    // connection
-    connect(address) {
-      try {
-        this.disconnect();
-        this.ws = new WebSocket(address);
-        this.ws.addEventListener("open", this.connectionHandler);
-        this.ws.addEventListener("close", this.disconnectionHandler);
-        this.ws.addEventListener("message", (message) => {
-          const dataString = message.data.toString();
-          const data = JSON.parse(dataString);
-          if (data.assignedMailboxId) {
-            return this.mailboxHandler(data.assignedMailboxId);
-          } else if (data.connectedMailboxId) {
-            return this.mailboxConnectionHandler(data.connectedMailboxId);
-          } else if (data.deletedMailbox) {
-            return this.mailboxDeleteHandler(data.deletedMailbox);
-          } else {
-            this.messageHandler(data);
-          }
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    disconnect() {
-      this.ws?.close();
-    }
-    // message
-    sendMessage(channel, body) {
-      const messageObject = {
-        messageChannel: channel,
-        messageBody: body
-      };
-      return this.send(messageObject);
-    }
-    // subscription
-    subscribe(channel) {
-      const messageObject = {
-        subscribeChannel: channel
-      };
-      return this.send(messageObject);
-    }
-    unsubscribe(channel) {
-      const messageObject = {
-        unsubscribeChannel: channel
-      };
-      return this.send(messageObject);
-    }
-    // mailbox
-    requestMailbox() {
-      const messageObject = {
-        requestingMailboxSetup: true
-      };
-      return this.send(messageObject);
-    }
-    connectMailbox(mailboxId2) {
-      const messageObject = {
-        requestedMailbox: mailboxId2
-      };
-      return this.send(messageObject);
-    }
-    deleteMailbox(mailboxId2) {
-      const messageObject = {
-        deletingMailbox: mailboxId2
-      };
-      return this.send(messageObject);
-    }
-  };
-
-  // src/Model/model.ts
-  var UDN = new UDNFrontend();
-  var isConnected = new State(false);
-  var serverAddressInput = restoreState("socket-address", "");
-  var didRequestConnection = restoreState(
-    "did-request-connection",
-    false
-  );
-  var currentAddress = restoreState("current-address", "");
-  var cannotDisonnect = createProxyState(
-    [isConnected],
-    () => isConnected.value == false
-  );
-  var cannotConnect = createProxyState(
-    [serverAddressInput, currentAddress, isConnected],
-    () => serverAddressInput.value == "" || currentAddress.value == serverAddressInput.value && isConnected.value == true
-  );
-  var cannotResetAddress = createProxyState(
-    [serverAddressInput, currentAddress],
-    () => serverAddressInput.value == currentAddress.value
-  );
-  function connect() {
-    if (cannotConnect.value == true) return;
-    currentAddress.value = serverAddressInput.value;
-    isConnected.value = false;
-    didRequestConnection.value = true;
-    UDN.connect(serverAddressInput.value);
+  var chats = new ListState();
+  chatIds.value.forEach((id) => chats.add(new Chat(id)));
+  function createChatWithName(name) {
+    const newChat = new Chat();
+    newChat.currentChannel.value = name;
+    chatIds.add(newChat.id);
+    chats.add(newChat);
   }
-  function disconnect() {
-    didRequestConnection.value = false;
-    if (cannotDisonnect.value == true) return;
-    UDN.disconnect();
-  }
-  function resetAddressInput() {
-    serverAddressInput.value = currentAddress.value;
-  }
-  UDN.onconnect = () => {
-    isConnected.value = true;
-  };
-  UDN.onmessage = (data) => {
-    chats.value.forEach((chat) => {
-      chat.onmessage(data);
+  function removeChat(chat) {
+    Object.values(storageKeys).forEach((cb) => {
+      localStorage.removeItem(cb(chat.id));
     });
-  };
-  UDN.ondisconnect = () => {
-    isConnected.value = false;
-  };
-  var mailboxId = restoreState("mailbox-id", "");
-  var isMailboxActive = new State(false);
-  var cannotDeleteMailbox = createProxyState(
-    [mailboxId, isMailboxActive],
-    () => mailboxId.value == "" || isMailboxActive.value == false
-  );
-  var cannotRequestMailbox = createProxyState(
-    [isConnected, isMailboxActive],
-    () => isConnected.value == false || isMailboxActive.value == true
-  );
-  function requestMailbox() {
-    if (cannotRequestMailbox.value == true) return;
-    UDN.requestMailbox();
-  }
-  function deleteMailbox() {
-    if (cannotDeleteMailbox.value == true) return;
-    UDN.deleteMailbox(mailboxId.value);
-  }
-  UDN.onmailboxcreate = (id) => {
-    mailboxId.value = id;
-    UDN.connectMailbox(id);
-  };
-  UDN.onmailboxconnect = () => {
-    isMailboxActive.value = true;
-  };
-  UDN.onmailboxdelete = () => {
-    isMailboxActive.value = false;
-    mailboxId.value = "";
-  };
-  var isEncryptionUnavailable = window.crypto.subtle == void 0;
-  var senderName = restoreState("sender-name", "");
-  var selectedChat = new State(void 0);
-  function closeChat() {
-    selectedChat.value = void 0;
-    document.getElementById("settings-tab")?.scrollIntoView();
-  }
-  if (serverAddressInput.value != "" && didRequestConnection.value == true) {
-    connect();
+    chats.remove(chat);
+    chatIds.remove(chat.id);
   }
 
   // src/translations.ts
@@ -673,13 +488,17 @@
     // overview
     overview: "Overview",
     connection: "Connection",
-    communication: "Communication",
-    encryption: "Encryption",
+    chats: "Chats",
     serverAddress: "Server Address",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
     disconnect: "Disonnect",
     resetAddress: "Reset address",
+    newChatPrimaryChannel: "Primary channel",
+    newChatNamePlaceholder: "my-channel",
+    addChat: "Add",
+    removeChat: "Remove chat",
+    // messages
     noChatSelected: "No chat selected",
     primaryChannel: "Primary channel",
     leaveChannel: "Leave",
@@ -857,7 +676,7 @@
       function clearMessageHistory() {
         chat.clearMessages();
       }
-      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChat }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.currentChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.currentChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
         "button",
         {
           "aria-label": translation.clearHistory,
@@ -869,9 +688,44 @@
     return /* @__PURE__ */ createElement("div", { "children:set": messageTabContent });
   }
 
+  // src/Views/chatListSection.tsx
+  var chatConverter = (chat) => {
+    function remove() {
+      removeChat(chat);
+    }
+    return /* @__PURE__ */ createElement("div", { class: "tile padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-100 justify-apart align-center" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis", "subscribe:innerText": chat.currentChannel }), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "aria-label": translation.removeChat,
+        "on:click": remove
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+    )));
+  };
+  function ChatListSection() {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.newChatPrimaryChannel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": newChatName,
+        placeholder: translation.newChatNamePlaceholder,
+        "on:enter": createChat
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-50",
+        "toggle:disabled": cannotCreateChat,
+        "on:click": createChat
+      },
+      translation.addChat,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap", "children:append": [chats, chatConverter] }));
+  }
+
   // src/Views/connectionSection.tsx
   function ConnectionSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": serverAddressInput,
@@ -927,10 +781,221 @@
 
   // src/Tabs/settingsTab.tsx
   function SettingsTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", null, ConnectionSection()));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, ConnectionSection(), ChatListSection()));
   }
 
+  // node_modules/udn-frontend/index.ts
+  var UDNFrontend = class {
+    ws;
+    // HANDLERS
+    connectionHandler = () => {
+    };
+    disconnectionHandler = () => {
+    };
+    messageHandler = (data) => {
+    };
+    mailboxHandler = (mailboxId2) => {
+    };
+    mailboxConnectionHandler = (mailboxId2) => {
+    };
+    mailboxDeleteHandler = (mailboxId2) => {
+    };
+    // INIT
+    set onconnect(handler) {
+      this.connectionHandler = handler;
+    }
+    set ondisconnect(handler) {
+      this.disconnectionHandler = handler;
+    }
+    set onmessage(handler) {
+      this.messageHandler = handler;
+    }
+    set onmailboxcreate(handler) {
+      this.mailboxHandler = handler;
+    }
+    set onmailboxconnect(handler) {
+      this.mailboxConnectionHandler = handler;
+    }
+    set onmailboxdelete(handler) {
+      this.mailboxDeleteHandler = handler;
+    }
+    // UTILITY METHODS
+    send(messageObject) {
+      if (this.ws == void 0) return false;
+      const messageString = JSON.stringify(messageObject);
+      this.ws.send(messageString);
+      return true;
+    }
+    // PUBLIC METHODS
+    // connection
+    connect(address) {
+      try {
+        this.disconnect();
+        this.ws = new WebSocket(address);
+        this.ws.addEventListener("open", this.connectionHandler);
+        this.ws.addEventListener("close", this.disconnectionHandler);
+        this.ws.addEventListener("message", (message) => {
+          const dataString = message.data.toString();
+          const data = JSON.parse(dataString);
+          if (data.assignedMailboxId) {
+            return this.mailboxHandler(data.assignedMailboxId);
+          } else if (data.connectedMailboxId) {
+            return this.mailboxConnectionHandler(data.connectedMailboxId);
+          } else if (data.deletedMailbox) {
+            return this.mailboxDeleteHandler(data.deletedMailbox);
+          } else {
+            this.messageHandler(data);
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    disconnect() {
+      this.ws?.close();
+    }
+    // message
+    sendMessage(channel, body) {
+      const messageObject = {
+        messageChannel: channel,
+        messageBody: body
+      };
+      return this.send(messageObject);
+    }
+    // subscription
+    subscribe(channel) {
+      const messageObject = {
+        subscribeChannel: channel
+      };
+      return this.send(messageObject);
+    }
+    unsubscribe(channel) {
+      const messageObject = {
+        unsubscribeChannel: channel
+      };
+      return this.send(messageObject);
+    }
+    // mailbox
+    requestMailbox() {
+      const messageObject = {
+        requestingMailboxSetup: true
+      };
+      return this.send(messageObject);
+    }
+    connectMailbox(mailboxId2) {
+      const messageObject = {
+        requestedMailbox: mailboxId2
+      };
+      return this.send(messageObject);
+    }
+    deleteMailbox(mailboxId2) {
+      const messageObject = {
+        deletingMailbox: mailboxId2
+      };
+      return this.send(messageObject);
+    }
+  };
+
   // src/index.tsx
+  var UDN = new UDNFrontend();
+  var isConnected = new State(false);
+  var serverAddressInput = restoreState("socket-address", "");
+  var didRequestConnection = restoreState(
+    "did-request-connection",
+    false
+  );
+  var currentAddress = restoreState("current-address", "");
+  var cannotDisonnect = createProxyState(
+    [isConnected],
+    () => isConnected.value == false
+  );
+  var cannotConnect = createProxyState(
+    [serverAddressInput, currentAddress, isConnected],
+    () => serverAddressInput.value == "" || currentAddress.value == serverAddressInput.value && isConnected.value == true
+  );
+  var cannotResetAddress = createProxyState(
+    [serverAddressInput, currentAddress],
+    () => serverAddressInput.value == currentAddress.value
+  );
+  function connect() {
+    if (cannotConnect.value == true) return;
+    currentAddress.value = serverAddressInput.value;
+    isConnected.value = false;
+    didRequestConnection.value = true;
+    UDN.connect(serverAddressInput.value);
+  }
+  function disconnect() {
+    didRequestConnection.value = false;
+    if (cannotDisonnect.value == true) return;
+    UDN.disconnect();
+  }
+  function resetAddressInput() {
+    serverAddressInput.value = currentAddress.value;
+  }
+  UDN.onconnect = () => {
+    isConnected.value = true;
+  };
+  UDN.onmessage = (data) => {
+    chats.value.forEach((chat) => {
+      chat.onmessage(data);
+    });
+  };
+  UDN.ondisconnect = () => {
+    isConnected.value = false;
+  };
+  var mailboxId = restoreState("mailbox-id", "");
+  var isMailboxActive = new State(false);
+  var cannotDeleteMailbox = createProxyState(
+    [mailboxId, isMailboxActive],
+    () => mailboxId.value == "" || isMailboxActive.value == false
+  );
+  var cannotRequestMailbox = createProxyState(
+    [isConnected, isMailboxActive],
+    () => isConnected.value == false || isMailboxActive.value == true
+  );
+  function requestMailbox() {
+    if (cannotRequestMailbox.value == true) return;
+    UDN.requestMailbox();
+  }
+  function deleteMailbox() {
+    if (cannotDeleteMailbox.value == true) return;
+    UDN.deleteMailbox(mailboxId.value);
+  }
+  function updateMailbox() {
+    deleteMailbox();
+    updateMailbox();
+  }
+  UDN.onmailboxcreate = (id) => {
+    mailboxId.value = id;
+    UDN.connectMailbox(id);
+  };
+  UDN.onmailboxconnect = () => {
+    isMailboxActive.value = true;
+  };
+  UDN.onmailboxdelete = () => {
+    isMailboxActive.value = false;
+    mailboxId.value = "";
+  };
+  var isEncryptionUnavailable = window.crypto.subtle == void 0;
+  var senderName = restoreState("sender-name", "");
+  var selectedChat = new State(void 0);
+  var newChatName = new State("");
+  var cannotCreateChat = createProxyState(
+    [newChatName],
+    () => newChatName.value == ""
+  );
+  function createChat() {
+    if (cannotCreateChat.value == true) return;
+    createChatWithName(newChatName.value);
+    newChatName.value = "";
+  }
+  function closeChatView() {
+    selectedChat.value = void 0;
+    document.getElementById("settings-tab")?.scrollIntoView();
+  }
+  if (serverAddressInput.value != "" && didRequestConnection.value == true) {
+    connect();
+  }
   document.querySelector("main").append(SettingsTab(), MessageTab());
   document.querySelector("main").classList.add("split");
 })();

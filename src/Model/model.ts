@@ -1,13 +1,12 @@
 import * as React from "bloatless-react";
 
-import { Chat, chats } from "./chatModel";
+import { Chat, chats, createChatWithName } from "./chatModel";
 
 import UDNFrontend from "udn-frontend";
 
 export const UDN = new UDNFrontend();
 
 // CONNECTION
-// state
 export const isConnected = new React.State(false);
 
 export const serverAddressInput = React.restoreState("socket-address", "");
@@ -38,7 +37,7 @@ export const cannotResetAddress = React.createProxyState(
 // methods
 export function connect(): void {
   if (cannotConnect.value == true) return;
-  
+
   currentAddress.value = serverAddressInput.value;
 
   isConnected.value = false;
@@ -95,6 +94,11 @@ export function deleteMailbox(): void {
   UDN.deleteMailbox(mailboxId.value);
 }
 
+export function updateMailbox(): void {
+  deleteMailbox();
+  updateMailbox();
+}
+
 UDN.onmailboxcreate = (id) => {
   mailboxId.value = id;
   UDN.connectMailbox(id);
@@ -114,8 +118,21 @@ export const isEncryptionUnavailable = window.crypto.subtle == undefined;
 export const senderName = React.restoreState("sender-name", "");
 
 export const selectedChat = new React.State<Chat | undefined>(undefined);
+export const newChatName = new React.State("");
 
-export function closeChat() {
+export const cannotCreateChat = React.createProxyState(
+  [newChatName],
+  () => newChatName.value == ""
+);
+
+export function createChat() {
+  if (cannotCreateChat.value == true) return;
+  
+  createChatWithName(newChatName.value);
+  newChatName.value = "";
+}
+
+export function closeChatView() {
   selectedChat.value = undefined;
   document.getElementById("settings-tab")?.scrollIntoView();
 }
