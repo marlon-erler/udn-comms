@@ -1,3 +1,5 @@
+console.log("Hello!")
+
 import { MessageTab } from "./Tabs/messageTab";
 import { OverviewTab } from "./Tabs/overviewTab";
 
