@@ -1,6 +1,40 @@
 const IV_SIZE = 12;
 const ENCRYPTION_ALG = "AES-GCM";
 
+// minimal
+export async function encryptString(
+  plaintext: string,
+  passphrase: string
+): Promise<string | false> {
+  if (!window.crypto.subtle) return false;
+
+  const iv = generateIV();
+  const key = await importKey(passphrase, "encrypt");
+  const encryptedArray = await encrypt(iv, key, plaintext);
+
+  const encryptionData = {
+    iv: uInt8ToArray(iv),
+    encryptedArray: uInt8ToArray(encryptedArray),
+  };
+  return btoa(JSON.stringify(encryptionData));
+}
+
+export async function decryptString(
+  cyphertext: string,
+  passphrase: string
+): Promise<string> {
+  try {
+    const encrypionData = JSON.parse(atob(cyphertext));
+    const iv = arrayToUint8(encrypionData.iv);
+    const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+
+    const key = await importKey(passphrase, "decrypt");
+    return await decrypt(iv, key, encryptedArray);
+  } catch {
+    return cyphertext;
+  }
+}
+
 // process
 export function encode(string: string): Uint8Array {
   return new TextEncoder().encode(string);
