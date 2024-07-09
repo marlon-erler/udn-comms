@@ -99,10 +99,9 @@
     remove(...items) {
       items.forEach((item) => {
         this.value.delete(item);
-        const id = item.id;
-        if (!this.removalHandlers.has(id)) return;
-        this.removalHandlers.get(id)(item);
-        this.removalHandlers.delete(id);
+        if (!this.removalHandlers.has(item)) return;
+        this.removalHandlers.get(item)(item);
+        this.removalHandlers.delete(item);
       });
       this.callSubscriptions();
     }
@@ -115,7 +114,7 @@
       [...this.value.values()].forEach(handler);
     }
     handleRemoval(item, handler) {
-      this.removalHandlers.set(item.id, handler);
+      this.removalHandlers.set(item, handler);
     }
     // stringification
     toString() {
@@ -180,28 +179,10 @@
             break;
           }
           case "subscribe": {
-            if (directiveValue == "children") {
-              element.style.scrollBehavior = "smooth";
-              try {
-                const [listState, toElement] = value;
-                listState.handleAddition((newItem) => {
-                  const child = toElement(newItem);
-                  listState.handleRemoval(
-                    newItem,
-                    () => child.remove()
-                  );
-                  element.append(child);
-                  element.scrollTop = element.scrollHeight;
-                });
-              } catch {
-                throw `error: cannot process subscribe:children directive because ListItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
-              }
-            } else {
-              const state = value;
-              state.subscribe(
-                (newValue) => element[directiveValue] = newValue
-              );
-            }
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
             break;
           }
           case "bind": {
@@ -233,6 +214,40 @@
             );
             break;
           }
+          case "children": {
+            switch (directiveValue) {
+              case "set": {
+                const state = value;
+                state.subscribe((newValue) => {
+                  element.innerHTML = "";
+                  element.append(newValue);
+                });
+                break;
+              }
+              case "append":
+              case "appendandscroll":
+              case "prepend": {
+                element.style.scrollBehavior = "smooth";
+                try {
+                  const [listState, toElement] = value;
+                  listState.handleAddition((newItem) => {
+                    const child = toElement(newItem);
+                    listState.handleRemoval(
+                      newItem,
+                      () => child.remove()
+                    );
+                    if (directiveValue == "append") {
+                      element.append(child);
+                    } else if (directiveValue == "prepend") {
+                      element.prepend(child);
+                    }
+                  });
+                } catch {
+                  throw `error: cannot process subscribe:children directive because ListItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                }
+              }
+            }
+          }
           default:
             element.setAttribute(attributename, value);
         }
@@ -244,6 +259,28 @@
   // src/cryptUtility.ts
   var IV_SIZE = 12;
   var ENCRYPTION_ALG = "AES-GCM";
+  async function encryptString(plaintext, passphrase) {
+    if (!window.crypto.subtle) return false;
+    const iv = generateIV();
+    const key = await importKey(passphrase, "encrypt");
+    const encryptedArray = await encrypt(iv, key, plaintext);
+    const encryptionData = {
+      iv: uInt8ToArray(iv),
+      encryptedArray: uInt8ToArray(encryptedArray)
+    };
+    return btoa(JSON.stringify(encryptionData));
+  }
+  async function decryptString(cyphertext, passphrase) {
+    try {
+      const encrypionData = JSON.parse(atob(cyphertext));
+      const iv = arrayToUint8(encrypionData.iv);
+      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+      const key = await importKey(passphrase, "decrypt");
+      return await decrypt(iv, key, encryptedArray);
+    } catch {
+      return cyphertext;
+    }
+  }
   function encode(string) {
     return new TextEncoder().encode(string);
   }
@@ -291,6 +328,143 @@
   function arrayToUint8(array) {
     return new Uint8Array(array);
   }
+
+  // src/utility.ts
+  var storageKeys = {
+    primaryChannel(id) {
+      return id + "primary-channel";
+    },
+    secondaryChannels(id) {
+      return id + "secondary-channels";
+    },
+    encyptionKey(id) {
+      return id + "encryption-key";
+    },
+    messages(id) {
+      return id + "messages";
+    },
+    composingMessage(id) {
+      return id + "composing-message";
+    }
+  };
+
+  // src/Model/chatModel.ts
+  var Chat = class {
+    id;
+    isSubscribed = new State(false);
+    currentChannel = new State("");
+    primaryChannelInput;
+    secondaryChannels;
+    encryptionKey;
+    messages;
+    composingMessage;
+    newSecondaryChannelName;
+    cannotSendMessage;
+    cannotAddSecondaryChannel;
+    cannotSetChannel;
+    // init
+    constructor(id = UUID()) {
+      this.primaryChannelInput = restoreState(
+        storageKeys.primaryChannel(id),
+        ""
+      );
+      this.secondaryChannels = restoreListState(
+        storageKeys.secondaryChannels(id)
+      );
+      this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
+      this.messages = restoreListState(storageKeys.messages(id));
+      this.composingMessage = restoreState(
+        storageKeys.composingMessage(id),
+        ""
+      );
+      this.newSecondaryChannelName = new State("");
+      this.cannotSendMessage = createProxyState(
+        [
+          this.primaryChannelInput,
+          this.composingMessage,
+          this.isSubscribed,
+          isConnected
+        ],
+        () => this.primaryChannelInput.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
+      );
+      this.cannotAddSecondaryChannel = createProxyState(
+        [this.newSecondaryChannelName],
+        () => this.newSecondaryChannelName.value == ""
+      );
+      this.cannotSetChannel = createProxyState(
+        [this.primaryChannelInput, this.currentChannel],
+        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.currentChannel.value
+      );
+    }
+    // handlers
+    onmessage(data) {
+      if (data.messageChannel && data.messageChannel != this.currentChannel.value)
+        return;
+      if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
+      if (!data.messageBody) return;
+      const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+      this.handleMessage({ sender, body, channel, isoDate });
+    }
+    handleSubscription(isSubscribed) {
+      this.isSubscribed.value = isSubscribed;
+    }
+    handleMessage(chatMessage) {
+      this.messages.add(chatMessage);
+    }
+    // messages
+    async sendMessage() {
+      if (this.cannotSendMessage.value == true) return;
+      const secondaryChannelNames = [
+        ...this.secondaryChannels.value.values()
+      ].map((channel) => channel);
+      const allChannelNames = [
+        this.primaryChannelInput.value,
+        ...secondaryChannelNames
+      ];
+      const encrypted = await encryptString(
+        this.composingMessage.value,
+        this.encryptionKey.value
+      ) || this.composingMessage.value;
+      if (encrypted == void 0) return;
+      const joinedChannelName = allChannelNames.join("/");
+      const messageObject = {
+        channel: joinedChannelName,
+        sender: senderName.value,
+        body: encrypted,
+        isoDate: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      const messageString = JSON.stringify(messageObject);
+      UDN.sendMessage(joinedChannelName, messageString);
+      this.composingMessage.value = "";
+    }
+    clearMessages() {
+      this.messages.clear();
+    }
+    deleteMessage(message) {
+      this.messages.remove(message);
+    }
+    async decryptReceivedMessage(message) {
+      message.body = await decryptString(message.body, this.encryptionKey.value);
+      this.messages.callSubscriptions();
+    }
+    // channel
+    setChannel() {
+      if (this.cannotSetChannel.value == true) return;
+      this.currentChannel.value = this.primaryChannelInput.value;
+      UDN.subscribe(this.currentChannel.value);
+    }
+    addSecondaryChannel() {
+      if (this.cannotAddSecondaryChannel.value == true) return;
+      this.secondaryChannels.add(this.newSecondaryChannelName.value);
+      this.newSecondaryChannelName.value = "";
+    }
+    removeSecondaryChannel(channel) {
+      this.secondaryChannels.remove(channel);
+    }
+  };
+  var chatIds = restoreListState("chat-ids");
+  var chatArray = [...chatIds.value.values()].map((id) => new Chat(id));
+  var chats = new ListState(chatArray);
 
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
@@ -404,15 +578,82 @@
     }
   };
 
+  // src/Model/model.ts
+  var UDN = new UDNFrontend();
+  var currentAddress = new State("");
+  var isConnected = new State(false);
+  var serverAddressInput = restoreState("socket-address", "");
+  var cannotDisonnect = createProxyState(
+    [isConnected],
+    () => isConnected.value == false
+  );
+  var cannotConnect = createProxyState(
+    [serverAddressInput, currentAddress, isConnected],
+    () => serverAddressInput.value == "" || currentAddress.value == serverAddressInput.value && isConnected.value == true
+  );
+  function connect() {
+    if (cannotConnect.value == true) return;
+    currentAddress.value = serverAddressInput.value;
+    isConnected.value = false;
+    UDN.connect(serverAddressInput.value);
+  }
+  function disconnect() {
+    if (cannotDisonnect.value == true) return;
+    UDN.disconnect();
+  }
+  UDN.onconnect = () => {
+    isConnected.value = true;
+  };
+  UDN.onmessage = (data) => {
+    chats.value.forEach((chat) => {
+      chat.onmessage(data);
+    });
+  };
+  UDN.ondisconnect = () => {
+    isConnected.value = false;
+  };
+  var mailboxId = restoreState("mailbox-id", "");
+  var isMailboxActive = new State(false);
+  var cannotDeleteMailbox = createProxyState(
+    [mailboxId, isMailboxActive],
+    () => mailboxId.value == "" || isMailboxActive.value == false
+  );
+  var cannotRequestMailbox = createProxyState(
+    [isConnected, isMailboxActive],
+    () => isConnected.value == false || isMailboxActive.value == true
+  );
+  function requestMailbox() {
+    if (cannotRequestMailbox.value == true) return;
+    UDN.requestMailbox();
+  }
+  function deleteMailbox() {
+    if (cannotDeleteMailbox.value == true) return;
+    UDN.deleteMailbox(mailboxId.value);
+  }
+  UDN.onmailboxcreate = (id) => {
+    mailboxId.value = id;
+    UDN.connectMailbox(id);
+  };
+  UDN.onmailboxconnect = () => {
+    isMailboxActive.value = true;
+  };
+  UDN.onmailboxdelete = () => {
+    isMailboxActive.value = false;
+    mailboxId.value = "";
+  };
+  var isEncryptionUnavailable = window.crypto.subtle == void 0;
+  var senderName = restoreState("sender-name", "");
+  var selectedChat = new State(void 0);
+  if (serverAddressInput.value != "") {
+    connect();
+  }
+
   // src/translations.ts
   var englishTranslations = {
     // general
     setInput: "Set",
-    connectionStatus: "Connection status",
-    connectedTo: (server) => `Connected to "${server}"`,
-    disconnected: "Disconnected",
-    // settings
-    settings: "Settings",
+    // overview
+    overview: "Overview",
     connection: "Connection",
     communication: "Communication",
     encryption: "Encryption",
@@ -420,6 +661,8 @@
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
     disconnect: "Disonnect",
+    resetAddress: "Reset address",
+    noChatSelected: "No chat selected",
     primaryChannel: "Primary channel",
     leaveChannel: "Leave",
     channelPlaceholder: "my-channel",
@@ -451,11 +694,8 @@
     es: {
       // general
       setInput: "OK",
-      connectionStatus: "Estado de Conexi\xF3n",
-      connectedTo: (server) => `Conectado a "${server}"`,
-      disconnected: "Desconectado",
       // settings
-      settings: "Configuraci\xF3n",
+      overview: "Configuraci\xF3n",
       connection: "Conexi\xF3n",
       communication: "Comunicaci\xF3n",
       encryption: "Cifrado",
@@ -492,11 +732,8 @@
     de: {
       // general
       setInput: "OK",
-      connectionStatus: "Verbindungsstatus",
-      connectedTo: (server) => `Verbunden mit "${server}"`,
-      disconnected: "Verbindung getrennt",
       // settings
-      settings: "Einstellungen",
+      overview: "Einstellungen",
       connection: "Verbindung",
       communication: "Kommunikation",
       encryption: "Verschl\xFCsselung",
@@ -534,279 +771,93 @@
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
 
-  // src/model.ts
-  var UDN = new UDNFrontend();
-  var Channel = class {
-    constructor(channelName) {
-      this.channelName = channelName;
-    }
-    id = UUID();
-  };
-  var Message = class {
-    constructor(channel, sender, body, isoDate) {
-      this.channel = channel;
-      this.sender = sender;
-      this.body = body;
-      this.isoDate = isoDate;
-    }
-    id = UUID();
-  };
-  var currentAddress = new State("");
-  var serverAddress = restoreState("socket-address", "");
-  var isConnected = new State(false);
-  var connectionMessage = createProxyState(
-    [serverAddress],
-    () => translation.connectedTo(serverAddress.value)
-  );
-  var cannotDisonnect = createProxyState(
-    [isConnected],
-    () => isConnected.value == false
-  );
-  var cannotConnect = createProxyState(
-    [serverAddress, currentAddress, isConnected],
-    () => serverAddress.value == "" || currentAddress.value == serverAddress.value && isConnected.value == true
-  );
-  var mailboxId = restoreState("mailbox-id", "");
-  var isMailboxConnected = new State(false);
-  var cannotRequestMailbox = createProxyState(
-    [isConnected, isMailboxConnected],
-    () => isConnected.value == false || isMailboxConnected.value == true
-  );
-  var cannotDeleteMailbox = createProxyState(
-    [isConnected, mailboxId, isMailboxConnected],
-    () => isConnected.value == false || mailboxId.value == "" || isMailboxConnected.value == false
-  );
-  var encryptionKey = restoreState("encryption-key", "");
-  var isEncryptionUnavailable = window.crypto.subtle == void 0;
-  var currentPrimaryChannel = new State("");
-  var primaryChannel = restoreState("primary-channel", "");
-  var newSecondaryChannelName = new State("");
-  var secondaryChannels = restoreListState("secondary-channels");
-  var cannotSetChannel = createProxyState(
-    [primaryChannel, currentPrimaryChannel, isConnected],
-    () => primaryChannel.value == "" || isConnected.value == false
-  );
-  var cannotLeaveChannel = createProxyState(
-    [currentPrimaryChannel, isConnected],
-    () => currentPrimaryChannel.value == "" || isConnected.value == false
-  );
-  var cannotAddSecondaryChannel = createProxyState(
-    [newSecondaryChannelName],
-    () => newSecondaryChannelName.value == ""
-  );
-  var senderName = restoreState("sender-name", "");
-  var messageBody = restoreState("message", "");
-  var cannotSendMessage = createProxyState(
-    [currentPrimaryChannel, messageBody, senderName, isConnected],
-    () => isConnected.value == false || currentPrimaryChannel.value == "" || messageBody.value == "" || senderName.value == ""
-  );
-  var messages = restoreListState("messages");
-  function connect() {
-    if (cannotConnect.value == true) return;
-    currentAddress.value = serverAddress.value;
-    isConnected.value = false;
-    UDN.connect(serverAddress.value);
-  }
-  function disconnect() {
-    if (cannotDisonnect.value == true) return;
-    UDN.disconnect();
-  }
-  function requestMailbox() {
-    UDN.requestMailbox();
-  }
-  function deleteMailbox() {
-    UDN.deleteMailbox(mailboxId.value);
-  }
-  function updateMailbox() {
-    if (!isMailboxConnected || mailboxId.value == "") return;
-    deleteMailbox();
-    requestMailbox();
-  }
-  async function sendMessage() {
-    if (cannotSendMessage.value == true) return;
-    const secondaryChannelNames = [
-      ...secondaryChannels.value.values()
-    ].map((channel) => channel.channelName);
-    const allChannelNames = [
-      primaryChannel.value,
-      ...secondaryChannelNames
-    ];
-    const encrypted = await encryptMessage();
-    if (encrypted == void 0) return;
-    const joinedChannelName = allChannelNames.join("/");
-    const messageObject = new Message(
-      joinedChannelName,
-      senderName.value,
-      encrypted,
-      (/* @__PURE__ */ new Date()).toISOString()
-    );
-    const messageString = JSON.stringify(messageObject);
-    UDN.sendMessage(joinedChannelName, messageString);
-    messageBody.value = "";
-  }
-  function clearMessageHistory() {
-    messages.clear();
-  }
-  function deleteMessage(message) {
-    messages.remove(message);
-  }
-  function setChannel(shouldUpdateMailbox = true) {
-    if (cannotSetChannel.value == true) return;
-    if (currentPrimaryChannel != void 0) {
-      UDN.unsubscribe(currentPrimaryChannel.value);
-    }
-    UDN.subscribe(primaryChannel.value);
-    if (shouldUpdateMailbox) {
-      updateMailbox();
-    }
-  }
-  function leaveChannel() {
-    if (cannotLeaveChannel.value == true) return;
-    UDN.unsubscribe(currentPrimaryChannel.value);
-  }
-  function addSecondaryChannel() {
-    if (cannotAddSecondaryChannel.value == true) return;
-    const channelObject = new Channel(newSecondaryChannelName.value);
-    secondaryChannels.add(channelObject);
-    newSecondaryChannelName.value = "";
-  }
-  function removeSecondaryChannel(channel) {
-    secondaryChannels.remove(channel);
-  }
-  async function decryptReceivedMessage(message) {
-    message.body = await decryptMessage(message.body);
-    messages.callSubscriptions();
-  }
-  UDN.onconnect = () => {
-    isConnected.value = true;
-    setChannel(false);
-    if (mailboxId.value != "") {
-      UDN.connectMailbox(mailboxId.value);
-    }
-  };
-  UDN.onmailboxcreate = (id) => {
-    mailboxId.value = id;
-    UDN.connectMailbox(id);
-  };
-  UDN.onmailboxconnect = () => {
-    console.log("connected");
-    isMailboxConnected.value = true;
-  };
-  UDN.onmailboxdelete = () => {
-    isMailboxConnected.value = false;
-    mailboxId.value = "";
-    setChannel();
-  };
-  UDN.onmessage = (data) => {
-    if (data.subscribed != void 0 && data.messageChannel != void 0) {
-      return handleSubscriptionConfirmation(data.messageChannel, data.subscribed);
-    } else if (data.messageBody) {
-      handleMessage(data.messageBody);
-    }
-  };
-  UDN.ondisconnect = () => {
-    isConnected.value = false;
-    isMailboxConnected.value = false;
-  };
-  function handleSubscriptionConfirmation(channel, isSubscribed) {
-    if (isSubscribed == true) {
-      currentPrimaryChannel.value = channel;
-    } else {
-      currentPrimaryChannel.value = "";
-    }
-  }
-  async function handleMessage(body) {
-    try {
-      const object = JSON.parse(body);
-      if (!object.channel || !object.sender || !object.body || !object.isoDate)
-        return;
-      const messageObject = new Message(
-        object.channel,
-        object.sender,
-        await decryptMessage(object.body),
-        object.isoDate
-      );
-      messages.add(messageObject);
-    } catch {
-    }
-  }
-  async function encryptMessage() {
-    if (encryptionKey.value == "") return messageBody.value;
-    if (!window.crypto.subtle) return messageBody.value;
-    const iv = generateIV();
-    const key = await importKey(encryptionKey.value, "encrypt");
-    const encryptedArray = await encrypt(iv, key, messageBody.value);
-    const encryptionData = {
-      iv: uInt8ToArray(iv),
-      encryptedArray: uInt8ToArray(encryptedArray)
-    };
-    return btoa(JSON.stringify(encryptionData));
-  }
-  async function decryptMessage(encryptionData) {
-    try {
-      const encrypionData = JSON.parse(atob(encryptionData));
-      const iv = arrayToUint8(encrypionData.iv);
-      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
-      const key = await importKey(encryptionKey.value, "decrypt");
-      return await decrypt(iv, key, encryptedArray);
-    } catch (error) {
-      console.error(error);
-      return encryptionData;
-    }
-  }
-  if (serverAddress.value != "") {
-    connect();
-  }
-
   // src/Views/messageComposer.tsx
   function MessageComposer() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
-      "input",
-      {
-        class: "width-100 flex-1",
-        style: "max-width: unset",
-        placeholder: translation.composerPlaceholder,
-        "bind:value": messageBody,
-        "on:enter": sendMessage
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "on:click": sendMessage,
-        "toggle:disabled": cannotSendMessage
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    ));
+    const composerContent = createProxyState([selectedChat], () => {
+      if (selectedChat.value == void 0) return /* @__PURE__ */ createElement("div", null);
+      const chat = selectedChat.value;
+      return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
+        "input",
+        {
+          class: "width-100 flex-1",
+          style: "max-width: unset",
+          placeholder: translation.composerPlaceholder,
+          "bind:value": chat.composingMessage,
+          "on:enter": chat.sendMessage
+        }
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "primary",
+          "on:click": chat.sendMessage,
+          "toggle:disabled": chat.cannotSendMessage
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+      ));
+    });
+    return /* @__PURE__ */ createElement("div", { "children:set": composerContent });
   }
 
   // src/Views/threadView.tsx
-  var messageConverter = (message) => {
-    const messageBody2 = createProxyState([messages], () => message.body);
-    function copyMessage() {
-      navigator.clipboard.writeText(message.body);
-    }
-    function decrypt2() {
-      decryptReceivedMessage(message);
-    }
-    function remove() {
-      deleteMessage(message);
-    }
-    return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.copyMessage, "on:click": copyMessage }, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "aria-label": translation.decryptMessage, "on:click": decrypt2 }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key")), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody2 }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
-  };
   function ThreadView() {
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "subscribe:children": [messages, messageConverter]
-      }
-    );
+    const threadViewContent = createProxyState([selectedChat], () => {
+      if (selectedChat.value == void 0)
+        return /* @__PURE__ */ createElement("div", null, translation.noChatSelected);
+      const chat = selectedChat.value;
+      const messageConverter = (message) => {
+        function copyMessage() {
+          navigator.clipboard.writeText(message.body);
+        }
+        function decrypt2() {
+          chat.decryptReceivedMessage(message);
+        }
+        function remove() {
+          chat.deleteMessage(message);
+        }
+        return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
+          "button",
+          {
+            "aria-label": translation.copyMessage,
+            "on:click": copyMessage
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            "aria-label": translation.decryptMessage,
+            "on:click": decrypt2
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            "aria-label": translation.deleteMessage,
+            "on:click": remove
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+        ))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": message.body }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
+      };
+      return /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [chat.messages, messageConverter]
+        }
+      );
+    });
+    return /* @__PURE__ */ createElement("div", { "children:set": threadViewContent });
   }
 
   // src/Tabs/messageTab.tsx
   function MessageTab() {
-    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, translation.messages, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+    function clearMessageHistory() {
+      selectedChat.value?.clearMessages();
+    }
+    const headerText = createProxyState(
+      [selectedChat],
+      () => selectedChat.value != void 0 ? selectedChat.value.currentChannel : translation.messages
+    );
+    return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", { "subscribe:innerText": headerText }), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
         "aria-label": translation.clearHistory,
@@ -816,108 +867,46 @@
     ))), ThreadView(), /* @__PURE__ */ createElement("footer", null, MessageComposer()));
   }
 
-  // src/Views/communicationSection.tsx
-  var secondaryChannelConverter = (channel) => {
-    function remove() {
-      removeSecondaryChannel(channel);
-    }
-    return /* @__PURE__ */ createElement("div", { class: "tile padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "padding-h" }, channel.channelName), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger",
-        "aria-label": translation.removeSecondaryChannel,
-        "on:click": remove
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-    )));
-  };
-  function CommunicationSection() {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.communication), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.myName), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": senderName,
-        placeholder: translation.yourNamePlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": primaryChannel,
-        "on:enter": setChannel,
-        placeholder: translation.channelPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-50",
-        "on:click": leaveChannel,
-        "toggle:disabled": cannotLeaveChannel
-      },
-      translation.leaveChannel
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-50",
-        "on:click": setChannel,
-        "toggle:disabled": cannotSetChannel
-      },
-      translation.setInput,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input margin-bottom" }, /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": newSecondaryChannelName,
-        "on:enter": addSecondaryChannel,
-        placeholder: translation.newSecondaryChannelPlaceholder,
-        class: "width-100 flex"
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "on:click": addSecondaryChannel,
-        "toggle:disabled": cannotAddSecondaryChannel,
-        "aria-label": translation.addSecondaryChannel
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "subscribe:children": [secondaryChannels, secondaryChannelConverter]
-      }
-    ));
-  }
-
-  // src/Views/connectionSettingsView.tsx
-  function ConnectionInputView() {
+  // src/Views/connectionSection.tsx
+  function ConnectionSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": serverAddress,
+        "bind:value": serverAddressInput,
         "on:enter": connect,
         placeholder: translation.serverAddressPlaceholder
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "danger width-50",
+        class: "danger width-100 flex-1",
+        "aria-label": translation.disconnect,
         "on:click": disconnect,
         "toggle:disabled": cannotDisonnect
       },
-      translation.disconnect
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary width-50",
+        class: "width-100 flex-1",
+        "aria-label": translation.resetAddress,
+        "on:click": disconnect,
+        "toggle:disabled": cannotDisonnect
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-100 flex-1",
+        "aria-label": translation.connectToServer,
         "on:click": connect,
         "toggle:disabled": cannotConnect
       },
-      translation.connectToServer,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
     )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.mailbox), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.mailboxExplanation))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "danger width-50",
+        class: "danger width-100 flex-1",
         "on:click": deleteMailbox,
         "toggle:disabled": cannotDeleteMailbox
       },
@@ -925,7 +914,7 @@
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary width-50",
+        class: "primary width-100 flex-1",
         "on:click": requestMailbox,
         "toggle:disabled": cannotRequestMailbox
       },
@@ -934,57 +923,12 @@
     )));
   }
 
-  // src/Views/connectionStatusView.tsx
-  function ConnectionStatusView() {
-    return /* @__PURE__ */ createElement("div", { class: "tile width-input" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.connectionStatus), /* @__PURE__ */ createElement(
-      "span",
-      {
-        class: "success connected-only",
-        "subscribe:innerText": connectionMessage
-      }
-    ), /* @__PURE__ */ createElement("span", { class: "error disconnected-only" }, translation.disconnected)));
-  }
-
-  // src/Views/connectionSection.tsx
-  function ConnectionSection() {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.connection), ConnectionStatusView(), /* @__PURE__ */ createElement("hr", null), ConnectionInputView());
-  }
-
-  // src/Views/encryptionSection.tsx
-  var shouldShowKey = new State(false);
-  var inputType = createProxyState(
-    [shouldShowKey],
-    () => shouldShowKey.value ? "text" : "password"
-  );
-  function EncryptionSection() {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h2", null, translation.encryption), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "error tile margin-bottom",
-        "toggle:hidden": !isEncryptionUnavailable
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"),
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("p", null, translation.encryptionUnavailableMessage))
-    ), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "toggle:disabled": isEncryptionUnavailable,
-        "bind:value": encryptionKey,
-        "set:type": inputType,
-        placeholder: translation.encryptionKeyPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showEncryptionKey));
-  }
-
   // src/Tabs/settingsTab.tsx
   function SettingsTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.settings), /* @__PURE__ */ createElement("div", null, ConnectionSection(), CommunicationSection(), EncryptionSection()));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", null, ConnectionSection()));
   }
 
   // src/index.tsx
-  document.body.prepend(
-    /* @__PURE__ */ createElement("menu", { class: "mobile-only" }, /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#settings-tab", active: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), translation.settings), /* @__PURE__ */ createElement("a", { class: "tab-link", href: "#message-tab" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), translation.messages))
-  );
   document.querySelector("main").append(SettingsTab(), MessageTab());
   document.querySelector("main").classList.add("split");
 })();

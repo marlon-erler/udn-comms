@@ -1,19 +1,23 @@
 const englishTranslations = {
   // general
   setInput: "Set",
-  connectionStatus: "Connection status",
-  connectedTo: (server: string) => `Connected to "${server}"`,
-  disconnected: "Disconnected",
 
-  // settings
-  settings: "Settings",
+  // overview
+  overview: "Overview",
+
   connection: "Connection",
   communication: "Communication",
   encryption: "Encryption",
+
   serverAddress: "Server Address",
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
+
   connectToServer: "Connect",
   disconnect: "Disonnect",
+  resetAddress: "Reset address",
+  
+  noChatSelected: "No chat selected",
+
   primaryChannel: "Primary channel",
   leaveChannel: "Leave",
   channelPlaceholder: "my-channel",
@@ -50,12 +54,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
   es: {
     // general
     setInput: "OK",
-    connectionStatus: "Estado de Conexión",
-    connectedTo: (server: string) => `Conectado a "${server}"`,
-    disconnected: "Desconectado",
 
     // settings
-    settings: "Configuración",
+    overview: "Configuración",
     connection: "Conexión",
     communication: "Comunicación",
     encryption: "Cifrado",
@@ -96,12 +97,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
   de: {
     // general
     setInput: "OK",
-    connectionStatus: "Verbindungsstatus",
-    connectedTo: (server: string) => `Verbunden mit "${server}"`,
-    disconnected: "Verbindung getrennt",
 
     // settings
-    settings: "Einstellungen",
+    overview: "Einstellungen",
     connection: "Verbindung",
     communication: "Kommunikation",
     encryption: "Verschlüsselung",

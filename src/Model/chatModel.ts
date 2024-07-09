@@ -1,10 +1,9 @@
 import * as React from "bloatless-react";
 
-import { UDN, isConnected } from "./model";
+import { UDN, isConnected, senderName } from "./model";
 import { decryptString, encryptString } from "../cryptUtility";
 
 import { Message } from "udn-frontend";
-import { senderName } from "./viewModel";
 import { storageKeys } from "../utility";
 
 // TYPES

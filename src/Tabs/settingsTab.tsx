@@ -1,20 +1,14 @@
 import * as React from "bloatless-react";
 
-import { CommunicationSection } from "../Views/communicationSection";
 import { ConnectionSection } from "../Views/connectionSection";
-import { EncryptionSection } from "../Views/encryptionSection";
-import { isConnected } from "../model";
+import { isConnected } from "../Model/model";
 import { translation } from "../translations";
 
 export function SettingsTab() {
   return (
     <article id="settings-tab" toggle:connected={isConnected}>
-      <header>{translation.settings}</header>
-      <div>
-        {ConnectionSection()}
-        {CommunicationSection()}
-        {EncryptionSection()}
-      </div>
+      <header>{translation.overview}</header>
+      <div>{ConnectionSection()}</div>
     </article>
   );
 }
