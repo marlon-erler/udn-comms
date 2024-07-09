@@ -453,6 +453,7 @@
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
       const messageString = JSON.stringify(messageObject);
+      console.log(messageString);
       UDN.sendMessage(joinedChannelName, messageString);
       this.composingMessage.value = "";
     };
@@ -908,7 +909,11 @@
         "children:append": [chat.messages, messageConverter]
       }
     );
-    chat.messages.handleAddition(() => listElement.scrollTop = listElement.scrollHeight);
+    chat.messages.handleAddition(() => {
+      const scrollFromBottom = listElement.scrollHeight - (listElement.scrollTop + listElement.offsetHeight);
+      if (scrollFromBottom > 400) return;
+      listElement.scrollTop = listElement.scrollHeight;
+    });
     return listElement;
   }
 

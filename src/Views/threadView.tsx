@@ -65,6 +65,13 @@ export function ThreadView(chat: Chat) {
       children:append={[chat.messages, messageConverter]}
     ></div>
   );
-  chat.messages.handleAddition(() => listElement.scrollTop = listElement.scrollHeight);
+  chat.messages.handleAddition(() => {
+    const scrollFromBottom =
+      listElement.scrollHeight -
+      (listElement.scrollTop + listElement.offsetHeight);
+    if (scrollFromBottom > 400) return;
+    
+    listElement.scrollTop = listElement.scrollHeight;
+  });
   return listElement;
 }
