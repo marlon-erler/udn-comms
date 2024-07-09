@@ -1,6 +1,6 @@
 # udn-comms
 
-UDN-Comms is a broadcast-based messenger built for [UDN](https://github.com/marlon-erler/universal-decentralized-network).
+UDN-Comms is a messenger built for [UDN](https://github.com/marlon-erler/universal-decentralized-network).
 
 # Features
 - Offline support
