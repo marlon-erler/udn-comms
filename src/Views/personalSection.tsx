@@ -6,8 +6,6 @@ import { translation } from "../translations";
 export function PersonalSection() {
   return (
     <div class="flex-column">
-      <h2>{translation.personal}</h2>
-
       <label class="tile">
         <span class="icon">account_circle</span>
         <div>

@@ -727,7 +727,6 @@
     close: "Close",
     // overview
     overview: "Overview",
-    personal: "You",
     connection: "Connection",
     chats: "Chats",
     yourName: "Your Name",
@@ -742,14 +741,12 @@
     requestMailbox: "Enable",
     deleteMailbox: "Disable",
     mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
-    newChatPrimaryChannel: "Primary channel",
-    newChatNamePlaceholder: "my-channel",
+    primaryChannel: "Primary channel",
+    primaryChannelPlaceholder: "my-channel",
     addChat: "Add",
     // messages
     showChatOptions: "show chat options",
     configureChatTitle: "Configure Chat",
-    primaryChannel: "Primary channel",
-    primaryChannelPlaceholder: "my-channel",
     secondaryChannel: "Secondary channel",
     secondaryChannelPlaceholder: "Add secondary channel",
     addSecondaryChannel: "Add secondary channel",
@@ -766,7 +763,93 @@
     deleteMessage: "Delete message"
   };
   var allTranslations = {
-    en: englishTranslations
+    en: englishTranslations,
+    es: {
+      // general
+      set: "Guardar",
+      back: "Atr\xE1s",
+      undoChanges: "Deshacer",
+      close: "Cerrar",
+      // overview
+      overview: "Inicio",
+      connection: "Conexion",
+      chats: "Chats",
+      yourName: "Tu nombre",
+      namePlaceholder: "Juan P\xE9rez",
+      encryptionUnavailableTitle: "Cifrado no disponible",
+      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
+      serverAddress: "Direccion del servidor",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Conectar",
+      disconnect: "Desconectar",
+      mailbox: "Buz\xF3n",
+      requestMailbox: "Activar",
+      deleteMailbox: "Desactivar",
+      mailboxExplanation: "Cuando est\xE1s sin conexion, los mensajes se guardar\xE1n en el servidor temporalmente",
+      primaryChannel: "Canal principal",
+      primaryChannelPlaceholder: "mi-canal",
+      addChat: "A\xF1adir",
+      // messages
+      showChatOptions: "Mostrar opciones del chat",
+      configureChatTitle: "Configurar",
+      secondaryChannel: "Canal segundario",
+      secondaryChannelPlaceholder: "A\xF1adir canal segundario",
+      addSecondaryChannel: "A\xF1adir canal segundario",
+      removeSecondaryChannel: "Eliminar canal segundario",
+      encryptionKey: "Clave de cifrado",
+      encryptionKeyPlaceholder: "n10d2482dg283hg",
+      removeChat: "Eliminar chat",
+      clearChatMessages: "Eliminar todos mensajes",
+      noChatSelected: "Selecciona un chat",
+      composerPlaceholder: "Escribe un mensaje...",
+      sendMessage: "Enviar",
+      decryptMessage: "Decifrar mensaje",
+      copyMessage: "Copiar mensaje",
+      deleteMessage: "Eliminar este mensaje"
+    },
+    de: {
+      // general
+      set: "OK",
+      back: "Zur\xFCck",
+      undoChanges: "\xC4nderungen verwerfen",
+      close: "Schlie\xDFen",
+      // overview
+      overview: "\xDCbersicht",
+      connection: "Verbindung",
+      chats: "Chats",
+      yourName: "Dein Name",
+      namePlaceholder: "Max Mustermann",
+      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
+      encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
+      serverAddress: "Serveradresse",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Verbinden",
+      disconnect: "Trennen",
+      mailbox: "Briefkasten",
+      requestMailbox: "Aktivieren",
+      deleteMailbox: "Deaktivieren",
+      mailboxExplanation: "Wenn du offline bist, werden Nachrichten auf dem Server gelagert",
+      primaryChannel: "Hauptkanal",
+      primaryChannelPlaceholder: "mein-kanal",
+      addChat: "Hinzuf\xFCgen",
+      // messages
+      showChatOptions: "Chatoptionen einblenden",
+      configureChatTitle: "Chat konfigurieren",
+      secondaryChannel: "Zweitkanal",
+      secondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
+      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
+      removeSecondaryChannel: "Zweitkanal entfernen",
+      encryptionKey: "Schl\xFCssel",
+      encryptionKeyPlaceholder: "n10d2482dg283hg",
+      removeChat: "Chat l\xF6schen",
+      clearChatMessages: "Nachrichtenverlauf leeren",
+      noChatSelected: "Kein Chat ausgew\xE4hlt",
+      composerPlaceholder: "Neue Nachricht...",
+      sendMessage: "Senden",
+      decryptMessage: "Nachricht entschl\xFCsseln",
+      copyMessage: "Nachricht kopieren",
+      deleteMessage: "Nachricht l\xF6schen"
+    }
   };
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
@@ -963,11 +1046,11 @@
     return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"));
   };
   function ChatListSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.newChatPrimaryChannel), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": newChatName,
-        placeholder: translation.newChatNamePlaceholder,
+        placeholder: translation.primaryChannelPlaceholder,
         "on:enter": createChat
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
@@ -1046,7 +1129,7 @@
 
   // src/Views/personalSection.tsx
   function PersonalSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.personal), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": senderName,

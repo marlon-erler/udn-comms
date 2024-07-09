@@ -1,6 +1,5 @@
 import * as React from "bloatless-react";
 
-import { Chat, removeChat } from "../Model/chatModel";
 import {
   cannotCreateChat,
   chats,
@@ -10,6 +9,7 @@ import {
   selectedChat,
 } from "../Model/model";
 
+import { Chat } from "../Model/chatModel";
 import { translation } from "../translations";
 
 const chatConverter: React.ListItemConverter<Chat> = (chat) => {
@@ -40,10 +40,10 @@ export function ChatListSection() {
       <label class="tile">
         <span class="icon">forum</span>
         <div>
-          <span>{translation.newChatPrimaryChannel}</span>
+          <span>{translation.primaryChannel}</span>
           <input
             bind:value={newChatName}
-            placeholder={translation.newChatNamePlaceholder}
+            placeholder={translation.primaryChannelPlaceholder}
             on:enter={createChat}
           ></input>
         </div>
