@@ -47,6 +47,8 @@ export function connect(): void {
   didRequestConnection.value = true;
 
   UDN.connect(serverAddressInput.value);
+
+  isMailboxActive.value = false;
 }
 
 export function disconnect(): void {
@@ -118,7 +120,8 @@ UDN.onmailboxcreate = (id) => {
   UDN.connectMailbox(id);
 };
 
-UDN.onmailboxconnect = () => {
+UDN.onmailboxconnect = (id) => {
+  console.log(id);
   isMailboxActive.value = true;
 };
 

@@ -643,6 +643,7 @@
     isConnected.value = false;
     didRequestConnection.value = true;
     UDN.connect(serverAddressInput.value);
+    isMailboxActive.value = false;
   }
   function disconnect() {
     didRequestConnection.value = false;
@@ -696,7 +697,8 @@
     mailboxId.value = id;
     UDN.connectMailbox(id);
   };
-  UDN.onmailboxconnect = () => {
+  UDN.onmailboxconnect = (id) => {
+    console.log(id);
     isMailboxActive.value = true;
   };
   UDN.onmailboxdelete = () => {
