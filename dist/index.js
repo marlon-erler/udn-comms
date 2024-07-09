@@ -415,7 +415,7 @@
     onmessage = async (data) => {
       if (!data.messageChannel) return;
       const channels = data.messageChannel.split("/");
-      if (!this.primaryChannel.value in channels) return;
+      if (this.primaryChannel.value in channels == false) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
       const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
@@ -839,13 +839,13 @@
           secondaryChannelConverter
         ]
       }
-    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translation.encryptionKeyPlaceholder,
         "bind:value": chat.encryptionKey
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/messageComposer.tsx

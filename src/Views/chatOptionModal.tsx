@@ -103,16 +103,18 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
 
           <hr></hr>
 
-          <label class="tile">
-            <span class="icon">key</span>
-            <div>
-              <span>{translation.encryptionKey}</span>
-              <input
-                placeholder={translation.encryptionKeyPlaceholder}
-                bind:value={chat.encryptionKey}
-              ></input>
-            </div>
-          </label>
+          <div>
+            <label class="tile">
+              <span class="icon">key</span>
+              <div>
+                <span>{translation.encryptionKey}</span>
+                <input
+                  placeholder={translation.encryptionKeyPlaceholder}
+                  bind:value={chat.encryptionKey}
+                ></input>
+              </div>
+            </label>
+          </div>
 
           <hr></hr>
 
