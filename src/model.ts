@@ -145,6 +145,12 @@ export function deleteMailbox(): void {
   UDN.deleteMailbox(mailboxId.value);
 }
 
+export function updateMailbox(): void {
+  if (!isMailboxConnected) return;
+  deleteMailbox();
+  requestMailbox();
+}
+
 // messages
 export async function sendMessage(): Promise<void> {
   if (cannotSendMessage.value == true) return;
@@ -195,6 +201,8 @@ export function setChannel(): void {
     UDN.unsubscribe(currentPrimaryChannel.value);
   }
   UDN.subscribe(primaryChannel.value);
+  
+  updateMailbox();
 }
 
 export function leaveChannel(): void {
