@@ -98,12 +98,13 @@ export class Chat {
 
     chats.remove(this);
     chatIds.remove(this.id);
-  }
+  };
 
   // handlers
   onmessage = async (data: Message): Promise<void> => {
-    if (data.messageChannel && data.messageChannel != this.primaryChannel.value)
-      return;
+    if (!data.messageChannel) return;
+    const channels = data.messageChannel.split("/");
+    if (!this.primaryChannel.value in channels) return;
 
     if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
 
@@ -132,7 +133,7 @@ export class Chat {
     // get channels
     const secondaryChannelNames: string[] = [
       ...this.secondaryChannels.value.values(),
-    ].map((channel) => channel);
+    ];
     const allChannelNames: string[] = [
       this.primaryChannel.value,
       ...secondaryChannelNames,

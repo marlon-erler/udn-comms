@@ -413,8 +413,9 @@
     };
     // handlers
     onmessage = async (data) => {
-      if (data.messageChannel && data.messageChannel != this.primaryChannel.value)
-        return;
+      if (!data.messageChannel) return;
+      const channels = data.messageChannel.split("/");
+      if (!this.primaryChannel.value in channels) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
       const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
@@ -436,7 +437,7 @@
       if (this.cannotSendMessage.value == true) return;
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
-      ].map((channel) => channel);
+      ];
       const allChannelNames = [
         this.primaryChannel.value,
         ...secondaryChannelNames
@@ -453,7 +454,6 @@
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
       const messageString = JSON.stringify(messageObject);
-      console.log(messageString);
       UDN.sendMessage(joinedChannelName, messageString);
       this.composingMessage.value = "";
     };
