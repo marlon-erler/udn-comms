@@ -87,8 +87,11 @@ export const mailboxId = React.restoreState("mailbox-id", "");
 export const isMailboxActive = new React.State(false);
 
 export const cannotDeleteMailbox = React.createProxyState(
-  [mailboxId, isMailboxActive],
-  () => mailboxId.value == "" || isMailboxActive.value == false
+  [mailboxId, isMailboxActive, isConnected],
+  () =>
+    mailboxId.value == "" ||
+    isMailboxActive.value == false ||
+    isConnected.value == false
 );
 export const cannotRequestMailbox = React.createProxyState(
   [isConnected, isMailboxActive],

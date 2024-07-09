@@ -673,8 +673,8 @@
   var mailboxId = restoreState("mailbox-id", "");
   var isMailboxActive = new State(false);
   var cannotDeleteMailbox = createProxyState(
-    [mailboxId, isMailboxActive],
-    () => mailboxId.value == "" || isMailboxActive.value == false
+    [mailboxId, isMailboxActive, isConnected],
+    () => mailboxId.value == "" || isMailboxActive.value == false || isConnected.value == false
   );
   var cannotRequestMailbox = createProxyState(
     [isConnected, isMailboxActive],
@@ -879,6 +879,7 @@
     function deleteChat() {
       chat.deleteSelf();
       closeModal();
+      closeChatView();
     }
     const shouldShowKey = new State(false);
     const inputType = createProxyState(
