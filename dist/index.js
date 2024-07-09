@@ -490,6 +490,7 @@
     const newChat = new Chat();
     chats.add(newChat);
     newChat.primaryChannel.value = name;
+    newChat.primaryChannelInput.value = name;
     chatIds.add(newChat.id);
     UDN.subscribe(name);
   }
