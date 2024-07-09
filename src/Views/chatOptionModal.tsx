@@ -8,6 +8,11 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
     isPresented.value = false;
   }
 
+  function deleteChat() {
+    chat.deleteSelf()
+    closeModal();
+  }
+
   const secondaryChannelConverter: React.ListItemConverter<string> = (
     secondaryChannel
   ) => {
@@ -108,8 +113,15 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
               ></input>
             </div>
           </label>
+
+          <hr></hr>
+
+          <button class="danger" on:click={deleteChat}>
+            {translation.removeChat}
+            <span class="icon">delete</span>
+          </button>
         </main>
-        <button class="danger" on:click={closeModal}>
+        <button on:click={closeModal}>
           {translation.close}
           <span class="icon">close</span>
         </button>

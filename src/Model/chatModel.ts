@@ -86,9 +86,18 @@ export class Chat {
     );
     this.cannotUndoChannel = React.createProxyState(
       [this.primaryChannelInput, this.primaryChannel],
-      () =>
-        this.primaryChannelInput.value == this.primaryChannel.value
+      () => this.primaryChannelInput.value == this.primaryChannel.value
     );
+  }
+
+  // general
+  deleteSelf = () => {
+    Object.values(storageKeys).forEach((storageKey) => {
+      localStorage.removeItem(storageKey(this.id));
+    });
+
+    chats.remove(this);
+    chatIds.remove(this.id);
   }
 
   // handlers
@@ -200,13 +209,4 @@ export function createChatWithName(name: string): void {
   chatIds.add(newChat.id);
 
   UDN.subscribe(name);
-}
-
-export function removeChat(chat: Chat): void {
-  Object.values(storageKeys).forEach((cb) => {
-    localStorage.removeItem(cb(chat.id));
-  });
-
-  chats.remove(chat);
-  chatIds.remove(chat.id);
 }

@@ -34,7 +34,6 @@ const englishTranslations = {
   newChatPrimaryChannel: "Primary channel",
   newChatNamePlaceholder: "my-channel",
   addChat: "Add",
-  removeChat: "Remove chat",
 
   // messages
   showChatOptions: "show chat options",
@@ -50,6 +49,8 @@ const englishTranslations = {
 
   encryptionKey: "Encryption key",
   encryptionKeyPlaceholder: "n10d2482dg283hg",
+
+  removeChat: "Remove chat",
 
   noChatSelected: "No chat selected",
 
