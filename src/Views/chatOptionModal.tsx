@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import { Chat } from "../Model/chatModel";
+import { closeChatView } from "../Model/model";
 import { translation } from "../translations";
 
 export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
@@ -11,6 +12,7 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
   function deleteChat() {
     chat.deleteSelf();
     closeModal();
+    closeChatView();
   }
 
   const shouldShowKey = new React.State(false);
