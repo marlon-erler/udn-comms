@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { closeChatView, selectedChat } from "../Model/model";
 
+import { ChatOptionModal } from "../Views/chatOptionModal";
 import { MessageComposer } from "../Views/messageComposer";
 import { ThreadView } from "../Views/threadView";
 import { translation } from "../translations";
@@ -16,9 +17,13 @@ export function MessageTab() {
       );
 
     const chat = selectedChat.value;
+    const isShowingOptions = new React.State(false);
 
-    function clearMessageHistory() {
-      chat.clearMessages();
+    function showOptions() {
+      isShowingOptions.value = true;
+    }
+    function hideOptions() {
+      isShowingOptions.value = false;
     }
 
     return (
@@ -29,19 +34,21 @@ export function MessageTab() {
               <span class="icon">arrow_back</span>
             </button>
 
-            <span subscribe:innerText={chat.currentChannel}></span>
+            <span subscribe:innerText={chat.primaryChannel}></span>
           </span>
           <span>
             <button
-              aria-label={translation.clearHistory}
-              on:click={clearMessageHistory}
+              aria-label={translation.showChatOptions}
+              on:click={showOptions}
             >
-              <span class="icon">delete_sweep</span>
+              <span class="icon">tune</span>
             </button>
           </span>
         </header>
         {ThreadView(chat)}
         <footer>{MessageComposer(chat)}</footer>
+
+        {ChatOptionModal(chat, isShowingOptions)}
       </article>
     );
   });

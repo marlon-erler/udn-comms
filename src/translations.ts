@@ -1,7 +1,9 @@
 const englishTranslations = {
   // general
-  setInput: "Set",
+  set: "Set",
   back: "Back",
+  undoChanges: "Undo changes",
+  close: "Close",
 
   // overview
   overview: "Overview",
@@ -9,46 +11,46 @@ const englishTranslations = {
   connection: "Connection",
   chats: "Chats",
 
+  encryptionUnavailableTitle: "Encryption is not available",
+  encryptionUnavailableMessage:
+    "Obtain this app via HTTPS or continue without encryption",
+
   serverAddress: "Server Address",
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
 
   connectToServer: "Connect",
   disconnect: "Disonnect",
-  resetAddress: "Reset address",
 
-  newChatPrimaryChannel: "Primary channel",
-  newChatNamePlaceholder: "my-channel",
-  addChat: "Add",
-  removeChat: "Remove chat",
-  
-  // messages
-  noChatSelected: "No chat selected",
-
-  primaryChannel: "Primary channel",
-  leaveChannel: "Leave",
-  channelPlaceholder: "my-channel",
-  addSecondaryChannel: "Add secondary channel",
-  removeSecondaryChannel: "Remove secondary channel",
-  newSecondaryChannelPlaceholder: "Add secondary channel",
-  encryptionKey: "Encryption key",
-  encryptionKeyPlaceholder: "1jg028ej40d",
-  showEncryptionKey: "Show encryption key",
-  myName: "My Name",
-  yourNamePlaceholder: "Jane Doe",
   mailbox: "Mailbox",
   requestMailbox: "Enable",
   deleteMailbox: "Disable",
   mailboxExplanation:
     "When you're disconnected, messages will be kept on the server temporarily",
 
+  newChatPrimaryChannel: "Primary channel",
+  newChatNamePlaceholder: "my-channel",
+  addChat: "Add",
+  removeChat: "Remove chat",
+
   // messages
-  messages: "Messages",
+  showChatOptions: "show chat options",
+  configureChatTitle: "Configure Chat",
+  
+  primaryChannel: "Primary channel",
+  primaryChannelPlaceholder: "my-channel",
+
+  secondaryChannel: "Secondary channel",
+  secondaryChannelPlaceholder: "Add secondary channel",
+  addSecondaryChannel: "Add secondary channel",
+  removeSecondaryChannel: "Remove secondary channel",
+
+  encryptionKey: "Encryption key",
+  encryptionKeyPlaceholder: "n10d2482dg283hg",
+
+  noChatSelected: "No chat selected",
+
   composerPlaceholder: "Type a message...",
   sendMessage: "Send",
-  clearHistory: "Clear history",
-  encryptionUnavailableTitle: "Encryption is not available",
-  encryptionUnavailableMessage:
-    "Obtain this app via HTTPS or continue without encryption",
 
   decryptMessage: "Decrypt message",
   copyMessage: "Copy message",
@@ -57,92 +59,6 @@ const englishTranslations = {
 
 const allTranslations: { [key: string]: typeof englishTranslations } = {
   en: englishTranslations,
-  es: {
-    // general
-    setInput: "OK",
-
-    // settings
-    overview: "Configuración",
-    connection: "Conexión",
-    communication: "Comunicación",
-    encryption: "Cifrado",
-    serverAddress: "Dirección del servidor",
-    serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    connectToServer: "Conectar",
-    disconnect: "Desconectar",
-    primaryChannel: "Canal principal",
-    leaveChannel: "Salir",
-    channelPlaceholder: "mi-canal",
-    addSecondaryChannel: "Añadir canal segundario",
-    removeSecondaryChannel: "Eliminar canal segundario",
-    newSecondaryChannelPlaceholder: "Añadir canal segundario",
-    encryptionKey: "Clave de cifrada",
-    encryptionKeyPlaceholder: "1jg028ej40d",
-    showEncryptionKey: "Mostrar clave de cifrado",
-    myName: "Mi nombre",
-    yourNamePlaceholder: "Juan Pérez",
-    mailbox: "Buzón",
-    requestMailbox: "Activar",
-    deleteMailbox: "Desactivar",
-    mailboxExplanation:
-      "Si estás sin conexión, los mensajes se guardarán temporalmente en el servidor",
-
-    // messages
-    messages: "Mensajes",
-    composerPlaceholder: "Escribe un mensaje...",
-    sendMessage: "Enviar",
-    clearHistory: "Borrar historial",
-    encryptionUnavailableTitle: "Cifrado no disponible",
-    encryptionUnavailableMessage:
-      "Obtén esta página a través de HTTPS para cifrar o continúa sin cifrado",
-
-    decryptMessage: "Descifrar mensaje",
-    copyMessage: "Copiar mensaje",
-    deleteMessage: "Eliminar mensaje",
-  },
-  de: {
-    // general
-    setInput: "OK",
-
-    // settings
-    overview: "Einstellungen",
-    connection: "Verbindung",
-    communication: "Kommunikation",
-    encryption: "Verschlüsselung",
-    serverAddress: "Serveraddresse",
-    serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    connectToServer: "Verbinden",
-    disconnect: "Trennen",
-    primaryChannel: "Hauptkanal",
-    leaveChannel: "Verlassen",
-    channelPlaceholder: "mein-kanal",
-    addSecondaryChannel: "Zweitkanal hinzufügen",
-    removeSecondaryChannel: "Zweitkanal entfernen",
-    newSecondaryChannelPlaceholder: "Zweitkanal hinzufügen",
-    encryptionKey: "Schlüssel",
-    encryptionKeyPlaceholder: "1jg028ej40d",
-    showEncryptionKey: "Schlüssel anzeigen",
-    myName: "Mein Name",
-    yourNamePlaceholder: "Max Mustermann",
-    mailbox: "Briefkasten",
-    requestMailbox: "Aktivieren",
-    deleteMailbox: "Deaktivieren",
-    mailboxExplanation:
-      "Nachrichten werden temporär auf dem Server gespeichert, wenn deine Verbindung getrennt ist",
-
-    // messages
-    messages: "Nachrichten",
-    composerPlaceholder: "Neue Nachricht...",
-    sendMessage: "Senden",
-    clearHistory: "Nachrichtenverlauf leeren",
-    encryptionUnavailableTitle: "Verschlüsselung nicht möglich",
-    encryptionUnavailableMessage:
-      "Um Nachrichten zu verschlüsseln, lade diese Seite über HTTPS.",
-
-    decryptMessage: "Nachricht entschlüsseln",
-    copyMessage: "Nachricht kopieren",
-    deleteMessage: "Nachricht löschen",
-  },
 };
 
 const language = navigator.language.substring(0, 2);

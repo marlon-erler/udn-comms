@@ -43,7 +43,7 @@ export function ConnectionSection() {
         </button>
         <button
           class="width-100 flex-1 justify-center"
-          aria-label={translation.resetAddress}
+          aria-label={translation.undoChanges}
           on:click={resetAddressInput}
           toggle:disabled={cannotResetAddress}
         >

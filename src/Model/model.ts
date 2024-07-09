@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { Chat, chats, createChatWithName } from "./chatModel";
+import { Chat, createChatWithName } from "./chatModel";
 
 import UDNFrontend from "udn-frontend";
 
@@ -59,6 +59,10 @@ export function resetAddressInput(): void {
 // listeners
 UDN.onconnect = () => {
   isConnected.value = true;
+
+  chats.value.forEach((chat) => {
+    UDN.subscribe(chat.primaryChannel.value);
+  });
 };
 
 UDN.onmessage = (data) => {
@@ -114,8 +118,12 @@ UDN.onmailboxdelete = () => {
 };
 
 // MISC
-export const isEncryptionUnavailable = window.crypto.subtle == undefined;
+export const isEncryptionAvailable = window.crypto.subtle != undefined;
 export const senderName = React.restoreState("sender-name", "");
+
+// CHAT
+export const chats = new React.ListState<Chat>();
+export const chatIds = React.restoreListState<string>("chat-ids");
 
 export const selectedChat = new React.State<Chat | undefined>(undefined);
 export const newChatName = new React.State("");
@@ -127,7 +135,7 @@ export const cannotCreateChat = React.createProxyState(
 
 export function createChat() {
   if (cannotCreateChat.value == true) return;
-  
+
   createChatWithName(newChatName.value);
   newChatName.value = "";
 }
@@ -136,6 +144,12 @@ export function closeChatView() {
   selectedChat.value = undefined;
   document.getElementById("settings-tab")?.scrollIntoView();
 }
+
+export function selectChat(chat: Chat) {
+  selectedChat.value = chat;
+}
+
+chatIds.value.forEach((id) => chats.add(new Chat(id)));
 
 // INIT
 if (serverAddressInput.value != "" && didRequestConnection.value == true) {

@@ -1,5 +1,5 @@
 import { MessageTab } from "./Tabs/messageTab";
-import { SettingsTab } from "./Tabs/settingsTab";
+import { OverviewTab } from "./Tabs/overviewTab";
 
-document.querySelector("main")!.append(SettingsTab(), MessageTab());
+document.querySelector("main")!.append(OverviewTab(), MessageTab());
 document.querySelector("main")!.classList.add("split");

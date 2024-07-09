@@ -1,29 +1,34 @@
 import * as React from "bloatless-react";
 
-import { Chat, chats, removeChat } from "../Model/chatModel";
-import { cannotCreateChat, createChat, newChatName } from "../Model/model";
+import { Chat, removeChat } from "../Model/chatModel";
+import {
+  cannotCreateChat,
+  chats,
+  createChat,
+  newChatName,
+  selectChat,
+  selectedChat,
+} from "../Model/model";
 
 import { translation } from "../translations";
 
 const chatConverter: React.ListItemConverter<Chat> = (chat) => {
-  function remove() {
-    removeChat(chat);
+  function select() {
+    selectChat(chat);
   }
 
+  const isSelected = React.createProxyState(
+    [selectedChat],
+    () => selectedChat.value == chat
+  );
+
   return (
-    <div class="tile padding-0">
-      <div class="flex-row width-100 justify-apart align-center">
-        <span class="padding-h ellipsis" subscribe:innerText={chat.currentChannel}></span>
-        
-        <button
-          class="danger"
-          aria-label={translation.removeChat}
-          on:click={remove}
-        >
-          <span class="icon">delete</span>
-        </button>
+    <button class="tile" on:click={select} toggle:selected={isSelected}>
+      <div>
+        <b class="ellipsis" subscribe:innerText={chat.primaryChannel}></b>
       </div>
-    </div>
+      <span class="icon">arrow_forward</span>
+    </button>
   );
 };
 
@@ -56,7 +61,10 @@ export function ChatListSection() {
 
       <hr></hr>
 
-      <div class="flex-column gap" children:append={[chats, chatConverter]}></div>
+      <div
+        class="flex-column gap"
+        children:append={[chats, chatConverter]}
+      ></div>
     </div>
   );
 }

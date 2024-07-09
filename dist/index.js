@@ -352,20 +352,21 @@
   var Chat = class {
     id;
     isSubscribed = new State(false);
-    currentChannel = new State("");
-    primaryChannelInput;
+    primaryChannel = new State("");
     secondaryChannels;
     encryptionKey;
     messages;
     composingMessage;
     newSecondaryChannelName;
+    primaryChannelInput;
     cannotSendMessage;
     cannotAddSecondaryChannel;
     cannotSetChannel;
+    cannotUndoChannel;
     // init
     constructor(id = UUID()) {
       this.id = id;
-      this.primaryChannelInput = restoreState(
+      this.primaryChannel = restoreState(
         storageKeys.primaryChannel(id),
         ""
       );
@@ -379,54 +380,63 @@
         ""
       );
       this.newSecondaryChannelName = new State("");
+      this.primaryChannelInput = new State(this.primaryChannel.value);
       this.cannotSendMessage = createProxyState(
         [
-          this.currentChannel,
+          this.primaryChannel,
           this.composingMessage,
           this.isSubscribed,
           isConnected
         ],
-        () => this.currentChannel.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
+        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
       );
       this.cannotAddSecondaryChannel = createProxyState(
         [this.newSecondaryChannelName],
         () => this.newSecondaryChannelName.value == ""
       );
       this.cannotSetChannel = createProxyState(
-        [this.primaryChannelInput, this.currentChannel],
-        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.currentChannel.value
+        [this.primaryChannelInput, this.primaryChannel],
+        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
+      );
+      this.cannotUndoChannel = createProxyState(
+        [this.primaryChannelInput, this.primaryChannel],
+        () => this.primaryChannelInput.value == this.primaryChannel.value
       );
     }
     // handlers
-    onmessage(data) {
-      if (data.messageChannel && data.messageChannel != this.currentChannel.value)
+    onmessage = async (data) => {
+      if (data.messageChannel && data.messageChannel != this.primaryChannel.value)
         return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
       const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
-      this.handleMessage({ sender, body, channel, isoDate });
-    }
-    handleSubscription(isSubscribed) {
+      this.handleMessage({
+        sender,
+        body: await decryptString(body, this.encryptionKey.value),
+        channel,
+        isoDate
+      });
+    };
+    handleSubscription = (isSubscribed) => {
       this.isSubscribed.value = isSubscribed;
-    }
-    handleMessage(chatMessage) {
+    };
+    handleMessage = (chatMessage) => {
       this.messages.add(chatMessage);
-    }
+    };
     // messages
-    async sendMessage() {
+    sendMessage = async () => {
       if (this.cannotSendMessage.value == true) return;
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ].map((channel) => channel);
       const allChannelNames = [
-        this.currentChannel.value,
+        this.primaryChannel.value,
         ...secondaryChannelNames
       ];
-      const encrypted = await encryptString(
+      const encrypted = this.encryptionKey.value == "" ? this.composingMessage.value : await encryptString(
         this.composingMessage.value,
         this.encryptionKey.value
       ) || this.composingMessage.value;
-      if (encrypted == void 0) return;
       const joinedChannelName = allChannelNames.join("/");
       const messageObject = {
         channel: joinedChannelName,
@@ -437,351 +447,41 @@
       const messageString = JSON.stringify(messageObject);
       UDN.sendMessage(joinedChannelName, messageString);
       this.composingMessage.value = "";
-    }
-    clearMessages() {
+    };
+    clearMessages = () => {
       this.messages.clear();
-    }
-    deleteMessage(message) {
+    };
+    deleteMessage = (message) => {
       this.messages.remove(message);
-    }
-    async decryptReceivedMessage(message) {
+    };
+    decryptReceivedMessage = async (message) => {
       message.body = await decryptString(message.body, this.encryptionKey.value);
       this.messages.callSubscriptions();
-    }
+    };
     // channel
-    setChannel() {
+    setChannel = () => {
       if (this.cannotSetChannel.value == true) return;
-      this.currentChannel.value = this.primaryChannelInput.value;
-      UDN.subscribe(this.currentChannel.value);
-    }
-    addSecondaryChannel() {
+      this.primaryChannel.value = this.primaryChannelInput.value;
+      UDN.subscribe(this.primaryChannel.value);
+    };
+    undoChannelChange = () => {
+      this.primaryChannelInput.value = this.primaryChannel.value;
+    };
+    addSecondaryChannel = () => {
       if (this.cannotAddSecondaryChannel.value == true) return;
       this.secondaryChannels.add(this.newSecondaryChannelName.value);
       this.newSecondaryChannelName.value = "";
-    }
-    removeSecondaryChannel(channel) {
+    };
+    removeSecondaryChannel = (channel) => {
       this.secondaryChannels.remove(channel);
-    }
+    };
   };
-  var chatIds = restoreListState("chat-ids");
-  var chats = new ListState();
-  chatIds.value.forEach((id) => chats.add(new Chat(id)));
   function createChatWithName(name) {
     const newChat = new Chat();
-    newChat.currentChannel.value = name;
-    chatIds.add(newChat.id);
     chats.add(newChat);
-  }
-  function removeChat(chat) {
-    Object.values(storageKeys).forEach((cb) => {
-      localStorage.removeItem(cb(chat.id));
-    });
-    chats.remove(chat);
-    chatIds.remove(chat.id);
-  }
-
-  // src/translations.ts
-  var englishTranslations = {
-    // general
-    setInput: "Set",
-    back: "Back",
-    // overview
-    overview: "Overview",
-    connection: "Connection",
-    chats: "Chats",
-    serverAddress: "Server Address",
-    serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    connectToServer: "Connect",
-    disconnect: "Disonnect",
-    resetAddress: "Reset address",
-    newChatPrimaryChannel: "Primary channel",
-    newChatNamePlaceholder: "my-channel",
-    addChat: "Add",
-    removeChat: "Remove chat",
-    // messages
-    noChatSelected: "No chat selected",
-    primaryChannel: "Primary channel",
-    leaveChannel: "Leave",
-    channelPlaceholder: "my-channel",
-    addSecondaryChannel: "Add secondary channel",
-    removeSecondaryChannel: "Remove secondary channel",
-    newSecondaryChannelPlaceholder: "Add secondary channel",
-    encryptionKey: "Encryption key",
-    encryptionKeyPlaceholder: "1jg028ej40d",
-    showEncryptionKey: "Show encryption key",
-    myName: "My Name",
-    yourNamePlaceholder: "Jane Doe",
-    mailbox: "Mailbox",
-    requestMailbox: "Enable",
-    deleteMailbox: "Disable",
-    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
-    // messages
-    messages: "Messages",
-    composerPlaceholder: "Type a message...",
-    sendMessage: "Send",
-    clearHistory: "Clear history",
-    encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
-    decryptMessage: "Decrypt message",
-    copyMessage: "Copy message",
-    deleteMessage: "Delete message"
-  };
-  var allTranslations = {
-    en: englishTranslations,
-    es: {
-      // general
-      setInput: "OK",
-      // settings
-      overview: "Configuraci\xF3n",
-      connection: "Conexi\xF3n",
-      communication: "Comunicaci\xF3n",
-      encryption: "Cifrado",
-      serverAddress: "Direcci\xF3n del servidor",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      connectToServer: "Conectar",
-      disconnect: "Desconectar",
-      primaryChannel: "Canal principal",
-      leaveChannel: "Salir",
-      channelPlaceholder: "mi-canal",
-      addSecondaryChannel: "A\xF1adir canal segundario",
-      removeSecondaryChannel: "Eliminar canal segundario",
-      newSecondaryChannelPlaceholder: "A\xF1adir canal segundario",
-      encryptionKey: "Clave de cifrada",
-      encryptionKeyPlaceholder: "1jg028ej40d",
-      showEncryptionKey: "Mostrar clave de cifrado",
-      myName: "Mi nombre",
-      yourNamePlaceholder: "Juan P\xE9rez",
-      mailbox: "Buz\xF3n",
-      requestMailbox: "Activar",
-      deleteMailbox: "Desactivar",
-      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
-      // messages
-      messages: "Mensajes",
-      composerPlaceholder: "Escribe un mensaje...",
-      sendMessage: "Enviar",
-      clearHistory: "Borrar historial",
-      encryptionUnavailableTitle: "Cifrado no disponible",
-      encryptionUnavailableMessage: "Obt\xE9n esta p\xE1gina a trav\xE9s de HTTPS para cifrar o contin\xFAa sin cifrado",
-      decryptMessage: "Descifrar mensaje",
-      copyMessage: "Copiar mensaje",
-      deleteMessage: "Eliminar mensaje"
-    },
-    de: {
-      // general
-      setInput: "OK",
-      // settings
-      overview: "Einstellungen",
-      connection: "Verbindung",
-      communication: "Kommunikation",
-      encryption: "Verschl\xFCsselung",
-      serverAddress: "Serveraddresse",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      connectToServer: "Verbinden",
-      disconnect: "Trennen",
-      primaryChannel: "Hauptkanal",
-      leaveChannel: "Verlassen",
-      channelPlaceholder: "mein-kanal",
-      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
-      removeSecondaryChannel: "Zweitkanal entfernen",
-      newSecondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
-      encryptionKey: "Schl\xFCssel",
-      encryptionKeyPlaceholder: "1jg028ej40d",
-      showEncryptionKey: "Schl\xFCssel anzeigen",
-      myName: "Mein Name",
-      yourNamePlaceholder: "Max Mustermann",
-      mailbox: "Briefkasten",
-      requestMailbox: "Aktivieren",
-      deleteMailbox: "Deaktivieren",
-      mailboxExplanation: "Nachrichten werden tempor\xE4r auf dem Server gespeichert, wenn deine Verbindung getrennt ist",
-      // messages
-      messages: "Nachrichten",
-      composerPlaceholder: "Neue Nachricht...",
-      sendMessage: "Senden",
-      clearHistory: "Nachrichtenverlauf leeren",
-      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
-      encryptionUnavailableMessage: "Um Nachrichten zu verschl\xFCsseln, lade diese Seite \xFCber HTTPS.",
-      decryptMessage: "Nachricht entschl\xFCsseln",
-      copyMessage: "Nachricht kopieren",
-      deleteMessage: "Nachricht l\xF6schen"
-    }
-  };
-  var language = navigator.language.substring(0, 2);
-  var translation = allTranslations[language] ?? allTranslations.en;
-
-  // src/Views/messageComposer.tsx
-  function MessageComposer(chat) {
-    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
-      "input",
-      {
-        class: "width-100 flex-1",
-        style: "max-width: unset",
-        placeholder: translation.composerPlaceholder,
-        "bind:value": chat.composingMessage,
-        "on:enter": chat.sendMessage
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "on:click": chat.sendMessage,
-        "toggle:disabled": chat.cannotSendMessage
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    ));
-  }
-
-  // src/Views/threadView.tsx
-  function ThreadView(chat) {
-    const messageConverter = (message) => {
-      function copyMessage() {
-        navigator.clipboard.writeText(message.body);
-      }
-      function decrypt2() {
-        chat.decryptReceivedMessage(message);
-      }
-      function remove() {
-        chat.deleteMessage(message);
-      }
-      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.copyMessage,
-          "on:click": copyMessage
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
-      ), /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.decryptMessage,
-          "on:click": decrypt2
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
-      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": message.body }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "children:append": [chat.messages, messageConverter]
-      }
-    );
-  }
-
-  // src/Tabs/messageTab.tsx
-  function MessageTab() {
-    const messageTabContent = createProxyState([selectedChat], () => {
-      if (selectedChat.value == void 0)
-        return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.noChatSelected));
-      const chat = selectedChat.value;
-      function clearMessageHistory() {
-        chat.clearMessages();
-      }
-      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.currentChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.clearHistory,
-          "on:click": clearMessageHistory
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
-      ))), ThreadView(chat), /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)));
-    });
-    return /* @__PURE__ */ createElement("div", { "children:set": messageTabContent });
-  }
-
-  // src/Views/chatListSection.tsx
-  var chatConverter = (chat) => {
-    function remove() {
-      removeChat(chat);
-    }
-    return /* @__PURE__ */ createElement("div", { class: "tile padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-100 justify-apart align-center" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis", "subscribe:innerText": chat.currentChannel }), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger",
-        "aria-label": translation.removeChat,
-        "on:click": remove
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-    )));
-  };
-  function ChatListSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.newChatPrimaryChannel), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": newChatName,
-        placeholder: translation.newChatNamePlaceholder,
-        "on:enter": createChat
-      }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-50",
-        "toggle:disabled": cannotCreateChat,
-        "on:click": createChat
-      },
-      translation.addChat,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap", "children:append": [chats, chatConverter] }));
-  }
-
-  // src/Views/connectionSection.tsx
-  function ConnectionSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": serverAddressInput,
-        "on:enter": connect,
-        placeholder: translation.serverAddressPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-100 flex-1 justify-center",
-        "aria-label": translation.disconnect,
-        "on:click": disconnect,
-        "toggle:disabled": cannotDisonnect
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "width-100 flex-1 justify-center",
-        "aria-label": translation.resetAddress,
-        "on:click": resetAddressInput,
-        "toggle:disabled": cannotResetAddress
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-100 flex-1 justify-center",
-        "aria-label": translation.connectToServer,
-        "on:click": connect,
-        "toggle:disabled": cannotConnect
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.mailbox), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.mailboxExplanation))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-100 flex-1",
-        "on:click": deleteMailbox,
-        "toggle:disabled": cannotDeleteMailbox
-      },
-      translation.deleteMailbox
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-100 flex-1",
-        "on:click": requestMailbox,
-        "toggle:disabled": cannotRequestMailbox
-      },
-      translation.requestMailbox,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )));
-  }
-
-  // src/Tabs/settingsTab.tsx
-  function SettingsTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, ConnectionSection(), ChatListSection()));
+    newChat.primaryChannel.value = name;
+    chatIds.add(newChat.id);
+    UDN.subscribe(name);
   }
 
   // node_modules/udn-frontend/index.ts
@@ -896,7 +596,7 @@
     }
   };
 
-  // src/index.tsx
+  // src/Model/model.ts
   var UDN = new UDNFrontend();
   var isConnected = new State(false);
   var serverAddressInput = restoreState("socket-address", "");
@@ -934,6 +634,9 @@
   }
   UDN.onconnect = () => {
     isConnected.value = true;
+    chats.value.forEach((chat) => {
+      UDN.subscribe(chat.primaryChannel.value);
+    });
   };
   UDN.onmessage = (data) => {
     chats.value.forEach((chat) => {
@@ -961,10 +664,6 @@
     if (cannotDeleteMailbox.value == true) return;
     UDN.deleteMailbox(mailboxId.value);
   }
-  function updateMailbox() {
-    deleteMailbox();
-    updateMailbox();
-  }
   UDN.onmailboxcreate = (id) => {
     mailboxId.value = id;
     UDN.connectMailbox(id);
@@ -976,8 +675,10 @@
     isMailboxActive.value = false;
     mailboxId.value = "";
   };
-  var isEncryptionUnavailable = window.crypto.subtle == void 0;
+  var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
+  var chats = new ListState();
+  var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
@@ -993,9 +694,325 @@
     selectedChat.value = void 0;
     document.getElementById("settings-tab")?.scrollIntoView();
   }
+  function selectChat(chat) {
+    selectedChat.value = chat;
+  }
+  chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
     connect();
   }
-  document.querySelector("main").append(SettingsTab(), MessageTab());
+
+  // src/translations.ts
+  var englishTranslations = {
+    // general
+    set: "Set",
+    back: "Back",
+    undoChanges: "Undo changes",
+    close: "Close",
+    // overview
+    overview: "Overview",
+    connection: "Connection",
+    chats: "Chats",
+    encryptionUnavailableTitle: "Encryption is not available",
+    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
+    serverAddress: "Server Address",
+    serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    connectToServer: "Connect",
+    disconnect: "Disonnect",
+    mailbox: "Mailbox",
+    requestMailbox: "Enable",
+    deleteMailbox: "Disable",
+    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
+    newChatPrimaryChannel: "Primary channel",
+    newChatNamePlaceholder: "my-channel",
+    addChat: "Add",
+    removeChat: "Remove chat",
+    // messages
+    showChatOptions: "show chat options",
+    configureChatTitle: "Configure Chat",
+    primaryChannel: "Primary channel",
+    primaryChannelPlaceholder: "my-channel",
+    secondaryChannel: "Secondary channel",
+    secondaryChannelPlaceholder: "Add secondary channel",
+    addSecondaryChannel: "Add secondary channel",
+    removeSecondaryChannel: "Remove secondary channel",
+    encryptionKey: "Encryption key",
+    encryptionKeyPlaceholder: "n10d2482dg283hg",
+    noChatSelected: "No chat selected",
+    composerPlaceholder: "Type a message...",
+    sendMessage: "Send",
+    decryptMessage: "Decrypt message",
+    copyMessage: "Copy message",
+    deleteMessage: "Delete message"
+  };
+  var allTranslations = {
+    en: englishTranslations
+  };
+  var language = navigator.language.substring(0, 2);
+  var translation = allTranslations[language] ?? allTranslations.en;
+
+  // src/Views/chatOptionModal.tsx
+  function ChatOptionModal(chat, isPresented) {
+    function closeModal() {
+      isPresented.value = false;
+    }
+    const secondaryChannelConverter = (secondaryChannel) => {
+      function remove() {
+        chat.removeSecondaryChannel(secondaryChannel);
+      }
+      return /* @__PURE__ */ createElement("div", { class: "tile width-input padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "padding-h" }, secondaryChannel), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "danger",
+          "aria-label": translation.removeSecondaryChannel,
+          "on:click": remove
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+      )));
+    };
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.configureChatTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": chat.primaryChannelInput,
+        placeholder: translation.primaryChannelPlaceholder,
+        "on:enter": chat.setChannel
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translation.undoChanges,
+        class: "flex justify-center",
+        "on:click": chat.undoChannelChange,
+        "toggle:disabled": chat.cannotUndoChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translation.set,
+        class: "flex justify-center primary",
+        "on:click": chat.setChannel,
+        "toggle:disabled": chat.cannotSetChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row margin-bottom width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "aria-label": translation.secondaryChannel,
+        placeholder: translation.secondaryChannelPlaceholder,
+        "bind:value": chat.newSecondaryChannelName,
+        "on:enter": chat.addSecondaryChannel
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "toggle:disabled": chat.cannotAddSecondaryChannel,
+        "aria-label": translation.addSecondaryChannel,
+        "on:click": chat.addSecondaryChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:prepend": [
+          chat.secondaryChannels,
+          secondaryChannelConverter
+        ]
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translation.encryptionKeyPlaceholder,
+        "bind:value": chat.encryptionKey
+      }
+    )))), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/Views/messageComposer.tsx
+  function MessageComposer(chat) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "width-100 flex-1",
+        style: "max-width: unset",
+        placeholder: translation.composerPlaceholder,
+        "bind:value": chat.composingMessage,
+        "on:enter": chat.sendMessage
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": chat.sendMessage,
+        "toggle:disabled": chat.cannotSendMessage
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+    ));
+  }
+
+  // src/Views/threadView.tsx
+  function ThreadView(chat) {
+    const messageConverter = (message) => {
+      function copyMessage() {
+        navigator.clipboard.writeText(message.body);
+      }
+      function decrypt2() {
+        chat.decryptReceivedMessage(message);
+      }
+      function remove() {
+        chat.deleteMessage(message);
+      }
+      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.copyMessage,
+          "on:click": copyMessage
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.decryptMessage,
+          "on:click": decrypt2
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
+      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word" }, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:append": [chat.messages, messageConverter]
+      }
+    );
+  }
+
+  // src/Tabs/messageTab.tsx
+  function MessageTab() {
+    const messageTabContent = createProxyState([selectedChat], () => {
+      if (selectedChat.value == void 0)
+        return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.noChatSelected));
+      const chat = selectedChat.value;
+      const isShowingOptions = new State(false);
+      function showOptions() {
+        isShowingOptions.value = true;
+      }
+      function hideOptions() {
+        isShowingOptions.value = false;
+      }
+      return /* @__PURE__ */ createElement("article", { id: "message-tab" }, /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.showChatOptions,
+          "on:click": showOptions
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
+      ))), ThreadView(chat), /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)), ChatOptionModal(chat, isShowingOptions));
+    });
+    return /* @__PURE__ */ createElement("div", { "children:set": messageTabContent });
+  }
+
+  // src/Views/chatListSection.tsx
+  var chatConverter = (chat) => {
+    function select() {
+      selectChat(chat);
+    }
+    const isSelected = createProxyState(
+      [selectedChat],
+      () => selectedChat.value == chat
+    );
+    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"));
+  };
+  function ChatListSection() {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.newChatPrimaryChannel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": newChatName,
+        placeholder: translation.newChatNamePlaceholder,
+        "on:enter": createChat
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-50",
+        "toggle:disabled": cannotCreateChat,
+        "on:click": createChat
+      },
+      translation.addChat,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:append": [chats, chatConverter]
+      }
+    ));
+  }
+
+  // src/Views/connectionSection.tsx
+  function ConnectionSection() {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": serverAddressInput,
+        "on:enter": connect,
+        placeholder: translation.serverAddressPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-100 flex-1 justify-center",
+        "aria-label": translation.disconnect,
+        "on:click": disconnect,
+        "toggle:disabled": cannotDisonnect
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-100 flex-1 justify-center",
+        "aria-label": translation.undoChanges,
+        "on:click": resetAddressInput,
+        "toggle:disabled": cannotResetAddress
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-100 flex-1 justify-center",
+        "aria-label": translation.connectToServer,
+        "on:click": connect,
+        "toggle:disabled": cannotConnect
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.mailbox), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.mailboxExplanation))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-100 flex-1",
+        "on:click": deleteMailbox,
+        "toggle:disabled": cannotDeleteMailbox
+      },
+      translation.deleteMailbox
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary width-100 flex-1",
+        "on:click": requestMailbox,
+        "toggle:disabled": cannotRequestMailbox
+      },
+      translation.requestMailbox,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    )));
+  }
+
+  // src/Tabs/overviewTab.tsx
+  function OverviewTab() {
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), ConnectionSection(), ChatListSection()));
+  }
+
+  // src/index.tsx
+  document.querySelector("main").append(OverviewTab(), MessageTab());
   document.querySelector("main").classList.add("split");
 })();
