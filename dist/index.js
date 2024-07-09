@@ -386,9 +386,10 @@
           this.primaryChannel,
           this.composingMessage,
           this.isSubscribed,
-          isConnected
+          isConnected,
+          senderName
         ],
-        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || this.isSubscribed.value == false || isConnected.value == false
+        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == "" || this.isSubscribed.value == false || isConnected.value == false
       );
       this.cannotAddSecondaryChannel = createProxyState(
         [this.newSecondaryChannelName],
@@ -919,6 +920,7 @@
       if (scrollFromBottom > 400) return;
       listElement.scrollTop = listElement.scrollHeight;
     });
+    setTimeout(() => listElement.scrollTop = listElement.scrollHeight, 50);
     return listElement;
   }
 

@@ -70,8 +70,9 @@ export function ThreadView(chat: Chat) {
       listElement.scrollHeight -
       (listElement.scrollTop + listElement.offsetHeight);
     if (scrollFromBottom > 400) return;
-    
+
     listElement.scrollTop = listElement.scrollHeight;
   });
+  setTimeout(() => (listElement.scrollTop = listElement.scrollHeight), 50);
   return listElement;
 }

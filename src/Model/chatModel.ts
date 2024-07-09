@@ -67,10 +67,12 @@ export class Chat {
         this.composingMessage,
         this.isSubscribed,
         isConnected,
+        senderName,
       ],
       () =>
         this.primaryChannel.value == "" ||
         this.composingMessage.value == "" ||
+        senderName.value == "" ||
         this.isSubscribed.value == false ||
         isConnected.value == false
     );
