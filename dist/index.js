@@ -580,9 +580,13 @@
 
   // src/Model/model.ts
   var UDN = new UDNFrontend();
-  var currentAddress = new State("");
   var isConnected = new State(false);
   var serverAddressInput = restoreState("socket-address", "");
+  var didRequestConnection = restoreState(
+    "did-request-connection",
+    false
+  );
+  var currentAddress = restoreState("current-address", "");
   var cannotDisonnect = createProxyState(
     [isConnected],
     () => isConnected.value == false
@@ -591,15 +595,24 @@
     [serverAddressInput, currentAddress, isConnected],
     () => serverAddressInput.value == "" || currentAddress.value == serverAddressInput.value && isConnected.value == true
   );
+  var cannotResetAddress = createProxyState(
+    [serverAddressInput, currentAddress],
+    () => serverAddressInput.value == currentAddress.value
+  );
   function connect() {
     if (cannotConnect.value == true) return;
     currentAddress.value = serverAddressInput.value;
     isConnected.value = false;
+    didRequestConnection.value = true;
     UDN.connect(serverAddressInput.value);
   }
   function disconnect() {
+    didRequestConnection.value = false;
     if (cannotDisonnect.value == true) return;
     UDN.disconnect();
+  }
+  function resetAddressInput() {
+    serverAddressInput.value = currentAddress.value;
   }
   UDN.onconnect = () => {
     isConnected.value = true;
@@ -644,7 +657,7 @@
   var isEncryptionUnavailable = window.crypto.subtle == void 0;
   var senderName = restoreState("sender-name", "");
   var selectedChat = new State(void 0);
-  if (serverAddressInput.value != "") {
+  if (serverAddressInput.value != "" && didRequestConnection.value == true) {
     connect();
   }
 
@@ -879,7 +892,7 @@
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "danger width-100 flex-1",
+        class: "danger width-100 flex-1 justify-center",
         "aria-label": translation.disconnect,
         "on:click": disconnect,
         "toggle:disabled": cannotDisonnect
@@ -888,16 +901,16 @@
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "width-100 flex-1",
+        class: "width-100 flex-1 justify-center",
         "aria-label": translation.resetAddress,
-        "on:click": disconnect,
-        "toggle:disabled": cannotDisonnect
+        "on:click": resetAddressInput,
+        "toggle:disabled": cannotResetAddress
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary width-100 flex-1",
+        class: "primary width-100 flex-1 justify-center",
         "aria-label": translation.connectToServer,
         "on:click": connect,
         "toggle:disabled": cannotConnect

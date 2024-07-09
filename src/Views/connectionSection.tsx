@@ -5,10 +5,12 @@ import {
   cannotDeleteMailbox,
   cannotDisonnect,
   cannotRequestMailbox,
+  cannotResetAddress,
   connect,
   deleteMailbox,
   disconnect,
   requestMailbox,
+  resetAddressInput,
   serverAddressInput,
 } from "../Model/model";
 
@@ -30,7 +32,7 @@ export function ConnectionSection() {
       </label>
       <div class="flex-row width-input justify-end">
         <button
-          class="danger width-100 flex-1"
+          class="danger width-100 flex-1 justify-center"
           aria-label={translation.disconnect}
           on:click={disconnect}
           toggle:disabled={cannotDisonnect}
@@ -38,15 +40,15 @@ export function ConnectionSection() {
           <span class="icon">close</span>
         </button>
         <button
-          class="width-100 flex-1"
+          class="width-100 flex-1 justify-center"
           aria-label={translation.resetAddress}
-          on:click={disconnect}
-          toggle:disabled={cannotDisonnect}
+          on:click={resetAddressInput}
+          toggle:disabled={cannotResetAddress}
         >
           <span class="icon">undo</span>
         </button>
         <button
-          class="primary width-100 flex-1"
+          class="primary width-100 flex-1 justify-center"
           aria-label={translation.connectToServer}
           on:click={connect}
           toggle:disabled={cannotConnect}

@@ -8,10 +8,14 @@ export const UDN = new UDNFrontend();
 
 // CONNECTION
 // state
-export const currentAddress = new React.State("");
 export const isConnected = new React.State(false);
 
 export const serverAddressInput = React.restoreState("socket-address", "");
+export const didRequestConnection = React.restoreState(
+  "did-request-connection",
+  false
+);
+export const currentAddress = React.restoreState("current-address", "");
 
 export const cannotDisonnect = React.createProxyState(
   [isConnected],
@@ -26,21 +30,31 @@ export const cannotConnect = React.createProxyState(
       isConnected.value == true)
 );
 
+export const cannotResetAddress = React.createProxyState(
+  [serverAddressInput, currentAddress],
+  () => serverAddressInput.value == currentAddress.value
+);
+
 // methods
 export function connect(): void {
   if (cannotConnect.value == true) return;
+  
   currentAddress.value = serverAddressInput.value;
+
   isConnected.value = false;
+  didRequestConnection.value = true;
+
   UDN.connect(serverAddressInput.value);
 }
 
 export function disconnect(): void {
+  didRequestConnection.value = false;
   if (cannotDisonnect.value == true) return;
   UDN.disconnect();
 }
 
 export function resetAddressInput(): void {
-  this.serverAddressInput.value = this.serverAddress.value;
+  serverAddressInput.value = currentAddress.value;
 }
 
 // listeners
@@ -84,16 +98,16 @@ export function deleteMailbox(): void {
 UDN.onmailboxcreate = (id) => {
   mailboxId.value = id;
   UDN.connectMailbox(id);
-}
+};
 
 UDN.onmailboxconnect = () => {
   isMailboxActive.value = true;
-}
+};
 
 UDN.onmailboxdelete = () => {
   isMailboxActive.value = false;
   mailboxId.value = "";
-}
+};
 
 // MISC
 export const isEncryptionUnavailable = window.crypto.subtle == undefined;
@@ -102,6 +116,6 @@ export const senderName = React.restoreState("sender-name", "");
 export const selectedChat = new React.State<Chat | undefined>(undefined);
 
 // INIT
-if (serverAddressInput.value != "") {
+if (serverAddressInput.value != "" && didRequestConnection.value == true) {
   connect();
 }
