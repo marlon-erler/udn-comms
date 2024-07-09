@@ -9,7 +9,7 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
   }
 
   function deleteChat() {
-    chat.deleteSelf()
+    chat.deleteSelf();
     closeModal();
   }
 
@@ -116,10 +116,17 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
 
           <hr></hr>
 
-          <button class="danger" on:click={deleteChat}>
-            {translation.removeChat}
-            <span class="icon">delete</span>
-          </button>
+          <div class="flex-column gap">
+            <button class="danger" on:click={chat.clearMessages}>
+              {translation.clearChatMessages}
+              <span class="icon">delete_sweep</span>
+            </button>
+
+            <button class="danger" on:click={deleteChat}>
+              {translation.removeChat}
+              <span class="icon">delete</span>
+            </button>
+          </div>
         </main>
         <button on:click={closeModal}>
           {translation.close}

@@ -750,6 +750,7 @@
     encryptionKey: "Encryption key",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
     removeChat: "Remove chat",
+    clearChatMessages: "Clear chat messages",
     noChatSelected: "No chat selected",
     composerPlaceholder: "Type a message...",
     sendMessage: "Send",
@@ -843,7 +844,7 @@
         placeholder: translation.encryptionKeyPlaceholder,
         "bind:value": chat.encryptionKey
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/messageComposer.tsx

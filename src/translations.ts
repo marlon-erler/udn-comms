@@ -51,6 +51,7 @@ const englishTranslations = {
   encryptionKeyPlaceholder: "n10d2482dg283hg",
 
   removeChat: "Remove chat",
+  clearChatMessages: "Clear chat messages",
 
   noChatSelected: "No chat selected",
 
