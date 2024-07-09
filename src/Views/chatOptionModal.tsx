@@ -13,6 +13,11 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
     closeModal();
   }
 
+  const shouldShowKey = new React.State(false);
+  const inputType = React.createProxyState([shouldShowKey], () =>
+    shouldShowKey.value == true ? "text" : "password"
+  );
+
   const secondaryChannelConverter: React.ListItemConverter<string> = (
     secondaryChannel
   ) => {
@@ -111,8 +116,14 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
                 <input
                   placeholder={translation.encryptionKeyPlaceholder}
                   bind:value={chat.encryptionKey}
+                  set:type={inputType}
                 ></input>
               </div>
+            </label>
+
+            <label class="inline margin-0">
+              <input type="checkbox" bind:checked={shouldShowKey}></input>
+              {translation.showKey}
             </label>
           </div>
 

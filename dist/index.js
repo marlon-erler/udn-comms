@@ -754,6 +754,7 @@
     removeSecondaryChannel: "Remove secondary channel",
     encryptionKey: "Encryption key",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
+    showKey: "Show key",
     removeChat: "Remove chat",
     clearChatMessages: "Clear chat messages",
     noChatSelected: "No chat selected",
@@ -799,6 +800,7 @@
       removeSecondaryChannel: "Eliminar canal segundario",
       encryptionKey: "Clave de cifrado",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
+      showKey: "Mostrar clave",
       removeChat: "Eliminar chat",
       clearChatMessages: "Eliminar todos mensajes",
       noChatSelected: "Selecciona un chat",
@@ -842,6 +844,7 @@
       removeSecondaryChannel: "Zweitkanal entfernen",
       encryptionKey: "Schl\xFCssel",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
+      showKey: "Schl\xFCssel anzeigen",
       removeChat: "Chat l\xF6schen",
       clearChatMessages: "Nachrichtenverlauf leeren",
       noChatSelected: "Kein Chat ausgew\xE4hlt",
@@ -864,6 +867,11 @@
       chat.deleteSelf();
       closeModal();
     }
+    const shouldShowKey = new State(false);
+    const inputType = createProxyState(
+      [shouldShowKey],
+      () => shouldShowKey.value == true ? "text" : "password"
+    );
     const secondaryChannelConverter = (secondaryChannel) => {
       function remove() {
         chat.removeSecondaryChannel(secondaryChannel);
@@ -933,9 +941,10 @@
       "input",
       {
         placeholder: translation.encryptionKeyPlaceholder,
-        "bind:value": chat.encryptionKey
+        "bind:value": chat.encryptionKey,
+        "set:type": inputType
       }
-    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/messageComposer.tsx

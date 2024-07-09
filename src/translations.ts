@@ -45,6 +45,7 @@ const englishTranslations = {
 
   encryptionKey: "Encryption key",
   encryptionKeyPlaceholder: "n10d2482dg283hg",
+  showKey: "Show key",
 
   removeChat: "Remove chat",
   clearChatMessages: "Clear chat messages",
@@ -108,6 +109,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     encryptionKey: "Clave de cifrado",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
+    showKey: "Mostrar clave",
 
     removeChat: "Eliminar chat",
     clearChatMessages: "Eliminar todos mensajes",
@@ -168,6 +170,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     encryptionKey: "Schlüssel",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
+    showKey: "Schlüssel anzeigen",
 
     removeChat: "Chat löschen",
     clearChatMessages: "Nachrichtenverlauf leeren",
