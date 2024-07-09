@@ -363,6 +363,7 @@
     cannotAddSecondaryChannel;
     cannotSetChannel;
     cannotUndoChannel;
+    cannotClearMessages;
     // init
     constructor(id = UUID()) {
       this.id = id;
@@ -402,6 +403,10 @@
       this.cannotUndoChannel = createProxyState(
         [this.primaryChannelInput, this.primaryChannel],
         () => this.primaryChannelInput.value == this.primaryChannel.value
+      );
+      this.cannotClearMessages = createProxyState(
+        [this.messages],
+        () => this.messages.value.size == 0
       );
     }
     // general
@@ -952,7 +957,16 @@
         "bind:value": chat.encryptionKey,
         "set:type": inputType
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { class: "danger", "on:click": chat.clearMessages }, translation.clearChatMessages, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "on:click": chat.clearMessages,
+        "toggle:disabled": chat.cannotClearMessages
+      },
+      translation.clearChatMessages,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
+    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/messageComposer.tsx

@@ -130,7 +130,11 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
           <hr></hr>
 
           <div class="flex-column gap">
-            <button class="danger" on:click={chat.clearMessages}>
+            <button
+              class="danger"
+              on:click={chat.clearMessages}
+              toggle:disabled={chat.cannotClearMessages}
+            >
               {translation.clearChatMessages}
               <span class="icon">delete_sweep</span>
             </button>

@@ -1,6 +1,13 @@
 import * as React from "bloatless-react";
 
-import { UDN, chatIds, chats, isConnected, senderName, updateMailbox } from "../Model/model";
+import {
+  UDN,
+  chatIds,
+  chats,
+  isConnected,
+  senderName,
+  updateMailbox,
+} from "../Model/model";
 import { decryptString, encryptString } from "../cryptUtility";
 
 import { Message } from "udn-frontend";
@@ -34,6 +41,7 @@ export class Chat {
   cannotAddSecondaryChannel: React.State<boolean>;
   cannotSetChannel: React.State<boolean>;
   cannotUndoChannel: React.State<boolean>;
+  cannotClearMessages: React.State<boolean>;
 
   // init
   constructor(id: string = React.UUID()) {
@@ -89,6 +97,10 @@ export class Chat {
     this.cannotUndoChannel = React.createProxyState(
       [this.primaryChannelInput, this.primaryChannel],
       () => this.primaryChannelInput.value == this.primaryChannel.value
+    );
+    this.cannotClearMessages = React.createProxyState(
+      [this.messages],
+      () => this.messages.value.size == 0
     );
   }
 
