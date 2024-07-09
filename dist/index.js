@@ -415,7 +415,7 @@
     onmessage = async (data) => {
       if (!data.messageChannel) return;
       const channels = data.messageChannel.split("/");
-      if (this.primaryChannel.value in channels == false) return;
+      if (channels.indexOf(this.primaryChannel.value) == -1) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
       const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
