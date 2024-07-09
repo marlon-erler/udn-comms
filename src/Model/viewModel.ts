@@ -1,5 +1,6 @@
 import * as React from "bloatless-react";
 
+import { Chat } from "./chatModel";
 import { translation } from "../translations";
 
 // connection
@@ -16,6 +17,4 @@ export const isEncryptionUnavailable = window.crypto.subtle == undefined;
 export const senderName = React.restoreState("sender-name", "");
 
 // chat
-export const newChatPrimaryChannelName = new React.State("");
-export const newChatSecondaryChannelName = new React.State("");
-export const newChatSecondaryChannelNames = new React.ListState<string>();
+export const selectedChat = new React.State<Chat | undefined>(undefined);

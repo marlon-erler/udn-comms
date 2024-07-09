@@ -1,17 +1,8 @@
 import * as React from "bloatless-react";
 
-import {
-  arrayToUint8,
-  decrypt,
-  encrypt,
-  generateIV,
-  importKey,
-  uInt8ToArray,
-} from "../cryptUtility";
-
 import UDNFrontend from "udn-frontend";
+import { chats } from "./chatModel";
 import { serverAddress } from "./viewModel";
-import { translation } from "../translations";
 
 export const UDN = new UDNFrontend();
 
@@ -52,7 +43,9 @@ UDN.onconnect = () => {
 
 
 UDN.onmessage = (data) => {
-
+  chats.value.forEach((chat) => {
+    chat.onmessage(data);
+  })
 };
 
 UDN.ondisconnect = () => {
