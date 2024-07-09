@@ -771,7 +771,7 @@
       undoChanges: "Deshacer",
       close: "Cerrar",
       // overview
-      overview: "Inicio",
+      overview: "Resumen",
       connection: "Conexion",
       chats: "Chats",
       yourName: "Tu nombre",
@@ -785,13 +785,13 @@
       mailbox: "Buz\xF3n",
       requestMailbox: "Activar",
       deleteMailbox: "Desactivar",
-      mailboxExplanation: "Cuando est\xE1s sin conexion, los mensajes se guardar\xE1n en el servidor temporalmente",
+      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
       primaryChannel: "Canal principal",
       primaryChannelPlaceholder: "mi-canal",
       addChat: "A\xF1adir",
       // messages
       showChatOptions: "Mostrar opciones del chat",
-      configureChatTitle: "Configurar",
+      configureChatTitle: "Configurar chat",
       secondaryChannel: "Canal segundario",
       secondaryChannelPlaceholder: "A\xF1adir canal segundario",
       addSecondaryChannel: "A\xF1adir canal segundario",
@@ -803,7 +803,7 @@
       noChatSelected: "Selecciona un chat",
       composerPlaceholder: "Escribe un mensaje...",
       sendMessage: "Enviar",
-      decryptMessage: "Decifrar mensaje",
+      decryptMessage: "Descifrar mensaje",
       copyMessage: "Copiar mensaje",
       deleteMessage: "Eliminar este mensaje"
     },
