@@ -121,7 +121,6 @@ UDN.onmailboxcreate = (id) => {
 };
 
 UDN.onmailboxconnect = (id) => {
-  console.log(id);
   isMailboxActive.value = true;
 };
 
