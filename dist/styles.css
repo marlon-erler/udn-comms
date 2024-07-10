@@ -981,7 +981,8 @@ main::-webkit-scrollbar {
   display: none;
 }
 
-main {
+main,
+article > div {
   scroll-behavior: smooth;
 }
 
