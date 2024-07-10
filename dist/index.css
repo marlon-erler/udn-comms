@@ -38,7 +38,7 @@
   bottom: var(--footer-top-line);
   flex: 1;
 }
-@media (max-height: 700px) and (min-width: 640px) {
+@media (max-height: 700px) and (min-width: 640px) and (max-width: 1400px) {
   main.split:has([showingchattools]) {
     display: flex;
   }
