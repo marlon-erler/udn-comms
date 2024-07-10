@@ -7,10 +7,10 @@ import {
   newChatName,
   selectChat,
   selectedChat,
-} from "../Model/model";
+} from "../../Model/model";
 
-import { Chat } from "../Model/chatModel";
-import { translation } from "../translations";
+import { Chat } from "../../Model/chatModel";
+import { translation } from "../../translations";
 
 const chatConverter: React.StateItemConverter<Chat> = (chat) => {
   function select() {

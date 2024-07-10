@@ -1,9 +1,9 @@
 import * as React from "bloatless-react";
 
-import { Chat, ChatMessage } from "../Model/chatModel";
+import { Chat, ChatMessage } from "../../Model/chatModel";
 
-import { isShowingChatTools } from "../Model/model";
-import { translation } from "../translations";
+import { isShowingChatTools } from "../../Model/model";
+import { translation } from "../../translations";
 
 export function ThreadView(chat: Chat) {
   const messageConverter: React.StateItemConverter<ChatMessage> = (message) => {

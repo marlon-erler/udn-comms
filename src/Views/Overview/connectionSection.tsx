@@ -13,9 +13,9 @@ import {
   requestMailbox,
   resetAddressInput,
   serverAddressInput,
-} from "../Model/model";
+} from "../../Model/model";
 
-import { translation } from "../translations";
+import { translation } from "../../translations";
 
 const addressConverter: React.StateItemConverter<string> = (address) => {
   return <option>{address}</option>;

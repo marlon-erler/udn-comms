@@ -2,9 +2,9 @@ import * as React from "bloatless-react";
 
 import { isConnected, isEncryptionAvailable } from "../Model/model";
 
-import { ChatListSection } from "../Views/chatListSection";
-import { ConnectionSection } from "../Views/connectionSection";
-import { PersonalSection } from "../Views/personalSection";
+import { ChatListSection } from "../Views/Overview/chatListSection";
+import { ConnectionSection } from "../Views/Overview/connectionSection";
+import { PersonalSection } from "../Views/Overview/personalSection";
 import { translation } from "../translations";
 
 export function OverviewTab() {

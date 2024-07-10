@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
-import { Chat } from "../Model/chatModel";
-import { translation } from "../translations";
+import { Chat } from "../../Model/chatModel";
+import { translation } from "../../translations";
 
 export function MessageComposer(chat: Chat) {
   return (

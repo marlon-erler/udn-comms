@@ -1,8 +1,8 @@
 import * as React from "bloatless-react";
 
-import { Chat } from "../Model/chatModel";
-import { closeChatView } from "../Model/model";
-import { translation } from "../translations";
+import { Chat } from "../../Model/chatModel";
+import { closeChatView } from "../../Model/model";
+import { translation } from "../../translations";
 
 export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
   function closeModal() {

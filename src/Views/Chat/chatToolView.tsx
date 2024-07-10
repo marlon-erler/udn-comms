@@ -1,8 +1,8 @@
 import * as React from "bloatless-react";
 
-import { Chat, Item } from "../Model/chatModel";
+import { Chat, Item } from "../../Model/chatModel";
 
-import { translation } from "../translations";
+import { translation } from "../../translations";
 
 export function ChatToolView(chat: Chat) {
   function createItem() {

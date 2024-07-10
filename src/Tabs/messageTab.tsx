@@ -2,10 +2,10 @@ import * as React from "bloatless-react";
 
 import { closeChatView, isShowingChatTools, selectedChat, toggleChatTools } from "../Model/model";
 
-import { ChatOptionModal } from "../Views/chatOptionModal";
-import { ChatToolView } from "../Views/chatToolView";
-import { MessageComposer } from "../Views/messageComposer";
-import { ThreadView } from "../Views/threadView";
+import { ChatOptionModal } from "../Views/Chat/chatOptionModal";
+import { ChatToolView } from "../Views/Chat/chatToolView";
+import { MessageComposer } from "../Views/Chat/messageComposer";
+import { ThreadView } from "../Views/Chat/threadView";
 import { translation } from "../translations";
 
 export function MessageTab() {
