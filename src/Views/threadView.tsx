@@ -72,20 +72,68 @@ export function ThreadView(chat: Chat) {
     );
   };
 
-  const listElement = (
+  const outboxMessageConverter: React.ListItemConverter<ChatMessage> = (
+    message
+  ) => {
+    function remove() {
+      chat.deleteOutboxMessage(message);
+    }
+
+    return (
+      <div class="tile width-100 flex-no padding-0">
+        <div class="flex-column">
+          <div class="flex-row justify-apart align-center">
+            <b class="error padding-h">{translation.messageInOutbox}</b>
+            <span class="flex-row secondary">
+              <button aria-label={translation.deleteMessage} on:click={remove}>
+                <span class="icon">delete</span>
+              </button>
+            </span>
+          </div>
+          <div class="flex-column padding-h padding-bottom">
+            <b class="break-word">{message.body}</b>
+            <span class="secondary">
+              <b>{new Date(message.isoDate).toLocaleString()}</b>
+              <br></br>
+              {message.channel}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const messageList = (
     <div
       class="flex-column gap"
       children:append={[chat.messages, messageConverter]}
     ></div>
   );
-  chat.messages.handleAddition(() => {
+  const outboxList = (
+    <div
+      class="flex-column gap"
+      children:append={[chat.outbox, outboxMessageConverter]}
+    ></div>
+  );
+  const listWrapper = (
+    <div class="flex-column gap">
+      {messageList}
+      {outboxList}
+    </div>
+  );
+
+  function scrollToBottom() {
     const scrollFromBottom =
-      listElement.scrollHeight -
-      (listElement.scrollTop + listElement.offsetHeight);
+      listWrapper.scrollHeight -
+      (listWrapper.scrollTop + listWrapper.offsetHeight);
     if (scrollFromBottom > 400) return;
 
-    listElement.scrollTop = listElement.scrollHeight;
-  });
-  setTimeout(() => (listElement.scrollTop = listElement.scrollHeight), 50);
-  return listElement;
+    listWrapper.scrollTop = listWrapper.scrollHeight;
+  }
+
+  chat.messages.handleAddition(scrollToBottom);
+  chat.outbox.handleAddition(scrollToBottom);
+  setTimeout(() => (listWrapper.scrollTop = listWrapper.scrollHeight), 50);
+
+  return listWrapper;
 }

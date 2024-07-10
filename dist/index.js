@@ -346,6 +346,9 @@
     messages(id) {
       return id + "messages";
     },
+    outbox(id) {
+      return id + "outbox";
+    },
     composingMessage(id) {
       return id + "composing-message";
     }
@@ -360,6 +363,8 @@
     secondaryChannels;
     encryptionKey;
     messages;
+    outbox;
+    isOutBoxEmpty;
     composingMessage;
     primaryChannelInput;
     newSecondaryChannelName;
@@ -385,6 +390,11 @@
       );
       this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
       this.messages = restoreListState(storageKeys.messages(id));
+      this.outbox = restoreListState(storageKeys.outbox(id));
+      this.isOutBoxEmpty = createProxyState(
+        [this.outbox],
+        () => this.outbox.value.size == 0
+      );
       this.composingMessage = restoreState(
         storageKeys.composingMessage(id),
         ""
@@ -392,18 +402,12 @@
       this.newSecondaryChannelName = new State("");
       this.primaryChannelInput = new State(this.primaryChannel.value);
       this.cannotSendMessage = createProxyState(
-        [
-          this.primaryChannel,
-          this.composingMessage,
-          this.isSubscribed,
-          isConnected,
-          senderName
-        ],
-        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == "" || this.isSubscribed.value == false || isConnected.value == false
+        [this.primaryChannel, this.composingMessage, senderName],
+        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == ""
       );
       this.cannotResendMessage = createProxyState(
-        [this.primaryChannel, this.isSubscribed, isConnected, senderName],
-        () => this.primaryChannel.value == "" || senderName.value == "" || this.isSubscribed.value == false || isConnected.value == false
+        [this.primaryChannel, senderName],
+        () => this.primaryChannel.value == "" || senderName.value == ""
       );
       this.cannotAddSecondaryChannel = createProxyState(
         [this.newSecondaryChannelName],
@@ -447,6 +451,9 @@
     };
     handleSubscription = (isSubscribed) => {
       this.isSubscribed.value = isSubscribed;
+      if (isSubscribed == true) {
+        this.sendMessagesInOutbox();
+      }
     };
     handleMessage = (chatMessage) => {
       this.messages.add(chatMessage);
@@ -455,14 +462,15 @@
     // messages
     sendNewMessage = async () => {
       if (this.cannotSendMessage.value == true) return;
-      this.sendMessageText(this.composingMessage.value);
+      const message = await this.createMessage(this.composingMessage.value);
+      this.sendExistingMessage(message);
       this.composingMessage.value = "";
     };
     resendMessage = (message) => {
       if (this.cannotResendMessage.value == true) return;
-      this.sendMessageText(message.body);
+      this.sendExistingMessage(message);
     };
-    sendMessageText = async (messageText) => {
+    createMessage = async (messageText) => {
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ];
@@ -472,20 +480,35 @@
       ];
       const encrypted = this.encryptionKey.value == "" ? messageText : await encryptString(messageText, this.encryptionKey.value);
       const joinedChannelName = allChannelNames.join("/");
-      const messageObject = {
+      return {
         channel: joinedChannelName,
         sender: senderName.value,
         body: encrypted,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
-      const messageString = JSON.stringify(messageObject);
-      UDN.sendMessage(joinedChannelName, messageString);
+    };
+    sendExistingMessage = async (chatMessage) => {
+      if (isConnected.value == true && this.isSubscribed.value == true) {
+        const messageString = JSON.stringify(chatMessage);
+        UDN.sendMessage(chatMessage.channel, messageString);
+      } else {
+        this.outbox.add(chatMessage);
+      }
+    };
+    sendMessagesInOutbox = () => {
+      this.outbox.value.forEach((message) => {
+        this.sendExistingMessage(message);
+        this.outbox.remove(message);
+      });
     };
     clearMessages = () => {
       this.messages.clear();
     };
     deleteMessage = (message) => {
       this.messages.remove(message);
+    };
+    deleteOutboxMessage = (message) => {
+      this.outbox.remove(message);
     };
     decryptReceivedMessage = async (message) => {
       message.body = await decryptString(message.body, this.encryptionKey.value);
@@ -790,6 +813,7 @@
     showKey: "Show key",
     removeChat: "Remove chat",
     clearChatMessages: "Clear chat messages",
+    messageInOutbox: "Pending",
     noChatSelected: "No chat selected",
     composerPlaceholder: "Type a message...",
     sendMessage: "Send",
@@ -838,6 +862,7 @@
       removeChat: "Eliminar chat",
       clearChatMessages: "Eliminar todos mensajes",
       noChatSelected: "Selecciona un chat",
+      messageInOutbox: "Pendiente",
       composerPlaceholder: "Escribe un mensaje...",
       sendMessage: "Enviar",
       resendMessage: "Enviar de nuevo",
@@ -883,6 +908,7 @@
       removeChat: "Chat l\xF6schen",
       clearChatMessages: "Nachrichtenverlauf leeren",
       noChatSelected: "Kein Chat ausgew\xE4hlt",
+      messageInOutbox: "Ausstehend",
       composerPlaceholder: "Neue Nachricht...",
       sendMessage: "Senden",
       resendMessage: "Erneut senden",
@@ -1058,20 +1084,36 @@
         /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
       ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), /* @__PURE__ */ createElement("br", null), message.channel))));
     };
-    const listElement = /* @__PURE__ */ createElement(
+    const outboxMessageConverter = (message) => {
+      function remove() {
+        chat.deleteOutboxMessage(message);
+      }
+      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "error padding-h" }, translation.messageInOutbox), /* @__PURE__ */ createElement("span", { class: "flex-row secondary" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word" }, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), /* @__PURE__ */ createElement("br", null), message.channel))));
+    };
+    const messageList = /* @__PURE__ */ createElement(
       "div",
       {
         class: "flex-column gap",
         "children:append": [chat.messages, messageConverter]
       }
     );
-    chat.messages.handleAddition(() => {
-      const scrollFromBottom = listElement.scrollHeight - (listElement.scrollTop + listElement.offsetHeight);
+    const outboxList = /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:append": [chat.outbox, outboxMessageConverter]
+      }
+    );
+    const listWrapper = /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, messageList, outboxList);
+    function scrollToBottom() {
+      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
       if (scrollFromBottom > 400) return;
-      listElement.scrollTop = listElement.scrollHeight;
-    });
-    setTimeout(() => listElement.scrollTop = listElement.scrollHeight, 50);
-    return listElement;
+      listWrapper.scrollTop = listWrapper.scrollHeight;
+    }
+    chat.messages.handleAddition(scrollToBottom);
+    chat.outbox.handleAddition(scrollToBottom);
+    setTimeout(() => listWrapper.scrollTop = listWrapper.scrollHeight, 50);
+    return listWrapper;
   }
 
   // src/Tabs/messageTab.tsx

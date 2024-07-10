@@ -34,6 +34,8 @@ export class Chat {
 
   encryptionKey: React.State<string>;
   messages: React.ListState<ChatMessage>;
+  outbox: React.ListState<ChatMessage>;
+  isOutBoxEmpty: React.State<boolean>;
 
   composingMessage: React.State<string>;
   primaryChannelInput: React.State<string>;
@@ -66,6 +68,11 @@ export class Chat {
     );
     this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
     this.messages = React.restoreListState(storageKeys.messages(id));
+    this.outbox = React.restoreListState(storageKeys.outbox(id));
+    this.isOutBoxEmpty = React.createProxyState(
+      [this.outbox],
+      () => this.outbox.value.size == 0
+    );
 
     // inputs
     this.composingMessage = React.restoreState(
@@ -77,27 +84,15 @@ export class Chat {
 
     // guards
     this.cannotSendMessage = React.createProxyState(
-      [
-        this.primaryChannel,
-        this.composingMessage,
-        this.isSubscribed,
-        isConnected,
-        senderName,
-      ],
+      [this.primaryChannel, this.composingMessage, senderName],
       () =>
         this.primaryChannel.value == "" ||
         this.composingMessage.value == "" ||
-        senderName.value == "" ||
-        this.isSubscribed.value == false ||
-        isConnected.value == false
+        senderName.value == ""
     );
     this.cannotResendMessage = React.createProxyState(
-      [this.primaryChannel, this.isSubscribed, isConnected, senderName],
-      () =>
-        this.primaryChannel.value == "" ||
-        senderName.value == "" ||
-        this.isSubscribed.value == false ||
-        isConnected.value == false
+      [this.primaryChannel, senderName],
+      () => this.primaryChannel.value == "" || senderName.value == ""
     );
     this.cannotAddSecondaryChannel = React.createProxyState(
       [this.newSecondaryChannelName],
@@ -149,6 +144,10 @@ export class Chat {
 
   handleSubscription = (isSubscribed: boolean): void => {
     this.isSubscribed.value = isSubscribed;
+
+    if (isSubscribed == true) {
+      this.sendMessagesInOutbox();
+    }
   };
 
   handleMessage = (chatMessage: ChatMessage): void => {
@@ -160,16 +159,17 @@ export class Chat {
   sendNewMessage = async (): Promise<void> => {
     if (this.cannotSendMessage.value == true) return;
 
-    this.sendMessageText(this.composingMessage.value);
+    const message = await this.createMessage(this.composingMessage.value);
+    this.sendExistingMessage(message);
     this.composingMessage.value = "";
   };
 
   resendMessage = (message: ChatMessage) => {
     if (this.cannotResendMessage.value == true) return;
-    this.sendMessageText(message.body);
+    this.sendExistingMessage(message);
   };
 
-  sendMessageText = async (messageText: string): Promise<void> => {
+  createMessage = async (messageText: string): Promise<ChatMessage> => {
     // get channels
     const secondaryChannelNames: string[] = [
       ...this.secondaryChannels.value.values(),
@@ -187,16 +187,28 @@ export class Chat {
 
     // create object
     const joinedChannelName = allChannelNames.join("/");
-    const messageObject: ChatMessage = {
+    return {
       channel: joinedChannelName,
       sender: senderName.value,
       body: encrypted,
       isoDate: new Date().toISOString(),
     };
-    const messageString = JSON.stringify(messageObject);
+  };
 
-    // send
-    UDN.sendMessage(joinedChannelName, messageString);
+  sendExistingMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    if (isConnected.value == true && this.isSubscribed.value == true) {
+      const messageString = JSON.stringify(chatMessage);
+      UDN.sendMessage(chatMessage.channel, messageString);
+    } else {
+      this.outbox.add(chatMessage);
+    }
+  };
+
+  sendMessagesInOutbox = () => {
+    this.outbox.value.forEach((message) => {
+      this.sendExistingMessage(message)
+      this.outbox.remove(message);
+    });
   };
 
   clearMessages = (): void => {
@@ -205,6 +217,10 @@ export class Chat {
 
   deleteMessage = (message: ChatMessage): void => {
     this.messages.remove(message);
+  };
+
+  deleteOutboxMessage = (message: ChatMessage): void => {
+    this.outbox.remove(message);
   };
 
   decryptReceivedMessage = async (message: ChatMessage): Promise<void> => {

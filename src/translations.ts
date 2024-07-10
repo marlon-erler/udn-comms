@@ -50,6 +50,8 @@ const englishTranslations = {
   removeChat: "Remove chat",
   clearChatMessages: "Clear chat messages",
 
+  messageInOutbox: "Pending",
+
   noChatSelected: "No chat selected",
 
   composerPlaceholder: "Type a message...",
@@ -117,6 +119,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     noChatSelected: "Selecciona un chat",
 
+    messageInOutbox: "Pendiente",
+
     composerPlaceholder: "Escribe un mensaje...",
     sendMessage: "Enviar",
 
@@ -178,6 +182,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     clearChatMessages: "Nachrichtenverlauf leeren",
 
     noChatSelected: "Kein Chat ausgewählt",
+
+    messageInOutbox: "Ausstehend",
 
     composerPlaceholder: "Neue Nachricht...",
     sendMessage: "Senden",

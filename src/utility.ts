@@ -19,6 +19,10 @@ export const storageKeys = {
     return id + "messages";
   },
 
+  outbox(id: string): string {
+    return id + "outbox";
+  },
+
   composingMessage(id: string): string {
     return id + "composing-message";
   },
