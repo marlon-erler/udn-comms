@@ -118,7 +118,48 @@
     }
     // stringification
     toString() {
-      const array = [...this.value];
+      const array = [...this.value.values()];
+      const json = JSON.stringify(array);
+      return json;
+    }
+  };
+  var MapState = class extends State {
+    additionHandlers = /* @__PURE__ */ new Set();
+    removalHandlers = /* @__PURE__ */ new Map();
+    // init
+    constructor(initialItems) {
+      super(new Map(initialItems));
+    }
+    // list
+    set(key, item) {
+      this.value.set(key, item);
+      this.additionHandlers.forEach((handler) => handler(item));
+      this.callSubscriptions();
+    }
+    remove(key) {
+      const item = this.value.get(key);
+      if (!item) return;
+      this.value.delete(key);
+      this.callSubscriptions();
+      if (!this.removalHandlers.has(item)) return;
+      this.removalHandlers.get(item)(item);
+      this.removalHandlers.delete(item);
+    }
+    clear() {
+      this.value.clear();
+      this.callSubscriptions();
+    }
+    // handlers
+    handleAddition(handler) {
+      this.additionHandlers.add(handler);
+      [...this.value.values()].forEach(handler);
+    }
+    handleRemoval(item, handler) {
+      this.removalHandlers.set(item, handler);
+    }
+    // stringification
+    toString() {
+      const array = [...this.value.entries()];
       const json = JSON.stringify(array);
       return json;
     }
@@ -143,9 +184,8 @@
     persistState(localStorageKey, state);
     return state;
   }
-  function restoreListState(localStorageKey) {
+  function restoreListState(localStorageKey, initialItems = []) {
     const storedString = localStorage.getItem(localStorageKey) ?? "";
-    let initialItems = [];
     try {
       const array = JSON.parse(storedString);
       if (!Array.isArray(array)) throw "";
@@ -153,6 +193,18 @@
     } catch {
     }
     const state = new ListState(initialItems);
+    persistState(localStorageKey, state);
+    return state;
+  }
+  function restoreMapState(localStorageKey, initialItems = []) {
+    const storedString = localStorage.getItem(localStorageKey) ?? "";
+    try {
+      const array = JSON.parse(storedString);
+      if (!Array.isArray(array)) throw "";
+      initialItems = array;
+    } catch {
+    }
+    const state = new MapState(initialItems);
     persistState(localStorageKey, state);
     return state;
   }
@@ -346,6 +398,9 @@
     messages(id) {
       return id + "messages";
     },
+    items(id) {
+      return id + "items";
+    },
     outbox(id) {
       return id + "outbox";
     },
@@ -363,6 +418,7 @@
     secondaryChannels;
     encryptionKey;
     messages;
+    items;
     outbox;
     isOutBoxEmpty;
     composingMessage;
@@ -390,6 +446,7 @@
       );
       this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
       this.messages = restoreListState(storageKeys.messages(id));
+      this.items = restoreMapState(storageKeys.items(id));
       this.outbox = restoreListState(storageKeys.outbox(id));
       this.isOutBoxEmpty = createProxyState(
         [this.outbox],
@@ -441,7 +498,12 @@
       if (channels.indexOf(this.primaryChannel.value) == -1) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
-      const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+      const { sender, body, channel, isoDate, itemData } = JSON.parse(
+        data.messageBody
+      );
+      if (itemData != void 0) {
+        return this.handleItem(itemData);
+      }
       this.handleMessage({
         sender,
         body: await decryptString(body, this.encryptionKey.value),
@@ -459,21 +521,11 @@
       this.messages.add(chatMessage);
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
+    handleItem = (itemData) => {
+      console.log(itemData);
+    };
     // messages
-    sendNewMessage = async () => {
-      if (this.cannotSendMessage.value == true) return;
-      await this.sendMessageText(this.composingMessage.value);
-      this.composingMessage.value = "";
-    };
-    sendMessageText = async (text) => {
-      const message = await this.createMessage(text);
-      this.sendExistingMessage(message);
-    };
-    resendMessage = (message) => {
-      if (this.cannotResendMessage.value == true) return;
-      this.sendMessageText(message.body);
-    };
-    createMessage = async (messageText) => {
+    createMessage = async (messageText, itemData) => {
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ];
@@ -482,14 +534,29 @@
         ...secondaryChannelNames
       ];
       const joinedChannelName = allChannelNames.join("/");
-      return {
+      const messageObject = {
         channel: joinedChannelName,
         sender: senderName.value,
         body: messageText,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
+      if (itemData) messageObject.itemData = itemData;
+      return messageObject;
     };
-    sendExistingMessage = async (chatMessage) => {
+    sendMessageFromComposer = async () => {
+      if (this.cannotSendMessage.value == true) return;
+      await this.sendMessageFromText(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
+    sendMessageFromText = async (text) => {
+      const message = await this.createMessage(text);
+      this.sendMessage(message);
+    };
+    resendMessage = (message) => {
+      if (this.cannotResendMessage.value == true) return;
+      this.sendMessageFromText(message.body);
+    };
+    sendMessage = async (chatMessage) => {
       if (isConnected.value == true && this.isSubscribed.value == true) {
         const encrypted = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
         chatMessage.body = encrypted;
@@ -501,7 +568,7 @@
     };
     sendMessagesInOutbox = () => {
       this.outbox.value.forEach((message) => {
-        this.sendExistingMessage(message);
+        this.sendMessage(message);
         this.outbox.remove(message);
       });
     };
@@ -518,6 +585,12 @@
       message.body = await decryptString(message.body, this.encryptionKey.value);
       this.messages.callSubscriptions();
     };
+    // items
+    async createItem(item) {
+      this.items.set(item.id, item);
+      const message = await this.createMessage("", item);
+      this.sendMessage(message);
+    }
     // channel
     setChannel = () => {
       if (this.cannotSetChannel.value == true) return;
@@ -1031,7 +1104,13 @@
 
   // src/Views/chatToolView.tsx
   function ChatToolView(chat) {
-    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("span", null, "Tools"));
+    function createItem() {
+      chat.createItem({
+        id: UUID(),
+        title: "new item"
+      });
+    }
+    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null));
   }
 
   // src/Views/messageComposer.tsx
@@ -1043,13 +1122,13 @@
         style: "max-width: unset",
         placeholder: translation.composerPlaceholder,
         "bind:value": chat.composingMessage,
-        "on:enter": chat.sendNewMessage
+        "on:enter": chat.sendMessageFromComposer
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
-        "on:click": chat.sendNewMessage,
+        "on:click": chat.sendMessageFromComposer,
         "toggle:disabled": chat.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")

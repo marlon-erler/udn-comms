@@ -21,6 +21,18 @@ export interface ChatMessage {
   sender: string;
   body: string;
   isoDate: string;
+
+  itemData?: Item;
+}
+
+// item
+export interface Item {
+  id: string;
+  title: string;
+}
+
+export interface NoteItem extends Item {
+  body: string;
 }
 
 // chat
@@ -34,6 +46,7 @@ export class Chat {
 
   encryptionKey: React.State<string>;
   messages: React.ListState<ChatMessage>;
+  items: React.MapState<Item>;
   outbox: React.ListState<ChatMessage>;
   isOutBoxEmpty: React.State<boolean>;
 
@@ -68,6 +81,7 @@ export class Chat {
     );
     this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
     this.messages = React.restoreListState(storageKeys.messages(id));
+    this.items = React.restoreMapState(storageKeys.items(id));
     this.outbox = React.restoreListState(storageKeys.outbox(id));
     this.isOutBoxEmpty = React.createProxyState(
       [this.outbox],
@@ -133,7 +147,14 @@ export class Chat {
     if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
 
     if (!data.messageBody) return;
-    const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+    const { sender, body, channel, isoDate, itemData } = JSON.parse(
+      data.messageBody
+    );
+
+    if (itemData != undefined) {
+      return this.handleItem(itemData);
+    }
+
     this.handleMessage({
       sender,
       body: await decryptString(body, this.encryptionKey.value),
@@ -155,25 +176,15 @@ export class Chat {
     if (selectedChat.value != this) this.hasUnreadMessages.value = true;
   };
 
+  handleItem = (itemData: Item): void => {
+    console.log(itemData);
+  };
+
   // messages
-  sendNewMessage = async (): Promise<void> => {
-    if (this.cannotSendMessage.value == true) return;
-
-    await this.sendMessageText(this.composingMessage.value);
-    this.composingMessage.value = "";
-  };
-
-  sendMessageText = async (text: string): Promise<void> => {
-    const message = await this.createMessage(text);
-    this.sendExistingMessage(message);
-  };
-
-  resendMessage = (message: ChatMessage) => {
-    if (this.cannotResendMessage.value == true) return;
-    this.sendMessageText(message.body);
-  };
-
-  createMessage = async (messageText: string): Promise<ChatMessage> => {
+  createMessage = async (
+    messageText: string,
+    itemData?: Item
+  ): Promise<ChatMessage> => {
     // get channels
     const secondaryChannelNames: string[] = [
       ...this.secondaryChannels.value.values(),
@@ -185,15 +196,35 @@ export class Chat {
 
     // create object
     const joinedChannelName = allChannelNames.join("/");
-    return {
+    const messageObject: ChatMessage = {
       channel: joinedChannelName,
       sender: senderName.value,
       body: messageText,
       isoDate: new Date().toISOString(),
     };
+
+    if (itemData) messageObject.itemData = itemData;
+    return messageObject;
   };
 
-  sendExistingMessage = async (chatMessage: ChatMessage): Promise<void> => {
+  sendMessageFromComposer = async (): Promise<void> => {
+    if (this.cannotSendMessage.value == true) return;
+
+    await this.sendMessageFromText(this.composingMessage.value);
+    this.composingMessage.value = "";
+  };
+
+  sendMessageFromText = async (text: string): Promise<void> => {
+    const message = await this.createMessage(text);
+    this.sendMessage(message);
+  };
+
+  resendMessage = (message: ChatMessage) => {
+    if (this.cannotResendMessage.value == true) return;
+    this.sendMessageFromText(message.body);
+  };
+
+  sendMessage = async (chatMessage: ChatMessage): Promise<void> => {
     if (isConnected.value == true && this.isSubscribed.value == true) {
       const encrypted =
         this.encryptionKey.value == ""
@@ -211,7 +242,7 @@ export class Chat {
 
   sendMessagesInOutbox = () => {
     this.outbox.value.forEach((message) => {
-      this.sendExistingMessage(message);
+      this.sendMessage(message);
       this.outbox.remove(message);
     });
   };
@@ -232,6 +263,14 @@ export class Chat {
     message.body = await decryptString(message.body, this.encryptionKey.value);
     this.messages.callSubscriptions();
   };
+
+  // items
+  async createItem(item: Item): Promise<void> {
+    this.items.set(item.id, item);
+
+    const message = await this.createMessage("", item);
+    this.sendMessage(message);
+  }
 
   // channel
   setChannel = (): void => {

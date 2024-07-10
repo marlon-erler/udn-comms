@@ -4,9 +4,18 @@ import { Chat } from "../Model/chatModel";
 import { translation } from "../translations";
 
 export function ChatToolView(chat: Chat) {
+  function createItem() {
+    chat.createItem({
+      id: React.UUID(),
+      title: "new item",
+    });
+  }
+
   return (
     <div class="chat-tool-view">
-      <span>Tools</span>
+      <button on:click={createItem}>+</button>
+      <hr></hr>
+      
     </div>
   );
 }

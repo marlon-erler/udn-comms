@@ -12,11 +12,11 @@ export function MessageComposer(chat: Chat) {
         style="max-width: unset"
         placeholder={translation.composerPlaceholder}
         bind:value={chat.composingMessage}
-        on:enter={chat.sendNewMessage}
+        on:enter={chat.sendMessageFromComposer}
       ></input>
       <button
         class="primary"
-        on:click={chat.sendNewMessage}
+        on:click={chat.sendMessageFromComposer}
         toggle:disabled={chat.cannotSendMessage}
       >
         <span class="icon">send</span>
