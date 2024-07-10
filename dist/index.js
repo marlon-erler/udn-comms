@@ -1111,7 +1111,6 @@
       });
     }
     const itemConverter = (item) => {
-      console.log(item);
       return /* @__PURE__ */ createElement("span", null, item.title);
     };
     return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:append": [chat.items, itemConverter] }));
@@ -1204,13 +1203,17 @@
     );
     const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
     function scrollToBottom() {
-      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
-      if (scrollFromBottom > 400) return;
       listWrapper.scrollTop = listWrapper.scrollHeight;
     }
-    chat.messages.handleAddition(scrollToBottom);
-    chat.outbox.handleAddition(scrollToBottom);
-    setTimeout(() => listWrapper.scrollTop = listWrapper.scrollHeight, 50);
+    function scrollToBottomIfAppropriate() {
+      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
+      if (scrollFromBottom > 400) return;
+      scrollToBottom();
+    }
+    chat.messages.handleAddition(scrollToBottomIfAppropriate);
+    chat.outbox.handleAddition(scrollToBottomIfAppropriate);
+    isShowingChatTools.subscribe(() => scrollToBottom());
+    setTimeout(() => scrollToBottom(), 50);
     return listWrapper;
   }
 
