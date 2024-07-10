@@ -5,6 +5,7 @@ import {
   chatIds,
   chats,
   isConnected,
+  selectedChat,
   senderName,
   updateMailbox,
 } from "../Model/model";
@@ -28,14 +29,15 @@ export class Chat {
 
   isSubscribed = new React.State(false);
   primaryChannel = new React.State("");
+  hasUnreadMessages: React.State<boolean>;
   secondaryChannels: React.ListState<string>;
 
   encryptionKey: React.State<string>;
   messages: React.ListState<ChatMessage>;
 
   composingMessage: React.State<string>;
-  newSecondaryChannelName: React.State<string>;
   primaryChannelInput: React.State<string>;
+  newSecondaryChannelName: React.State<string>;
 
   cannotSendMessage: React.State<boolean>;
   cannotResendMessage: React.State<boolean>;
@@ -58,6 +60,10 @@ export class Chat {
     );
 
     // messaging
+    this.hasUnreadMessages = React.restoreState(
+      storageKeys.hasUnread(id),
+      false
+    );
     this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
     this.messages = React.restoreListState(storageKeys.messages(id));
 
@@ -147,6 +153,7 @@ export class Chat {
 
   handleMessage = (chatMessage: ChatMessage): void => {
     this.messages.add(chatMessage);
+    if (selectedChat.value != this) this.hasUnreadMessages.value = true;
   };
 
   // messages

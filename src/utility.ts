@@ -1,4 +1,8 @@
 export const storageKeys = {
+  hasUnread(id: string): string {
+    return id + "has-unread-messages";
+  },
+  
   primaryChannel(id: string): string {
     return id + "primary-channel";
   },

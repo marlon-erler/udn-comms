@@ -1,3 +1,5 @@
+import "./styles.css";
+
 import { MessageTab } from "./Tabs/messageTab";
 import { OverviewTab } from "./Tabs/overviewTab";
 

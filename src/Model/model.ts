@@ -160,6 +160,7 @@ export function closeChatView() {
 
 export function selectChat(chat: Chat) {
   selectedChat.value = chat;
+  chat.hasUnreadMessages.value = false;
   document.getElementById("message-tab")?.scrollIntoView();
 }
 

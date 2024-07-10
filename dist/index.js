@@ -331,6 +331,9 @@
 
   // src/utility.ts
   var storageKeys = {
+    hasUnread(id) {
+      return id + "has-unread-messages";
+    },
     primaryChannel(id) {
       return id + "primary-channel";
     },
@@ -353,12 +356,13 @@
     id;
     isSubscribed = new State(false);
     primaryChannel = new State("");
+    hasUnreadMessages;
     secondaryChannels;
     encryptionKey;
     messages;
     composingMessage;
-    newSecondaryChannelName;
     primaryChannelInput;
+    newSecondaryChannelName;
     cannotSendMessage;
     cannotResendMessage;
     cannotAddSecondaryChannel;
@@ -374,6 +378,10 @@
       );
       this.secondaryChannels = restoreListState(
         storageKeys.secondaryChannels(id)
+      );
+      this.hasUnreadMessages = restoreState(
+        storageKeys.hasUnread(id),
+        false
       );
       this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
       this.messages = restoreListState(storageKeys.messages(id));
@@ -442,6 +450,7 @@
     };
     handleMessage = (chatMessage) => {
       this.messages.add(chatMessage);
+      if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
     // messages
     sendNewMessage = async () => {
@@ -735,6 +744,7 @@
   }
   function selectChat(chat) {
     selectedChat.value = chat;
+    chat.hasUnreadMessages.value = false;
     document.getElementById("message-tab")?.scrollIntoView();
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
@@ -1100,7 +1110,17 @@
       [selectedChat],
       () => selectedChat.value == chat
     );
-    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"));
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile",
+        "on:click": select,
+        "toggle:selected": isSelected,
+        "toggle:unread": chat.hasUnreadMessages
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": chat.primaryChannel })),
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    );
   };
   function ChatListSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(

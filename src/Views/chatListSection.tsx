@@ -23,7 +23,12 @@ const chatConverter: React.ListItemConverter<Chat> = (chat) => {
   );
 
   return (
-    <button class="tile" on:click={select} toggle:selected={isSelected}>
+    <button
+      class="tile"
+      on:click={select}
+      toggle:selected={isSelected}
+      toggle:unread={chat.hasUnreadMessages}
+    >
       <div>
         <b class="ellipsis" subscribe:innerText={chat.primaryChannel}></b>
       </div>
