@@ -20,7 +20,7 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
     shouldShowKey.value == true ? "text" : "password"
   );
 
-  const secondaryChannelConverter: React.ListItemConverter<string> = (
+  const secondaryChannelConverter: React.StateItemConverter<string> = (
     secondaryChannel
   ) => {
     function remove() {

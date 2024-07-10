@@ -295,7 +295,7 @@
                     }
                   });
                 } catch {
-                  throw `error: cannot process subscribe:children directive because ListItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
                 }
               }
             }
@@ -501,7 +501,7 @@
       const { sender, body, channel, isoDate, itemData } = JSON.parse(
         data.messageBody
       );
-      if (itemData != void 0) {
+      if (itemData && itemData.id && itemData.title) {
         return this.handleItem(itemData);
       }
       this.handleMessage({
@@ -522,7 +522,7 @@
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
     handleItem = (itemData) => {
-      console.log(itemData);
+      this.items.set(itemData.id, itemData);
     };
     // messages
     createMessage = async (messageText, itemData) => {
@@ -1110,7 +1110,11 @@
         title: "new item"
       });
     }
-    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null));
+    const itemConverter = (item) => {
+      console.log(item);
+      return /* @__PURE__ */ createElement("span", null, item.title);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:append": [chat.items, itemConverter] }));
   }
 
   // src/Views/messageComposer.tsx

@@ -12,7 +12,7 @@ import {
 import { Chat } from "../Model/chatModel";
 import { translation } from "../translations";
 
-const chatConverter: React.ListItemConverter<Chat> = (chat) => {
+const chatConverter: React.StateItemConverter<Chat> = (chat) => {
   function select() {
     selectChat(chat);
   }

@@ -5,7 +5,7 @@ import { Chat, ChatMessage } from "../Model/chatModel";
 import { translation } from "../translations";
 
 export function ThreadView(chat: Chat) {
-  const messageConverter: React.ListItemConverter<ChatMessage> = (message) => {
+  const messageConverter: React.StateItemConverter<ChatMessage> = (message) => {
     function resendMessage() {
       chat.resendMessage(message);
     }
@@ -72,7 +72,7 @@ export function ThreadView(chat: Chat) {
     );
   };
 
-  const outboxMessageConverter: React.ListItemConverter<ChatMessage> = (
+  const outboxMessageConverter: React.StateItemConverter<ChatMessage> = (
     message
   ) => {
     function remove() {

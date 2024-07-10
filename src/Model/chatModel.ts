@@ -151,7 +151,7 @@ export class Chat {
       data.messageBody
     );
 
-    if (itemData != undefined) {
+    if (itemData && itemData.id && itemData.title) {
       return this.handleItem(itemData);
     }
 
@@ -177,7 +177,7 @@ export class Chat {
   };
 
   handleItem = (itemData: Item): void => {
-    console.log(itemData);
+    this.items.set(itemData.id, itemData);
   };
 
   // messages

@@ -17,7 +17,7 @@ import {
 
 import { translation } from "../translations";
 
-const addressConverter: React.ListItemConverter<string> = (address) => {
+const addressConverter: React.StateItemConverter<string> = (address) => {
   return <option>{address}</option>;
 };
 
