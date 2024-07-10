@@ -132,6 +132,7 @@
     }
     // list
     set(key, item) {
+      this.remove(key);
       this.value.set(key, item);
       this.additionHandlers.forEach((handler) => handler(item));
       this.callSubscriptions();
@@ -404,6 +405,9 @@
     outbox(id) {
       return id + "outbox";
     },
+    itemOutbox(id) {
+      return id + "item-outbox";
+    },
     composingMessage(id) {
       return id + "composing-message";
     }
@@ -420,6 +424,7 @@
     messages;
     items;
     outbox;
+    itemOutbox;
     isOutBoxEmpty;
     composingMessage;
     primaryChannelInput;
@@ -448,6 +453,7 @@
       this.messages = restoreListState(storageKeys.messages(id));
       this.items = restoreMapState(storageKeys.items(id));
       this.outbox = restoreListState(storageKeys.outbox(id));
+      this.itemOutbox = restoreListState(storageKeys.itemOutbox(id));
       this.isOutBoxEmpty = createProxyState(
         [this.outbox],
         () => this.outbox.value.size == 0
@@ -563,6 +569,7 @@
         const messageString = JSON.stringify(chatMessage);
         UDN.sendMessage(chatMessage.channel, messageString);
       } else {
+        if (chatMessage.itemData) return this.itemOutbox.add(chatMessage);
         this.outbox.add(chatMessage);
       }
     };
@@ -570,6 +577,10 @@
       this.outbox.value.forEach((message) => {
         this.sendMessage(message);
         this.outbox.remove(message);
+      });
+      this.itemOutbox.value.forEach((message) => {
+        this.sendMessage(message);
+        this.itemOutbox.remove(message);
       });
     };
     clearMessages = () => {

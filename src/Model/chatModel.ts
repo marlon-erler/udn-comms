@@ -48,6 +48,7 @@ export class Chat {
   messages: React.ListState<ChatMessage>;
   items: React.MapState<Item>;
   outbox: React.ListState<ChatMessage>;
+  itemOutbox: React.ListState<ChatMessage>;
   isOutBoxEmpty: React.State<boolean>;
 
   composingMessage: React.State<string>;
@@ -83,6 +84,7 @@ export class Chat {
     this.messages = React.restoreListState(storageKeys.messages(id));
     this.items = React.restoreMapState(storageKeys.items(id));
     this.outbox = React.restoreListState(storageKeys.outbox(id));
+    this.itemOutbox = React.restoreListState(storageKeys.itemOutbox(id));
     this.isOutBoxEmpty = React.createProxyState(
       [this.outbox],
       () => this.outbox.value.size == 0
@@ -236,6 +238,7 @@ export class Chat {
       const messageString = JSON.stringify(chatMessage);
       UDN.sendMessage(chatMessage.channel, messageString);
     } else {
+      if (chatMessage.itemData) return this.itemOutbox.add(chatMessage);
       this.outbox.add(chatMessage);
     }
   };
@@ -244,6 +247,10 @@ export class Chat {
     this.outbox.value.forEach((message) => {
       this.sendMessage(message);
       this.outbox.remove(message);
+    });
+    this.itemOutbox.value.forEach((message) => {
+      this.sendMessage(message);
+      this.itemOutbox.remove(message);
     });
   };
 
