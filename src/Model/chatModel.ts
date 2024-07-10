@@ -159,14 +159,18 @@ export class Chat {
   sendNewMessage = async (): Promise<void> => {
     if (this.cannotSendMessage.value == true) return;
 
-    const message = await this.createMessage(this.composingMessage.value);
-    this.sendExistingMessage(message);
+    await this.sendMessageText(this.composingMessage.value);
     this.composingMessage.value = "";
+  };
+
+  sendMessageText = async (text: string): Promise<void> => {
+    const message = await this.createMessage(text);
+    this.sendExistingMessage(message);
   };
 
   resendMessage = (message: ChatMessage) => {
     if (this.cannotResendMessage.value == true) return;
-    this.sendExistingMessage(message);
+    this.sendMessageText(message.body);
   };
 
   createMessage = async (messageText: string): Promise<ChatMessage> => {
