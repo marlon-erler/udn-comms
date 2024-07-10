@@ -61,7 +61,11 @@ export function ThreadView(chat: Chat) {
           </div>
           <div class="flex-column padding-h padding-bottom">
             <b class="break-word" subscribe:innerText={messageBody}></b>
-            <span class="secondary"><b>{new Date(message.isoDate).toLocaleString()}</b> - {message.channel}</span>
+            <span class="secondary">
+              <b>{new Date(message.isoDate).toLocaleString()}</b>
+              <br></br>
+              {message.channel}
+            </span>
           </div>
         </div>
       </div>

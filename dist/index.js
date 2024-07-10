@@ -707,7 +707,6 @@
     UDN.connectMailbox(id);
   };
   UDN.onmailboxconnect = (id) => {
-    console.log(id);
     isMailboxActive.value = true;
   };
   UDN.onmailboxdelete = () => {
@@ -1047,7 +1046,7 @@
           "on:click": decrypt2
         },
         /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
-      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), " - ", message.channel))));
+      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), /* @__PURE__ */ createElement("br", null), message.channel))));
     };
     const listElement = /* @__PURE__ */ createElement(
       "div",
