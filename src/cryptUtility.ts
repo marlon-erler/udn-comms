@@ -5,8 +5,8 @@ const ENCRYPTION_ALG = "AES-GCM";
 export async function encryptString(
   plaintext: string,
   passphrase: string
-): Promise<string | false> {
-  if (!window.crypto.subtle) return false;
+): Promise<string> {
+  if (!window.crypto.subtle) return plaintext;
 
   const iv = generateIV();
   const key = await importKey(passphrase, "encrypt");

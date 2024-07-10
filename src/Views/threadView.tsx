@@ -6,6 +6,10 @@ import { translation } from "../translations";
 
 export function ThreadView(chat: Chat) {
   const messageConverter: React.ListItemConverter<ChatMessage> = (message) => {
+    function resendMessage() {
+      chat.resendMessage(message);
+    }
+
     function copyMessage() {
       navigator.clipboard.writeText(message.body);
     }
@@ -28,9 +32,16 @@ export function ThreadView(chat: Chat) {
         <div class="flex-column">
           <div class="flex-row justify-apart align-center secondary">
             <span class="padding-h ellipsis">
-              <b class="info">{message.sender}</b> - {message.channel}
+              <b class="info">{message.sender}</b>
             </span>
             <span class="flex-row">
+              <button
+                aria-label={translation.resendMessage}
+                on:click={resendMessage}
+                toggle:disabled={chat.cannotResendMessage}
+              >
+                <span class="icon">replay</span>
+              </button>
               <button
                 aria-label={translation.copyMessage}
                 on:click={copyMessage}
@@ -50,9 +61,7 @@ export function ThreadView(chat: Chat) {
           </div>
           <div class="flex-column padding-h padding-bottom">
             <b class="break-word" subscribe:innerText={messageBody}></b>
-            <span class="secondary">
-              {new Date(message.isoDate).toLocaleString()}
-            </span>
+            <span class="secondary"><b>{new Date(message.isoDate).toLocaleString()}</b> - {message.channel}</span>
           </div>
         </div>
       </div>

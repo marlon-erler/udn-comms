@@ -38,6 +38,7 @@ export class Chat {
   primaryChannelInput: React.State<string>;
 
   cannotSendMessage: React.State<boolean>;
+  cannotResendMessage: React.State<boolean>;
   cannotAddSecondaryChannel: React.State<boolean>;
   cannotSetChannel: React.State<boolean>;
   cannotUndoChannel: React.State<boolean>;
@@ -80,6 +81,14 @@ export class Chat {
       () =>
         this.primaryChannel.value == "" ||
         this.composingMessage.value == "" ||
+        senderName.value == "" ||
+        this.isSubscribed.value == false ||
+        isConnected.value == false
+    );
+    this.cannotResendMessage = React.createProxyState(
+      [this.primaryChannel, this.isSubscribed, isConnected, senderName],
+      () =>
+        this.primaryChannel.value == "" ||
         senderName.value == "" ||
         this.isSubscribed.value == false ||
         isConnected.value == false
@@ -141,9 +150,19 @@ export class Chat {
   };
 
   // messages
-  sendMessage = async (): Promise<void> => {
+  sendNewMessage = async (): Promise<void> => {
     if (this.cannotSendMessage.value == true) return;
 
+    this.sendMessageText(this.composingMessage.value);
+    this.composingMessage.value = "";
+  };
+
+  resendMessage = (message: ChatMessage) => {
+    if (this.cannotResendMessage.value == true) return;
+    this.sendMessageText(message.body);
+  };
+
+  sendMessageText = async (messageText: string): Promise<void> => {
     // get channels
     const secondaryChannelNames: string[] = [
       ...this.secondaryChannels.value.values(),
@@ -156,11 +175,8 @@ export class Chat {
     // encrypt
     const encrypted =
       this.encryptionKey.value == ""
-        ? this.composingMessage.value
-        : (await encryptString(
-            this.composingMessage.value,
-            this.encryptionKey.value
-          )) || this.composingMessage.value;
+        ? messageText
+        : await encryptString(messageText, this.encryptionKey.value);
 
     // create object
     const joinedChannelName = allChannelNames.join("/");
@@ -174,9 +190,6 @@ export class Chat {
 
     // send
     UDN.sendMessage(joinedChannelName, messageString);
-
-    // clear
-    this.composingMessage.value = "";
   };
 
   clearMessages = (): void => {

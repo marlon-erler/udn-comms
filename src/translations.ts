@@ -55,6 +55,7 @@ const englishTranslations = {
   composerPlaceholder: "Type a message...",
   sendMessage: "Send",
 
+  resendMessage: "Resend message",
   decryptMessage: "Decrypt message",
   copyMessage: "Copy message",
   deleteMessage: "Delete message",
@@ -119,6 +120,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     composerPlaceholder: "Escribe un mensaje...",
     sendMessage: "Enviar",
 
+    resendMessage: "Enviar de nuevo",
     decryptMessage: "Descifrar mensaje",
     copyMessage: "Copiar mensaje",
     deleteMessage: "Eliminar este mensaje",
@@ -180,6 +182,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     composerPlaceholder: "Neue Nachricht...",
     sendMessage: "Senden",
 
+    resendMessage: "Erneut senden",
     decryptMessage: "Nachricht entschlüsseln",
     copyMessage: "Nachricht kopieren",
     deleteMessage: "Nachricht löschen",

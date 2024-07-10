@@ -260,7 +260,7 @@
   var IV_SIZE = 12;
   var ENCRYPTION_ALG = "AES-GCM";
   async function encryptString(plaintext, passphrase) {
-    if (!window.crypto.subtle) return false;
+    if (!window.crypto.subtle) return plaintext;
     const iv = generateIV();
     const key = await importKey(passphrase, "encrypt");
     const encryptedArray = await encrypt(iv, key, plaintext);
@@ -360,6 +360,7 @@
     newSecondaryChannelName;
     primaryChannelInput;
     cannotSendMessage;
+    cannotResendMessage;
     cannotAddSecondaryChannel;
     cannotSetChannel;
     cannotUndoChannel;
@@ -391,6 +392,10 @@
           senderName
         ],
         () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == "" || this.isSubscribed.value == false || isConnected.value == false
+      );
+      this.cannotResendMessage = createProxyState(
+        [this.primaryChannel, this.isSubscribed, isConnected, senderName],
+        () => this.primaryChannel.value == "" || senderName.value == "" || this.isSubscribed.value == false || isConnected.value == false
       );
       this.cannotAddSecondaryChannel = createProxyState(
         [this.newSecondaryChannelName],
@@ -439,8 +444,16 @@
       this.messages.add(chatMessage);
     };
     // messages
-    sendMessage = async () => {
+    sendNewMessage = async () => {
       if (this.cannotSendMessage.value == true) return;
+      this.sendMessageText(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
+    resendMessage = (message) => {
+      if (this.cannotResendMessage.value == true) return;
+      this.sendMessageText(message.body);
+    };
+    sendMessageText = async (messageText) => {
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ];
@@ -448,10 +461,7 @@
         this.primaryChannel.value,
         ...secondaryChannelNames
       ];
-      const encrypted = this.encryptionKey.value == "" ? this.composingMessage.value : await encryptString(
-        this.composingMessage.value,
-        this.encryptionKey.value
-      ) || this.composingMessage.value;
+      const encrypted = this.encryptionKey.value == "" ? messageText : await encryptString(messageText, this.encryptionKey.value);
       const joinedChannelName = allChannelNames.join("/");
       const messageObject = {
         channel: joinedChannelName,
@@ -461,7 +471,6 @@
       };
       const messageString = JSON.stringify(messageObject);
       UDN.sendMessage(joinedChannelName, messageString);
-      this.composingMessage.value = "";
     };
     clearMessages = () => {
       this.messages.clear();
@@ -775,6 +784,7 @@
     noChatSelected: "No chat selected",
     composerPlaceholder: "Type a message...",
     sendMessage: "Send",
+    resendMessage: "Resend message",
     decryptMessage: "Decrypt message",
     copyMessage: "Copy message",
     deleteMessage: "Delete message"
@@ -821,6 +831,7 @@
       noChatSelected: "Selecciona un chat",
       composerPlaceholder: "Escribe un mensaje...",
       sendMessage: "Enviar",
+      resendMessage: "Enviar de nuevo",
       decryptMessage: "Descifrar mensaje",
       copyMessage: "Copiar mensaje",
       deleteMessage: "Eliminar este mensaje"
@@ -865,6 +876,7 @@
       noChatSelected: "Kein Chat ausgew\xE4hlt",
       composerPlaceholder: "Neue Nachricht...",
       sendMessage: "Senden",
+      resendMessage: "Erneut senden",
       decryptMessage: "Nachricht entschl\xFCsseln",
       copyMessage: "Nachricht kopieren",
       deleteMessage: "Nachricht l\xF6schen"
@@ -981,13 +993,13 @@
         style: "max-width: unset",
         placeholder: translation.composerPlaceholder,
         "bind:value": chat.composingMessage,
-        "on:enter": chat.sendMessage
+        "on:enter": chat.sendNewMessage
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
-        "on:click": chat.sendMessage,
+        "on:click": chat.sendNewMessage,
         "toggle:disabled": chat.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
@@ -997,6 +1009,9 @@
   // src/Views/threadView.tsx
   function ThreadView(chat) {
     const messageConverter = (message) => {
+      function resendMessage() {
+        chat.resendMessage(message);
+      }
       function copyMessage() {
         navigator.clipboard.writeText(message.body);
       }
@@ -1010,7 +1025,15 @@
         [chat.messages],
         () => message.body
       );
-      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender), " - ", message.channel), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
+      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender)), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          "aria-label": translation.resendMessage,
+          "on:click": resendMessage,
+          "toggle:disabled": chat.cannotResendMessage
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "replay")
+      ), /* @__PURE__ */ createElement(
         "button",
         {
           "aria-label": translation.copyMessage,
@@ -1024,7 +1047,7 @@
           "on:click": decrypt2
         },
         /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
-      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, new Date(message.isoDate).toLocaleString()))));
+      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), " - ", message.channel))));
     };
     const listElement = /* @__PURE__ */ createElement(
       "div",
