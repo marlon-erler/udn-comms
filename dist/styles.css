@@ -140,9 +140,11 @@ select,
 @media (hover: hover) {
   button:hover,
   select:hover,
-  button.tile.ghost:hover,
-  [selected]:active {
+  button.tile.ghost:hover {
     background-color: var(--surface-hover);
+  }
+  [selected]:hover {
+    background-color: var(--surface);
   }
 }
 button:active,
@@ -150,6 +152,9 @@ select:active,
 button.tile.ghost:active,
 [selected] {
   background-color: var(--surface-active);
+}
+[selected]:active {
+  background-color: var(--surface-hover);
 }
 header button {
   background-color: transparent;

@@ -139,6 +139,7 @@ export const chats = new React.ListState<Chat>();
 export const chatIds = React.restoreListState<string>("chat-ids");
 
 export const selectedChat = new React.State<Chat | undefined>(undefined);
+export const isShowingChatTools = new React.State(false);
 export const newChatName = new React.State("");
 
 export const cannotCreateChat = React.createProxyState(
@@ -154,6 +155,7 @@ export function createChat() {
 }
 
 export function closeChatView() {
+  isShowingChatTools.value = false;
   selectedChat.value = undefined;
   document.getElementById("settings-tab")?.scrollIntoView();
 }
@@ -162,6 +164,10 @@ export function selectChat(chat: Chat) {
   selectedChat.value = chat;
   chat.hasUnreadMessages.value = false;
   document.getElementById("message-tab")?.scrollIntoView();
+}
+
+export function toggleChatTools() {
+  isShowingChatTools.value = !isShowingChatTools.value;
 }
 
 chatIds.value.forEach((id) => chats.add(new Chat(id)));

@@ -36,6 +36,7 @@ const englishTranslations = {
 
   // messages
   showChatOptions: "show chat options",
+  toggleChatTools: "toggle chat tools",
   configureChatTitle: "Configure Chat",
 
   secondaryChannel: "Secondary channel",

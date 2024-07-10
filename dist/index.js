@@ -755,6 +755,7 @@
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
+  var isShowingChatTools = new State(false);
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
     [newChatName],
@@ -766,6 +767,7 @@
     newChatName.value = "";
   }
   function closeChatView() {
+    isShowingChatTools.value = false;
     selectedChat.value = void 0;
     document.getElementById("settings-tab")?.scrollIntoView();
   }
@@ -773,6 +775,9 @@
     selectedChat.value = chat;
     chat.hasUnreadMessages.value = false;
     document.getElementById("message-tab")?.scrollIntoView();
+  }
+  function toggleChatTools() {
+    isShowingChatTools.value = !isShowingChatTools.value;
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
@@ -807,6 +812,7 @@
     addChat: "Add",
     // messages
     showChatOptions: "show chat options",
+    toggleChatTools: "toggle chat tools",
     configureChatTitle: "Configure Chat",
     secondaryChannel: "Secondary channel",
     secondaryChannelPlaceholder: "Add secondary channel",
@@ -1023,6 +1029,11 @@
     ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
+  // src/Views/chatToolView.tsx
+  function ChatToolView(chat) {
+    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("span", null, "Tools"));
+  }
+
   // src/Views/messageComposer.tsx
   function MessageComposer(chat) {
     return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
@@ -1108,7 +1119,7 @@
         "children:append": [chat.outbox, outboxMessageConverter]
       }
     );
-    const listWrapper = /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, messageList, outboxList);
+    const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
     function scrollToBottom() {
       const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
       if (scrollFromBottom > 400) return;
@@ -1134,17 +1145,33 @@
         /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
           "button",
           {
+            "aria-label": translation.toggleChatTools,
+            "on:click": toggleChatTools,
+            "toggle:selected": isShowingChatTools
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "architecture")
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
             "aria-label": translation.showChatOptions,
             "on:click": showOptions
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
         ))),
+        ChatToolView(chat),
         ThreadView(chat),
         /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)),
         ChatOptionModal(chat, isShowingOptions)
       ];
     });
-    return /* @__PURE__ */ createElement("article", { id: "message-tab", "children:set": messageTabContent });
+    return /* @__PURE__ */ createElement(
+      "article",
+      {
+        "toggle:showingchattools": isShowingChatTools,
+        id: "message-tab",
+        "children:set": messageTabContent
+      }
+    );
   }
 
   // src/Views/chatListSection.tsx

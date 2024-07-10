@@ -116,7 +116,7 @@ export function ThreadView(chat: Chat) {
     ></div>
   );
   const listWrapper = (
-    <div class="flex-column gap">
+    <div class="thread-view flex-column gap">
       {messageList}
       {outboxList}
     </div>
