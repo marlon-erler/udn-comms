@@ -53,7 +53,7 @@
   flex: 1;
 }
 
-@media (max-height: 700px) and (min-width: 640px) and (max-width: 1400px) {
+@media (min-width: 640px) and (max-width: 1400px) {
   main.split:has([showingchattools]) {
     display: flex;
   }
@@ -63,7 +63,7 @@
   }
 }
 
-@media (min-width: 1400px) or ((max-height: 700px) and (min-width: 640px)) {
+@media (min-width: 640px) {
   [showingchattools] :is(.thread-view, .chat-tool-view) {
     top: var(--header-height);
     bottom: var(--footer-top-line);
