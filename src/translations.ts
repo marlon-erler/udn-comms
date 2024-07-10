@@ -1,9 +1,11 @@
 const englishTranslations = {
   // general
   set: "Set",
+  save: "Save",
   back: "Back",
   undoChanges: "Undo changes",
   close: "Close",
+  discard: "Discard",
 
   // overview
   overview: "Overview",
@@ -36,7 +38,6 @@ const englishTranslations = {
 
   // messages
   showChatOptions: "show chat options",
-  toggleChatTools: "toggle chat tools",
   configureChatTitle: "Configure Chat",
 
   secondaryChannel: "Secondary channel",
@@ -62,6 +63,14 @@ const englishTranslations = {
   decryptMessage: "Decrypt message",
   copyMessage: "Copy message",
   deleteMessage: "Delete message",
+
+  // objects
+  toggleChatTools: "toggle chat tools",
+
+  objectTitle: "Object title",
+  objectTitlePlaceholder: "My object",
+
+  deleteObject: "Delete object",
 };
 
 const allTranslations: { [key: string]: typeof englishTranslations } = {

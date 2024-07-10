@@ -19,7 +19,7 @@ export const storageKeys = {
     return id + "messages";
   },
 
-  items(id: string): string {
+  objects(id: string): string {
     return id + "items";
   },
 

@@ -399,7 +399,7 @@
     messages(id) {
       return id + "messages";
     },
-    items(id) {
+    objects(id) {
       return id + "items";
     },
     outbox(id) {
@@ -422,9 +422,9 @@
     secondaryChannels;
     encryptionKey;
     messages;
-    items;
+    objects;
     outbox;
-    itemOutbox;
+    objectOutbox;
     isOutBoxEmpty;
     composingMessage;
     primaryChannelInput;
@@ -451,9 +451,9 @@
       );
       this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
       this.messages = restoreListState(storageKeys.messages(id));
-      this.items = restoreMapState(storageKeys.items(id));
+      this.objects = restoreMapState(storageKeys.objects(id));
       this.outbox = restoreListState(storageKeys.outbox(id));
-      this.itemOutbox = restoreListState(storageKeys.itemOutbox(id));
+      this.objectOutbox = restoreListState(storageKeys.itemOutbox(id));
       this.isOutBoxEmpty = createProxyState(
         [this.outbox],
         () => this.outbox.value.size == 0
@@ -504,11 +504,11 @@
       if (channels.indexOf(this.primaryChannel.value) == -1) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
-      const { sender, body, channel, isoDate, itemData } = JSON.parse(
+      const { sender, body, channel, isoDate, messageObject } = JSON.parse(
         data.messageBody
       );
-      if (itemData && itemData.id && itemData.title) {
-        return this.handleItem(itemData);
+      if (messageObject && messageObject.id && messageObject.title) {
+        return this.handleMessageObject(messageObject);
       }
       this.handleMessage({
         sender,
@@ -527,11 +527,11 @@
       this.messages.add(chatMessage);
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
-    handleItem = (itemData) => {
-      this.items.set(itemData.id, itemData);
+    handleMessageObject = (messageObject) => {
+      this.objects.set(messageObject.id, messageObject);
     };
     // messages
-    createMessage = async (messageText, itemData) => {
+    createChatMessage = async (messageText, messageObject) => {
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ];
@@ -540,14 +540,14 @@
         ...secondaryChannelNames
       ];
       const joinedChannelName = allChannelNames.join("/");
-      const messageObject = {
+      const chatMessage = {
         channel: joinedChannelName,
         sender: senderName.value,
         body: messageText,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
-      if (itemData) messageObject.itemData = itemData;
-      return messageObject;
+      if (messageObject) chatMessage.messageObject = messageObject;
+      return chatMessage;
     };
     sendMessageFromComposer = async () => {
       if (this.cannotSendMessage.value == true) return;
@@ -555,12 +555,12 @@
       this.composingMessage.value = "";
     };
     sendMessageFromText = async (text) => {
-      const message = await this.createMessage(text);
-      this.sendMessage(message);
+      const chatMessage = await this.createChatMessage(text);
+      this.sendMessage(chatMessage);
     };
-    resendMessage = (message) => {
+    resendMessage = (chatMessage) => {
       if (this.cannotResendMessage.value == true) return;
-      this.sendMessageFromText(message.body);
+      this.sendMessageFromText(chatMessage.body);
     };
     sendMessage = async (chatMessage) => {
       if (isConnected.value == true && this.isSubscribed.value == true) {
@@ -569,7 +569,7 @@
         const messageString = JSON.stringify(chatMessage);
         UDN.sendMessage(chatMessage.channel, messageString);
       } else {
-        if (chatMessage.itemData) return this.itemOutbox.add(chatMessage);
+        if (chatMessage.messageObject) return this.objectOutbox.add(chatMessage);
         this.outbox.add(chatMessage);
       }
     };
@@ -578,29 +578,29 @@
         this.sendMessage(message);
         this.outbox.remove(message);
       });
-      this.itemOutbox.value.forEach((message) => {
+      this.objectOutbox.value.forEach((message) => {
         this.sendMessage(message);
-        this.itemOutbox.remove(message);
+        this.objectOutbox.remove(message);
       });
     };
     clearMessages = () => {
       this.messages.clear();
     };
-    deleteMessage = (message) => {
-      this.messages.remove(message);
+    deleteMessage = (chatMessage) => {
+      this.messages.remove(chatMessage);
     };
-    deleteOutboxMessage = (message) => {
-      this.outbox.remove(message);
+    deleteOutboxMessage = (chatMessage) => {
+      this.outbox.remove(chatMessage);
     };
-    decryptReceivedMessage = async (message) => {
-      message.body = await decryptString(message.body, this.encryptionKey.value);
+    decryptReceivedMessage = async (chatMessage) => {
+      chatMessage.body = await decryptString(chatMessage.body, this.encryptionKey.value);
       this.messages.callSubscriptions();
     };
-    // items
-    async createItem(item) {
-      this.items.set(item.id, item);
-      const message = await this.createMessage("", item);
-      this.sendMessage(message);
+    // objects
+    async createObject(object) {
+      this.objects.set(object.id, object);
+      const chatMessage = await this.createChatMessage("", object);
+      this.sendMessage(chatMessage);
     }
     // channel
     setChannel = () => {
@@ -872,9 +872,11 @@
   var englishTranslations = {
     // general
     set: "Set",
+    save: "Save",
     back: "Back",
     undoChanges: "Undo changes",
     close: "Close",
+    discard: "Discard",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -896,7 +898,6 @@
     addChat: "Add",
     // messages
     showChatOptions: "show chat options",
-    toggleChatTools: "toggle chat tools",
     configureChatTitle: "Configure Chat",
     secondaryChannel: "Secondary channel",
     secondaryChannelPlaceholder: "Add secondary channel",
@@ -914,7 +915,12 @@
     resendMessage: "Resend message",
     decryptMessage: "Decrypt message",
     copyMessage: "Copy message",
-    deleteMessage: "Delete message"
+    deleteMessage: "Delete message",
+    // objects
+    toggleChatTools: "toggle chat tools",
+    objectTitle: "Object title",
+    objectTitlePlaceholder: "My object",
+    deleteObject: "Delete object"
   };
   var allTranslations = {
     en: englishTranslations,
@@ -1014,7 +1020,7 @@
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
 
-  // src/Views/chatOptionModal.tsx
+  // src/Views/Chat/chatOptionModal.tsx
   function ChatOptionModal(chat, isPresented) {
     function closeModal() {
       isPresented.value = false;
@@ -1113,21 +1119,55 @@
     ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
-  // src/Views/chatToolView.tsx
+  // src/Views/Chat/itemDetailModal.tsx
+  function ItemDetailModal(chat, object, isPresented) {
+    function closeModal() {
+      isPresented.value = false;
+    }
+    function saveAndClose() {
+      object.title = editingTitle.value;
+      chat.objects.set(object.id, object);
+      closeModal();
+    }
+    function deleteAndClose() {
+      chat.objects.remove(object.id);
+      closeModal();
+    }
+    const editingTitle = new State(object.title);
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, object.title), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": editingTitle,
+        placeholder: translation.objectTitlePlaceholder
+      }
+    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/Views/Chat/chatToolView.tsx
   function ChatToolView(chat) {
+    const isShowingObjectModal = new State(false);
+    const selectedObject = new State(void 0);
+    const objectModal = createProxyState([selectedObject], () => {
+      if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
+      return ItemDetailModal(chat, selectedObject.value, isShowingObjectModal);
+    });
     function createItem() {
-      chat.createItem({
+      chat.createObject({
         id: UUID(),
         title: "new item"
       });
     }
-    const itemConverter = (item) => {
-      return /* @__PURE__ */ createElement("span", null, item.title);
+    const itemConverter = (object) => {
+      function select() {
+        selectedObject.value = object;
+        isShowingObjectModal.value = true;
+      }
+      return /* @__PURE__ */ createElement("button", { "on:click": select }, object.title);
     };
-    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:append": [chat.items, itemConverter] }));
+    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:append": [chat.objects, itemConverter] }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
 
-  // src/Views/messageComposer.tsx
+  // src/Views/Chat/messageComposer.tsx
   function MessageComposer(chat) {
     return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
       "input",
@@ -1149,7 +1189,7 @@
     ));
   }
 
-  // src/Views/threadView.tsx
+  // src/Views/Chat/threadView.tsx
   function ThreadView(chat) {
     const messageConverter = (message) => {
       function resendMessage() {
@@ -1271,7 +1311,7 @@
     );
   }
 
-  // src/Views/chatListSection.tsx
+  // src/Views/Overview/chatListSection.tsx
   var chatConverter = (chat) => {
     function select() {
       selectChat(chat);
@@ -1318,7 +1358,7 @@
     ));
   }
 
-  // src/Views/connectionSection.tsx
+  // src/Views/Overview/connectionSection.tsx
   var addressConverter = (address) => {
     return /* @__PURE__ */ createElement("option", null, address);
   };
@@ -1385,7 +1425,7 @@
     )));
   }
 
-  // src/Views/personalSection.tsx
+  // src/Views/Overview/personalSection.tsx
   function PersonalSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
       "input",

@@ -1,26 +1,43 @@
 import * as React from "bloatless-react";
 
-import { Chat, Item } from "../../Model/chatModel";
+import { Chat, MessageObject } from "../../Model/chatModel";
 
+import { ChatOptionModal } from "./chatOptionModal";
+import { ItemDetailModal } from "./itemDetailModal";
 import { translation } from "../../translations";
 
 export function ChatToolView(chat: Chat) {
+  const isShowingObjectModal = new React.State(false);
+  const selectedObject = new React.State<MessageObject | undefined>(undefined);
+  const objectModal = React.createProxyState([selectedObject], () => {
+    if (selectedObject.value == undefined) return <div></div>;
+
+    return ItemDetailModal(chat, selectedObject.value, isShowingObjectModal);
+  });
+
   function createItem() {
-    chat.createItem({
+    chat.createObject({
       id: React.UUID(),
       title: "new item",
     });
   }
 
-  const itemConverter: React.StateItemConverter<Item> = (item) => {
-    return <span>{item.title}</span>;
+  const itemConverter: React.StateItemConverter<MessageObject> = (object) => {
+    function select() {
+      selectedObject.value = object;
+      isShowingObjectModal.value = true;
+    }
+
+    return <button on:click={select}>{object.title}</button>;
   };
 
   return (
     <div class="chat-tool-view">
       <button on:click={createItem}>+</button>
       <hr></hr>
-      <div children:append={[chat.items, itemConverter]}></div>
+      <div children:append={[chat.objects, itemConverter]}></div>
+
+      <div children:set={objectModal}></div>
     </div>
   );
 }
