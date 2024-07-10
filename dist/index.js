@@ -478,17 +478,18 @@
         this.primaryChannel.value,
         ...secondaryChannelNames
       ];
-      const encrypted = this.encryptionKey.value == "" ? messageText : await encryptString(messageText, this.encryptionKey.value);
       const joinedChannelName = allChannelNames.join("/");
       return {
         channel: joinedChannelName,
         sender: senderName.value,
-        body: encrypted,
+        body: messageText,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
     };
     sendExistingMessage = async (chatMessage) => {
       if (isConnected.value == true && this.isSubscribed.value == true) {
+        const encrypted = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
+        chatMessage.body = encrypted;
         const messageString = JSON.stringify(chatMessage);
         UDN.sendMessage(chatMessage.channel, messageString);
       } else {

@@ -179,24 +179,25 @@ export class Chat {
       ...secondaryChannelNames,
     ];
 
-    // encrypt
-    const encrypted =
-      this.encryptionKey.value == ""
-        ? messageText
-        : await encryptString(messageText, this.encryptionKey.value);
-
     // create object
     const joinedChannelName = allChannelNames.join("/");
     return {
       channel: joinedChannelName,
       sender: senderName.value,
-      body: encrypted,
+      body: messageText,
       isoDate: new Date().toISOString(),
     };
   };
 
   sendExistingMessage = async (chatMessage: ChatMessage): Promise<void> => {
     if (isConnected.value == true && this.isSubscribed.value == true) {
+      const encrypted =
+        this.encryptionKey.value == ""
+          ? chatMessage.body
+          : await encryptString(chatMessage.body, this.encryptionKey.value);
+
+      chatMessage.body = encrypted;
+
       const messageString = JSON.stringify(chatMessage);
       UDN.sendMessage(chatMessage.channel, messageString);
     } else {
@@ -206,7 +207,7 @@ export class Chat {
 
   sendMessagesInOutbox = () => {
     this.outbox.value.forEach((message) => {
-      this.sendExistingMessage(message)
+      this.sendExistingMessage(message);
       this.outbox.remove(message);
     });
   };
