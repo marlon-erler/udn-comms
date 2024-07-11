@@ -16,7 +16,7 @@ export function ChatToolView(chat: Chat) {
   });
 
   function createItem() {
-    chat.createObject({
+    chat.addObjectAndSend({
       id: React.UUID(),
       title: "new item",
     });
@@ -35,7 +35,7 @@ export function ChatToolView(chat: Chat) {
     <div class="chat-tool-view">
       <button on:click={createItem}>+</button>
       <hr></hr>
-      <div children:append={[chat.objects, itemConverter]}></div>
+      <div children:prepend={[chat.objects, itemConverter]}></div>
 
       <div children:set={objectModal}></div>
     </div>

@@ -453,7 +453,7 @@
       this.messages = restoreListState(storageKeys.messages(id));
       this.objects = restoreMapState(storageKeys.objects(id));
       this.outbox = restoreListState(storageKeys.outbox(id));
-      this.objectOutbox = restoreListState(storageKeys.itemOutbox(id));
+      this.objectOutbox = restoreMapState(storageKeys.itemOutbox(id));
       this.isOutBoxEmpty = createProxyState(
         [this.outbox],
         () => this.outbox.value.size == 0
@@ -556,31 +556,20 @@
     };
     sendMessageFromText = async (text) => {
       const chatMessage = await this.createChatMessage(text);
-      this.sendMessage(chatMessage);
+      this.outbox.add(chatMessage);
+      this.sendMessagesInOutbox();
     };
     resendMessage = (chatMessage) => {
       if (this.cannotResendMessage.value == true) return;
       this.sendMessageFromText(chatMessage.body);
     };
-    sendMessage = async (chatMessage) => {
-      if (isConnected.value == true && this.isSubscribed.value == true) {
-        const encrypted = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
-        chatMessage.body = encrypted;
-        const messageString = JSON.stringify(chatMessage);
-        UDN.sendMessage(chatMessage.channel, messageString);
-      } else {
-        if (chatMessage.messageObject) return this.objectOutbox.add(chatMessage);
-        this.outbox.add(chatMessage);
-      }
-    };
     sendMessagesInOutbox = () => {
       this.outbox.value.forEach((message) => {
         this.sendMessage(message);
-        this.outbox.remove(message);
       });
-      this.objectOutbox.value.forEach((message) => {
-        this.sendMessage(message);
-        this.objectOutbox.remove(message);
+      this.objectOutbox.value.forEach(async (object) => {
+        const chatMessage = await this.createChatMessage("", object);
+        this.sendMessage(chatMessage);
       });
     };
     clearMessages = () => {
@@ -593,14 +582,28 @@
       this.outbox.remove(chatMessage);
     };
     decryptReceivedMessage = async (chatMessage) => {
-      chatMessage.body = await decryptString(chatMessage.body, this.encryptionKey.value);
+      chatMessage.body = await decryptString(
+        chatMessage.body,
+        this.encryptionKey.value
+      );
       this.messages.callSubscriptions();
     };
+    sendMessage = async (chatMessage) => {
+      if (isConnected.value == false || this.isSubscribed.value == false) return;
+      const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
+      chatMessage.body = encryptedBody;
+      const messageString = JSON.stringify(chatMessage);
+      UDN.sendMessage(chatMessage.channel, messageString);
+      this.outbox.remove(chatMessage);
+    };
     // objects
-    async createObject(object) {
+    async addObjectAndSend(object) {
       this.objects.set(object.id, object);
-      const chatMessage = await this.createChatMessage("", object);
-      this.sendMessage(chatMessage);
+      await this.sendObject(object);
+    }
+    async sendObject(object) {
+      this.objectOutbox.set(object.id, object);
+      this.sendMessagesInOutbox();
     }
     // channel
     setChannel = () => {
@@ -1126,7 +1129,7 @@
     }
     function saveAndClose() {
       object.title = editingTitle.value;
-      chat.objects.set(object.id, object);
+      chat.addObjectAndSend(object);
       closeModal();
     }
     function deleteAndClose() {
@@ -1152,7 +1155,7 @@
       return ItemDetailModal(chat, selectedObject.value, isShowingObjectModal);
     });
     function createItem() {
-      chat.createObject({
+      chat.addObjectAndSend({
         id: UUID(),
         title: "new item"
       });
@@ -1164,7 +1167,7 @@
       }
       return /* @__PURE__ */ createElement("button", { "on:click": select }, object.title);
     };
-    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:append": [chat.objects, itemConverter] }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:prepend": [chat.objects, itemConverter] }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
 
   // src/Views/Chat/messageComposer.tsx

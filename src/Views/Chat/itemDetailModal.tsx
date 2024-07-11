@@ -15,7 +15,8 @@ export function ItemDetailModal(
 
   function saveAndClose() {
     object.title = editingTitle.value;
-    chat.objects.set(object.id, object);
+    
+    chat.addObjectAndSend(object);
     closeModal();
   }
 
