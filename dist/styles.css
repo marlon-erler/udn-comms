@@ -395,6 +395,7 @@ main,
   display: flex;
 }
 
+header > span,
 .flex-column,
 .flex-row {
   display: flex;
@@ -455,6 +456,7 @@ label.inline,
   gap: var(--gap-in-controls);
 }
 
+header > span,
 .gap {
   gap: var(--gap-between-tiles) !important;
 }
@@ -584,6 +586,10 @@ textarea,
 
 .padding {
   padding: var(--control-padding) !important;
+}
+
+header > span {
+  padding: var(--gap-between-tiles);
 }
 
 .padding-sm {
@@ -747,9 +753,12 @@ select + .icon {
   height: var(--control-height);
 }
 
-header,
-header button {
+header {
   height: var(--header-height);
+}
+
+header button {
+  height: calc(var(--header-height) - var(--gap-between-tiles) * 2);
 }
 
 .ellipsis {
