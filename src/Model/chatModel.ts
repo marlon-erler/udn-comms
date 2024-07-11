@@ -29,11 +29,13 @@ export interface ChatMessage {
 export interface MessageObject {
   id: string;
   title: string;
-  dateLastEdited: Date;
+  isoDateLastEdited: string;
   contentVersions: MessageObjectContent[];
 }
 
-export interface MessageObjectContent {}
+export interface MessageObjectContent {
+  isoDateVersionCreated: string;
+}
 
 // chat
 export class Chat {
@@ -163,7 +165,8 @@ export class Chat {
         this.encryptionKey.value
       );
       const messageObject = JSON.parse(decryptedMessageObjectString);
-      if (messageObject.id && messageObject.title) return this.handleMessageObject(messageObject);
+      if (messageObject.id && messageObject.title)
+        return this.handleMessageObject(messageObject);
     }
 
     this.handleMessage({
@@ -296,7 +299,7 @@ export class Chat {
     return {
       id: React.UUID(),
       title,
-      dateLastEdited: new Date(),
+      isoDateLastEdited: new Date().toISOString(),
       contentVersions: [],
     };
   };
@@ -341,7 +344,10 @@ export class Chat {
     messageObject: MessageObject
   ): MessageObjectContent => {
     const versions = messageObject.contentVersions;
-    if (versions.length == 0) return {};
+    if (versions.length == 0)
+      return {
+        isoDateVersionCreated: new Date().toISOString(),
+      };
     return versions[versions.length - 1];
   };
 

@@ -508,16 +508,16 @@
       if (channels.indexOf(this.primaryChannel.value) == -1) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
-      const { sender, body, channel, isoDate, messageObject } = JSON.parse(
-        data.messageBody
-      );
-      if (messageObject) {
-        const decrypted = await decryptString(
-          messageObject,
+      const message = JSON.parse(data.messageBody);
+      const { sender, body, channel, isoDate, messageObjectString } = message;
+      if (messageObjectString) {
+        const decryptedMessageObjectString = await decryptString(
+          messageObjectString,
           this.encryptionKey.value
         );
-        const object = JSON.parse(decrypted);
-        if (object.id && object.title) return this.handleMessageObject(object);
+        const messageObject = JSON.parse(decryptedMessageObjectString);
+        if (messageObject.id && messageObject.title)
+          return this.handleMessageObject(messageObject);
       }
       this.handleMessage({
         sender,
@@ -545,10 +545,10 @@
         const isSent = await this.sendMessage(message);
         if (isSent == true) this.outbox.remove(message);
       });
-      this.objectOutbox.value.forEach(async (object) => {
-        const chatMessage = await this.createChatMessage("", object);
+      this.objectOutbox.value.forEach(async (messageObject) => {
+        const chatMessage = await this.createChatMessage("", messageObject);
         const isSent = await this.sendMessage(chatMessage);
-        if (isSent == true) this.objectOutbox.remove(object.id);
+        if (isSent == true) this.objectOutbox.remove(messageObject.id);
       });
     };
     // messages
@@ -568,7 +568,7 @@
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
       if (messageObject)
-        chatMessage.messageObject = await encryptString(
+        chatMessage.messageObjectString = await encryptString(
           JSON.stringify(messageObject),
           this.encryptionKey.value
         );
@@ -618,7 +618,7 @@
       return {
         id: UUID(),
         title,
-        dateLastEdited: /* @__PURE__ */ new Date(),
+        isoDateLastEdited: (/* @__PURE__ */ new Date()).toISOString(),
         contentVersions: []
       };
     };
@@ -626,22 +626,22 @@
       this.objects.set(messageObject.id, messageObject);
     };
     updateObject = (id, contents) => {
-      const object = this.objects.value.get(id);
-      if (!object) return;
-      object.contentVersions.push(contents);
-      this.sendObject(object);
+      const messageObject = this.objects.value.get(id);
+      if (!messageObject) return;
+      messageObject.contentVersions.push(contents);
+      this.sendObject(messageObject);
     };
-    addObjectAndSend = (object) => {
-      this.addObject(object);
-      this.sendObject(object);
+    addObjectAndSend = (messageObject) => {
+      this.addObject(messageObject);
+      this.sendObject(messageObject);
     };
-    sendObject = (object) => {
-      this.objectOutbox.set(object.id, object);
+    sendObject = (messageObject) => {
+      this.objectOutbox.set(messageObject.id, messageObject);
       this.sendMessagesInOutbox();
     };
-    deleteObject = (object) => {
-      this.objects.remove(object.id);
-      this.objectOutbox.remove(object.id);
+    deleteObject = (messageObject) => {
+      this.objects.remove(messageObject.id);
+      this.objectOutbox.remove(messageObject.id);
     };
     resendObjects = () => {
       this.objects.value.forEach((messageObject) => {
@@ -653,7 +653,10 @@
     };
     getLatestObjectContent = (messageObject) => {
       const versions = messageObject.contentVersions;
-      if (versions.length == 0) return {};
+      if (versions.length == 0)
+        return {
+          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
+        };
       return versions[versions.length - 1];
     };
     // channel
@@ -976,6 +979,7 @@
     toggleChatTools: "toggle chat tools",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
+    objectVersion: "Object version",
     resendObjects: "Resend all objects",
     deleteObject: "Delete object"
   };
@@ -1187,26 +1191,28 @@
 
   // src/Views/Objects/objectDetailModal.tsx
   function ObjectDetailModal(chat, messageObject, isPresented) {
+    const editingTitle = new State(messageObject.title);
     function closeModal() {
       isPresented.value = false;
     }
     function saveAndClose() {
       messageObject.title = editingTitle.value;
-      chat.updateObject(messageObject.id, {});
+      chat.updateObject(messageObject.id, {
+        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
+      });
       closeModal();
     }
     function deleteAndClose() {
       chat.deleteObject(messageObject);
       closeModal();
     }
-    const editingTitle = new State(messageObject.title);
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
-    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", null, ...messageObject.contentVersions.map((content) => /* @__PURE__ */ createElement("option", null, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/objectListEntry.tsx

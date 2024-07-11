@@ -602,7 +602,7 @@ label.tile:has(> span.icon) {
   padding-left: var(--control-padding);
 }
 
-label.tile:has(> span.icon) input {
+label.tile:has(> span.icon) :is(input, select) {
   padding-left: 0px;
 }
 
