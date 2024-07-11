@@ -1266,7 +1266,7 @@
     });
     const fieldElements = Object.entries(fields).map((field) => {
       const [icon, value] = field;
-      return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap align-center" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), value);
+      return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap align-center" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), /* @__PURE__ */ createElement("span", { class: "ellipsis" }, value));
     });
     return /* @__PURE__ */ createElement("button", { class: "tile justify-start", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements)));
   }

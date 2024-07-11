@@ -43,7 +43,7 @@ export function ObjectEntryView(
     return (
       <span class="flex-row control-gap align-center">
         <span class="icon">{icon}</span>
-        {value}
+        <span class="ellipsis">{value}</span>
       </span>
     );
   });
