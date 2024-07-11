@@ -511,8 +511,14 @@
       const { sender, body, channel, isoDate, messageObject } = JSON.parse(
         data.messageBody
       );
-      if (messageObject && messageObject.id && messageObject.title) {
-        return this.handleMessageObject(messageObject);
+      if (messageObject) {
+        const decrypted = await decryptString(
+          messageObject,
+          this.encryptionKey.value
+        );
+        console.log(decrypted);
+        const object = JSON.parse(decrypted);
+        if (object.id && object.title) return this.handleMessageObject(object);
       }
       this.handleMessage({
         sender,
@@ -534,6 +540,18 @@
     handleMessageObject = (messageObject) => {
       this.objects.set(messageObject.id, messageObject);
     };
+    // sending
+    sendMessagesInOutbox = () => {
+      this.outbox.value.forEach(async (message) => {
+        const isSent = await this.sendMessage(message);
+        if (isSent == true) this.outbox.remove(message);
+      });
+      this.objectOutbox.value.forEach(async (object) => {
+        const chatMessage = await this.createChatMessage("", object);
+        const isSent = await this.sendMessage(chatMessage);
+        if (isSent == true) this.objectOutbox.remove(object.id);
+      });
+    };
     // messages
     createChatMessage = async (messageText, messageObject) => {
       const secondaryChannelNames = [
@@ -550,7 +568,11 @@
         body: messageText,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
-      if (messageObject) chatMessage.messageObject = messageObject;
+      if (messageObject)
+        chatMessage.messageObject = await encryptString(
+          JSON.stringify(messageObject),
+          this.encryptionKey.value
+        );
       return chatMessage;
     };
     sendMessageFromComposer = async () => {
@@ -566,15 +588,6 @@
     resendMessage = (chatMessage) => {
       if (this.cannotResendMessage.value == true) return;
       this.sendMessageFromText(chatMessage.body);
-    };
-    sendMessagesInOutbox = () => {
-      this.outbox.value.forEach((message) => {
-        this.sendMessage(message);
-      });
-      this.objectOutbox.value.forEach(async (object) => {
-        const chatMessage = await this.createChatMessage("", object);
-        this.sendMessage(chatMessage);
-      });
     };
     clearMessages = () => {
       this.messages.clear();
@@ -593,14 +606,13 @@
       this.messages.callSubscriptions();
     };
     sendMessage = async (chatMessage) => {
-      if (isConnected.value == false || this.isSubscribed.value == false) return;
+      if (isConnected.value == false || this.isSubscribed.value == false)
+        return false;
       const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
       chatMessage.body = encryptedBody;
       const messageString = JSON.stringify(chatMessage);
       UDN.sendMessage(chatMessage.channel, messageString);
-      this.outbox.remove(chatMessage);
-      if (chatMessage.messageObject)
-        this.objectOutbox.remove(chatMessage.messageObject.id);
+      return true;
     };
     // objects
     addObjectAndSend = (object) => {
@@ -1139,7 +1151,7 @@
         "toggle:disabled": chat.cannotClearObjects
       },
       translation.clearObjects,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
     ), /* @__PURE__ */ createElement(
       "button",
       {

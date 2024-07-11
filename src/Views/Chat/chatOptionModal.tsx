@@ -147,7 +147,7 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
               toggle:disabled={chat.cannotClearObjects}
             >
               {translation.clearObjects}
-              <span class="icon">delete_sweep</span>
+              <span class="icon">deployed_code</span>
             </button>
 
             <button
