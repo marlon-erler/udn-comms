@@ -163,6 +163,12 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     createObject: "añadir nuevo objeto",
     untitledObject: "Sin Título",
 
+    viewAll: "Todos",
+    viewNotes: "Notas",
+
+    noObjects: "Sin objetos",
+    noNotes: "Sin notas",
+
     objectTitle: "Título",
     objectTitlePlaceholder: "Mi objeto",
 
@@ -245,6 +251,12 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     showObjects: "Objekte anzeigen",
     createObject: "Neues Objekt erstellen",
     untitledObject: "Unbenannt",
+
+    viewAll: "Alle",
+    viewNotes: "Notizen",
+    
+    noObjects: "Keine Objekte",
+    noNotes: "Keine Notizen",
 
     objectTitle: "Titel",
     objectTitlePlaceholder: "Mein Objekt",
