@@ -1443,7 +1443,7 @@
     return messageObjects.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement(
       "div",
       {
-        class: "width-100 grid gap padding scroll-v",
+        class: "width-100 height-100 grid gap padding scroll-v",
         style: "grid-template-columns: repeat(auto-fill, minmax(170px, 1fr))",
         "children:prepend": [messageObjects, objectConverter]
       }
