@@ -93,32 +93,34 @@ export function ObjectDetailModal(
 
           <hr></hr>
 
-          <label class="tile">
-            <span class="icon">history</span>
-            <div>
-              <span>{translation.objectVersion}</span>
-              <select bind:value={selectedMessageObjectIndex}>
-                {...messageObject.contentVersions.map((content, index) => (
-                  <option value={index}>
-                    {new Date(content.isoDateVersionCreated).toLocaleString()}
-                  </option>
-                ))}
-              </select>
-              <span class="icon">arrow_drop_down</span>
-            </div>
-          </label>
+          <div class="flex-column gap">
+            <label class="tile">
+              <span class="icon">history</span>
+              <div>
+                <span>{translation.objectVersion}</span>
+                <select bind:value={selectedMessageObjectIndex}>
+                  {...messageObject.contentVersions.map((content, index) => (
+                    <option value={index}>
+                      {new Date(content.isoDateVersionCreated).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+                <span class="icon">arrow_drop_down</span>
+              </div>
+            </label>
 
-          <label class="tile">
-            <span class="icon">sticky_note_2</span>
-            <div>
-              <span>{translation.noteContent}</span>
-              <textarea
-                rows="5"
-                bind:value={editingNoteContent}
-                placeholder={translation.noteContentPlaceholder}
-              ></textarea>
-            </div>
-          </label>
+            <label class="tile">
+              <span class="icon">sticky_note_2</span>
+              <div>
+                <span>{translation.noteContent}</span>
+                <textarea
+                  rows="5"
+                  bind:value={editingNoteContent}
+                  placeholder={translation.noteContentPlaceholder}
+                ></textarea>
+              </div>
+            </label>
+          </div>
 
           <hr></hr>
 
