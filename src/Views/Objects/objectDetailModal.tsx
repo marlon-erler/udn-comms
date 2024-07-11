@@ -80,20 +80,20 @@ export function ObjectDetailModal(
 
           <hr></hr>
 
-          <label class="tile">
-            <span class="icon">label</span>
-            <div>
-              <span>{translation.objectTitle}</span>
-              <input
-                bind:value={editingTitle}
-                placeholder={translation.objectTitlePlaceholder}
-              ></input>
-            </div>
-          </label>
-
-          <hr></hr>
-
           <div class="flex-column gap">
+            <label class="tile">
+              <span class="icon">label</span>
+              <div>
+                <span>{translation.objectTitle}</span>
+                <input
+                  bind:value={editingTitle}
+                  placeholder={translation.objectTitlePlaceholder}
+                ></input>
+              </div>
+            </label>
+
+            <hr></hr>
+
             <label class="tile">
               <span class="icon">history</span>
               <div>
@@ -120,14 +120,14 @@ export function ObjectDetailModal(
                 ></textarea>
               </div>
             </label>
+
+            <hr></hr>
+
+            <button class="danger width-input" on:click={deleteAndClose}>
+              {translation.deleteObject}
+              <span class="icon">delete</span>
+            </button>
           </div>
-
-          <hr></hr>
-
-          <button class="danger width-input" on:click={deleteAndClose}>
-            {translation.deleteObject}
-            <span class="icon">delete</span>
-          </button>
         </main>
 
         <div class="flex-row">

@@ -624,7 +624,6 @@
       return {
         id: UUID(),
         title,
-        isoDateLastEdited: (/* @__PURE__ */ new Date()).toISOString(),
         contentVersions: [this.createObjectContent()]
       };
     };
@@ -1255,20 +1254,20 @@
       chat.deleteObject(messageObject);
       closeModal();
     }
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectIndex }, ...messageObject.contentVersions.map((content, index) => /* @__PURE__ */ createElement("option", { value: index }, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectIndex }, ...messageObject.contentVersions.map((content, index) => /* @__PURE__ */ createElement("option", { value: index }, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "5",
         "bind:value": editingNoteContent,
         placeholder: translation.noteContentPlaceholder
       }
-    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/objectListEntry.tsx
