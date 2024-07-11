@@ -112,6 +112,7 @@ export function deleteMailbox(): void {
 }
 
 export function updateMailbox(): void {
+  if (isMailboxActive.value == false) return;
   deleteMailbox();
   setTimeout(() => requestMailbox(), 10);
 }

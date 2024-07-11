@@ -1155,6 +1155,7 @@
     UDN.deleteMailbox(mailboxId.value);
   }
   function updateMailbox() {
+    if (isMailboxActive.value == false) return;
     deleteMailbox();
     setTimeout(() => requestMailbox(), 10);
   }
