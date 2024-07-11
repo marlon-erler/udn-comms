@@ -133,6 +133,18 @@ UDN.onmailboxdelete = () => {
 // MISC
 export const isEncryptionAvailable = window.crypto.subtle != undefined;
 export const senderName = React.restoreState("sender-name", "");
+export const pageZoom = React.restoreState("page-zoom", 100);
+pageZoom.subscribe(() => {
+  document.body.style.zoom = `${pageZoom.value}%`;
+});
+
+const zoomStep = 10;
+export function zoomOut() {
+  pageZoom.value -= zoomStep;
+}
+export function zoomIn() {
+  pageZoom.value += zoomStep;
+}
 
 // CHAT
 export const chats = new React.ListState<Chat>();

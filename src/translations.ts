@@ -7,6 +7,9 @@ const englishTranslations = {
   close: "Close",
   discard: "Discard",
 
+  zoomOut: "zoom out",
+  zoomIn: "zoom in",
+
   // overview
   overview: "Overview",
 
@@ -99,6 +102,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     close: "Cerrar",
     discard: "Descartar",
 
+    zoomOut: "alejar",
+    zoomIn: "acercar",
+
     // overview
     overview: "Resumen",
 
@@ -188,6 +194,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     close: "Schließen",
     discard: "Verwerfen",
 
+    zoomOut: "verkleinern",
+    zoomIn: "vergrößern",
+
     // overview
     overview: "Übersicht",
 
@@ -254,7 +263,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     viewAll: "Alle",
     viewNotes: "Notizen",
-    
+
     noObjects: "Keine Objekte",
     noNotes: "Keine Notizen",
 

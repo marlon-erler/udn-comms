@@ -1071,10 +1071,6 @@ main {
     grid-template-columns: var(--split-pane-width-desktop) 1fr;
   }
 
-  footer {
-    bottom: 0px !important;
-  }
-
   article > div {
     padding-bottom: calc(var(--content-padding) + var(--control-height));
   }

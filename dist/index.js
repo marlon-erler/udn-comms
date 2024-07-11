@@ -923,6 +923,17 @@
   };
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
+  var pageZoom = restoreState("page-zoom", 100);
+  pageZoom.subscribe(() => {
+    document.body.style.zoom = `${pageZoom.value}%`;
+  });
+  var zoomStep = 10;
+  function zoomOut() {
+    pageZoom.value -= zoomStep;
+  }
+  function zoomIn() {
+    pageZoom.value += zoomStep;
+  }
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
@@ -964,6 +975,8 @@
     undoChanges: "Undo changes",
     close: "Close",
     discard: "Discard",
+    zoomOut: "zoom out",
+    zoomIn: "zoom in",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -1031,6 +1044,8 @@
       undoChanges: "Deshacer",
       close: "Cerrar",
       discard: "Descartar",
+      zoomOut: "alejar",
+      zoomIn: "acercar",
       // overview
       overview: "Resumen",
       connection: "Conexi\xF3n",
@@ -1096,6 +1111,8 @@
       undoChanges: "\xC4nderungen verwerfen",
       close: "Schlie\xDFen",
       discard: "Verwerfen",
+      zoomOut: "verkleinern",
+      zoomIn: "vergr\xF6\xDFern",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -1330,8 +1347,7 @@
       "button",
       {
         class: "height-100",
-        "on:click": createObject,
-        "aria-label": translation.createObject
+        disabled: true
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility")
     )), /* @__PURE__ */ createElement(
@@ -1733,7 +1749,7 @@
 
   // src/Tabs/overviewTab.tsx
   function OverviewTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement("button", { "on:click": zoomOut, "aria-label": translation.zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out")), /* @__PURE__ */ createElement("button", { "on:click": zoomIn, "aria-label": translation.zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in")))), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
   }
 
   // src/index.tsx
