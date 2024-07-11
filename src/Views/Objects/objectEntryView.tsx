@@ -54,7 +54,7 @@ export function ObjectEntryView(
 
   return (
     <button
-      class="tile justify-start"
+      class="tile flex-no"
       on:click={select}
       draggable="true"
       on:dragstart={dragStart}

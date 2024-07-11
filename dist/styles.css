@@ -761,6 +761,10 @@ header button {
   height: calc(var(--header-height) - var(--gap-between-tiles) * 2);
 }
 
+.max-height-100 {
+  max-height: 100% !important;
+}
+
 .ellipsis {
   max-width: 100%;
 }

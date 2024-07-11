@@ -1416,7 +1416,7 @@
     return /* @__PURE__ */ createElement(
       "button",
       {
-        class: "tile justify-start",
+        class: "tile flex-no",
         "on:click": select,
         draggable: "true",
         "on:dragstart": dragStart
@@ -1443,8 +1443,8 @@
     return messageObjects.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement(
       "div",
       {
-        class: "width-100 height-100 grid gap padding scroll-v",
-        style: "grid-template-columns: repeat(auto-fill, minmax(170px, 1fr))",
+        class: "width-100 max-height-100 grid gap padding scroll-v",
+        style: "grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));",
         "children:prepend": [messageObjects, objectConverter]
       }
     );
