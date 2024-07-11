@@ -1,9 +1,11 @@
 const englishTranslations = {
   // general
   set: "Set",
+  save: "Save",
   back: "Back",
   undoChanges: "Undo changes",
   close: "Close",
+  discard: "Discard",
 
   // overview
   overview: "Overview",
@@ -22,7 +24,7 @@ const englishTranslations = {
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
 
   connectToServer: "Connect",
-  disconnect: "Disonnect",
+  disconnect: "Disconnect",
 
   mailbox: "Mailbox",
   requestMailbox: "Enable",
@@ -34,7 +36,7 @@ const englishTranslations = {
   primaryChannelPlaceholder: "my-channel",
   addChat: "Add",
 
-  // messages
+  // chat
   showChatOptions: "show chat options",
   configureChatTitle: "Configure Chat",
 
@@ -47,8 +49,9 @@ const englishTranslations = {
   encryptionKeyPlaceholder: "n10d2482dg283hg",
   showKey: "Show key",
 
-  removeChat: "Remove chat",
+  clearObjects: "Delete all objects",
   clearChatMessages: "Clear chat messages",
+  removeChat: "Remove chat",
 
   messageInOutbox: "Pending",
 
@@ -57,10 +60,32 @@ const englishTranslations = {
   composerPlaceholder: "Type a message...",
   sendMessage: "Send",
 
+  // messages
   resendMessage: "Resend message",
   decryptMessage: "Decrypt message",
   copyMessage: "Copy message",
   deleteMessage: "Delete message",
+
+  // objects
+  showObjects: "show objects",
+  createObject: "create object",
+  untitledObject: "Untitled Object",
+
+  viewAll: "All",
+  viewNotes: "Notes",
+
+  noObjects: "No objects",
+  noNotes: "No notes",
+
+  objectTitle: "Object title",
+  objectTitlePlaceholder: "My object",
+
+  objectVersion: "Object version",
+  noteContent: "Note",
+  noteContentPlaceholder: "Take a note...",
+
+  resendObjects: "Resend all objects",
+  deleteObject: "Delete object",
 };
 
 const allTranslations: { [key: string]: typeof englishTranslations } = {
@@ -68,14 +93,16 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
   es: {
     // general
     set: "Guardar",
+    save: "Guardar",
     back: "Atrás",
     undoChanges: "Deshacer",
     close: "Cerrar",
+    discard: "Descartar",
 
     // overview
     overview: "Resumen",
 
-    connection: "Conexion",
+    connection: "Conexión",
     chats: "Chats",
 
     yourName: "Tu nombre",
@@ -85,7 +112,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     encryptionUnavailableMessage:
       "Obtén esta aplicación a traves de HTTPS o continúa sin cifrado",
 
-    serverAddress: "Direccion del servidor",
+    serverAddress: "Dirección del servidor",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
 
     connectToServer: "Conectar",
@@ -101,40 +128,65 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     primaryChannelPlaceholder: "mi-canal",
     addChat: "Añadir",
 
-    // messages
+    // chat
     showChatOptions: "Mostrar opciones del chat",
     configureChatTitle: "Configurar chat",
 
-    secondaryChannel: "Canal segundario",
-    secondaryChannelPlaceholder: "Añadir canal segundario",
-    addSecondaryChannel: "Añadir canal segundario",
-    removeSecondaryChannel: "Eliminar canal segundario",
+    secondaryChannel: "Canal secundario",
+    secondaryChannelPlaceholder: "Añadir canal secundario",
+    addSecondaryChannel: "Añadir canal secundario",
+    removeSecondaryChannel: "Eliminar canal secundario",
 
     encryptionKey: "Clave de cifrado",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
     showKey: "Mostrar clave",
 
+    clearObjects: "Eliminar todos los objetos",
+    clearChatMessages: "Eliminar todos los mensajes",
     removeChat: "Eliminar chat",
-    clearChatMessages: "Eliminar todos mensajes",
-
-    noChatSelected: "Selecciona un chat",
 
     messageInOutbox: "Pendiente",
+
+    noChatSelected: "Selecciona un chat",
 
     composerPlaceholder: "Escribe un mensaje...",
     sendMessage: "Enviar",
 
-    resendMessage: "Enviar de nuevo",
+    // messages
+    resendMessage: "Reenviar mensaje",
     decryptMessage: "Descifrar mensaje",
     copyMessage: "Copiar mensaje",
     deleteMessage: "Eliminar este mensaje",
+
+    // objects
+    showObjects: "mostrar objetos",
+    createObject: "añadir nuevo objeto",
+    untitledObject: "Sin Título",
+
+    viewAll: "Todos",
+    viewNotes: "Notas",
+
+    noObjects: "Sin objetos",
+    noNotes: "Sin notas",
+
+    objectTitle: "Título",
+    objectTitlePlaceholder: "Mi objeto",
+
+    objectVersion: "Version del objeto",
+    noteContent: "Nota",
+    noteContentPlaceholder: "Toma nota...",
+
+    resendObjects: "Reenviar todos objetos",
+    deleteObject: "Eliminar objeto",
   },
   de: {
     // general
     set: "OK",
+    save: "Sichern",
     back: "Zurück",
     undoChanges: "Änderungen verwerfen",
     close: "Schließen",
+    discard: "Verwerfen",
 
     // overview
     overview: "Übersicht",
@@ -165,7 +217,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     primaryChannelPlaceholder: "mein-kanal",
     addChat: "Hinzufügen",
 
-    // messages
+    // chat
     showChatOptions: "Chatoptionen einblenden",
     configureChatTitle: "Chat konfigurieren",
 
@@ -178,20 +230,43 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     encryptionKeyPlaceholder: "n10d2482dg283hg",
     showKey: "Schlüssel anzeigen",
 
-    removeChat: "Chat löschen",
+    clearObjects: "Alle Objekte löschen",
     clearChatMessages: "Nachrichtenverlauf leeren",
-
-    noChatSelected: "Kein Chat ausgewählt",
+    removeChat: "Chat löschen",
 
     messageInOutbox: "Ausstehend",
+
+    noChatSelected: "Kein Chat ausgewählt",
 
     composerPlaceholder: "Neue Nachricht...",
     sendMessage: "Senden",
 
+    // messages
     resendMessage: "Erneut senden",
     decryptMessage: "Nachricht entschlüsseln",
     copyMessage: "Nachricht kopieren",
     deleteMessage: "Nachricht löschen",
+
+    // objects
+    showObjects: "Objekte anzeigen",
+    createObject: "Neues Objekt erstellen",
+    untitledObject: "Unbenannt",
+
+    viewAll: "Alle",
+    viewNotes: "Notizen",
+    
+    noObjects: "Keine Objekte",
+    noNotes: "Keine Notizen",
+
+    objectTitle: "Titel",
+    objectTitlePlaceholder: "Mein Objekt",
+
+    objectVersion: "Version des Objekts",
+    noteContent: "Notiz",
+    noteContentPlaceholder: "Notiz eingeben...",
+
+    resendObjects: "Objekte erneut senden",
+    deleteObject: "Objekt löschen",
   },
 };
 

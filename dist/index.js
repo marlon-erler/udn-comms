@@ -76,6 +76,9 @@
       this._bindings.add(fn);
       fn(this._value);
     }
+    subscribeSilent(fn) {
+      this._bindings.add(fn);
+    }
     // stringify
     toString() {
       return JSON.stringify(this._value);
@@ -118,7 +121,48 @@
     }
     // stringification
     toString() {
-      const array = [...this.value];
+      const array = [...this.value.values()];
+      const json = JSON.stringify(array);
+      return json;
+    }
+  };
+  var MapState = class extends State {
+    additionHandlers = /* @__PURE__ */ new Set();
+    removalHandlers = /* @__PURE__ */ new Map();
+    // init
+    constructor(initialItems) {
+      super(new Map(initialItems));
+    }
+    // list
+    set(key, item) {
+      this.remove(key);
+      this.value.set(key, item);
+      this.additionHandlers.forEach((handler) => handler(item));
+      this.callSubscriptions();
+    }
+    remove(key) {
+      const item = this.value.get(key);
+      if (!item) return;
+      this.value.delete(key);
+      this.callSubscriptions();
+      if (!this.removalHandlers.has(item)) return;
+      this.removalHandlers.get(item)(item);
+      this.removalHandlers.delete(item);
+    }
+    clear() {
+      [...this.value.keys()].forEach((key) => this.remove(key));
+    }
+    // handlers
+    handleAddition(handler) {
+      this.additionHandlers.add(handler);
+      [...this.value.values()].forEach(handler);
+    }
+    handleRemoval(item, handler) {
+      this.removalHandlers.set(item, handler);
+    }
+    // stringification
+    toString() {
+      const array = [...this.value.entries()];
       const json = JSON.stringify(array);
       return json;
     }
@@ -129,6 +173,9 @@
       (state) => state.subscribe(() => proxyState.value = fn())
     );
     return proxyState;
+  }
+  function bulkSubscribe(statesToSubscibe, fn) {
+    statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
   }
   function persistState(localStorageKey, state) {
     state.subscribe(() => {
@@ -143,9 +190,8 @@
     persistState(localStorageKey, state);
     return state;
   }
-  function restoreListState(localStorageKey) {
+  function restoreListState(localStorageKey, initialItems = []) {
     const storedString = localStorage.getItem(localStorageKey) ?? "";
-    let initialItems = [];
     try {
       const array = JSON.parse(storedString);
       if (!Array.isArray(array)) throw "";
@@ -153,6 +199,18 @@
     } catch {
     }
     const state = new ListState(initialItems);
+    persistState(localStorageKey, state);
+    return state;
+  }
+  function restoreMapState(localStorageKey, initialItems = []) {
+    const storedString = localStorage.getItem(localStorageKey) ?? "";
+    try {
+      const array = JSON.parse(storedString);
+      if (!Array.isArray(array)) throw "";
+      initialItems = array;
+    } catch {
+    }
+    const state = new MapState(initialItems);
     persistState(localStorageKey, state);
     return state;
   }
@@ -243,7 +301,7 @@
                     }
                   });
                 } catch {
-                  throw `error: cannot process subscribe:children directive because ListItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
                 }
               }
             }
@@ -346,8 +404,14 @@
     messages(id) {
       return id + "messages";
     },
+    objects(id) {
+      return id + "items";
+    },
     outbox(id) {
       return id + "outbox";
+    },
+    itemOutbox(id) {
+      return id + "item-outbox";
     },
     composingMessage(id) {
       return id + "composing-message";
@@ -363,7 +427,9 @@
     secondaryChannels;
     encryptionKey;
     messages;
+    objects;
     outbox;
+    objectOutbox;
     isOutBoxEmpty;
     composingMessage;
     primaryChannelInput;
@@ -374,6 +440,7 @@
     cannotSetChannel;
     cannotUndoChannel;
     cannotClearMessages;
+    cannotClearObjects;
     // init
     constructor(id = UUID()) {
       this.id = id;
@@ -390,7 +457,9 @@
       );
       this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
       this.messages = restoreListState(storageKeys.messages(id));
+      this.objects = restoreMapState(storageKeys.objects(id));
       this.outbox = restoreListState(storageKeys.outbox(id));
+      this.objectOutbox = restoreMapState(storageKeys.itemOutbox(id));
       this.isOutBoxEmpty = createProxyState(
         [this.outbox],
         () => this.outbox.value.size == 0
@@ -425,6 +494,10 @@
         [this.messages],
         () => this.messages.value.size == 0
       );
+      this.cannotClearObjects = createProxyState(
+        [this.objects],
+        () => this.objects.value.size == 0
+      );
     }
     // general
     deleteSelf = () => {
@@ -441,7 +514,17 @@
       if (channels.indexOf(this.primaryChannel.value) == -1) return;
       if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
       if (!data.messageBody) return;
-      const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+      const message = JSON.parse(data.messageBody);
+      const { sender, body, channel, isoDate, messageObjectString } = message;
+      if (messageObjectString) {
+        const decryptedMessageObjectString = await decryptString(
+          messageObjectString,
+          this.encryptionKey.value
+        );
+        const messageObject = JSON.parse(decryptedMessageObjectString);
+        if (messageObject.id && messageObject.title)
+          return this.handleMessageObject(messageObject);
+      }
       this.handleMessage({
         sender,
         body: await decryptString(body, this.encryptionKey.value),
@@ -459,21 +542,23 @@
       this.messages.add(chatMessage);
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
+    handleMessageObject = (messageObject) => {
+      this.addObject(messageObject);
+    };
+    // sending
+    sendMessagesInOutbox = () => {
+      this.outbox.value.forEach(async (message) => {
+        const isSent = await this.sendMessage(message);
+        if (isSent == true) this.outbox.remove(message);
+      });
+      this.objectOutbox.value.forEach(async (messageObject) => {
+        const chatMessage = await this.createChatMessage("", messageObject);
+        const isSent = await this.sendMessage(chatMessage);
+        if (isSent == true) this.objectOutbox.remove(messageObject.id);
+      });
+    };
     // messages
-    sendNewMessage = async () => {
-      if (this.cannotSendMessage.value == true) return;
-      await this.sendMessageText(this.composingMessage.value);
-      this.composingMessage.value = "";
-    };
-    sendMessageText = async (text) => {
-      const message = await this.createMessage(text);
-      this.sendExistingMessage(message);
-    };
-    resendMessage = (message) => {
-      if (this.cannotResendMessage.value == true) return;
-      this.sendMessageText(message.body);
-    };
-    createMessage = async (messageText) => {
+    createChatMessage = async (messageText, messageObject) => {
       const secondaryChannelNames = [
         ...this.secondaryChannels.value.values()
       ];
@@ -482,41 +567,127 @@
         ...secondaryChannelNames
       ];
       const joinedChannelName = allChannelNames.join("/");
-      return {
+      const chatMessage = {
         channel: joinedChannelName,
         sender: senderName.value,
         body: messageText,
         isoDate: (/* @__PURE__ */ new Date()).toISOString()
       };
+      if (messageObject)
+        chatMessage.messageObjectString = await encryptString(
+          JSON.stringify(messageObject),
+          this.encryptionKey.value
+        );
+      return chatMessage;
     };
-    sendExistingMessage = async (chatMessage) => {
-      if (isConnected.value == true && this.isSubscribed.value == true) {
-        const encrypted = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
-        chatMessage.body = encrypted;
-        const messageString = JSON.stringify(chatMessage);
-        UDN.sendMessage(chatMessage.channel, messageString);
-      } else {
-        this.outbox.add(chatMessage);
-      }
+    sendMessageFromComposer = async () => {
+      if (this.cannotSendMessage.value == true) return;
+      await this.sendMessageFromText(this.composingMessage.value);
+      this.composingMessage.value = "";
     };
-    sendMessagesInOutbox = () => {
-      this.outbox.value.forEach((message) => {
-        this.sendExistingMessage(message);
-        this.outbox.remove(message);
-      });
+    sendMessageFromText = async (text) => {
+      const chatMessage = await this.createChatMessage(text);
+      this.outbox.add(chatMessage);
+      this.sendMessagesInOutbox();
+    };
+    resendMessage = (chatMessage) => {
+      if (this.cannotResendMessage.value == true) return;
+      this.sendMessageFromText(chatMessage.body);
     };
     clearMessages = () => {
       this.messages.clear();
     };
-    deleteMessage = (message) => {
-      this.messages.remove(message);
+    deleteMessage = (chatMessage) => {
+      this.messages.remove(chatMessage);
     };
-    deleteOutboxMessage = (message) => {
-      this.outbox.remove(message);
+    deleteOutboxMessage = (chatMessage) => {
+      this.outbox.remove(chatMessage);
     };
-    decryptReceivedMessage = async (message) => {
-      message.body = await decryptString(message.body, this.encryptionKey.value);
+    decryptReceivedMessage = async (chatMessage) => {
+      chatMessage.body = await decryptString(
+        chatMessage.body,
+        this.encryptionKey.value
+      );
       this.messages.callSubscriptions();
+    };
+    sendMessage = async (chatMessage) => {
+      if (isConnected.value == false || this.isSubscribed.value == false)
+        return false;
+      const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
+      chatMessage.body = encryptedBody;
+      const messageString = JSON.stringify(chatMessage);
+      UDN.sendMessage(chatMessage.channel, messageString);
+      return true;
+    };
+    // objects
+    createObjectFromTitle = (title) => {
+      const firstObjectContent = this.createObjectContent();
+      const messageObject = {
+        id: UUID(),
+        title,
+        contentVersions: {}
+      };
+      this.addObjectContent(messageObject, firstObjectContent);
+      return messageObject;
+    };
+    createObjectContent = () => {
+      return {
+        id: UUID(),
+        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    };
+    addObjectContent = (messageObject, content) => {
+      messageObject.contentVersions[content.id] = content;
+    };
+    addObject = (messageObject) => {
+      const existingObject = this.objects.value.get(messageObject.id);
+      if (existingObject) {
+        existingObject.title = messageObject.title;
+        Object.values(messageObject.contentVersions).forEach((content) => {
+          this.addObjectContent(existingObject, content);
+        });
+        this.objects.set(existingObject.id, existingObject);
+      } else {
+        this.objects.set(messageObject.id, messageObject);
+      }
+    };
+    addObjectAndSend = (messageObject) => {
+      this.addObject(messageObject);
+      this.sendObject(messageObject);
+    };
+    sendObject = (messageObject) => {
+      this.objectOutbox.set(messageObject.id, messageObject);
+      this.sendMessagesInOutbox();
+    };
+    deleteObject = (messageObject) => {
+      this.objects.remove(messageObject.id);
+      this.objectOutbox.remove(messageObject.id);
+    };
+    resendObjects = () => {
+      this.objects.value.forEach((messageObject) => {
+        this.sendObject(messageObject);
+      });
+    };
+    clearObjects = () => {
+      this.objects.clear();
+    };
+    getSortedContents = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      contents.sort(
+        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+      );
+      return contents;
+    };
+    getMostRecentContentId = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      return contents[contents.length - 1].id;
+    };
+    getMostRecentContent = (messageObject) => {
+      const id = this.getMostRecentContentId(messageObject);
+      return this.getObjectContentFromId(messageObject, id);
+    };
+    getObjectContentFromId = (messageObject, contentId) => {
+      return messageObject.contentVersions[contentId];
     };
     // channel
     setChannel = () => {
@@ -755,6 +926,7 @@
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
+  var isShowingChatTools = new State(false);
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
     [newChatName],
@@ -766,6 +938,7 @@
     newChatName.value = "";
   }
   function closeChatView() {
+    isShowingChatTools.value = false;
     selectedChat.value = void 0;
     document.getElementById("settings-tab")?.scrollIntoView();
   }
@@ -773,6 +946,9 @@
     selectedChat.value = chat;
     chat.hasUnreadMessages.value = false;
     document.getElementById("message-tab")?.scrollIntoView();
+  }
+  function toggleChatTools() {
+    isShowingChatTools.value = !isShowingChatTools.value;
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
@@ -783,9 +959,11 @@
   var englishTranslations = {
     // general
     set: "Set",
+    save: "Save",
     back: "Back",
     undoChanges: "Undo changes",
     close: "Close",
+    discard: "Discard",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -797,7 +975,7 @@
     serverAddress: "Server Address",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
-    disconnect: "Disonnect",
+    disconnect: "Disconnect",
     mailbox: "Mailbox",
     requestMailbox: "Enable",
     deleteMailbox: "Disable",
@@ -805,7 +983,7 @@
     primaryChannel: "Primary channel",
     primaryChannelPlaceholder: "my-channel",
     addChat: "Add",
-    // messages
+    // chat
     showChatOptions: "show chat options",
     configureChatTitle: "Configure Chat",
     secondaryChannel: "Secondary channel",
@@ -815,34 +993,53 @@
     encryptionKey: "Encryption key",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
     showKey: "Show key",
-    removeChat: "Remove chat",
+    clearObjects: "Delete all objects",
     clearChatMessages: "Clear chat messages",
+    removeChat: "Remove chat",
     messageInOutbox: "Pending",
     noChatSelected: "No chat selected",
     composerPlaceholder: "Type a message...",
     sendMessage: "Send",
+    // messages
     resendMessage: "Resend message",
     decryptMessage: "Decrypt message",
     copyMessage: "Copy message",
-    deleteMessage: "Delete message"
+    deleteMessage: "Delete message",
+    // objects
+    showObjects: "show objects",
+    createObject: "create object",
+    untitledObject: "Untitled Object",
+    viewAll: "All",
+    viewNotes: "Notes",
+    noObjects: "No objects",
+    noNotes: "No notes",
+    objectTitle: "Object title",
+    objectTitlePlaceholder: "My object",
+    objectVersion: "Object version",
+    noteContent: "Note",
+    noteContentPlaceholder: "Take a note...",
+    resendObjects: "Resend all objects",
+    deleteObject: "Delete object"
   };
   var allTranslations = {
     en: englishTranslations,
     es: {
       // general
       set: "Guardar",
+      save: "Guardar",
       back: "Atr\xE1s",
       undoChanges: "Deshacer",
       close: "Cerrar",
+      discard: "Descartar",
       // overview
       overview: "Resumen",
-      connection: "Conexion",
+      connection: "Conexi\xF3n",
       chats: "Chats",
       yourName: "Tu nombre",
       namePlaceholder: "Juan P\xE9rez",
       encryptionUnavailableTitle: "Cifrado no disponible",
       encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
-      serverAddress: "Direccion del servidor",
+      serverAddress: "Direcci\xF3n del servidor",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
       connectToServer: "Conectar",
       disconnect: "Desconectar",
@@ -853,33 +1050,48 @@
       primaryChannel: "Canal principal",
       primaryChannelPlaceholder: "mi-canal",
       addChat: "A\xF1adir",
-      // messages
+      // chat
       showChatOptions: "Mostrar opciones del chat",
       configureChatTitle: "Configurar chat",
-      secondaryChannel: "Canal segundario",
-      secondaryChannelPlaceholder: "A\xF1adir canal segundario",
-      addSecondaryChannel: "A\xF1adir canal segundario",
-      removeSecondaryChannel: "Eliminar canal segundario",
+      secondaryChannel: "Canal secundario",
+      secondaryChannelPlaceholder: "A\xF1adir canal secundario",
+      addSecondaryChannel: "A\xF1adir canal secundario",
+      removeSecondaryChannel: "Eliminar canal secundario",
       encryptionKey: "Clave de cifrado",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
       showKey: "Mostrar clave",
+      clearObjects: "Eliminar todos los objetos",
+      clearChatMessages: "Eliminar todos los mensajes",
       removeChat: "Eliminar chat",
-      clearChatMessages: "Eliminar todos mensajes",
-      noChatSelected: "Selecciona un chat",
       messageInOutbox: "Pendiente",
+      noChatSelected: "Selecciona un chat",
       composerPlaceholder: "Escribe un mensaje...",
       sendMessage: "Enviar",
-      resendMessage: "Enviar de nuevo",
+      // messages
+      resendMessage: "Reenviar mensaje",
       decryptMessage: "Descifrar mensaje",
       copyMessage: "Copiar mensaje",
-      deleteMessage: "Eliminar este mensaje"
+      deleteMessage: "Eliminar este mensaje",
+      // objects
+      showObjects: "mostrar objetos",
+      createObject: "a\xF1adir nuevo objeto",
+      untitledObject: "Sin T\xEDtulo",
+      objectTitle: "T\xEDtulo",
+      objectTitlePlaceholder: "Mi objeto",
+      objectVersion: "Version del objeto",
+      noteContent: "Nota",
+      noteContentPlaceholder: "Toma nota...",
+      resendObjects: "Reenviar todos objetos",
+      deleteObject: "Eliminar objeto"
     },
     de: {
       // general
       set: "OK",
+      save: "Sichern",
       back: "Zur\xFCck",
       undoChanges: "\xC4nderungen verwerfen",
       close: "Schlie\xDFen",
+      discard: "Verwerfen",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -899,7 +1111,7 @@
       primaryChannel: "Hauptkanal",
       primaryChannelPlaceholder: "mein-kanal",
       addChat: "Hinzuf\xFCgen",
-      // messages
+      // chat
       showChatOptions: "Chatoptionen einblenden",
       configureChatTitle: "Chat konfigurieren",
       secondaryChannel: "Zweitkanal",
@@ -909,22 +1121,232 @@
       encryptionKey: "Schl\xFCssel",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
       showKey: "Schl\xFCssel anzeigen",
-      removeChat: "Chat l\xF6schen",
+      clearObjects: "Alle Objekte l\xF6schen",
       clearChatMessages: "Nachrichtenverlauf leeren",
-      noChatSelected: "Kein Chat ausgew\xE4hlt",
+      removeChat: "Chat l\xF6schen",
       messageInOutbox: "Ausstehend",
+      noChatSelected: "Kein Chat ausgew\xE4hlt",
       composerPlaceholder: "Neue Nachricht...",
       sendMessage: "Senden",
+      // messages
       resendMessage: "Erneut senden",
       decryptMessage: "Nachricht entschl\xFCsseln",
       copyMessage: "Nachricht kopieren",
-      deleteMessage: "Nachricht l\xF6schen"
+      deleteMessage: "Nachricht l\xF6schen",
+      // objects
+      showObjects: "Objekte anzeigen",
+      createObject: "Neues Objekt erstellen",
+      untitledObject: "Unbenannt",
+      objectTitle: "Titel",
+      objectTitlePlaceholder: "Mein Objekt",
+      objectVersion: "Version des Objekts",
+      noteContent: "Notiz",
+      noteContentPlaceholder: "Notiz eingeben...",
+      resendObjects: "Objekte erneut senden",
+      deleteObject: "Objekt l\xF6schen"
     }
   };
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
 
-  // src/Views/chatOptionModal.tsx
+  // src/Views/Objects/allObjectsView.tsx
+  function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
+    const objectConverter = (messageObject) => {
+      function select() {
+        selectedObject.value = messageObject;
+        isShowingObjectModal.value = true;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+    };
+    const content = createProxyState(
+      [chat.objects],
+      () => chat.objects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noObjects) : /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap padding",
+          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
+          "children:prepend": [chat.objects, objectConverter]
+        }
+      )
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+  }
+
+  // src/Views/Objects/noteObjectsView.tsx
+  function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
+    const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      function select() {
+        selectedObject.value = messageObject;
+        isShowingObjectModal.value = true;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, latest.noteContent.split("\n")[0])));
+    };
+    const notes = new ListState();
+    chat.objects.subscribe(() => {
+      notes.clear();
+      chat.objects.value.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        if (!latest.noteContent) return;
+        notes.add(messageObject);
+      });
+    });
+    const content = createProxyState(
+      [chat.objects],
+      () => notes.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noNotes) : /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap padding",
+          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
+          "children:prepend": [notes, objectConverter]
+        }
+      )
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+  }
+
+  // src/Views/Objects/objectDetailModal.tsx
+  function ObjectDetailModal(chat, messageObject, isPresented) {
+    const editingTitle = new State(messageObject.title);
+    const selectedMessageObjectId = new State(
+      chat.getMostRecentContentId(messageObject)
+    );
+    const selectedMessageObject = createProxyState(
+      [selectedMessageObjectId],
+      () => chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
+    );
+    const didEditContent = new State(false);
+    const editingNoteContent = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.noteContent ?? ""
+    );
+    bulkSubscribe(
+      [editingNoteContent],
+      () => didEditContent.value = true
+    );
+    function handleKeyDown(e) {
+      if (!e.metaKey && !e.ctrlKey) return;
+      switch (e.key) {
+        case "s":
+          e.preventDefault();
+          saveAndClose();
+          break;
+      }
+    }
+    function closeModal() {
+      isPresented.value = false;
+    }
+    function saveAndClose() {
+      messageObject.title = editingTitle.value;
+      if (didEditContent.value == true) {
+        chat.addObjectContent(messageObject, {
+          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
+          id: UUID(),
+          noteContent: editingNoteContent.value
+        });
+      }
+      chat.addObjectAndSend(messageObject);
+      closeModal();
+    }
+    function deleteAndClose() {
+      chat.deleteObject(messageObject);
+      closeModal();
+    }
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+      "input",
+      {
+        autofocus: true,
+        "bind:value": editingTitle,
+        placeholder: translation.objectTitlePlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
+      content.isoDateVersionCreated
+    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+      "textarea",
+      {
+        rows: "5",
+        "bind:value": editingNoteContent,
+        placeholder: translation.noteContentPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/Views/Objects/chatObjectView.tsx
+  var viewTypes = {
+    all: [translation.viewAll, "grid_view"],
+    notes: [translation.viewNotes, "sticky_note_2"]
+  };
+  function ChatObjectView(chat) {
+    const isShowingObjectModal = new State(false);
+    const selectedObject = new State(void 0);
+    const objectModal = createProxyState(
+      [chat.objects, selectedObject],
+      () => {
+        if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
+        return ObjectDetailModal(
+          chat,
+          selectedObject.value,
+          isShowingObjectModal
+        );
+      }
+    );
+    const selectedViewType = new State("all");
+    const mainView = createProxyState([selectedViewType], () => {
+      function getViewFunction() {
+        switch (selectedViewType.value) {
+          case "notes":
+            return NoteObjectsView;
+          default:
+            return AllObjectsView;
+        }
+      }
+      return getViewFunction()(chat, selectedObject, isShowingObjectModal);
+    });
+    function createObject() {
+      const newObject = chat.createObjectFromTitle(translation.untitledObject);
+      chat.addObjectAndSend(newObject);
+      selectedObject.value = newObject;
+      isShowingObjectModal.value = true;
+    }
+    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary height-100",
+        "on:click": createObject,
+        "aria-label": translation.createObject
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
+      (key) => ViewTypeToggle(key, selectedViewType)
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "height-100",
+        "on:click": createObject,
+        "aria-label": translation.createObject
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility")
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "width-100 height-100 flex-1 scroll-h",
+        "children:set": mainView
+      }
+    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+  }
+  function ViewTypeToggle(key, selection) {
+    const [label, icon] = viewTypes[key];
+    function select() {
+      selection.value = key;
+    }
+    const isSelected = createProxyState(
+      [selection],
+      () => selection.value == key
+    );
+    return /* @__PURE__ */ createElement("button", { "aria-label": label, "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon));
+  }
+
+  // src/Views/Chat/chatOptionModal.tsx
   function ChatOptionModal(chat, isPresented) {
     function closeModal() {
       isPresented.value = false;
@@ -1011,7 +1433,16 @@
         "bind:value": chat.encryptionKey,
         "set:type": inputType
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement("button", { "on:click": chat.resendObjects }, translation.resendObjects, /* @__PURE__ */ createElement("span", { class: "icon" }, "replay"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "on:click": chat.clearObjects,
+        "toggle:disabled": chat.cannotClearObjects
+      },
+      translation.clearObjects,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
+    ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger",
@@ -1019,11 +1450,11 @@
         "toggle:disabled": chat.cannotClearMessages
       },
       translation.clearChatMessages,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
-    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
+    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
-  // src/Views/messageComposer.tsx
+  // src/Views/Chat/messageComposer.tsx
   function MessageComposer(chat) {
     return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
       "input",
@@ -1032,20 +1463,20 @@
         style: "max-width: unset",
         placeholder: translation.composerPlaceholder,
         "bind:value": chat.composingMessage,
-        "on:enter": chat.sendNewMessage
+        "on:enter": chat.sendMessageFromComposer
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
-        "on:click": chat.sendNewMessage,
+        "on:click": chat.sendMessageFromComposer,
         "toggle:disabled": chat.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
     ));
   }
 
-  // src/Views/threadView.tsx
+  // src/Views/Chat/threadView.tsx
   function ThreadView(chat) {
     const messageConverter = (message) => {
       function resendMessage() {
@@ -1108,15 +1539,19 @@
         "children:append": [chat.outbox, outboxMessageConverter]
       }
     );
-    const listWrapper = /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, messageList, outboxList);
+    const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
     function scrollToBottom() {
-      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
-      if (scrollFromBottom > 400) return;
       listWrapper.scrollTop = listWrapper.scrollHeight;
     }
-    chat.messages.handleAddition(scrollToBottom);
-    chat.outbox.handleAddition(scrollToBottom);
-    setTimeout(() => listWrapper.scrollTop = listWrapper.scrollHeight, 50);
+    function scrollToBottomIfAppropriate() {
+      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
+      if (scrollFromBottom > 400) return;
+      scrollToBottom();
+    }
+    chat.messages.handleAddition(scrollToBottomIfAppropriate);
+    chat.outbox.handleAddition(scrollToBottomIfAppropriate);
+    isShowingChatTools.subscribe(() => scrollToBottom());
+    setTimeout(() => scrollToBottom(), 50);
     return listWrapper;
   }
 
@@ -1134,20 +1569,36 @@
         /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
           "button",
           {
+            "aria-label": translation.showObjects,
+            "on:click": toggleChatTools,
+            "toggle:selected": isShowingChatTools
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
             "aria-label": translation.showChatOptions,
             "on:click": showOptions
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
         ))),
+        ChatObjectView(chat),
         ThreadView(chat),
         /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)),
         ChatOptionModal(chat, isShowingOptions)
       ];
     });
-    return /* @__PURE__ */ createElement("article", { id: "message-tab", "children:set": messageTabContent });
+    return /* @__PURE__ */ createElement(
+      "article",
+      {
+        "toggle:showingchattools": isShowingChatTools,
+        id: "message-tab",
+        "children:set": messageTabContent
+      }
+    );
   }
 
-  // src/Views/chatListSection.tsx
+  // src/Views/Overview/chatListSection.tsx
   var chatConverter = (chat) => {
     function select() {
       selectChat(chat);
@@ -1194,7 +1645,7 @@
     ));
   }
 
-  // src/Views/connectionSection.tsx
+  // src/Views/Overview/connectionSection.tsx
   var addressConverter = (address) => {
     return /* @__PURE__ */ createElement("option", null, address);
   };
@@ -1261,7 +1712,7 @@
     )));
   }
 
-  // src/Views/personalSection.tsx
+  // src/Views/Overview/personalSection.tsx
   function PersonalSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
       "input",

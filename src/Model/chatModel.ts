@@ -21,6 +21,22 @@ export interface ChatMessage {
   sender: string;
   body: string;
   isoDate: string;
+
+  messageObjectString?: string;
+}
+
+// object
+export interface MessageObject {
+  id: string;
+  title: string;
+  contentVersions: { [key: string]: MessageObjectContent };
+}
+
+export interface MessageObjectContent {
+  isoDateVersionCreated: string;
+  id: string;
+
+  noteContent?: string;
 }
 
 // chat
@@ -34,7 +50,9 @@ export class Chat {
 
   encryptionKey: React.State<string>;
   messages: React.ListState<ChatMessage>;
+  objects: React.MapState<MessageObject>;
   outbox: React.ListState<ChatMessage>;
+  objectOutbox: React.MapState<MessageObject>;
   isOutBoxEmpty: React.State<boolean>;
 
   composingMessage: React.State<string>;
@@ -47,6 +65,7 @@ export class Chat {
   cannotSetChannel: React.State<boolean>;
   cannotUndoChannel: React.State<boolean>;
   cannotClearMessages: React.State<boolean>;
+  cannotClearObjects: React.State<boolean>;
 
   // init
   constructor(id: string = React.UUID()) {
@@ -68,7 +87,9 @@ export class Chat {
     );
     this.encryptionKey = React.restoreState(storageKeys.encyptionKey(id), "");
     this.messages = React.restoreListState(storageKeys.messages(id));
+    this.objects = React.restoreMapState(storageKeys.objects(id));
     this.outbox = React.restoreListState(storageKeys.outbox(id));
+    this.objectOutbox = React.restoreMapState(storageKeys.itemOutbox(id));
     this.isOutBoxEmpty = React.createProxyState(
       [this.outbox],
       () => this.outbox.value.size == 0
@@ -112,6 +133,10 @@ export class Chat {
       [this.messages],
       () => this.messages.value.size == 0
     );
+    this.cannotClearObjects = React.createProxyState(
+      [this.objects],
+      () => this.objects.value.size == 0
+    );
   }
 
   // general
@@ -131,9 +156,21 @@ export class Chat {
     if (channels.indexOf(this.primaryChannel.value) == -1) return;
 
     if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
-
     if (!data.messageBody) return;
-    const { sender, body, channel, isoDate } = JSON.parse(data.messageBody);
+
+    const message: ChatMessage = JSON.parse(data.messageBody);
+    const { sender, body, channel, isoDate, messageObjectString } = message;
+
+    if (messageObjectString) {
+      const decryptedMessageObjectString = await decryptString(
+        messageObjectString,
+        this.encryptionKey.value
+      );
+      const messageObject = JSON.parse(decryptedMessageObjectString);
+      if (messageObject.id && messageObject.title)
+        return this.handleMessageObject(messageObject);
+    }
+
     this.handleMessage({
       sender,
       body: await decryptString(body, this.encryptionKey.value),
@@ -155,25 +192,28 @@ export class Chat {
     if (selectedChat.value != this) this.hasUnreadMessages.value = true;
   };
 
+  handleMessageObject = (messageObject: MessageObject): void => {
+    this.addObject(messageObject);
+  };
+
+  // sending
+  sendMessagesInOutbox = () => {
+    this.outbox.value.forEach(async (message) => {
+      const isSent = await this.sendMessage(message);
+      if (isSent == true) this.outbox.remove(message);
+    });
+    this.objectOutbox.value.forEach(async (messageObject) => {
+      const chatMessage = await this.createChatMessage("", messageObject);
+      const isSent = await this.sendMessage(chatMessage);
+      if (isSent == true) this.objectOutbox.remove(messageObject.id);
+    });
+  };
+
   // messages
-  sendNewMessage = async (): Promise<void> => {
-    if (this.cannotSendMessage.value == true) return;
-
-    await this.sendMessageText(this.composingMessage.value);
-    this.composingMessage.value = "";
-  };
-
-  sendMessageText = async (text: string): Promise<void> => {
-    const message = await this.createMessage(text);
-    this.sendExistingMessage(message);
-  };
-
-  resendMessage = (message: ChatMessage) => {
-    if (this.cannotResendMessage.value == true) return;
-    this.sendMessageText(message.body);
-  };
-
-  createMessage = async (messageText: string): Promise<ChatMessage> => {
+  createChatMessage = async (
+    messageText: string,
+    messageObject?: MessageObject
+  ): Promise<ChatMessage> => {
     // get channels
     const secondaryChannelNames: string[] = [
       ...this.secondaryChannels.value.values(),
@@ -185,52 +225,165 @@ export class Chat {
 
     // create object
     const joinedChannelName = allChannelNames.join("/");
-    return {
+    const chatMessage: ChatMessage = {
       channel: joinedChannelName,
       sender: senderName.value,
       body: messageText,
       isoDate: new Date().toISOString(),
     };
+
+    if (messageObject)
+      chatMessage.messageObjectString = await encryptString(
+        JSON.stringify(messageObject),
+        this.encryptionKey.value
+      );
+    return chatMessage;
   };
 
-  sendExistingMessage = async (chatMessage: ChatMessage): Promise<void> => {
-    if (isConnected.value == true && this.isSubscribed.value == true) {
-      const encrypted =
-        this.encryptionKey.value == ""
-          ? chatMessage.body
-          : await encryptString(chatMessage.body, this.encryptionKey.value);
+  sendMessageFromComposer = async (): Promise<void> => {
+    if (this.cannotSendMessage.value == true) return;
 
-      chatMessage.body = encrypted;
-
-      const messageString = JSON.stringify(chatMessage);
-      UDN.sendMessage(chatMessage.channel, messageString);
-    } else {
-      this.outbox.add(chatMessage);
-    }
+    await this.sendMessageFromText(this.composingMessage.value);
+    this.composingMessage.value = "";
   };
 
-  sendMessagesInOutbox = () => {
-    this.outbox.value.forEach((message) => {
-      this.sendExistingMessage(message);
-      this.outbox.remove(message);
-    });
+  sendMessageFromText = async (text: string): Promise<void> => {
+    const chatMessage = await this.createChatMessage(text);
+    this.outbox.add(chatMessage);
+    this.sendMessagesInOutbox();
+  };
+
+  resendMessage = (chatMessage: ChatMessage) => {
+    if (this.cannotResendMessage.value == true) return;
+    this.sendMessageFromText(chatMessage.body);
   };
 
   clearMessages = (): void => {
     this.messages.clear();
   };
 
-  deleteMessage = (message: ChatMessage): void => {
-    this.messages.remove(message);
+  deleteMessage = (chatMessage: ChatMessage): void => {
+    this.messages.remove(chatMessage);
   };
 
-  deleteOutboxMessage = (message: ChatMessage): void => {
-    this.outbox.remove(message);
+  deleteOutboxMessage = (chatMessage: ChatMessage): void => {
+    this.outbox.remove(chatMessage);
   };
 
-  decryptReceivedMessage = async (message: ChatMessage): Promise<void> => {
-    message.body = await decryptString(message.body, this.encryptionKey.value);
+  decryptReceivedMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    chatMessage.body = await decryptString(
+      chatMessage.body,
+      this.encryptionKey.value
+    );
     this.messages.callSubscriptions();
+  };
+
+  sendMessage = async (chatMessage: ChatMessage): Promise<boolean> => {
+    if (isConnected.value == false || this.isSubscribed.value == false)
+      return false;
+
+    const encryptedBody =
+      this.encryptionKey.value == ""
+        ? chatMessage.body
+        : await encryptString(chatMessage.body, this.encryptionKey.value);
+
+    chatMessage.body = encryptedBody;
+
+    const messageString = JSON.stringify(chatMessage);
+    UDN.sendMessage(chatMessage.channel, messageString);
+
+    return true;
+  };
+
+  // objects
+  createObjectFromTitle = (title: string): MessageObject => {
+    const firstObjectContent = this.createObjectContent();
+    const messageObject: MessageObject = {
+      id: React.UUID(),
+      title,
+      contentVersions: {},
+    };
+    this.addObjectContent(messageObject, firstObjectContent);
+    return messageObject;
+  };
+
+  createObjectContent = () => {
+    return {
+      id: React.UUID(),
+      isoDateVersionCreated: new Date().toISOString(),
+    };
+  };
+
+  addObjectContent = (
+    messageObject: MessageObject,
+    content: MessageObjectContent
+  ): void => {
+    messageObject.contentVersions[content.id] = content;
+  };
+
+  addObject = (messageObject: MessageObject): void => {
+    const existingObject = this.objects.value.get(messageObject.id);
+    if (existingObject) {
+      existingObject.title = messageObject.title;
+      Object.values(messageObject.contentVersions).forEach((content) => {
+        this.addObjectContent(existingObject, content);
+      });
+      this.objects.set(existingObject.id, existingObject);  
+    } else {
+      this.objects.set(messageObject.id, messageObject);
+    }
+  };
+
+  addObjectAndSend = (messageObject: MessageObject): void => {
+    this.addObject(messageObject);
+    this.sendObject(messageObject);
+  };
+
+  sendObject = (messageObject: MessageObject): void => {
+    this.objectOutbox.set(messageObject.id, messageObject);
+    this.sendMessagesInOutbox();
+  };
+
+  deleteObject = (messageObject: MessageObject): void => {
+    this.objects.remove(messageObject.id);
+    this.objectOutbox.remove(messageObject.id);
+  };
+
+  resendObjects = (): void => {
+    this.objects.value.forEach((messageObject) => {
+      this.sendObject(messageObject);
+    });
+  };
+
+  clearObjects = (): void => {
+    this.objects.clear();
+  };
+
+  getSortedContents = (
+    messageObject: MessageObject
+  ): MessageObjectContent[] => {
+    const contents = Object.values(messageObject.contentVersions);
+    contents.sort((a, b) =>
+      a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+    );
+    return contents;
+  };
+
+  getMostRecentContentId = (messageObject: MessageObject): string => {
+    const contents = Object.values(messageObject.contentVersions);
+    return contents[contents.length - 1].id;
+  };
+
+  getMostRecentContent = (messageObject: MessageObject): MessageObjectContent => {
+    const id = this.getMostRecentContentId(messageObject);
+    return this.getObjectContentFromId(messageObject, id);
+  }
+
+  getObjectContentFromId = (
+    messageObject: MessageObject,
+    contentId: string
+  ): MessageObjectContent => {
+    return messageObject.contentVersions[contentId];
   };
 
   // channel

@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
-import { senderName } from "../Model/model";
-import { translation } from "../translations";
+import { senderName } from "../../Model/model";
+import { translation } from "../../translations";
 
 export function PersonalSection() {
   return (

@@ -1,10 +1,11 @@
 import * as React from "bloatless-react";
 
-import { closeChatView, selectedChat } from "../Model/model";
+import { closeChatView, isShowingChatTools, selectedChat, toggleChatTools } from "../Model/model";
 
-import { ChatOptionModal } from "../Views/chatOptionModal";
-import { MessageComposer } from "../Views/messageComposer";
-import { ThreadView } from "../Views/threadView";
+import { ChatObjectView } from "../Views/Objects/chatObjectView";
+import { ChatOptionModal } from "../Views/Chat/chatOptionModal";
+import { MessageComposer } from "../Views/Chat/messageComposer";
+import { ThreadView } from "../Views/Chat/threadView";
 import { translation } from "../translations";
 
 export function MessageTab() {
@@ -34,6 +35,13 @@ export function MessageTab() {
         </span>
         <span>
           <button
+            aria-label={translation.showObjects}
+            on:click={toggleChatTools}
+            toggle:selected={isShowingChatTools}
+          >
+            <span class="icon">deployed_code</span>
+          </button>
+          <button
             aria-label={translation.showChatOptions}
             on:click={showOptions}
           >
@@ -42,6 +50,7 @@ export function MessageTab() {
         </span>
       </header>,
 
+      ChatObjectView(chat),
       ThreadView(chat),
 
       <footer>{MessageComposer(chat)}</footer>,
@@ -50,5 +59,11 @@ export function MessageTab() {
     ];
   });
 
-  return <article id="message-tab" children:set={messageTabContent}></article>;
+  return (
+    <article
+      toggle:showingchattools={isShowingChatTools}
+      id="message-tab"
+      children:set={messageTabContent}
+    ></article>
+  );
 }

@@ -1,8 +1,8 @@
 import * as React from "bloatless-react";
 
-import { Chat } from "../Model/chatModel";
-import { closeChatView } from "../Model/model";
-import { translation } from "../translations";
+import { Chat } from "../../Model/chatModel";
+import { closeChatView } from "../../Model/model";
+import { translation } from "../../translations";
 
 export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
   function closeModal() {
@@ -20,7 +20,7 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
     shouldShowKey.value == true ? "text" : "password"
   );
 
-  const secondaryChannelConverter: React.ListItemConverter<string> = (
+  const secondaryChannelConverter: React.StateItemConverter<string> = (
     secondaryChannel
   ) => {
     function remove() {
@@ -131,19 +131,37 @@ export function ChatOptionModal(chat: Chat, isPresented: React.State<boolean>) {
 
           <hr></hr>
 
-          <div class="flex-column gap">
+          <div class="flex-column gap width-input">
+            <button on:click={chat.resendObjects}>
+              {translation.resendObjects}
+              <span class="icon">replay</span>
+            </button>
+          </div>
+
+          <hr></hr>
+
+          <div class="flex-column gap width-input">
+            <button
+              class="danger"
+              on:click={chat.clearObjects}
+              toggle:disabled={chat.cannotClearObjects}
+            >
+              {translation.clearObjects}
+              <span class="icon">deployed_code</span>
+            </button>
+
             <button
               class="danger"
               on:click={chat.clearMessages}
               toggle:disabled={chat.cannotClearMessages}
             >
               {translation.clearChatMessages}
-              <span class="icon">delete_sweep</span>
+              <span class="icon">chat_error</span>
             </button>
 
             <button class="danger" on:click={deleteChat}>
               {translation.removeChat}
-              <span class="icon">delete</span>
+              <span class="icon">delete_forever</span>
             </button>
           </div>
         </main>

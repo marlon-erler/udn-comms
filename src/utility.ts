@@ -19,8 +19,16 @@ export const storageKeys = {
     return id + "messages";
   },
 
+  objects(id: string): string {
+    return id + "items";
+  },
+
   outbox(id: string): string {
     return id + "outbox";
+  },
+
+  itemOutbox(id: string): string {
+    return id + "item-outbox";
   },
 
   composingMessage(id: string): string {

@@ -1,11 +1,12 @@
 import * as React from "bloatless-react";
 
-import { Chat, ChatMessage } from "../Model/chatModel";
+import { Chat, ChatMessage } from "../../Model/chatModel";
 
-import { translation } from "../translations";
+import { isShowingChatTools } from "../../Model/model";
+import { translation } from "../../translations";
 
 export function ThreadView(chat: Chat) {
-  const messageConverter: React.ListItemConverter<ChatMessage> = (message) => {
+  const messageConverter: React.StateItemConverter<ChatMessage> = (message) => {
     function resendMessage() {
       chat.resendMessage(message);
     }
@@ -72,7 +73,7 @@ export function ThreadView(chat: Chat) {
     );
   };
 
-  const outboxMessageConverter: React.ListItemConverter<ChatMessage> = (
+  const outboxMessageConverter: React.StateItemConverter<ChatMessage> = (
     message
   ) => {
     function remove() {
@@ -116,24 +117,29 @@ export function ThreadView(chat: Chat) {
     ></div>
   );
   const listWrapper = (
-    <div class="flex-column gap">
+    <div class="thread-view flex-column gap">
       {messageList}
       {outboxList}
     </div>
   );
 
   function scrollToBottom() {
+    listWrapper.scrollTop = listWrapper.scrollHeight;
+  }
+
+  function scrollToBottomIfAppropriate() {
     const scrollFromBottom =
       listWrapper.scrollHeight -
       (listWrapper.scrollTop + listWrapper.offsetHeight);
     if (scrollFromBottom > 400) return;
 
-    listWrapper.scrollTop = listWrapper.scrollHeight;
+    scrollToBottom();
   }
 
-  chat.messages.handleAddition(scrollToBottom);
-  chat.outbox.handleAddition(scrollToBottom);
-  setTimeout(() => (listWrapper.scrollTop = listWrapper.scrollHeight), 50);
+  chat.messages.handleAddition(scrollToBottomIfAppropriate);
+  chat.outbox.handleAddition(scrollToBottomIfAppropriate);
+  isShowingChatTools.subscribe(() => scrollToBottom());
+  setTimeout(() => scrollToBottom(), 50);
 
   return listWrapper;
 }
