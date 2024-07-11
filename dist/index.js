@@ -621,25 +621,35 @@
     };
     // objects
     createObjectFromTitle = (title) => {
-      return {
+      const firstObjectContent = this.createObjectContent();
+      const messageObject = {
         id: UUID(),
         title,
-        contentVersions: [this.createObjectContent()]
+        contentVersions: {}
+      };
+      this.addObjectContent(messageObject, firstObjectContent);
+      return messageObject;
+    };
+    createObjectContent = () => {
+      return {
+        id: UUID(),
+        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
       };
     };
-    addObject = (messageObject) => {
-      this.objects.set(messageObject.id, messageObject);
+    addObjectContent = (messageObject, content) => {
+      messageObject.contentVersions[content.id] = content;
     };
-    updateObject = (id, contents) => {
-      const messageObject = this.objects.value.get(id);
-      if (!messageObject) return;
-      if (contents) {
-        messageObject.contentVersions.push(contents);
-        messageObject.contentVersions.sort(
-          (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
-        );
+    addObject = (messageObject) => {
+      const existingObject = this.objects.value.get(messageObject.id);
+      if (existingObject) {
+        existingObject.title = messageObject.title;
+        Object.values(messageObject.contentVersions).forEach((content) => {
+          this.addObjectContent(existingObject, content);
+        });
+        this.objects.set(existingObject.id, existingObject);
+      } else {
+        this.objects.set(messageObject.id, messageObject);
       }
-      this.sendObject(messageObject);
     };
     addObjectAndSend = (messageObject) => {
       this.addObject(messageObject);
@@ -661,18 +671,23 @@
     clearObjects = () => {
       this.objects.clear();
     };
-    getLatestObjectContent = (messageObject) => {
-      return this.getObjectContentFromIndex(messageObject, 0);
+    getSortedContents = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      contents.sort(
+        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+      );
+      return contents;
     };
-    getObjectContentFromIndex = (messageObject, index) => {
-      const versions = messageObject.contentVersions;
-      return versions[index] ?? this.createObjectContent();
+    getMostRecentContentId = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      return contents[contents.length - 1].id;
     };
-    createObjectContent = () => {
-      return {
-        id: UUID(),
-        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
-      };
+    getMostRecentContent = (messageObject) => {
+      const id = this.getMostRecentContentId(messageObject);
+      return this.getObjectContentFromId(messageObject, id);
+    };
+    getObjectContentFromId = (messageObject, contentId) => {
+      return messageObject.contentVersions[contentId];
     };
     // channel
     setChannel = () => {
@@ -1209,13 +1224,12 @@
   // src/Views/Objects/objectDetailModal.tsx
   function ObjectDetailModal(chat, messageObject, isPresented) {
     const editingTitle = new State(messageObject.title);
-    const selectedMessageObjectIndex = new State(0);
+    const selectedMessageObjectId = new State(
+      chat.getMostRecentContentId(messageObject)
+    );
     const selectedMessageObject = createProxyState(
-      [selectedMessageObjectIndex],
-      () => chat.getObjectContentFromIndex(
-        messageObject,
-        selectedMessageObjectIndex.value
-      )
+      [selectedMessageObjectId],
+      () => chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
     );
     const didEditContent = new State(false);
     const editingNoteContent = createProxyState(
@@ -1240,14 +1254,14 @@
     }
     function saveAndClose() {
       messageObject.title = editingTitle.value;
-      chat.updateObject(
-        messageObject.id,
-        didEditContent.value == true ? {
+      if (didEditContent.value == true) {
+        chat.addObjectContent(messageObject, {
           isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
           id: UUID(),
           noteContent: editingNoteContent.value
-        } : void 0
-      );
+        });
+      }
+      chat.addObjectAndSend(messageObject);
       closeModal();
     }
     function deleteAndClose() {
@@ -1260,7 +1274,9 @@
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectIndex }, ...messageObject.contentVersions.map((content, index) => /* @__PURE__ */ createElement("option", { value: index }, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
+      content.isoDateVersionCreated
+    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "5",
@@ -1279,17 +1295,22 @@
   function ChatToolView(chat) {
     const isShowingObjectModal = new State(false);
     const selectedObject = new State(void 0);
-    const objectModal = createProxyState([selectedObject], () => {
-      if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
-      return ObjectDetailModal(chat, selectedObject.value, isShowingObjectModal);
-    });
+    const objectModal = createProxyState(
+      [chat.objects, selectedObject],
+      () => {
+        if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
+        return ObjectDetailModal(
+          chat,
+          selectedObject.value,
+          isShowingObjectModal
+        );
+      }
+    );
     function createItem() {
       const newObject = chat.createObjectFromTitle("New item");
       chat.addObjectAndSend(newObject);
     }
     const itemConverter = (messageObject) => {
-      const latestObject = chat.getLatestObjectContent(messageObject);
-      if (!latestObject) return /* @__PURE__ */ createElement("div", null);
       function select() {
         selectedObject.value = messageObject;
         isShowingObjectModal.value = true;

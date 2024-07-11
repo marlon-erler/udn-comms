@@ -9,11 +9,18 @@ import { translation } from "../../translations";
 export function ChatToolView(chat: Chat) {
   const isShowingObjectModal = new React.State(false);
   const selectedObject = new React.State<MessageObject | undefined>(undefined);
-  const objectModal = React.createProxyState([selectedObject], () => {
-    if (selectedObject.value == undefined) return <div></div>;
+  const objectModal = React.createProxyState(
+    [chat.objects, selectedObject],
+    () => {
+      if (selectedObject.value == undefined) return <div></div>;
 
-    return ObjectDetailModal(chat, selectedObject.value, isShowingObjectModal);
-  });
+      return ObjectDetailModal(
+        chat,
+        selectedObject.value,
+        isShowingObjectModal
+      );
+    }
+  );
 
   function createItem() {
     const newObject = chat.createObjectFromTitle("New item");
@@ -23,10 +30,6 @@ export function ChatToolView(chat: Chat) {
   const itemConverter: React.StateItemConverter<MessageObject> = (
     messageObject
   ) => {
-    const latestObject = chat.getLatestObjectContent(messageObject);
-
-    if (!latestObject) return <div></div>; //TODO
-
     function select() {
       selectedObject.value = messageObject;
       isShowingObjectModal.value = true;

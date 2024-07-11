@@ -12,14 +12,13 @@ export function ObjectDetailModal(
   // state
   const editingTitle = new React.State(messageObject.title);
 
-  const selectedMessageObjectIndex = new React.State(0);
+  const selectedMessageObjectId = new React.State(
+    chat.getMostRecentContentId(messageObject)
+  );
   const selectedMessageObject = React.createProxyState(
-    [selectedMessageObjectIndex],
+    [selectedMessageObjectId],
     () =>
-      chat.getObjectContentFromIndex(
-        messageObject,
-        selectedMessageObjectIndex.value
-      )
+      chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
   );
 
   const didEditContent = new React.State(false);
@@ -51,18 +50,16 @@ export function ObjectDetailModal(
   function saveAndClose() {
     messageObject.title = editingTitle.value;
 
-    chat.updateObject(
-      messageObject.id,
-      didEditContent.value == true
-        ? {
-            isoDateVersionCreated: new Date().toISOString(),
-            id: React.UUID(),
+    if (didEditContent.value == true) {
+      chat.addObjectContent(messageObject, {
+        isoDateVersionCreated: new Date().toISOString(),
+        id: React.UUID(),
 
-            noteContent: editingNoteContent.value,
-          }
-        : undefined
-    );
+        noteContent: editingNoteContent.value,
+      });
+    }
 
+    chat.addObjectAndSend(messageObject);
     closeModal();
   }
 
@@ -98,12 +95,16 @@ export function ObjectDetailModal(
               <span class="icon">history</span>
               <div>
                 <span>{translation.objectVersion}</span>
-                <select bind:value={selectedMessageObjectIndex}>
-                  {...messageObject.contentVersions.map((content, index) => (
-                    <option value={index}>
-                      {new Date(content.isoDateVersionCreated).toLocaleString()}
-                    </option>
-                  ))}
+                <select bind:value={selectedMessageObjectId}>
+                  {...chat
+                    .getSortedContents(messageObject)
+                    .map((content) => (
+                      <option value={content.id}>
+                        {new Date(
+                          content.isoDateVersionCreated
+                        ).toLocaleString()}
+                      </option>
+                    ))}
                 </select>
                 <span class="icon">arrow_drop_down</span>
               </div>

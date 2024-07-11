@@ -29,7 +29,7 @@ export interface ChatMessage {
 export interface MessageObject {
   id: string;
   title: string;
-  contentVersions: MessageObjectContent[];
+  contentVersions: { [key: string]: MessageObjectContent };
 }
 
 export interface MessageObjectContent {
@@ -156,8 +156,8 @@ export class Chat {
     if (channels.indexOf(this.primaryChannel.value) == -1) return;
 
     if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
-
     if (!data.messageBody) return;
+
     const message: ChatMessage = JSON.parse(data.messageBody);
     const { sender, body, channel, isoDate, messageObjectString } = message;
 
@@ -197,7 +197,6 @@ export class Chat {
   };
 
   // sending
-
   sendMessagesInOutbox = () => {
     this.outbox.value.forEach(async (message) => {
       const isSent = await this.sendMessage(message);
@@ -298,27 +297,41 @@ export class Chat {
 
   // objects
   createObjectFromTitle = (title: string): MessageObject => {
-    return {
+    const firstObjectContent = this.createObjectContent();
+    const messageObject: MessageObject = {
       id: React.UUID(),
       title,
-      contentVersions: [this.createObjectContent()],
+      contentVersions: {},
+    };
+    this.addObjectContent(messageObject, firstObjectContent);
+    return messageObject;
+  };
+
+  createObjectContent = () => {
+    return {
+      id: React.UUID(),
+      isoDateVersionCreated: new Date().toISOString(),
     };
   };
 
-  addObject = (messageObject: MessageObject): void => {
-    this.objects.set(messageObject.id, messageObject);
+  addObjectContent = (
+    messageObject: MessageObject,
+    content: MessageObjectContent
+  ): void => {
+    messageObject.contentVersions[content.id] = content;
   };
 
-  updateObject = (id: string, contents?: MessageObjectContent): void => {
-    const messageObject = this.objects.value.get(id);
-    if (!messageObject) return;
-    if (contents) {
-      messageObject.contentVersions.push(contents);
-      messageObject.contentVersions.sort((a, b) =>
-        a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
-      );
+  addObject = (messageObject: MessageObject): void => {
+    const existingObject = this.objects.value.get(messageObject.id);
+    if (existingObject) {
+      existingObject.title = messageObject.title;
+      Object.values(messageObject.contentVersions).forEach((content) => {
+        this.addObjectContent(existingObject, content);
+      });
+      this.objects.set(existingObject.id, existingObject);  
+    } else {
+      this.objects.set(messageObject.id, messageObject);
     }
-    this.sendObject(messageObject);
   };
 
   addObjectAndSend = (messageObject: MessageObject): void => {
@@ -346,25 +359,31 @@ export class Chat {
     this.objects.clear();
   };
 
-  getLatestObjectContent = (
+  getSortedContents = (
     messageObject: MessageObject
-  ): MessageObjectContent => {
-    return this.getObjectContentFromIndex(messageObject, 0);
+  ): MessageObjectContent[] => {
+    const contents = Object.values(messageObject.contentVersions);
+    contents.sort((a, b) =>
+      a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+    );
+    return contents;
   };
 
-  getObjectContentFromIndex = (
+  getMostRecentContentId = (messageObject: MessageObject): string => {
+    const contents = Object.values(messageObject.contentVersions);
+    return contents[contents.length - 1].id;
+  };
+
+  getMostRecentContent = (messageObject: MessageObject): MessageObjectContent => {
+    const id = this.getMostRecentContentId(messageObject);
+    return this.getObjectContentFromId(messageObject, id);
+  }
+
+  getObjectContentFromId = (
     messageObject: MessageObject,
-    index: number
+    contentId: string
   ): MessageObjectContent => {
-    const versions = messageObject.contentVersions;
-    return versions[index] ?? this.createObjectContent();
-  };
-
-  createObjectContent = () => {
-    return {
-      id: React.UUID(),
-      isoDateVersionCreated: new Date().toISOString(),
-    };
+    return messageObject.contentVersions[contentId];
   };
 
   // channel
