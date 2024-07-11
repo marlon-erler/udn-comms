@@ -1164,7 +1164,7 @@
         "div",
         {
           class: "grid gap padding",
-          style: "grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))",
+          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
           "children:prepend": [chat.objects, objectConverter]
         }
       )
@@ -1175,20 +1175,30 @@
   // src/Views/Objects/noteObjectsView.tsx
   function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
     const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
       function select() {
         selectedObject.value = messageObject;
         isShowingObjectModal.value = true;
       }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, latest.noteContent.split("\n")[0])));
     };
+    const notes = new ListState();
+    chat.objects.subscribe(() => {
+      notes.clear();
+      chat.objects.value.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        if (!latest.noteContent) return;
+        notes.add(messageObject);
+      });
+    });
     const content = createProxyState(
       [chat.objects],
-      () => chat.objects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noNotes) : /* @__PURE__ */ createElement(
+      () => notes.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noNotes) : /* @__PURE__ */ createElement(
         "div",
         {
           class: "grid gap padding",
-          style: "grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))",
-          "children:prepend": [chat.objects, objectConverter]
+          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
+          "children:prepend": [notes, objectConverter]
         }
       )
     );

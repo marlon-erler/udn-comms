@@ -35,7 +35,7 @@ export function AllObjectsView(
     ) : (
       <div
         class="grid gap padding"
-        style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))"
+        style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))"
         children:prepend={[chat.objects, objectConverter]}
       ></div>
     )
