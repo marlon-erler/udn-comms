@@ -6,6 +6,7 @@ const englishTranslations = {
   undoChanges: "Undo changes",
   close: "Close",
   discard: "Discard",
+  rename: "Rename",
 
   zoomOut: "zoom out",
   zoomIn: "zoom in",
@@ -119,6 +120,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     undoChanges: "Deshacer",
     close: "Cerrar",
     discard: "Descartar",
+    rename: "Renombrar",
 
     zoomOut: "alejar",
     zoomIn: "acercar",
@@ -229,6 +231,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     undoChanges: "Änderungen verwerfen",
     close: "Schließen",
     discard: "Verwerfen",
+    rename: "Umbenennen",
 
     zoomOut: "verkleinern",
     zoomIn: "vergrößern",

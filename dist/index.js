@@ -427,6 +427,7 @@
     undoChanges: "Undo changes",
     close: "Close",
     discard: "Discard",
+    rename: "Rename",
     zoomOut: "zoom out",
     zoomIn: "zoom in",
     // overview
@@ -513,6 +514,7 @@
       undoChanges: "Deshacer",
       close: "Cerrar",
       discard: "Descartar",
+      rename: "Renombrar",
       zoomOut: "alejar",
       zoomIn: "acercar",
       // overview
@@ -597,6 +599,7 @@
       undoChanges: "\xC4nderungen verwerfen",
       close: "Schlie\xDFen",
       discard: "Verwerfen",
+      rename: "Umbenennen",
       zoomOut: "verkleinern",
       zoomIn: "vergr\xF6\xDFern",
       // overview
@@ -1487,6 +1490,19 @@
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
+    const editingBoardTitle = new State(kanbanBoard.title);
+    const isEditing = new State(false);
+    const cannotRename = createProxyState(
+      [editingBoardTitle],
+      () => editingBoardTitle.value == kanbanBoard.title || editingBoardTitle.value == ""
+    );
+    function renameBoard() {
+      kanbanBoard.items.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        latest.categoryName = editingBoardTitle.value;
+        chat.addObjectAndSend(messageObject);
+      });
+    }
     function dragOver(event) {
       event.preventDefault();
     }
@@ -1500,6 +1516,7 @@
       latest.categoryName = kanbanBoard.title;
       chat.addObjectAndSend(messageObject);
     }
+    const titleInput = /* @__PURE__ */ createElement("input", { "bind:value": editingBoardTitle, "on:enter": renameBoard });
     return /* @__PURE__ */ createElement(
       "div",
       {
@@ -1508,7 +1525,16 @@
         "on:dragover": dragOver,
         "on:drop": drop
       },
-      /* @__PURE__ */ createElement("b", { class: "flex-row width-100" }, kanbanBoard.title),
+      /* @__PURE__ */ createElement("div", { class: "flex-row align-center justify-apart" }, titleInput, /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "primary",
+          "aria-label": translation.rename,
+          "on:click": renameBoard,
+          "toggle:disabled": cannotRename
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
+      )),
       /* @__PURE__ */ createElement("hr", null),
       /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.map(
         (messageObject) => ObjectEntryView(

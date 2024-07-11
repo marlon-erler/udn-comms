@@ -59,6 +59,23 @@ function KanbanBoardView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
+  const editingBoardTitle = new React.State(kanbanBoard.title);
+  const isEditing = new React.State(false);
+  const cannotRename = React.createProxyState(
+    [editingBoardTitle],
+    () =>
+      editingBoardTitle.value == kanbanBoard.title ||
+      editingBoardTitle.value == ""
+  );
+
+  function renameBoard() {
+    kanbanBoard.items.forEach((messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      latest.categoryName = editingBoardTitle.value;
+      chat.addObjectAndSend(messageObject);
+    });
+  }
+
   function dragOver(event: DragEvent) {
     event.preventDefault();
   }
@@ -73,9 +90,12 @@ function KanbanBoardView(
 
     const latest = chat.getMostRecentContent(messageObject);
     latest.categoryName = kanbanBoard.title;
-
     chat.addObjectAndSend(messageObject);
   }
+
+  const titleInput = (
+    <input bind:value={editingBoardTitle} on:enter={renameBoard}></input>
+  );
 
   return (
     <div
@@ -84,7 +104,17 @@ function KanbanBoardView(
       on:dragover={dragOver}
       on:drop={drop}
     >
-      <b class="flex-row width-100">{kanbanBoard.title}</b>
+      <div class="flex-row align-center justify-apart">
+        {titleInput}
+        <button
+          class="primary"
+          aria-label={translation.rename}
+          on:click={renameBoard}
+          toggle:disabled={cannotRename}
+        >
+          <span class="icon">edit</span>
+        </button>
+      </div>
       <hr></hr>
       <div class="flex-column gap padding-bottom">
         {...kanbanBoard.items.map((messageObject) =>
