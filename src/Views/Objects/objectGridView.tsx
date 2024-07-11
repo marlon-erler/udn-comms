@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
+import { PlaceholderView } from "./placeholderView";
 
 export function ObjectGridView(
   chat: Chat,
@@ -10,8 +11,7 @@ export function ObjectGridView(
     | React.ListState<MessageObject>
     | React.MapState<MessageObject>,
   selectedObject: React.State<MessageObject | undefined>,
-  isShowingObjectModal: React.State<boolean>,
-  placeholderText: string
+  isShowingObjectModal: React.State<boolean>
 ) {
   const objectConverter: React.StateItemConverter<MessageObject> = (
     messageObject
@@ -25,9 +25,7 @@ export function ObjectGridView(
   };
 
   return messageObjects.value.size == 0 ? (
-    <div class="flex-column width-100 height-100 align-center justify-center secondary">
-      {placeholderText}
-    </div>
+    PlaceholderView()
   ) : (
     <div
       class="width-100 grid gap padding scroll-v"

@@ -15,8 +15,7 @@ export function AllObjectsView(
       chat,
       chat.objects,
       selectedObject,
-      isShowingObjectModal,
-      translation.noObjects
+      isShowingObjectModal
     )
   );
 

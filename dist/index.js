@@ -489,7 +489,6 @@
     viewNotes: "Notes",
     viewKanban: "Kanban",
     noObjects: "No objects",
-    noNotes: "No notes",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
     objectVersion: "Object version",
@@ -576,7 +575,6 @@
       viewNotes: "Notas",
       viewKanban: "Kanban",
       noObjects: "Sin objetos",
-      noNotes: "Sin notas",
       objectTitle: "T\xEDtulo",
       objectTitlePlaceholder: "Mi objeto",
       objectVersion: "Version del objeto",
@@ -661,7 +659,6 @@
       viewNotes: "Notizen",
       viewKanban: "Kanban",
       noObjects: "Keine Objekte",
-      noNotes: "Keine Notizen",
       objectTitle: "Titel",
       objectTitlePlaceholder: "Mein Objekt",
       objectVersion: "Version des Objekts",
@@ -1428,8 +1425,13 @@
     );
   }
 
+  // src/Views/Objects/placeholderView.tsx
+  function PlaceholderView() {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noObjects);
+  }
+
   // src/Views/Objects/objectGridView.tsx
-  function ObjectGridView(chat, messageObjects, selectedObject, isShowingObjectModal, placeholderText) {
+  function ObjectGridView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const objectConverter = (messageObject) => {
       return ObjectEntryView(
         chat,
@@ -1438,7 +1440,7 @@
         isShowingObjectModal
       );
     };
-    return messageObjects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, placeholderText) : /* @__PURE__ */ createElement(
+    return messageObjects.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement(
       "div",
       {
         class: "width-100 grid gap padding scroll-v",
@@ -1456,8 +1458,7 @@
         chat,
         chat.objects,
         selectedObject,
-        isShowingObjectModal,
-        translation.noObjects
+        isShowingObjectModal
       )
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
@@ -1477,9 +1478,12 @@
         boards.value.get(boardTitle)?.items.push(messageObject);
       });
     });
-    const content = createProxyState([chat.objects], () => /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.title.localeCompare(b.title)).map(
-      (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
-    )));
+    const content = createProxyState(
+      [chat.objects],
+      () => boards.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.title.localeCompare(b.title)).map(
+        (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
+      ))
+    );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
@@ -1534,8 +1538,7 @@
         chat,
         notes,
         selectedObject,
-        isShowingObjectModal,
-        translation.noNotes
+        isShowingObjectModal
       )
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });

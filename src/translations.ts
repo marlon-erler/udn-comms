@@ -91,7 +91,6 @@ const englishTranslations = {
   viewKanban: "Kanban",
 
   noObjects: "No objects",
-  noNotes: "No notes",
 
   objectTitle: "Object title",
   objectTitlePlaceholder: "My object",
@@ -205,7 +204,6 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewKanban: "Kanban",
 
     noObjects: "Sin objetos",
-    noNotes: "Sin notas",
 
     objectTitle: "Título",
     objectTitlePlaceholder: "Mi objeto",
@@ -316,7 +314,6 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewKanban: "Kanban",
 
     noObjects: "Keine Objekte",
-    noNotes: "Keine Notizen",
 
     objectTitle: "Titel",
     objectTitlePlaceholder: "Mein Objekt",

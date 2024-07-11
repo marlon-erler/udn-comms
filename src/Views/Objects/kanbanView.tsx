@@ -4,6 +4,7 @@ import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
 import { ObjectGridView } from "./objectGridView";
+import { PlaceholderView } from "./placeholderView";
 import { translation } from "../../translations";
 
 interface KanbanBoard {
@@ -33,15 +34,19 @@ export function KanbanView(
     });
   });
 
-  const content = React.createProxyState([chat.objects], () => (
-    <div class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding">
-      {...[...boards.value.values()]
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .map((board) =>
-          KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
-        )}
-    </div>
-  ));
+  const content = React.createProxyState([chat.objects], () =>
+    boards.value.size == 0 ? (
+      PlaceholderView()
+    ) : (
+      <div class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding">
+        {...[...boards.value.values()]
+          .sort((a, b) => a.title.localeCompare(b.title))
+          .map((board) =>
+            KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
+          )}
+      </div>
+    )
+  );
 
   return (
     <div class="width-100 height-100 scroll-no" children:set={content}></div>

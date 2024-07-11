@@ -26,8 +26,7 @@ export function NoteObjectsView(
       chat,
       notes,
       selectedObject,
-      isShowingObjectModal,
-      translation.noNotes
+      isShowingObjectModal
     )
   );
 
