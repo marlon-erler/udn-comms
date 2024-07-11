@@ -1204,7 +1204,7 @@
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
-  var isShowingChatTools = new State(false);
+  var isShowingObjects = restoreState("showing-objects", false);
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
     [newChatName],
@@ -1216,7 +1216,6 @@
     newChatName.value = "";
   }
   function closeChatView() {
-    isShowingChatTools.value = false;
     selectedChat.value = void 0;
     document.getElementById("settings-tab")?.scrollIntoView();
   }
@@ -1226,7 +1225,7 @@
     document.getElementById("message-tab")?.scrollIntoView();
   }
   function toggleChatTools() {
-    isShowingChatTools.value = !isShowingChatTools.value;
+    isShowingObjects.value = !isShowingObjects.value;
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
@@ -1660,7 +1659,7 @@
     }
     chat.messages.handleAddition(scrollToBottomIfAppropriate);
     chat.outbox.handleAddition(scrollToBottomIfAppropriate);
-    isShowingChatTools.subscribe(() => scrollToBottom());
+    isShowingObjects.subscribe(() => scrollToBottom());
     setTimeout(() => scrollToBottom(), 50);
     return listWrapper;
   }
@@ -1681,7 +1680,7 @@
           {
             "aria-label": translation.showObjects,
             "on:click": toggleChatTools,
-            "toggle:selected": isShowingChatTools
+            "toggle:selected": isShowingObjects
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
         ), /* @__PURE__ */ createElement(
@@ -1701,7 +1700,7 @@
     return /* @__PURE__ */ createElement(
       "article",
       {
-        "toggle:showingchattools": isShowingChatTools,
+        "toggle:showingchattools": isShowingObjects,
         id: "message-tab",
         "children:set": messageTabContent
       }

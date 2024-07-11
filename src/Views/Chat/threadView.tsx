@@ -2,7 +2,7 @@ import * as React from "bloatless-react";
 
 import { Chat, ChatMessage } from "../../Model/chatModel";
 
-import { isShowingChatTools } from "../../Model/model";
+import { isShowingObjects } from "../../Model/model";
 import { translation } from "../../translations";
 
 export function ThreadView(chat: Chat) {
@@ -138,7 +138,7 @@ export function ThreadView(chat: Chat) {
 
   chat.messages.handleAddition(scrollToBottomIfAppropriate);
   chat.outbox.handleAddition(scrollToBottomIfAppropriate);
-  isShowingChatTools.subscribe(() => scrollToBottom());
+  isShowingObjects.subscribe(() => scrollToBottom());
   setTimeout(() => scrollToBottom(), 50);
 
   return listWrapper;

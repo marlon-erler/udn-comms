@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { closeChatView, isShowingChatTools, selectedChat, toggleChatTools } from "../Model/model";
+import { closeChatView, isShowingObjects, selectedChat, toggleChatTools } from "../Model/model";
 
 import { ChatObjectView } from "../Views/Objects/chatObjectView";
 import { ChatOptionModal } from "../Views/Chat/chatOptionModal";
@@ -37,7 +37,7 @@ export function MessageTab() {
           <button
             aria-label={translation.showObjects}
             on:click={toggleChatTools}
-            toggle:selected={isShowingChatTools}
+            toggle:selected={isShowingObjects}
           >
             <span class="icon">deployed_code</span>
           </button>
@@ -61,7 +61,7 @@ export function MessageTab() {
 
   return (
     <article
-      toggle:showingchattools={isShowingChatTools}
+      toggle:showingchattools={isShowingObjects}
       id="message-tab"
       children:set={messageTabContent}
     ></article>
