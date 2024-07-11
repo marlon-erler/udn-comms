@@ -29,7 +29,6 @@ export interface ChatMessage {
 export interface MessageObject {
   id: string;
   title: string;
-  isoDateLastEdited: string;
   contentVersions: MessageObjectContent[];
 }
 
@@ -302,7 +301,6 @@ export class Chat {
     return {
       id: React.UUID(),
       title,
-      isoDateLastEdited: new Date().toISOString(),
       contentVersions: [this.createObjectContent()],
     };
   };
