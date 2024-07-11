@@ -22,7 +22,7 @@ export function NoteObjectsView(
     return (
       <button class="tile" on:click={select}>
         <div>
-          <b>{messageObject.title}</b>
+          <b>{chat.getObjectTitle(messageObject)}</b>
           <span class="secondary ellipsis">
             {latest.noteContent!.split("\n")[0]}
           </span>

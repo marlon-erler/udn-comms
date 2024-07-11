@@ -418,426 +418,6 @@
     }
   };
 
-  // src/Model/chatModel.ts
-  var Chat = class {
-    id;
-    isSubscribed = new State(false);
-    primaryChannel = new State("");
-    hasUnreadMessages;
-    secondaryChannels;
-    encryptionKey;
-    messages;
-    objects;
-    outbox;
-    objectOutbox;
-    isOutBoxEmpty;
-    composingMessage;
-    primaryChannelInput;
-    newSecondaryChannelName;
-    cannotSendMessage;
-    cannotResendMessage;
-    cannotAddSecondaryChannel;
-    cannotSetChannel;
-    cannotUndoChannel;
-    cannotClearMessages;
-    cannotClearObjects;
-    // init
-    constructor(id = UUID()) {
-      this.id = id;
-      this.primaryChannel = restoreState(
-        storageKeys.primaryChannel(id),
-        ""
-      );
-      this.secondaryChannels = restoreListState(
-        storageKeys.secondaryChannels(id)
-      );
-      this.hasUnreadMessages = restoreState(
-        storageKeys.hasUnread(id),
-        false
-      );
-      this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
-      this.messages = restoreListState(storageKeys.messages(id));
-      this.objects = restoreMapState(storageKeys.objects(id));
-      this.outbox = restoreListState(storageKeys.outbox(id));
-      this.objectOutbox = restoreMapState(storageKeys.itemOutbox(id));
-      this.isOutBoxEmpty = createProxyState(
-        [this.outbox],
-        () => this.outbox.value.size == 0
-      );
-      bulkSubscribe(
-        [this.outbox, this.objectOutbox],
-        () => this.updateOutboxCount()
-      );
-      this.updateOutboxCount();
-      this.composingMessage = restoreState(
-        storageKeys.composingMessage(id),
-        ""
-      );
-      this.newSecondaryChannelName = new State("");
-      this.primaryChannelInput = new State(this.primaryChannel.value);
-      this.cannotSendMessage = createProxyState(
-        [this.primaryChannel, this.composingMessage, senderName],
-        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == ""
-      );
-      this.cannotResendMessage = createProxyState(
-        [this.primaryChannel, senderName],
-        () => this.primaryChannel.value == "" || senderName.value == ""
-      );
-      this.cannotAddSecondaryChannel = createProxyState(
-        [this.newSecondaryChannelName],
-        () => this.newSecondaryChannelName.value == ""
-      );
-      this.cannotSetChannel = createProxyState(
-        [this.primaryChannelInput, this.primaryChannel],
-        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
-      );
-      this.cannotUndoChannel = createProxyState(
-        [this.primaryChannelInput, this.primaryChannel],
-        () => this.primaryChannelInput.value == this.primaryChannel.value
-      );
-      this.cannotClearMessages = createProxyState(
-        [this.messages],
-        () => this.messages.value.size == 0
-      );
-      this.cannotClearObjects = createProxyState(
-        [this.objects],
-        () => this.objects.value.size == 0
-      );
-    }
-    // general
-    deleteSelf = () => {
-      Object.values(storageKeys).forEach((storageKey) => {
-        localStorage.removeItem(storageKey(this.id));
-      });
-      chats.remove(this);
-      chatIds.remove(this.id);
-    };
-    // handlers
-    onmessage = async (data) => {
-      if (!data.messageChannel) return;
-      const channels = data.messageChannel.split("/");
-      if (channels.indexOf(this.primaryChannel.value) == -1) return;
-      if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
-      if (!data.messageBody) return;
-      const message = JSON.parse(data.messageBody);
-      const { sender, body, channel, isoDate, messageObjectString } = message;
-      if (messageObjectString) {
-        const decryptedMessageObjectString = await decryptString(
-          messageObjectString,
-          this.encryptionKey.value
-        );
-        const messageObject = JSON.parse(decryptedMessageObjectString);
-        if (messageObject.id && messageObject.title)
-          return this.handleMessageObject(messageObject);
-      }
-      this.handleMessage({
-        sender,
-        body: await decryptString(body, this.encryptionKey.value),
-        channel,
-        isoDate
-      });
-    };
-    handleSubscription = (isSubscribed) => {
-      this.isSubscribed.value = isSubscribed;
-      if (isSubscribed == true) {
-        this.sendMessagesInOutbox();
-      }
-    };
-    handleMessage = (chatMessage) => {
-      this.messages.add(chatMessage);
-      if (selectedChat.value != this) this.hasUnreadMessages.value = true;
-    };
-    handleMessageObject = (messageObject) => {
-      this.addObject(messageObject);
-    };
-    // sending
-    sendMessagesInOutbox = () => {
-      this.outbox.value.forEach(async (message) => {
-        const isSent = await this.sendMessage(message);
-        if (isSent == true) this.outbox.remove(message);
-      });
-      this.objectOutbox.value.forEach(async (messageObject) => {
-        const chatMessage = await this.createChatMessage("", messageObject);
-        const isSent = await this.sendMessage(chatMessage);
-        if (isSent == true) this.objectOutbox.remove(messageObject.id);
-      });
-    };
-    updateOutboxCount() {
-      outboxItemCount.value = this.outbox.value.size + this.objectOutbox.value.size;
-    }
-    // messages
-    createChatMessage = async (messageText, messageObject) => {
-      const secondaryChannelNames = [
-        ...this.secondaryChannels.value.values()
-      ];
-      const allChannelNames = [
-        this.primaryChannel.value,
-        ...secondaryChannelNames
-      ];
-      const joinedChannelName = allChannelNames.join("/");
-      const chatMessage = {
-        channel: joinedChannelName,
-        sender: senderName.value,
-        body: messageText,
-        isoDate: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      if (messageObject)
-        chatMessage.messageObjectString = await encryptString(
-          JSON.stringify(messageObject),
-          this.encryptionKey.value
-        );
-      return chatMessage;
-    };
-    sendMessageFromComposer = async () => {
-      if (this.cannotSendMessage.value == true) return;
-      await this.sendMessageFromText(this.composingMessage.value);
-      this.composingMessage.value = "";
-    };
-    sendMessageFromText = async (text) => {
-      const chatMessage = await this.createChatMessage(text);
-      this.outbox.add(chatMessage);
-      this.sendMessagesInOutbox();
-    };
-    resendMessage = (chatMessage) => {
-      if (this.cannotResendMessage.value == true) return;
-      this.sendMessageFromText(chatMessage.body);
-    };
-    clearMessages = () => {
-      this.messages.clear();
-    };
-    deleteMessage = (chatMessage) => {
-      this.messages.remove(chatMessage);
-    };
-    deleteOutboxMessage = (chatMessage) => {
-      this.outbox.remove(chatMessage);
-    };
-    decryptReceivedMessage = async (chatMessage) => {
-      chatMessage.body = await decryptString(
-        chatMessage.body,
-        this.encryptionKey.value
-      );
-      this.messages.callSubscriptions();
-    };
-    sendMessage = async (chatMessage) => {
-      if (isConnected.value == false || this.isSubscribed.value == false)
-        return false;
-      const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
-      chatMessage.body = encryptedBody;
-      const messageString = JSON.stringify(chatMessage);
-      UDN.sendMessage(chatMessage.channel, messageString);
-      return true;
-    };
-    // objects
-    createObjectFromTitle = (title) => {
-      const firstObjectContent = this.createObjectContent();
-      const messageObject = {
-        id: UUID(),
-        title,
-        contentVersions: {}
-      };
-      this.addObjectContent(messageObject, firstObjectContent);
-      return messageObject;
-    };
-    createObjectContent = () => {
-      return {
-        id: UUID(),
-        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
-      };
-    };
-    addObjectContent = (messageObject, content) => {
-      messageObject.contentVersions[content.id] = content;
-    };
-    addObject = (messageObject) => {
-      const existingObject = this.objects.value.get(messageObject.id);
-      if (existingObject) {
-        existingObject.title = messageObject.title;
-        Object.values(messageObject.contentVersions).forEach((content) => {
-          this.addObjectContent(existingObject, content);
-        });
-        this.objects.set(existingObject.id, existingObject);
-      } else {
-        this.objects.set(messageObject.id, messageObject);
-      }
-    };
-    addObjectAndSend = (messageObject) => {
-      this.addObject(messageObject);
-      this.sendObject(messageObject);
-    };
-    sendObject = (messageObject) => {
-      this.objectOutbox.set(messageObject.id, messageObject);
-      this.sendMessagesInOutbox();
-    };
-    deleteObject = (messageObject) => {
-      this.objects.remove(messageObject.id);
-      this.objectOutbox.remove(messageObject.id);
-    };
-    resendObjects = () => {
-      this.objects.value.forEach((messageObject) => {
-        this.sendObject(messageObject);
-      });
-    };
-    clearObjects = () => {
-      this.objects.clear();
-    };
-    getSortedContents = (messageObject) => {
-      const contents = Object.values(messageObject.contentVersions);
-      contents.sort(
-        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? -1 : 1
-      );
-      return contents;
-    };
-    getMostRecentContentId = (messageObject) => {
-      const contents = Object.values(messageObject.contentVersions);
-      return contents[contents.length - 1].id;
-    };
-    getMostRecentContent = (messageObject) => {
-      const id = this.getMostRecentContentId(messageObject);
-      return this.getObjectContentFromId(messageObject, id);
-    };
-    getObjectContentFromId = (messageObject, contentId) => {
-      return messageObject.contentVersions[contentId];
-    };
-    // channel
-    setChannel = () => {
-      if (this.cannotSetChannel.value == true) return;
-      this.primaryChannel.value = this.primaryChannelInput.value;
-      UDN.subscribe(this.primaryChannel.value);
-      updateMailbox();
-    };
-    undoChannelChange = () => {
-      this.primaryChannelInput.value = this.primaryChannel.value;
-    };
-    addSecondaryChannel = () => {
-      if (this.cannotAddSecondaryChannel.value == true) return;
-      this.secondaryChannels.add(this.newSecondaryChannelName.value);
-      this.newSecondaryChannelName.value = "";
-    };
-    removeSecondaryChannel = (channel) => {
-      this.secondaryChannels.remove(channel);
-    };
-  };
-  function createChatWithName(name) {
-    const newChat = new Chat();
-    chats.add(newChat);
-    newChat.primaryChannel.value = name;
-    newChat.primaryChannelInput.value = name;
-    chatIds.add(newChat.id);
-    UDN.subscribe(name);
-    updateMailbox();
-  }
-
-  // node_modules/udn-frontend/index.ts
-  var UDNFrontend = class {
-    ws;
-    // HANDLERS
-    connectionHandler = () => {
-    };
-    disconnectionHandler = () => {
-    };
-    messageHandler = (data) => {
-    };
-    mailboxHandler = (mailboxId2) => {
-    };
-    mailboxConnectionHandler = (mailboxId2) => {
-    };
-    mailboxDeleteHandler = (mailboxId2) => {
-    };
-    // INIT
-    set onconnect(handler) {
-      this.connectionHandler = handler;
-    }
-    set ondisconnect(handler) {
-      this.disconnectionHandler = handler;
-    }
-    set onmessage(handler) {
-      this.messageHandler = handler;
-    }
-    set onmailboxcreate(handler) {
-      this.mailboxHandler = handler;
-    }
-    set onmailboxconnect(handler) {
-      this.mailboxConnectionHandler = handler;
-    }
-    set onmailboxdelete(handler) {
-      this.mailboxDeleteHandler = handler;
-    }
-    // UTILITY METHODS
-    send(messageObject) {
-      if (this.ws == void 0) return false;
-      const messageString = JSON.stringify(messageObject);
-      this.ws.send(messageString);
-      return true;
-    }
-    // PUBLIC METHODS
-    // connection
-    connect(address) {
-      try {
-        this.disconnect();
-        this.ws = new WebSocket(address);
-        this.ws.addEventListener("open", this.connectionHandler);
-        this.ws.addEventListener("close", this.disconnectionHandler);
-        this.ws.addEventListener("message", (message) => {
-          const dataString = message.data.toString();
-          const data = JSON.parse(dataString);
-          if (data.assignedMailboxId) {
-            return this.mailboxHandler(data.assignedMailboxId);
-          } else if (data.connectedMailboxId) {
-            return this.mailboxConnectionHandler(data.connectedMailboxId);
-          } else if (data.deletedMailbox) {
-            return this.mailboxDeleteHandler(data.deletedMailbox);
-          } else {
-            this.messageHandler(data);
-          }
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    disconnect() {
-      this.ws?.close();
-    }
-    // message
-    sendMessage(channel, body) {
-      const messageObject = {
-        messageChannel: channel,
-        messageBody: body
-      };
-      return this.send(messageObject);
-    }
-    // subscription
-    subscribe(channel) {
-      const messageObject = {
-        subscribeChannel: channel
-      };
-      return this.send(messageObject);
-    }
-    unsubscribe(channel) {
-      const messageObject = {
-        unsubscribeChannel: channel
-      };
-      return this.send(messageObject);
-    }
-    // mailbox
-    requestMailbox() {
-      const messageObject = {
-        requestingMailboxSetup: true
-      };
-      return this.send(messageObject);
-    }
-    connectMailbox(mailboxId2) {
-      const messageObject = {
-        requestedMailbox: mailboxId2
-      };
-      return this.send(messageObject);
-    }
-    deleteMailbox(mailboxId2) {
-      const messageObject = {
-        deletingMailbox: mailboxId2
-      };
-      return this.send(messageObject);
-    }
-  };
-
   // src/translations.ts
   var englishTranslations = {
     // general
@@ -1079,6 +659,428 @@
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
 
+  // src/Model/chatModel.ts
+  var Chat = class {
+    id;
+    isSubscribed = new State(false);
+    primaryChannel = new State("");
+    hasUnreadMessages;
+    secondaryChannels;
+    encryptionKey;
+    messages;
+    objects;
+    outbox;
+    objectOutbox;
+    isOutBoxEmpty;
+    composingMessage;
+    primaryChannelInput;
+    newSecondaryChannelName;
+    cannotSendMessage;
+    cannotResendMessage;
+    cannotAddSecondaryChannel;
+    cannotSetChannel;
+    cannotUndoChannel;
+    cannotClearMessages;
+    cannotClearObjects;
+    // init
+    constructor(id = UUID()) {
+      this.id = id;
+      this.primaryChannel = restoreState(
+        storageKeys.primaryChannel(id),
+        ""
+      );
+      this.secondaryChannels = restoreListState(
+        storageKeys.secondaryChannels(id)
+      );
+      this.hasUnreadMessages = restoreState(
+        storageKeys.hasUnread(id),
+        false
+      );
+      this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
+      this.messages = restoreListState(storageKeys.messages(id));
+      this.objects = restoreMapState(storageKeys.objects(id));
+      this.outbox = restoreListState(storageKeys.outbox(id));
+      this.objectOutbox = restoreMapState(storageKeys.itemOutbox(id));
+      this.isOutBoxEmpty = createProxyState(
+        [this.outbox],
+        () => this.outbox.value.size == 0
+      );
+      bulkSubscribe(
+        [this.outbox, this.objectOutbox],
+        () => this.updateOutboxCount()
+      );
+      this.updateOutboxCount();
+      this.composingMessage = restoreState(
+        storageKeys.composingMessage(id),
+        ""
+      );
+      this.newSecondaryChannelName = new State("");
+      this.primaryChannelInput = new State(this.primaryChannel.value);
+      this.cannotSendMessage = createProxyState(
+        [this.primaryChannel, this.composingMessage, senderName],
+        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == ""
+      );
+      this.cannotResendMessage = createProxyState(
+        [this.primaryChannel, senderName],
+        () => this.primaryChannel.value == "" || senderName.value == ""
+      );
+      this.cannotAddSecondaryChannel = createProxyState(
+        [this.newSecondaryChannelName],
+        () => this.newSecondaryChannelName.value == ""
+      );
+      this.cannotSetChannel = createProxyState(
+        [this.primaryChannelInput, this.primaryChannel],
+        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
+      );
+      this.cannotUndoChannel = createProxyState(
+        [this.primaryChannelInput, this.primaryChannel],
+        () => this.primaryChannelInput.value == this.primaryChannel.value
+      );
+      this.cannotClearMessages = createProxyState(
+        [this.messages],
+        () => this.messages.value.size == 0
+      );
+      this.cannotClearObjects = createProxyState(
+        [this.objects],
+        () => this.objects.value.size == 0
+      );
+    }
+    // general
+    deleteSelf = () => {
+      Object.values(storageKeys).forEach((storageKey) => {
+        localStorage.removeItem(storageKey(this.id));
+      });
+      chats.remove(this);
+      chatIds.remove(this.id);
+    };
+    // handlers
+    onmessage = async (data) => {
+      if (!data.messageChannel) return;
+      const channels = data.messageChannel.split("/");
+      if (channels.indexOf(this.primaryChannel.value) == -1) return;
+      if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
+      if (!data.messageBody) return;
+      const message = JSON.parse(data.messageBody);
+      const { sender, body, channel, isoDate, messageObjectString } = message;
+      if (messageObjectString) {
+        const decryptedMessageObjectString = await decryptString(
+          messageObjectString,
+          this.encryptionKey.value
+        );
+        const messageObject = JSON.parse(decryptedMessageObjectString);
+        if (messageObject.id) return this.handleMessageObject(messageObject);
+      }
+      this.handleMessage({
+        sender,
+        body: await decryptString(body, this.encryptionKey.value),
+        channel,
+        isoDate
+      });
+    };
+    handleSubscription = (isSubscribed) => {
+      this.isSubscribed.value = isSubscribed;
+      if (isSubscribed == true) {
+        this.sendMessagesInOutbox();
+      }
+    };
+    handleMessage = (chatMessage) => {
+      this.messages.add(chatMessage);
+      if (selectedChat.value != this) this.hasUnreadMessages.value = true;
+    };
+    handleMessageObject = (messageObject) => {
+      this.addObject(messageObject);
+    };
+    // sending
+    sendMessagesInOutbox = () => {
+      this.outbox.value.forEach(async (message) => {
+        const isSent = await this.sendMessage(message);
+        if (isSent == true) this.outbox.remove(message);
+      });
+      this.objectOutbox.value.forEach(async (messageObject) => {
+        const chatMessage = await this.createChatMessage("", messageObject);
+        const isSent = await this.sendMessage(chatMessage);
+        if (isSent == true) this.objectOutbox.remove(messageObject.id);
+      });
+    };
+    updateOutboxCount() {
+      outboxItemCount.value = this.outbox.value.size + this.objectOutbox.value.size;
+    }
+    // messages
+    createChatMessage = async (messageText, messageObject) => {
+      const secondaryChannelNames = [
+        ...this.secondaryChannels.value.values()
+      ];
+      const allChannelNames = [
+        this.primaryChannel.value,
+        ...secondaryChannelNames
+      ];
+      const joinedChannelName = allChannelNames.join("/");
+      const chatMessage = {
+        channel: joinedChannelName,
+        sender: senderName.value,
+        body: messageText,
+        isoDate: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      if (messageObject)
+        chatMessage.messageObjectString = await encryptString(
+          JSON.stringify(messageObject),
+          this.encryptionKey.value
+        );
+      return chatMessage;
+    };
+    sendMessageFromComposer = async () => {
+      if (this.cannotSendMessage.value == true) return;
+      await this.sendMessageFromText(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
+    sendMessageFromText = async (text) => {
+      const chatMessage = await this.createChatMessage(text);
+      this.outbox.add(chatMessage);
+      this.sendMessagesInOutbox();
+    };
+    resendMessage = (chatMessage) => {
+      if (this.cannotResendMessage.value == true) return;
+      this.sendMessageFromText(chatMessage.body);
+    };
+    clearMessages = () => {
+      this.messages.clear();
+    };
+    deleteMessage = (chatMessage) => {
+      this.messages.remove(chatMessage);
+    };
+    deleteOutboxMessage = (chatMessage) => {
+      this.outbox.remove(chatMessage);
+    };
+    decryptReceivedMessage = async (chatMessage) => {
+      chatMessage.body = await decryptString(
+        chatMessage.body,
+        this.encryptionKey.value
+      );
+      this.messages.callSubscriptions();
+    };
+    sendMessage = async (chatMessage) => {
+      if (isConnected.value == false || this.isSubscribed.value == false)
+        return false;
+      const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
+      chatMessage.body = encryptedBody;
+      const messageString = JSON.stringify(chatMessage);
+      UDN.sendMessage(chatMessage.channel, messageString);
+      return true;
+    };
+    // objects
+    createObjectFromTitle = (title) => {
+      const firstObjectContent = this.createObjectContent();
+      const messageObject = {
+        id: UUID(),
+        title,
+        contentVersions: {}
+      };
+      this.addObjectContent(messageObject, firstObjectContent);
+      return messageObject;
+    };
+    createObjectContent = () => {
+      return {
+        id: UUID(),
+        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    };
+    addObjectContent = (messageObject, content) => {
+      messageObject.contentVersions[content.id] = content;
+    };
+    addObject = (messageObject) => {
+      const existingObject = this.objects.value.get(messageObject.id);
+      if (existingObject) {
+        existingObject.title = messageObject.title;
+        Object.values(messageObject.contentVersions).forEach((content) => {
+          this.addObjectContent(existingObject, content);
+        });
+        this.objects.set(existingObject.id, existingObject);
+      } else {
+        this.objects.set(messageObject.id, messageObject);
+      }
+    };
+    addObjectAndSend = (messageObject) => {
+      this.addObject(messageObject);
+      this.sendObject(messageObject);
+    };
+    sendObject = (messageObject) => {
+      this.objectOutbox.set(messageObject.id, messageObject);
+      this.sendMessagesInOutbox();
+    };
+    deleteObject = (messageObject) => {
+      this.objects.remove(messageObject.id);
+      this.objectOutbox.remove(messageObject.id);
+    };
+    resendObjects = () => {
+      this.objects.value.forEach((messageObject) => {
+        this.sendObject(messageObject);
+      });
+    };
+    clearObjects = () => {
+      this.objects.clear();
+    };
+    getSortedContents = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      contents.sort(
+        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? -1 : 1
+      );
+      return contents;
+    };
+    getMostRecentContentId = (messageObject) => {
+      const contents = Object.values(messageObject.contentVersions);
+      return contents[contents.length - 1].id;
+    };
+    getMostRecentContent = (messageObject) => {
+      const id = this.getMostRecentContentId(messageObject);
+      return this.getObjectContentFromId(messageObject, id);
+    };
+    getObjectContentFromId = (messageObject, contentId) => {
+      return messageObject.contentVersions[contentId];
+    };
+    getObjectTitle = (messageObject) => {
+      return messageObject.title || translation.untitledObject;
+    };
+    // channel
+    setChannel = () => {
+      if (this.cannotSetChannel.value == true) return;
+      this.primaryChannel.value = this.primaryChannelInput.value;
+      UDN.subscribe(this.primaryChannel.value);
+      updateMailbox();
+    };
+    undoChannelChange = () => {
+      this.primaryChannelInput.value = this.primaryChannel.value;
+    };
+    addSecondaryChannel = () => {
+      if (this.cannotAddSecondaryChannel.value == true) return;
+      this.secondaryChannels.add(this.newSecondaryChannelName.value);
+      this.newSecondaryChannelName.value = "";
+    };
+    removeSecondaryChannel = (channel) => {
+      this.secondaryChannels.remove(channel);
+    };
+  };
+  function createChatWithName(name) {
+    const newChat = new Chat();
+    chats.add(newChat);
+    newChat.primaryChannel.value = name;
+    newChat.primaryChannelInput.value = name;
+    chatIds.add(newChat.id);
+    UDN.subscribe(name);
+    updateMailbox();
+  }
+
+  // node_modules/udn-frontend/index.ts
+  var UDNFrontend = class {
+    ws;
+    // HANDLERS
+    connectionHandler = () => {
+    };
+    disconnectionHandler = () => {
+    };
+    messageHandler = (data) => {
+    };
+    mailboxHandler = (mailboxId2) => {
+    };
+    mailboxConnectionHandler = (mailboxId2) => {
+    };
+    mailboxDeleteHandler = (mailboxId2) => {
+    };
+    // INIT
+    set onconnect(handler) {
+      this.connectionHandler = handler;
+    }
+    set ondisconnect(handler) {
+      this.disconnectionHandler = handler;
+    }
+    set onmessage(handler) {
+      this.messageHandler = handler;
+    }
+    set onmailboxcreate(handler) {
+      this.mailboxHandler = handler;
+    }
+    set onmailboxconnect(handler) {
+      this.mailboxConnectionHandler = handler;
+    }
+    set onmailboxdelete(handler) {
+      this.mailboxDeleteHandler = handler;
+    }
+    // UTILITY METHODS
+    send(messageObject) {
+      if (this.ws == void 0) return false;
+      const messageString = JSON.stringify(messageObject);
+      this.ws.send(messageString);
+      return true;
+    }
+    // PUBLIC METHODS
+    // connection
+    connect(address) {
+      try {
+        this.disconnect();
+        this.ws = new WebSocket(address);
+        this.ws.addEventListener("open", this.connectionHandler);
+        this.ws.addEventListener("close", this.disconnectionHandler);
+        this.ws.addEventListener("message", (message) => {
+          const dataString = message.data.toString();
+          const data = JSON.parse(dataString);
+          if (data.assignedMailboxId) {
+            return this.mailboxHandler(data.assignedMailboxId);
+          } else if (data.connectedMailboxId) {
+            return this.mailboxConnectionHandler(data.connectedMailboxId);
+          } else if (data.deletedMailbox) {
+            return this.mailboxDeleteHandler(data.deletedMailbox);
+          } else {
+            this.messageHandler(data);
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    disconnect() {
+      this.ws?.close();
+    }
+    // message
+    sendMessage(channel, body) {
+      const messageObject = {
+        messageChannel: channel,
+        messageBody: body
+      };
+      return this.send(messageObject);
+    }
+    // subscription
+    subscribe(channel) {
+      const messageObject = {
+        subscribeChannel: channel
+      };
+      return this.send(messageObject);
+    }
+    unsubscribe(channel) {
+      const messageObject = {
+        unsubscribeChannel: channel
+      };
+      return this.send(messageObject);
+    }
+    // mailbox
+    requestMailbox() {
+      const messageObject = {
+        requestingMailboxSetup: true
+      };
+      return this.send(messageObject);
+    }
+    connectMailbox(mailboxId2) {
+      const messageObject = {
+        requestedMailbox: mailboxId2
+      };
+      return this.send(messageObject);
+    }
+    deleteMailbox(mailboxId2) {
+      const messageObject = {
+        deletingMailbox: mailboxId2
+      };
+      return this.send(messageObject);
+    }
+  };
+
   // src/Model/model.ts
   var UDN = new UDNFrontend();
   var isConnected = new State(false);
@@ -1232,7 +1234,7 @@
         selectedObject.value = messageObject;
         isShowingObjectModal.value = true;
       }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
     };
     const content = createProxyState(
       [chat.objects],
@@ -1256,7 +1258,7 @@
         selectedObject.value = messageObject;
         isShowingObjectModal.value = true;
       }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, latest.noteContent.split("\n")[0])));
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, latest.noteContent.split("\n")[0])));
     };
     const notes = new ListState();
     chat.objects.subscribe(() => {
@@ -1328,14 +1330,15 @@
       chat.deleteObject(messageObject);
       closeModal();
     }
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+    const input = /* @__PURE__ */ createElement(
       "input",
       {
-        autofocus: true,
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
+    );
+    isPresented.subscribe(() => setTimeout(() => input.focus(), 100));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), input)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
       content.isoDateVersionCreated
     ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
       "textarea",
@@ -1379,7 +1382,7 @@
       return getViewFunction()(chat, selectedObject, isShowingObjectModal);
     });
     function createObject() {
-      const newObject = chat.createObjectFromTitle(translation.untitledObject);
+      const newObject = chat.createObjectFromTitle("");
       chat.addObjectAndSend(newObject);
       selectedObject.value = newObject;
       isShowingObjectModal.value = true;
@@ -1394,14 +1397,7 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
       (key) => ViewTypeToggle(key, selectedViewType)
-    )), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "height-100",
-        disabled: true
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility")
-    )), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement(
       "div",
       {
         class: "width-100 height-100 flex-1 scroll-h",

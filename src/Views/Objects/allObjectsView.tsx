@@ -20,7 +20,7 @@ export function AllObjectsView(
     return (
       <button class="tile" on:click={select}>
         <div>
-          <b>{messageObject.title}</b>
+        <b>{chat.getObjectTitle(messageObject)}</b>
           <span class="secondary">{messageObject.id}</span>
         </div>
       </button>

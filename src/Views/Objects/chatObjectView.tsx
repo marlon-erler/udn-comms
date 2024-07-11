@@ -46,7 +46,7 @@ export function ChatObjectView(chat: Chat) {
 
   // methods
   function createObject() {
-    const newObject = chat.createObjectFromTitle(translation.untitledObject);
+    const newObject = chat.createObjectFromTitle("");
     chat.addObjectAndSend(newObject);
     selectedObject.value = newObject;
     isShowingObjectModal.value = true;
@@ -69,10 +69,7 @@ export function ChatObjectView(chat: Chat) {
           )}
         </div>
 
-        <button
-          class="height-100"
-          disabled
-        >
+        <button class="height-100" disabled>
           <span class="icon">visibility</span>
         </button>
       </div>

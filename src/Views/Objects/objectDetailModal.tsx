@@ -68,11 +68,19 @@ export function ObjectDetailModal(
     closeModal();
   }
 
+  const input = (
+    <input
+      bind:value={editingTitle}
+      placeholder={translation.objectTitlePlaceholder}
+    ></input>
+  );
+  isPresented.subscribe(() => setTimeout(() => input.focus(), 100));
+
   return (
     <div class="modal" toggle:open={isPresented} on:keydown={handleKeyDown}>
       <div>
         <main>
-          <h2>{messageObject.title}</h2>
+          <h2>{chat.getObjectTitle(messageObject)}</h2>
           <span class="secondary">{messageObject.id}</span>
 
           <hr></hr>
@@ -82,11 +90,7 @@ export function ObjectDetailModal(
               <span class="icon">label</span>
               <div>
                 <span>{translation.objectTitle}</span>
-                <input
-                autofocus
-                  bind:value={editingTitle}
-                  placeholder={translation.objectTitlePlaceholder}
-                ></input>
+                {input}
               </div>
             </label>
 

@@ -14,6 +14,7 @@ import { decryptString, encryptString } from "../cryptUtility";
 
 import { Message } from "udn-frontend";
 import { storageKeys } from "../utility";
+import { translation } from "../translations";
 
 // TYPES
 // message
@@ -174,8 +175,7 @@ export class Chat {
         this.encryptionKey.value
       );
       const messageObject = JSON.parse(decryptedMessageObjectString);
-      if (messageObject.id && messageObject.title)
-        return this.handleMessageObject(messageObject);
+      if (messageObject.id) return this.handleMessageObject(messageObject);
     }
 
     this.handleMessage({
@@ -398,6 +398,10 @@ export class Chat {
     contentId: string
   ): MessageObjectContent => {
     return messageObject.contentVersions[contentId];
+  };
+
+  getObjectTitle = (messageObject: MessageObject) => {
+    return messageObject.title || translation.untitledObject;
   };
 
   // channel
