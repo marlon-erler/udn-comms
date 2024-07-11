@@ -22,7 +22,7 @@ export interface ChatMessage {
   body: string;
   isoDate: string;
 
-  messageObject?: string;
+  messageObjectString?: string;
 }
 
 // object
@@ -154,17 +154,16 @@ export class Chat {
     if (data.subscribed != undefined) this.handleSubscription(data.subscribed);
 
     if (!data.messageBody) return;
-    const { sender, body, channel, isoDate, messageObject } = JSON.parse(
-      data.messageBody
-    );
+    const message: ChatMessage = JSON.parse(data.messageBody);
+    const { sender, body, channel, isoDate, messageObjectString } = message;
 
-    if (messageObject) {
-      const decrypted = await decryptString(
-        messageObject,
+    if (messageObjectString) {
+      const decryptedMessageObjectString = await decryptString(
+        messageObjectString,
         this.encryptionKey.value
       );
-      const object = JSON.parse(decrypted);
-      if (object.id && object.title) return this.handleMessageObject(object);
+      const messageObject = JSON.parse(decryptedMessageObjectString);
+      if (messageObject.id && messageObject.title) return this.handleMessageObject(messageObject);
     }
 
     this.handleMessage({
@@ -199,10 +198,10 @@ export class Chat {
       const isSent = await this.sendMessage(message);
       if (isSent == true) this.outbox.remove(message);
     });
-    this.objectOutbox.value.forEach(async (object) => {
-      const chatMessage = await this.createChatMessage("", object);
+    this.objectOutbox.value.forEach(async (messageObject) => {
+      const chatMessage = await this.createChatMessage("", messageObject);
       const isSent = await this.sendMessage(chatMessage);
-      if (isSent == true) this.objectOutbox.remove(object.id);
+      if (isSent == true) this.objectOutbox.remove(messageObject.id);
     });
   };
 
@@ -230,7 +229,7 @@ export class Chat {
     };
 
     if (messageObject)
-      chatMessage.messageObject = await encryptString(
+      chatMessage.messageObjectString = await encryptString(
         JSON.stringify(messageObject),
         this.encryptionKey.value
       );
@@ -307,25 +306,25 @@ export class Chat {
   };
 
   updateObject = (id: string, contents: MessageObjectContent): void => {
-    const object = this.objects.value.get(id);
-    if (!object) return;
-    object.contentVersions.push(contents);
-    this.sendObject(object);
+    const messageObject = this.objects.value.get(id);
+    if (!messageObject) return;
+    messageObject.contentVersions.push(contents);
+    this.sendObject(messageObject);
   };
 
-  addObjectAndSend = (object: MessageObject): void => {
-    this.addObject(object);
-    this.sendObject(object);
+  addObjectAndSend = (messageObject: MessageObject): void => {
+    this.addObject(messageObject);
+    this.sendObject(messageObject);
   };
 
-  sendObject = (object: MessageObject): void => {
-    this.objectOutbox.set(object.id, object);
+  sendObject = (messageObject: MessageObject): void => {
+    this.objectOutbox.set(messageObject.id, messageObject);
     this.sendMessagesInOutbox();
   };
 
-  deleteObject = (object: MessageObject): void => {
-    this.objects.remove(object.id);
-    this.objectOutbox.remove(object.id);
+  deleteObject = (messageObject: MessageObject): void => {
+    this.objects.remove(messageObject.id);
+    this.objectOutbox.remove(messageObject.id);
   };
 
   resendObjects = (): void => {
