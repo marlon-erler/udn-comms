@@ -2,8 +2,8 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
-import { ChatOptionModal } from "./chatOptionModal";
-import { ItemDetailModal } from "./itemDetailModal";
+import { ObjectDetailModal } from "./objectDetailModal";
+import { ObjectListEntry } from "./objectListEntry";
 import { translation } from "../../translations";
 
 export function ChatToolView(chat: Chat) {
@@ -12,23 +12,27 @@ export function ChatToolView(chat: Chat) {
   const objectModal = React.createProxyState([selectedObject], () => {
     if (selectedObject.value == undefined) return <div></div>;
 
-    return ItemDetailModal(chat, selectedObject.value, isShowingObjectModal);
+    return ObjectDetailModal(chat, selectedObject.value, isShowingObjectModal);
   });
 
   function createItem() {
-    chat.addObjectAndSend({
-      id: React.UUID(),
-      title: "new item",
-    });
+    const newObject = chat.createObjectFromTitle("New item");
+    chat.addObjectAndSend(newObject);
   }
 
-  const itemConverter: React.StateItemConverter<MessageObject> = (object) => {
+  const itemConverter: React.StateItemConverter<MessageObject> = (
+    messageObject
+  ) => {
+    const latestObject = chat.getLatestObjectContent(messageObject);
+
+    if (!latestObject) return <div></div>; //TODO
+
     function select() {
-      selectedObject.value = object;
+      selectedObject.value = messageObject;
       isShowingObjectModal.value = true;
     }
 
-    return <button on:click={select}>{object.title}</button>;
+    return ObjectListEntry(messageObject, select);
   };
 
   return (

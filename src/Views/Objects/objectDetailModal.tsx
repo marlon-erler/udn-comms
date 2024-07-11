@@ -4,9 +4,9 @@ import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { translation } from "../../translations";
 
-export function ItemDetailModal(
+export function ObjectDetailModal(
   chat: Chat,
-  object: MessageObject,
+  messageObject: MessageObject,
   isPresented: React.State<boolean>
 ) {
   function closeModal() {
@@ -14,24 +14,23 @@ export function ItemDetailModal(
   }
 
   function saveAndClose() {
-    object.title = editingTitle.value;
-    
-    chat.addObjectAndSend(object);
+    messageObject.title = editingTitle.value;
+    chat.updateObject(messageObject.id, {});
     closeModal();
   }
 
   function deleteAndClose() {
-    chat.deleteObject(object);
+    chat.deleteObject(messageObject);
     closeModal();
   }
 
-  const editingTitle = new React.State(object.title);
+  const editingTitle = new React.State(messageObject.title);
 
   return (
     <div class="modal" toggle:open={isPresented}>
       <div>
         <main>
-          <h2>{object.title}</h2>
+          <h2>{messageObject.title}</h2>
 
           <div>
             <label class="tile">

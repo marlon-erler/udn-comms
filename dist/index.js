@@ -516,7 +516,6 @@
           messageObject,
           this.encryptionKey.value
         );
-        console.log(decrypted);
         const object = JSON.parse(decrypted);
         if (object.id && object.title) return this.handleMessageObject(object);
       }
@@ -538,7 +537,7 @@
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
     handleMessageObject = (messageObject) => {
-      this.objects.set(messageObject.id, messageObject);
+      this.addObject(messageObject);
     };
     // sending
     sendMessagesInOutbox = () => {
@@ -615,8 +614,25 @@
       return true;
     };
     // objects
+    createObjectFromTitle = (title) => {
+      return {
+        id: UUID(),
+        title,
+        dateLastEdited: /* @__PURE__ */ new Date(),
+        contentVersions: []
+      };
+    };
+    addObject = (messageObject) => {
+      this.objects.set(messageObject.id, messageObject);
+    };
+    updateObject = (id, contents) => {
+      const object = this.objects.value.get(id);
+      if (!object) return;
+      object.contentVersions.push(contents);
+      this.sendObject(object);
+    };
     addObjectAndSend = (object) => {
-      this.objects.set(object.id, object);
+      this.addObject(object);
       this.sendObject(object);
     };
     sendObject = (object) => {
@@ -628,12 +644,17 @@
       this.objectOutbox.remove(object.id);
     };
     resendObjects = () => {
-      this.objects.value.forEach((object) => {
-        this.sendObject(object);
+      this.objects.value.forEach((messageObject) => {
+        this.sendObject(messageObject);
       });
     };
     clearObjects = () => {
       this.objects.clear();
+    };
+    getLatestObjectContent = (messageObject) => {
+      const versions = messageObject.contentVersions;
+      if (versions.length == 0) return {};
+      return versions[versions.length - 1];
     };
     // channel
     setChannel = () => {
@@ -1164,22 +1185,22 @@
     ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
-  // src/Views/Chat/itemDetailModal.tsx
-  function ItemDetailModal(chat, object, isPresented) {
+  // src/Views/Objects/objectDetailModal.tsx
+  function ObjectDetailModal(chat, messageObject, isPresented) {
     function closeModal() {
       isPresented.value = false;
     }
     function saveAndClose() {
-      object.title = editingTitle.value;
-      chat.addObjectAndSend(object);
+      messageObject.title = editingTitle.value;
+      chat.updateObject(messageObject.id, {});
       closeModal();
     }
     function deleteAndClose() {
-      chat.deleteObject(object);
+      chat.deleteObject(messageObject);
       closeModal();
     }
-    const editingTitle = new State(object.title);
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, object.title), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+    const editingTitle = new State(messageObject.title);
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingTitle,
@@ -1188,26 +1209,31 @@
     )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
-  // src/Views/Chat/chatToolView.tsx
+  // src/Views/Objects/objectListEntry.tsx
+  function ObjectListEntry(messageObject, onclick) {
+    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": onclick }, /* @__PURE__ */ createElement("b", null, messageObject.title));
+  }
+
+  // src/Views/Objects/objectListView.tsx
   function ChatToolView(chat) {
     const isShowingObjectModal = new State(false);
     const selectedObject = new State(void 0);
     const objectModal = createProxyState([selectedObject], () => {
       if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
-      return ItemDetailModal(chat, selectedObject.value, isShowingObjectModal);
+      return ObjectDetailModal(chat, selectedObject.value, isShowingObjectModal);
     });
     function createItem() {
-      chat.addObjectAndSend({
-        id: UUID(),
-        title: "new item"
-      });
+      const newObject = chat.createObjectFromTitle("New item");
+      chat.addObjectAndSend(newObject);
     }
-    const itemConverter = (object) => {
+    const itemConverter = (messageObject) => {
+      const latestObject = chat.getLatestObjectContent(messageObject);
+      if (!latestObject) return /* @__PURE__ */ createElement("div", null);
       function select() {
-        selectedObject.value = object;
+        selectedObject.value = messageObject;
         isShowingObjectModal.value = true;
       }
-      return /* @__PURE__ */ createElement("button", { "on:click": select }, object.title);
+      return ObjectListEntry(messageObject, select);
     };
     return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:prepend": [chat.objects, itemConverter] }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }

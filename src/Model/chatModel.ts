@@ -29,7 +29,11 @@ export interface ChatMessage {
 export interface MessageObject {
   id: string;
   title: string;
+  dateLastEdited: Date;
+  contentVersions: MessageObjectContent[];
 }
+
+export interface MessageObjectContent {}
 
 // chat
 export class Chat {
@@ -185,7 +189,7 @@ export class Chat {
   };
 
   handleMessageObject = (messageObject: MessageObject): void => {
-    this.objects.set(messageObject.id, messageObject);
+    this.addObject(messageObject);
   };
 
   // sending
@@ -289,8 +293,28 @@ export class Chat {
   };
 
   // objects
+  createObjectFromTitle = (title: string): MessageObject => {
+    return {
+      id: React.UUID(),
+      title,
+      dateLastEdited: new Date(),
+      contentVersions: [],
+    };
+  };
+
+  addObject = (messageObject: MessageObject): void => {
+    this.objects.set(messageObject.id, messageObject);
+  };
+
+  updateObject = (id: string, contents: MessageObjectContent): void => {
+    const object = this.objects.value.get(id);
+    if (!object) return;
+    object.contentVersions.push(contents);
+    this.sendObject(object);
+  };
+
   addObjectAndSend = (object: MessageObject): void => {
-    this.objects.set(object.id, object);
+    this.addObject(object);
     this.sendObject(object);
   };
 
@@ -305,13 +329,21 @@ export class Chat {
   };
 
   resendObjects = (): void => {
-    this.objects.value.forEach((object) => {
-      this.sendObject(object);
+    this.objects.value.forEach((messageObject) => {
+      this.sendObject(messageObject);
     });
   };
 
   clearObjects = (): void => {
     this.objects.clear();
+  };
+
+  getLatestObjectContent = (
+    messageObject: MessageObject
+  ): MessageObjectContent => {
+    const versions = messageObject.contentVersions;
+    if (versions.length == 0) return {};
+    return versions[versions.length - 1];
   };
 
   // channel

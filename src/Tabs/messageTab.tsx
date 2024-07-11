@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import { closeChatView, isShowingChatTools, selectedChat, toggleChatTools } from "../Model/model";
 
 import { ChatOptionModal } from "../Views/Chat/chatOptionModal";
-import { ChatToolView } from "../Views/Chat/chatToolView";
+import { ChatToolView } from "../Views/Objects/objectListView";
 import { MessageComposer } from "../Views/Chat/messageComposer";
 import { ThreadView } from "../Views/Chat/threadView";
 import { translation } from "../translations";
