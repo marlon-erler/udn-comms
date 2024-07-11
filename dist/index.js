@@ -580,6 +580,12 @@
       objectVersion: "Version del objeto",
       note: "Nota",
       noteContentPlaceholder: "Toma nota...",
+      category: "Categor\xEDa",
+      priority: "Prioridad",
+      priorityPlaceholder: "2",
+      categoryPlaceholder: "Define una categor\xEDa",
+      date: "Fecha",
+      time: "Hora",
       resendObjects: "Reenviar todos objetos",
       deleteObject: "Eliminar objeto"
     },
@@ -658,6 +664,12 @@
       objectVersion: "Version des Objekts",
       note: "Notiz",
       noteContentPlaceholder: "Notiz eingeben...",
+      category: "Kategorie",
+      priority: "Priorit\xE4t",
+      priorityPlaceholder: "2",
+      categoryPlaceholder: "Kategorie eingeben...",
+      date: "Datum",
+      time: "Uhrzeit",
       resendObjects: "Objekte erneut senden",
       deleteObject: "Objekt l\xF6schen"
     }

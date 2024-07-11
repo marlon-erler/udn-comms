@@ -1,6 +1,6 @@
 /* src/styles.css */
 [unread] {
-  border-left: 10px solid var(--text-warn);
+  border-left: 10px solid var(--text-warning);
 }
 :root {
   --thread-view-height-with-tools: 8rem;
