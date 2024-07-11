@@ -602,7 +602,7 @@ label.tile:has(> span.icon) {
   padding-left: var(--control-padding);
 }
 
-label.tile:has(> span.icon) :is(input, select) {
+label.tile:has(> span.icon) :is(input, select, textarea) {
   padding-left: 0px;
 }
 
@@ -735,8 +735,7 @@ button:not(.tile):not(header *),
 footer,
 input:not([type="checkbox"]):not([type="radio"]),
 select,
-select + .icon,
-textarea {
+select + .icon {
   height: var(--control-height);
 }
 
@@ -784,6 +783,10 @@ input[type="checkbox"],
 input[type="radio"] {
   width: 16px;
   height: 16px;
+}
+
+label.tile textarea {
+  resize: vertical;
 }
 
 /*

@@ -35,6 +35,9 @@ export interface MessageObject {
 
 export interface MessageObjectContent {
   isoDateVersionCreated: string;
+  id: string;
+
+  noteContent?: string;
 }
 
 // chat
@@ -300,7 +303,7 @@ export class Chat {
       id: React.UUID(),
       title,
       isoDateLastEdited: new Date().toISOString(),
-      contentVersions: [],
+      contentVersions: [this.createObjectContent()],
     };
   };
 
@@ -308,10 +311,15 @@ export class Chat {
     this.objects.set(messageObject.id, messageObject);
   };
 
-  updateObject = (id: string, contents: MessageObjectContent): void => {
+  updateObject = (id: string, contents?: MessageObjectContent): void => {
     const messageObject = this.objects.value.get(id);
     if (!messageObject) return;
-    messageObject.contentVersions.push(contents);
+    if (contents) {
+      messageObject.contentVersions.push(contents);
+      messageObject.contentVersions.sort((a, b) =>
+        a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+      );
+    }
     this.sendObject(messageObject);
   };
 
@@ -343,12 +351,22 @@ export class Chat {
   getLatestObjectContent = (
     messageObject: MessageObject
   ): MessageObjectContent => {
+    return this.getObjectContentFromIndex(messageObject, 0);
+  };
+
+  getObjectContentFromIndex = (
+    messageObject: MessageObject,
+    index: number
+  ): MessageObjectContent => {
     const versions = messageObject.contentVersions;
-    if (versions.length == 0)
-      return {
-        isoDateVersionCreated: new Date().toISOString(),
-      };
-    return versions[versions.length - 1];
+    return versions[index] ?? this.createObjectContent();
+  };
+
+  createObjectContent = () => {
+    return {
+      id: React.UUID(),
+      isoDateVersionCreated: new Date().toISOString(),
+    };
   };
 
   // channel

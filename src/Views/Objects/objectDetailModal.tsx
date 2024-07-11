@@ -1,10 +1,6 @@
 import * as React from "bloatless-react";
 
-import {
-  Chat,
-  MessageObject,
-  MessageObjectContent,
-} from "../../Model/chatModel";
+import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { translation } from "../../translations";
 
@@ -15,20 +11,59 @@ export function ObjectDetailModal(
 ) {
   // state
   const editingTitle = new React.State(messageObject.title);
-  const selectedMessageObject = new React.State<MessageObjectContent>(
-    chat.getLatestObjectContent(messageObject)
+
+  const selectedMessageObjectIndex = new React.State(0);
+  selectedMessageObjectIndex.subscribe(console.log);
+  const selectedMessageObject = React.createProxyState(
+    [selectedMessageObjectIndex],
+    () =>
+      chat.getObjectContentFromIndex(
+        messageObject,
+        selectedMessageObjectIndex.value
+      )
+  );
+
+  const didEditContent = new React.State(false);
+  const editingNoteContent = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.noteContent ?? ""
+  );
+  React.bulkSubscribe(
+    [editingNoteContent],
+    () => (didEditContent.value = true)
   );
 
   // methods
+  function handleKeyDown(e: KeyboardEvent) {
+    if (!e.metaKey && !e.ctrlKey) return;
+
+    switch (e.key) {
+      case "s":
+        e.preventDefault();
+        saveAndClose();
+        break;
+    }
+  }
+
   function closeModal() {
     isPresented.value = false;
   }
 
   function saveAndClose() {
     messageObject.title = editingTitle.value;
-    chat.updateObject(messageObject.id, {
-      isoDateVersionCreated: new Date().toISOString(),
-    });
+
+    chat.updateObject(
+      messageObject.id,
+      didEditContent.value == true
+        ? {
+            isoDateVersionCreated: new Date().toISOString(),
+            id: React.UUID(),
+
+            noteContent: editingNoteContent.value,
+          }
+        : undefined
+    );
+
     closeModal();
   }
 
@@ -38,7 +73,7 @@ export function ObjectDetailModal(
   }
 
   return (
-    <div class="modal" toggle:open={isPresented}>
+    <div class="modal" toggle:open={isPresented} on:keydown={handleKeyDown}>
       <div>
         <main>
           <h2>{messageObject.title}</h2>
@@ -63,14 +98,26 @@ export function ObjectDetailModal(
             <span class="icon">history</span>
             <div>
               <span>{translation.objectVersion}</span>
-              <select>
-                {...messageObject.contentVersions.map((content) => (
-                  <option>
+              <select bind:value={selectedMessageObjectIndex}>
+                {...messageObject.contentVersions.map((content, index) => (
+                  <option value={index}>
                     {new Date(content.isoDateVersionCreated).toLocaleString()}
                   </option>
                 ))}
               </select>
               <span class="icon">arrow_drop_down</span>
+            </div>
+          </label>
+
+          <label class="tile">
+            <span class="icon">sticky_note_2</span>
+            <div>
+              <span>{translation.noteContent}</span>
+              <textarea
+                rows="5"
+                bind:value={editingNoteContent}
+                placeholder={translation.noteContentPlaceholder}
+              ></textarea>
             </div>
           </label>
 

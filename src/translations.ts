@@ -71,8 +71,10 @@ const englishTranslations = {
 
   objectTitle: "Object title",
   objectTitlePlaceholder: "My object",
-  
+
   objectVersion: "Object version",
+  noteContent: "Note",
+  noteContentPlaceholder: "Take a note...",
 
   resendObjects: "Resend all objects",
   deleteObject: "Delete object",

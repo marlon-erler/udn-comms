@@ -76,6 +76,9 @@
       this._bindings.add(fn);
       fn(this._value);
     }
+    subscribeSilent(fn) {
+      this._bindings.add(fn);
+    }
     // stringify
     toString() {
       return JSON.stringify(this._value);
@@ -170,6 +173,9 @@
       (state) => state.subscribe(() => proxyState.value = fn())
     );
     return proxyState;
+  }
+  function bulkSubscribe(statesToSubscibe, fn) {
+    statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
   }
   function persistState(localStorageKey, state) {
     state.subscribe(() => {
@@ -619,7 +625,7 @@
         id: UUID(),
         title,
         isoDateLastEdited: (/* @__PURE__ */ new Date()).toISOString(),
-        contentVersions: []
+        contentVersions: [this.createObjectContent()]
       };
     };
     addObject = (messageObject) => {
@@ -628,7 +634,12 @@
     updateObject = (id, contents) => {
       const messageObject = this.objects.value.get(id);
       if (!messageObject) return;
-      messageObject.contentVersions.push(contents);
+      if (contents) {
+        messageObject.contentVersions.push(contents);
+        messageObject.contentVersions.sort(
+          (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+        );
+      }
       this.sendObject(messageObject);
     };
     addObjectAndSend = (messageObject) => {
@@ -652,12 +663,17 @@
       this.objects.clear();
     };
     getLatestObjectContent = (messageObject) => {
+      return this.getObjectContentFromIndex(messageObject, 0);
+    };
+    getObjectContentFromIndex = (messageObject, index) => {
       const versions = messageObject.contentVersions;
-      if (versions.length == 0)
-        return {
-          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
-        };
-      return versions[versions.length - 1];
+      return versions[index] ?? this.createObjectContent();
+    };
+    createObjectContent = () => {
+      return {
+        id: UUID(),
+        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
+      };
     };
     // channel
     setChannel = () => {
@@ -980,6 +996,8 @@
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
     objectVersion: "Object version",
+    noteContent: "Note",
+    noteContentPlaceholder: "Take a note...",
     resendObjects: "Resend all objects",
     deleteObject: "Delete object"
   };
@@ -1192,27 +1210,66 @@
   // src/Views/Objects/objectDetailModal.tsx
   function ObjectDetailModal(chat, messageObject, isPresented) {
     const editingTitle = new State(messageObject.title);
+    const selectedMessageObjectIndex = new State(0);
+    selectedMessageObjectIndex.subscribe(console.log);
+    const selectedMessageObject = createProxyState(
+      [selectedMessageObjectIndex],
+      () => chat.getObjectContentFromIndex(
+        messageObject,
+        selectedMessageObjectIndex.value
+      )
+    );
+    const didEditContent = new State(false);
+    const editingNoteContent = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.noteContent ?? ""
+    );
+    bulkSubscribe(
+      [editingNoteContent],
+      () => didEditContent.value = true
+    );
+    function handleKeyDown(e) {
+      if (!e.metaKey && !e.ctrlKey) return;
+      switch (e.key) {
+        case "s":
+          e.preventDefault();
+          saveAndClose();
+          break;
+      }
+    }
     function closeModal() {
       isPresented.value = false;
     }
     function saveAndClose() {
       messageObject.title = editingTitle.value;
-      chat.updateObject(messageObject.id, {
-        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
-      });
+      chat.updateObject(
+        messageObject.id,
+        didEditContent.value == true ? {
+          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
+          id: UUID(),
+          noteContent: editingNoteContent.value
+        } : void 0
+      );
       closeModal();
     }
     function deleteAndClose() {
       chat.deleteObject(messageObject);
       closeModal();
     }
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", null, ...messageObject.contentVersions.map((content) => /* @__PURE__ */ createElement("option", null, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectIndex }, ...messageObject.contentVersions.map((content, index) => /* @__PURE__ */ createElement("option", { value: index }, new Date(content.isoDateVersionCreated).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+      "textarea",
+      {
+        rows: "5",
+        "bind:value": editingNoteContent,
+        placeholder: translation.noteContentPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete"))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/objectListEntry.tsx
