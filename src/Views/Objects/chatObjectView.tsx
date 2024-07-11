@@ -71,8 +71,7 @@ export function ChatObjectView(chat: Chat) {
 
         <button
           class="height-100"
-          on:click={createObject}
-          aria-label={translation.createObject}
+          disabled
         >
           <span class="icon">visibility</span>
         </button>
