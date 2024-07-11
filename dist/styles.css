@@ -323,6 +323,10 @@ hr {
   border-bottom: 1px solid var(--border);
 }
 
+.border-bottom {
+  border-bottom: 1px solid var(--border) !important;
+}
+
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus:not(
     label.tile *
   ),
@@ -959,6 +963,15 @@ article > div,
 main {
   overflow-x: scroll;
 }
+
+.scroll-h {
+  overflow-x: scroll !important;
+}
+
+.scroll-v {
+  overflow-y: scroll !important;
+}
+
 
 .ellipsis {
   text-overflow: ellipsis;

@@ -6,7 +6,7 @@ import { ObjectDetailModal } from "./objectDetailModal";
 import { ObjectListEntry } from "./objectListEntry";
 import { translation } from "../../translations";
 
-export function ChatToolView(chat: Chat) {
+export function ChatObjectView(chat: Chat) {
   const isShowingObjectModal = new React.State(false);
   const selectedObject = new React.State<MessageObject | undefined>(undefined);
   const objectModal = React.createProxyState(
@@ -22,12 +22,14 @@ export function ChatToolView(chat: Chat) {
     }
   );
 
-  function createItem() {
-    const newObject = chat.createObjectFromTitle("New item");
+  function createObject() {
+    const newObject = chat.createObjectFromTitle(translation.untitledObject);
     chat.addObjectAndSend(newObject);
+    selectedObject.value = newObject;
+    isShowingObjectModal.value = true;
   }
 
-  const itemConverter: React.StateItemConverter<MessageObject> = (
+  const objectConverter: React.StateItemConverter<MessageObject> = (
     messageObject
   ) => {
     function select() {
@@ -39,10 +41,22 @@ export function ChatToolView(chat: Chat) {
   };
 
   return (
-    <div class="chat-tool-view">
-      <button on:click={createItem}>+</button>
-      <hr></hr>
-      <div children:prepend={[chat.objects, itemConverter]}></div>
+    <div class="chat-object-view flex-column">
+      <div class="flex-row align-center scroll-h border-bottom">
+        <button
+          class="primary"
+          on:click={createObject}
+          aria-label={translation.createObject}
+        >
+          <span class="icon">add</span>
+        </button>
+      </div>
+
+      <div
+        class="grid gap padding"
+        style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))"
+        children:prepend={[chat.objects, objectConverter]}
+      ></div>
 
       <div children:set={objectModal}></div>
     </div>

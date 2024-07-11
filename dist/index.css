@@ -14,10 +14,10 @@
   display: flex;
   flex-direction: column;
 }
-.chat-tool-view {
+.chat-object-view {
   display: none;
 }
-[showingchattools] :is(.thread-view, .chat-tool-view) {
+[showingchattools] :is(.thread-view, .chat-object-view) {
   overflow: scroll;
   position: absolute;
   padding: 0px;
@@ -25,7 +25,7 @@
 [showingchattools] header {
   border-bottom: 1px solid var(--border);
 }
-[showingchattools] .chat-tool-view {
+[showingchattools] .chat-object-view {
   display: flex;
   top: var(--header-height);
   bottom: calc(var(--thread-view-height-with-tools) + var(--footer-top-line));
@@ -47,11 +47,11 @@
   }
 }
 @media (min-width: 640px) {
-  [showingchattools] :is(.thread-view, .chat-tool-view) {
+  [showingchattools] :is(.thread-view, .chat-object-view) {
     top: var(--header-height);
     bottom: var(--footer-top-line);
   }
-  [showingchattools] .chat-tool-view {
+  [showingchattools] .chat-object-view {
     left: 0px;
     right: var(--thread-view-width-with-tools);
     border-bottom: none;

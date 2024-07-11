@@ -1006,7 +1006,9 @@
     copyMessage: "Copy message",
     deleteMessage: "Delete message",
     // objects
-    toggleChatTools: "toggle chat tools",
+    showObjects: "show objects",
+    createObject: "create object",
+    untitledObject: "Untitled Object",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
     objectVersion: "Object version",
@@ -1112,6 +1114,122 @@
   };
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
+
+  // src/Views/Objects/objectDetailModal.tsx
+  function ObjectDetailModal(chat, messageObject, isPresented) {
+    const editingTitle = new State(messageObject.title);
+    const selectedMessageObjectId = new State(
+      chat.getMostRecentContentId(messageObject)
+    );
+    const selectedMessageObject = createProxyState(
+      [selectedMessageObjectId],
+      () => chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
+    );
+    const didEditContent = new State(false);
+    const editingNoteContent = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.noteContent ?? ""
+    );
+    bulkSubscribe(
+      [editingNoteContent],
+      () => didEditContent.value = true
+    );
+    function handleKeyDown(e) {
+      if (!e.metaKey && !e.ctrlKey) return;
+      switch (e.key) {
+        case "s":
+          e.preventDefault();
+          saveAndClose();
+          break;
+      }
+    }
+    function closeModal() {
+      isPresented.value = false;
+    }
+    function saveAndClose() {
+      messageObject.title = editingTitle.value;
+      if (didEditContent.value == true) {
+        chat.addObjectContent(messageObject, {
+          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
+          id: UUID(),
+          noteContent: editingNoteContent.value
+        });
+      }
+      chat.addObjectAndSend(messageObject);
+      closeModal();
+    }
+    function deleteAndClose() {
+      chat.deleteObject(messageObject);
+      closeModal();
+    }
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": editingTitle,
+        placeholder: translation.objectTitlePlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
+      content.isoDateVersionCreated
+    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+      "textarea",
+      {
+        rows: "5",
+        "bind:value": editingNoteContent,
+        placeholder: translation.noteContentPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/Views/Objects/objectListEntry.tsx
+  function ObjectListEntry(messageObject, onclick) {
+    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": onclick }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+  }
+
+  // src/Views/Objects/chatObjectView.tsx
+  function ChatObjectView(chat) {
+    const isShowingObjectModal = new State(false);
+    const selectedObject = new State(void 0);
+    const objectModal = createProxyState(
+      [chat.objects, selectedObject],
+      () => {
+        if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
+        return ObjectDetailModal(
+          chat,
+          selectedObject.value,
+          isShowingObjectModal
+        );
+      }
+    );
+    function createObject() {
+      const newObject = chat.createObjectFromTitle(translation.untitledObject);
+      chat.addObjectAndSend(newObject);
+      selectedObject.value = newObject;
+      isShowingObjectModal.value = true;
+    }
+    const objectConverter = (messageObject) => {
+      function select() {
+        selectedObject.value = messageObject;
+        isShowingObjectModal.value = true;
+      }
+      return ObjectListEntry(messageObject, select);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center scroll-h border-bottom" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": createObject,
+        "aria-label": translation.createObject
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap padding",
+        style: "grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))",
+        "children:prepend": [chat.objects, objectConverter]
+      }
+    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+  }
 
   // src/Views/Chat/chatOptionModal.tsx
   function ChatOptionModal(chat, isPresented) {
@@ -1219,105 +1337,6 @@
       translation.clearChatMessages,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
     ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-  }
-
-  // src/Views/Objects/objectDetailModal.tsx
-  function ObjectDetailModal(chat, messageObject, isPresented) {
-    const editingTitle = new State(messageObject.title);
-    const selectedMessageObjectId = new State(
-      chat.getMostRecentContentId(messageObject)
-    );
-    const selectedMessageObject = createProxyState(
-      [selectedMessageObjectId],
-      () => chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
-    );
-    const didEditContent = new State(false);
-    const editingNoteContent = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.noteContent ?? ""
-    );
-    bulkSubscribe(
-      [editingNoteContent],
-      () => didEditContent.value = true
-    );
-    function handleKeyDown(e) {
-      if (!e.metaKey && !e.ctrlKey) return;
-      switch (e.key) {
-        case "s":
-          e.preventDefault();
-          saveAndClose();
-          break;
-      }
-    }
-    function closeModal() {
-      isPresented.value = false;
-    }
-    function saveAndClose() {
-      messageObject.title = editingTitle.value;
-      if (didEditContent.value == true) {
-        chat.addObjectContent(messageObject, {
-          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
-          id: UUID(),
-          noteContent: editingNoteContent.value
-        });
-      }
-      chat.addObjectAndSend(messageObject);
-      closeModal();
-    }
-    function deleteAndClose() {
-      chat.deleteObject(messageObject);
-      closeModal();
-    }
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": editingTitle,
-        placeholder: translation.objectTitlePlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
-      content.isoDateVersionCreated
-    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
-      "textarea",
-      {
-        rows: "5",
-        "bind:value": editingNoteContent,
-        placeholder: translation.noteContentPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
-  }
-
-  // src/Views/Objects/objectListEntry.tsx
-  function ObjectListEntry(messageObject, onclick) {
-    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": onclick }, /* @__PURE__ */ createElement("b", null, messageObject.title));
-  }
-
-  // src/Views/Objects/objectListView.tsx
-  function ChatToolView(chat) {
-    const isShowingObjectModal = new State(false);
-    const selectedObject = new State(void 0);
-    const objectModal = createProxyState(
-      [chat.objects, selectedObject],
-      () => {
-        if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
-        return ObjectDetailModal(
-          chat,
-          selectedObject.value,
-          isShowingObjectModal
-        );
-      }
-    );
-    function createItem() {
-      const newObject = chat.createObjectFromTitle("New item");
-      chat.addObjectAndSend(newObject);
-    }
-    const itemConverter = (messageObject) => {
-      function select() {
-        selectedObject.value = messageObject;
-        isShowingObjectModal.value = true;
-      }
-      return ObjectListEntry(messageObject, select);
-    };
-    return /* @__PURE__ */ createElement("div", { class: "chat-tool-view" }, /* @__PURE__ */ createElement("button", { "on:click": createItem }, "+"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { "children:prepend": [chat.objects, itemConverter] }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
 
   // src/Views/Chat/messageComposer.tsx
@@ -1435,7 +1454,7 @@
         /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
           "button",
           {
-            "aria-label": translation.toggleChatTools,
+            "aria-label": translation.showObjects,
             "on:click": toggleChatTools,
             "toggle:selected": isShowingChatTools
           },
@@ -1448,7 +1467,7 @@
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
         ))),
-        ChatToolView(chat),
+        ChatObjectView(chat),
         ThreadView(chat),
         /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)),
         ChatOptionModal(chat, isShowingOptions)

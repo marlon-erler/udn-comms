@@ -8,7 +8,10 @@ export function ObjectListEntry(
 ) {
   return (
     <button class="tile" on:click={onclick}>
-      <b>{messageObject.title}</b>
+      <div>
+        <b>{messageObject.title}</b>
+        <span class="secondary">{messageObject.id}</span>
+      </div>
     </button>
   );
 }

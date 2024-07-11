@@ -67,7 +67,9 @@ const englishTranslations = {
   deleteMessage: "Delete message",
 
   // objects
-  toggleChatTools: "toggle chat tools",
+  showObjects: "show objects",
+  createObject: "create object",
+  untitledObject: "Untitled Object",
 
   objectTitle: "Object title",
   objectTitlePlaceholder: "My object",
