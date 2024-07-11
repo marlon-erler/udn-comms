@@ -36,7 +36,7 @@ const englishTranslations = {
   primaryChannelPlaceholder: "my-channel",
   addChat: "Add",
 
-  // messages
+  // chat
   showChatOptions: "show chat options",
   configureChatTitle: "Configure Chat",
 
@@ -49,8 +49,9 @@ const englishTranslations = {
   encryptionKeyPlaceholder: "n10d2482dg283hg",
   showKey: "Show key",
 
-  removeChat: "Remove chat",
+  clearObjects: "Delete all objects",
   clearChatMessages: "Clear chat messages",
+  removeChat: "Remove chat",
 
   messageInOutbox: "Pending",
 
@@ -59,6 +60,7 @@ const englishTranslations = {
   composerPlaceholder: "Type a message...",
   sendMessage: "Send",
 
+  // messages
   resendMessage: "Resend message",
   decryptMessage: "Decrypt message",
   copyMessage: "Copy message",
@@ -70,6 +72,7 @@ const englishTranslations = {
   objectTitle: "Object title",
   objectTitlePlaceholder: "My object",
 
+  resendObjects: "Resend all objects",
   deleteObject: "Delete object",
 };
 

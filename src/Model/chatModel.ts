@@ -57,6 +57,7 @@ export class Chat {
   cannotSetChannel: React.State<boolean>;
   cannotUndoChannel: React.State<boolean>;
   cannotClearMessages: React.State<boolean>;
+  cannotClearObjects: React.State<boolean>;
 
   // init
   constructor(id: string = React.UUID()) {
@@ -123,6 +124,10 @@ export class Chat {
     this.cannotClearMessages = React.createProxyState(
       [this.messages],
       () => this.messages.value.size == 0
+    );
+    this.cannotClearObjects = React.createProxyState(
+      [this.objects],
+      () => this.objects.value.size == 0
     );
   }
 
@@ -272,20 +277,30 @@ export class Chat {
   };
 
   // objects
-  addObjectAndSend(object: MessageObject): void {
+  addObjectAndSend = (object: MessageObject): void => {
     this.objects.set(object.id, object);
     this.sendObject(object);
-  }
+  };
 
-  sendObject(object: MessageObject): void {
+  sendObject = (object: MessageObject): void => {
     this.objectOutbox.set(object.id, object);
     this.sendMessagesInOutbox();
-  }
+  };
 
-  deleteObject(object: MessageObject): void {
+  deleteObject = (object: MessageObject): void => {
     this.objects.remove(object.id);
     this.objectOutbox.remove(object.id);
-  }
+  };
+
+  resendObjects = (): void => {
+    this.objects.value.forEach((object) => {
+      this.sendObject(object);
+    });
+  };
+
+  clearObjects = (): void => {
+    this.objects.clear();
+  };
 
   // channel
   setChannel = (): void => {

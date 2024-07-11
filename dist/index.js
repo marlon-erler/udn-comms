@@ -147,8 +147,7 @@
       this.removalHandlers.delete(item);
     }
     clear() {
-      this.value.clear();
-      this.callSubscriptions();
+      [...this.value.keys()].forEach((key) => this.remove(key));
     }
     // handlers
     handleAddition(handler) {
@@ -435,6 +434,7 @@
     cannotSetChannel;
     cannotUndoChannel;
     cannotClearMessages;
+    cannotClearObjects;
     // init
     constructor(id = UUID()) {
       this.id = id;
@@ -487,6 +487,10 @@
       this.cannotClearMessages = createProxyState(
         [this.messages],
         () => this.messages.value.size == 0
+      );
+      this.cannotClearObjects = createProxyState(
+        [this.objects],
+        () => this.objects.value.size == 0
       );
     }
     // general
@@ -599,18 +603,26 @@
         this.objectOutbox.remove(chatMessage.messageObject.id);
     };
     // objects
-    addObjectAndSend(object) {
+    addObjectAndSend = (object) => {
       this.objects.set(object.id, object);
       this.sendObject(object);
-    }
-    sendObject(object) {
+    };
+    sendObject = (object) => {
       this.objectOutbox.set(object.id, object);
       this.sendMessagesInOutbox();
-    }
-    deleteObject(object) {
+    };
+    deleteObject = (object) => {
       this.objects.remove(object.id);
       this.objectOutbox.remove(object.id);
-    }
+    };
+    resendObjects = () => {
+      this.objects.value.forEach((object) => {
+        this.sendObject(object);
+      });
+    };
+    clearObjects = () => {
+      this.objects.clear();
+    };
     // channel
     setChannel = () => {
       if (this.cannotSetChannel.value == true) return;
@@ -905,7 +917,7 @@
     primaryChannel: "Primary channel",
     primaryChannelPlaceholder: "my-channel",
     addChat: "Add",
-    // messages
+    // chat
     showChatOptions: "show chat options",
     configureChatTitle: "Configure Chat",
     secondaryChannel: "Secondary channel",
@@ -915,12 +927,14 @@
     encryptionKey: "Encryption key",
     encryptionKeyPlaceholder: "n10d2482dg283hg",
     showKey: "Show key",
-    removeChat: "Remove chat",
+    clearObjects: "Delete all objects",
     clearChatMessages: "Clear chat messages",
+    removeChat: "Remove chat",
     messageInOutbox: "Pending",
     noChatSelected: "No chat selected",
     composerPlaceholder: "Type a message...",
     sendMessage: "Send",
+    // messages
     resendMessage: "Resend message",
     decryptMessage: "Decrypt message",
     copyMessage: "Copy message",
@@ -929,6 +943,7 @@
     toggleChatTools: "toggle chat tools",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
+    resendObjects: "Resend all objects",
     deleteObject: "Delete object"
   };
   var allTranslations = {
@@ -1116,7 +1131,16 @@
         "bind:value": chat.encryptionKey,
         "set:type": inputType
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement("button", { "on:click": chat.resendObjects }, translation.resendObjects, /* @__PURE__ */ createElement("span", { class: "icon" }, "replay"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "on:click": chat.clearObjects,
+        "toggle:disabled": chat.cannotClearObjects
+      },
+      translation.clearObjects,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
+    ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger",
@@ -1124,8 +1148,8 @@
         "toggle:disabled": chat.cannotClearMessages
       },
       translation.clearChatMessages,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_sweep")
-    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
+    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/Views/Chat/itemDetailModal.tsx
