@@ -21,6 +21,10 @@ export function ObjectEntryView(
     isShowingObjectModal.value = true;
   }
 
+  function dragStart(event: DragEvent) {
+    event.dataTransfer?.setData("text", messageObject.id);
+  }
+
   const fields = {
     [icons.noteContent]: "---",
     [icons.priority]: "---",
@@ -49,7 +53,12 @@ export function ObjectEntryView(
   });
 
   return (
-    <button class="tile justify-start" on:click={select}>
+    <button
+      class="tile justify-start"
+      on:click={select}
+      draggable="true"
+      on:dragstart={dragStart}
+    >
       <div>
         <b>{chat.getObjectTitle(messageObject)}</b>
         <hr></hr>

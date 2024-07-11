@@ -54,8 +54,31 @@ function KanbanBoardView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
+  function dragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  function drop(event: DragEvent) {
+    event.preventDefault();
+    var id = event.dataTransfer?.getData("text");
+    if (!id) return;
+
+    const messageObject = chat.objects.value.get(id);
+    if (!messageObject) return;
+
+    const latest = chat.getMostRecentContent(messageObject);
+    latest.categoryName = kanbanBoard.title;
+
+    chat.addObjectAndSend(messageObject);
+  }
+
   return (
-    <div class="flex-column flex-no" style="min-width: 280px">
+    <div
+      class="flex-column flex-no"
+      style="min-width: 280px"
+      on:dragover={dragOver}
+      on:drop={drop}
+    >
       <b class="flex-row width-100">{kanbanBoard.title}</b>
       <hr></hr>
       <div class="flex-column gap padding-bottom">

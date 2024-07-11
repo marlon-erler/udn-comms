@@ -1395,6 +1395,9 @@
       selectedObject.value = messageObject;
       isShowingObjectModal.value = true;
     }
+    function dragStart(event) {
+      event.dataTransfer?.setData("text", messageObject.id);
+    }
     const fields = {
       [icons.noteContent]: "---",
       [icons.priority]: "---",
@@ -1413,7 +1416,16 @@
       const [icon, value] = field;
       return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap align-center" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), /* @__PURE__ */ createElement("span", { class: "ellipsis" }, value));
     });
-    return /* @__PURE__ */ createElement("button", { class: "tile justify-start", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements)));
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile justify-start",
+        "on:click": select,
+        draggable: "true",
+        "on:dragstart": dragStart
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements))
+    );
   }
 
   // src/Views/Objects/objectGridView.tsx
@@ -1471,14 +1483,38 @@
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", style: "min-width: 280px" }, /* @__PURE__ */ createElement("b", { class: "flex-row width-100" }, kanbanBoard.title), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.map(
-      (messageObject) => ObjectEntryView(
-        chat,
-        messageObject,
-        selectedObject,
-        isShowingObjectModal
-      )
-    )));
+    function dragOver(event) {
+      event.preventDefault();
+    }
+    function drop(event) {
+      event.preventDefault();
+      var id = event.dataTransfer?.getData("text");
+      if (!id) return;
+      const messageObject = chat.objects.value.get(id);
+      if (!messageObject) return;
+      const latest = chat.getMostRecentContent(messageObject);
+      latest.categoryName = kanbanBoard.title;
+      chat.addObjectAndSend(messageObject);
+    }
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column flex-no",
+        style: "min-width: 280px",
+        "on:dragover": dragOver,
+        "on:drop": drop
+      },
+      /* @__PURE__ */ createElement("b", { class: "flex-row width-100" }, kanbanBoard.title),
+      /* @__PURE__ */ createElement("hr", null),
+      /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.map(
+        (messageObject) => ObjectEntryView(
+          chat,
+          messageObject,
+          selectedObject,
+          isShowingObjectModal
+        )
+      ))
+    );
   }
 
   // src/Views/Objects/noteObjectsView.tsx
