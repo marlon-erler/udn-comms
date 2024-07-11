@@ -5,6 +5,7 @@ import {
   chatIds,
   chats,
   isConnected,
+  outboxItemCount,
   selectedChat,
   senderName,
   updateMailbox,
@@ -94,6 +95,12 @@ export class Chat {
       [this.outbox],
       () => this.outbox.value.size == 0
     );
+
+    // outbox
+    React.bulkSubscribe([this.outbox, this.objectOutbox], () =>
+      this.updateOutboxCount()
+    );
+    this.updateOutboxCount();
 
     // inputs
     this.composingMessage = React.restoreState(
@@ -208,6 +215,11 @@ export class Chat {
       if (isSent == true) this.objectOutbox.remove(messageObject.id);
     });
   };
+
+  updateOutboxCount() {
+    outboxItemCount.value =
+      this.outbox.value.size + this.objectOutbox.value.size;
+  }
 
   // messages
   createChatMessage = async (
@@ -328,7 +340,7 @@ export class Chat {
       Object.values(messageObject.contentVersions).forEach((content) => {
         this.addObjectContent(existingObject, content);
       });
-      this.objects.set(existingObject.id, existingObject);  
+      this.objects.set(existingObject.id, existingObject);
     } else {
       this.objects.set(messageObject.id, messageObject);
     }
@@ -374,10 +386,12 @@ export class Chat {
     return contents[contents.length - 1].id;
   };
 
-  getMostRecentContent = (messageObject: MessageObject): MessageObjectContent => {
+  getMostRecentContent = (
+    messageObject: MessageObject
+  ): MessageObjectContent => {
     const id = this.getMostRecentContentId(messageObject);
     return this.getObjectContentFromId(messageObject, id);
-  }
+  };
 
   getObjectContentFromId = (
     messageObject: MessageObject,

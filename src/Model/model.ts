@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import { Chat, createChatWithName } from "./chatModel";
 
 import UDNFrontend from "udn-frontend";
+import { translation } from "../translations";
 
 export const UDN = new UDNFrontend();
 
@@ -129,6 +130,15 @@ UDN.onmailboxdelete = () => {
   mailboxId.value = "";
   subscribeChannels();
 };
+
+// OUTBOX
+export const outboxItemCount = new React.State(0);
+export const outboxText = React.createProxyState([outboxItemCount], () =>
+  translation.outboxText(outboxItemCount.value)
+);
+export const outboxTextStyle = React.createProxyState([outboxItemCount], () =>
+  outboxItemCount.value == 0 ? "success" : "warning"
+);
 
 // MISC
 export const isEncryptionAvailable = window.crypto.subtle != undefined;

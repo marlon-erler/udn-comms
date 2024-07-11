@@ -35,6 +35,18 @@ const englishTranslations = {
   mailboxExplanation:
     "When you're disconnected, messages will be kept on the server temporarily",
 
+  outbox: "Outbox",
+  outboxText: (count: number) => {
+    switch (count) {
+      case 0:
+        return "All items sent";
+      case 1:
+        return "1 item in outbox";
+      default:
+        return `${count} items in outbox`;
+    }
+  },
+
   primaryChannel: "Primary channel",
   primaryChannelPlaceholder: "my-channel",
   addChat: "Add",
@@ -130,6 +142,18 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     mailboxExplanation:
       "Si estás sin conexión, los mensajes se guardarán temporalmente en el servidor",
 
+    outbox: "Bandeja de salida",
+    outboxText: (count: number) => {
+      switch (count) {
+        case 0:
+          return "Todos los elementos enviados";
+        case 1:
+          return "1 elemento en bandeja de salida";
+        default:
+          return `${count} elementos en bandeja de salida`;
+      }
+    },
+
     primaryChannel: "Canal principal",
     primaryChannelPlaceholder: "mi-canal",
     addChat: "Añadir",
@@ -221,6 +245,18 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     deleteMailbox: "Deaktivieren",
     mailboxExplanation:
       "Wenn du offline bist, werden Nachrichten auf dem Server gelagert",
+
+    outbox: "Ausgang",
+    outboxText: (count: number) => {
+      switch (count) {
+        case 0:
+          return "Alle Nachrichten gesendet";
+        case 1:
+          return "Eine Nachricht ausstehend";
+        default:
+          return `${count} Nachrichten ausstehend`;
+      }
+    },
 
     primaryChannel: "Hauptkanal",
     primaryChannelPlaceholder: "mein-kanal",

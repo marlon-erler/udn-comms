@@ -9,6 +9,8 @@ import {
   connect,
   deleteMailbox,
   disconnect,
+  outboxText,
+  outboxTextStyle,
   previousAddresses,
   requestMailbox,
   resetAddressInput,
@@ -95,6 +97,16 @@ export function ConnectionSection() {
           {translation.requestMailbox}
           <span class="icon">arrow_forward</span>
         </button>
+      </div>
+
+      <hr></hr>
+
+      <div class="tile">
+        <span class="icon">outbox</span>
+        <div>
+          <b>{translation.outbox}</b>
+          <span set:class={outboxTextStyle} subscribe:innerText={outboxText}></span>
+        </div>
       </div>
     </div>
   );

@@ -464,6 +464,11 @@
         [this.outbox],
         () => this.outbox.value.size == 0
       );
+      bulkSubscribe(
+        [this.outbox, this.objectOutbox],
+        () => this.updateOutboxCount()
+      );
+      this.updateOutboxCount();
       this.composingMessage = restoreState(
         storageKeys.composingMessage(id),
         ""
@@ -557,6 +562,9 @@
         if (isSent == true) this.objectOutbox.remove(messageObject.id);
       });
     };
+    updateOutboxCount() {
+      outboxItemCount.value = this.outbox.value.size + this.objectOutbox.value.size;
+    }
     // messages
     createChatMessage = async (messageText, messageObject) => {
       const secondaryChannelNames = [
@@ -830,6 +838,247 @@
     }
   };
 
+  // src/translations.ts
+  var englishTranslations = {
+    // general
+    set: "Set",
+    save: "Save",
+    back: "Back",
+    undoChanges: "Undo changes",
+    close: "Close",
+    discard: "Discard",
+    zoomOut: "zoom out",
+    zoomIn: "zoom in",
+    // overview
+    overview: "Overview",
+    connection: "Connection",
+    chats: "Chats",
+    yourName: "Your Name",
+    namePlaceholder: "Jane Doe",
+    encryptionUnavailableTitle: "Encryption is not available",
+    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
+    serverAddress: "Server Address",
+    serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    connectToServer: "Connect",
+    disconnect: "Disconnect",
+    mailbox: "Mailbox",
+    requestMailbox: "Enable",
+    deleteMailbox: "Disable",
+    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
+    outbox: "Outbox",
+    outboxText: (count) => {
+      switch (count) {
+        case 0:
+          return "All items sent";
+        case 1:
+          return "1 item in outbox";
+        default:
+          return `${count} items in outbox`;
+      }
+    },
+    primaryChannel: "Primary channel",
+    primaryChannelPlaceholder: "my-channel",
+    addChat: "Add",
+    // chat
+    showChatOptions: "show chat options",
+    configureChatTitle: "Configure Chat",
+    secondaryChannel: "Secondary channel",
+    secondaryChannelPlaceholder: "Add secondary channel",
+    addSecondaryChannel: "Add secondary channel",
+    removeSecondaryChannel: "Remove secondary channel",
+    encryptionKey: "Encryption key",
+    encryptionKeyPlaceholder: "n10d2482dg283hg",
+    showKey: "Show key",
+    clearObjects: "Delete all objects",
+    clearChatMessages: "Clear chat messages",
+    removeChat: "Remove chat",
+    messageInOutbox: "Pending",
+    noChatSelected: "No chat selected",
+    composerPlaceholder: "Type a message...",
+    sendMessage: "Send",
+    // messages
+    resendMessage: "Resend message",
+    decryptMessage: "Decrypt message",
+    copyMessage: "Copy message",
+    deleteMessage: "Delete message",
+    // objects
+    showObjects: "show objects",
+    createObject: "create object",
+    untitledObject: "Untitled Object",
+    viewAll: "All",
+    viewNotes: "Notes",
+    noObjects: "No objects",
+    noNotes: "No notes",
+    objectTitle: "Object title",
+    objectTitlePlaceholder: "My object",
+    objectVersion: "Object version",
+    noteContent: "Note",
+    noteContentPlaceholder: "Take a note...",
+    resendObjects: "Resend all objects",
+    deleteObject: "Delete object"
+  };
+  var allTranslations = {
+    en: englishTranslations,
+    es: {
+      // general
+      set: "Guardar",
+      save: "Guardar",
+      back: "Atr\xE1s",
+      undoChanges: "Deshacer",
+      close: "Cerrar",
+      discard: "Descartar",
+      zoomOut: "alejar",
+      zoomIn: "acercar",
+      // overview
+      overview: "Resumen",
+      connection: "Conexi\xF3n",
+      chats: "Chats",
+      yourName: "Tu nombre",
+      namePlaceholder: "Juan P\xE9rez",
+      encryptionUnavailableTitle: "Cifrado no disponible",
+      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
+      serverAddress: "Direcci\xF3n del servidor",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Conectar",
+      disconnect: "Desconectar",
+      mailbox: "Buz\xF3n",
+      requestMailbox: "Activar",
+      deleteMailbox: "Desactivar",
+      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
+      outbox: "Bandeja de salida",
+      outboxText: (count) => {
+        switch (count) {
+          case 0:
+            return "Todos los elementos enviados";
+          case 1:
+            return "1 elemento en bandeja de salida";
+          default:
+            return `${count} elementos en bandeja de salida`;
+        }
+      },
+      primaryChannel: "Canal principal",
+      primaryChannelPlaceholder: "mi-canal",
+      addChat: "A\xF1adir",
+      // chat
+      showChatOptions: "Mostrar opciones del chat",
+      configureChatTitle: "Configurar chat",
+      secondaryChannel: "Canal secundario",
+      secondaryChannelPlaceholder: "A\xF1adir canal secundario",
+      addSecondaryChannel: "A\xF1adir canal secundario",
+      removeSecondaryChannel: "Eliminar canal secundario",
+      encryptionKey: "Clave de cifrado",
+      encryptionKeyPlaceholder: "n10d2482dg283hg",
+      showKey: "Mostrar clave",
+      clearObjects: "Eliminar todos los objetos",
+      clearChatMessages: "Eliminar todos los mensajes",
+      removeChat: "Eliminar chat",
+      messageInOutbox: "Pendiente",
+      noChatSelected: "Selecciona un chat",
+      composerPlaceholder: "Escribe un mensaje...",
+      sendMessage: "Enviar",
+      // messages
+      resendMessage: "Reenviar mensaje",
+      decryptMessage: "Descifrar mensaje",
+      copyMessage: "Copiar mensaje",
+      deleteMessage: "Eliminar este mensaje",
+      // objects
+      showObjects: "mostrar objetos",
+      createObject: "a\xF1adir nuevo objeto",
+      untitledObject: "Sin T\xEDtulo",
+      viewAll: "Todos",
+      viewNotes: "Notas",
+      noObjects: "Sin objetos",
+      noNotes: "Sin notas",
+      objectTitle: "T\xEDtulo",
+      objectTitlePlaceholder: "Mi objeto",
+      objectVersion: "Version del objeto",
+      noteContent: "Nota",
+      noteContentPlaceholder: "Toma nota...",
+      resendObjects: "Reenviar todos objetos",
+      deleteObject: "Eliminar objeto"
+    },
+    de: {
+      // general
+      set: "OK",
+      save: "Sichern",
+      back: "Zur\xFCck",
+      undoChanges: "\xC4nderungen verwerfen",
+      close: "Schlie\xDFen",
+      discard: "Verwerfen",
+      zoomOut: "verkleinern",
+      zoomIn: "vergr\xF6\xDFern",
+      // overview
+      overview: "\xDCbersicht",
+      connection: "Verbindung",
+      chats: "Chats",
+      yourName: "Dein Name",
+      namePlaceholder: "Max Mustermann",
+      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
+      encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
+      serverAddress: "Serveradresse",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectToServer: "Verbinden",
+      disconnect: "Trennen",
+      mailbox: "Briefkasten",
+      requestMailbox: "Aktivieren",
+      deleteMailbox: "Deaktivieren",
+      mailboxExplanation: "Wenn du offline bist, werden Nachrichten auf dem Server gelagert",
+      outbox: "Ausgang",
+      outboxText: (count) => {
+        switch (count) {
+          case 0:
+            return "Alle Nachrichten gesendet";
+          case 1:
+            return "Eine Nachricht ausstehend";
+          default:
+            return `${count} Nachrichten ausstehend`;
+        }
+      },
+      primaryChannel: "Hauptkanal",
+      primaryChannelPlaceholder: "mein-kanal",
+      addChat: "Hinzuf\xFCgen",
+      // chat
+      showChatOptions: "Chatoptionen einblenden",
+      configureChatTitle: "Chat konfigurieren",
+      secondaryChannel: "Zweitkanal",
+      secondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
+      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
+      removeSecondaryChannel: "Zweitkanal entfernen",
+      encryptionKey: "Schl\xFCssel",
+      encryptionKeyPlaceholder: "n10d2482dg283hg",
+      showKey: "Schl\xFCssel anzeigen",
+      clearObjects: "Alle Objekte l\xF6schen",
+      clearChatMessages: "Nachrichtenverlauf leeren",
+      removeChat: "Chat l\xF6schen",
+      messageInOutbox: "Ausstehend",
+      noChatSelected: "Kein Chat ausgew\xE4hlt",
+      composerPlaceholder: "Neue Nachricht...",
+      sendMessage: "Senden",
+      // messages
+      resendMessage: "Erneut senden",
+      decryptMessage: "Nachricht entschl\xFCsseln",
+      copyMessage: "Nachricht kopieren",
+      deleteMessage: "Nachricht l\xF6schen",
+      // objects
+      showObjects: "Objekte anzeigen",
+      createObject: "Neues Objekt erstellen",
+      untitledObject: "Unbenannt",
+      viewAll: "Alle",
+      viewNotes: "Notizen",
+      noObjects: "Keine Objekte",
+      noNotes: "Keine Notizen",
+      objectTitle: "Titel",
+      objectTitlePlaceholder: "Mein Objekt",
+      objectVersion: "Version des Objekts",
+      noteContent: "Notiz",
+      noteContentPlaceholder: "Notiz eingeben...",
+      resendObjects: "Objekte erneut senden",
+      deleteObject: "Objekt l\xF6schen"
+    }
+  };
+  var language = navigator.language.substring(0, 2);
+  var translation = allTranslations[language] ?? allTranslations.en;
+
   // src/Model/model.ts
   var UDN = new UDNFrontend();
   var isConnected = new State(false);
@@ -921,6 +1170,15 @@
     mailboxId.value = "";
     subscribeChannels();
   };
+  var outboxItemCount = new State(0);
+  var outboxText = createProxyState(
+    [outboxItemCount],
+    () => translation.outboxText(outboxItemCount.value)
+  );
+  var outboxTextStyle = createProxyState(
+    [outboxItemCount],
+    () => outboxItemCount.value == 0 ? "success" : "warning"
+  );
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
   var pageZoom = restoreState("page-zoom", 100);
@@ -965,214 +1223,6 @@
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
     connect();
   }
-
-  // src/translations.ts
-  var englishTranslations = {
-    // general
-    set: "Set",
-    save: "Save",
-    back: "Back",
-    undoChanges: "Undo changes",
-    close: "Close",
-    discard: "Discard",
-    zoomOut: "zoom out",
-    zoomIn: "zoom in",
-    // overview
-    overview: "Overview",
-    connection: "Connection",
-    chats: "Chats",
-    yourName: "Your Name",
-    namePlaceholder: "Jane Doe",
-    encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
-    serverAddress: "Server Address",
-    serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    connectToServer: "Connect",
-    disconnect: "Disconnect",
-    mailbox: "Mailbox",
-    requestMailbox: "Enable",
-    deleteMailbox: "Disable",
-    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
-    primaryChannel: "Primary channel",
-    primaryChannelPlaceholder: "my-channel",
-    addChat: "Add",
-    // chat
-    showChatOptions: "show chat options",
-    configureChatTitle: "Configure Chat",
-    secondaryChannel: "Secondary channel",
-    secondaryChannelPlaceholder: "Add secondary channel",
-    addSecondaryChannel: "Add secondary channel",
-    removeSecondaryChannel: "Remove secondary channel",
-    encryptionKey: "Encryption key",
-    encryptionKeyPlaceholder: "n10d2482dg283hg",
-    showKey: "Show key",
-    clearObjects: "Delete all objects",
-    clearChatMessages: "Clear chat messages",
-    removeChat: "Remove chat",
-    messageInOutbox: "Pending",
-    noChatSelected: "No chat selected",
-    composerPlaceholder: "Type a message...",
-    sendMessage: "Send",
-    // messages
-    resendMessage: "Resend message",
-    decryptMessage: "Decrypt message",
-    copyMessage: "Copy message",
-    deleteMessage: "Delete message",
-    // objects
-    showObjects: "show objects",
-    createObject: "create object",
-    untitledObject: "Untitled Object",
-    viewAll: "All",
-    viewNotes: "Notes",
-    noObjects: "No objects",
-    noNotes: "No notes",
-    objectTitle: "Object title",
-    objectTitlePlaceholder: "My object",
-    objectVersion: "Object version",
-    noteContent: "Note",
-    noteContentPlaceholder: "Take a note...",
-    resendObjects: "Resend all objects",
-    deleteObject: "Delete object"
-  };
-  var allTranslations = {
-    en: englishTranslations,
-    es: {
-      // general
-      set: "Guardar",
-      save: "Guardar",
-      back: "Atr\xE1s",
-      undoChanges: "Deshacer",
-      close: "Cerrar",
-      discard: "Descartar",
-      zoomOut: "alejar",
-      zoomIn: "acercar",
-      // overview
-      overview: "Resumen",
-      connection: "Conexi\xF3n",
-      chats: "Chats",
-      yourName: "Tu nombre",
-      namePlaceholder: "Juan P\xE9rez",
-      encryptionUnavailableTitle: "Cifrado no disponible",
-      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
-      serverAddress: "Direcci\xF3n del servidor",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      connectToServer: "Conectar",
-      disconnect: "Desconectar",
-      mailbox: "Buz\xF3n",
-      requestMailbox: "Activar",
-      deleteMailbox: "Desactivar",
-      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
-      primaryChannel: "Canal principal",
-      primaryChannelPlaceholder: "mi-canal",
-      addChat: "A\xF1adir",
-      // chat
-      showChatOptions: "Mostrar opciones del chat",
-      configureChatTitle: "Configurar chat",
-      secondaryChannel: "Canal secundario",
-      secondaryChannelPlaceholder: "A\xF1adir canal secundario",
-      addSecondaryChannel: "A\xF1adir canal secundario",
-      removeSecondaryChannel: "Eliminar canal secundario",
-      encryptionKey: "Clave de cifrado",
-      encryptionKeyPlaceholder: "n10d2482dg283hg",
-      showKey: "Mostrar clave",
-      clearObjects: "Eliminar todos los objetos",
-      clearChatMessages: "Eliminar todos los mensajes",
-      removeChat: "Eliminar chat",
-      messageInOutbox: "Pendiente",
-      noChatSelected: "Selecciona un chat",
-      composerPlaceholder: "Escribe un mensaje...",
-      sendMessage: "Enviar",
-      // messages
-      resendMessage: "Reenviar mensaje",
-      decryptMessage: "Descifrar mensaje",
-      copyMessage: "Copiar mensaje",
-      deleteMessage: "Eliminar este mensaje",
-      // objects
-      showObjects: "mostrar objetos",
-      createObject: "a\xF1adir nuevo objeto",
-      untitledObject: "Sin T\xEDtulo",
-      viewAll: "Todos",
-      viewNotes: "Notas",
-      noObjects: "Sin objetos",
-      noNotes: "Sin notas",
-      objectTitle: "T\xEDtulo",
-      objectTitlePlaceholder: "Mi objeto",
-      objectVersion: "Version del objeto",
-      noteContent: "Nota",
-      noteContentPlaceholder: "Toma nota...",
-      resendObjects: "Reenviar todos objetos",
-      deleteObject: "Eliminar objeto"
-    },
-    de: {
-      // general
-      set: "OK",
-      save: "Sichern",
-      back: "Zur\xFCck",
-      undoChanges: "\xC4nderungen verwerfen",
-      close: "Schlie\xDFen",
-      discard: "Verwerfen",
-      zoomOut: "verkleinern",
-      zoomIn: "vergr\xF6\xDFern",
-      // overview
-      overview: "\xDCbersicht",
-      connection: "Verbindung",
-      chats: "Chats",
-      yourName: "Dein Name",
-      namePlaceholder: "Max Mustermann",
-      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
-      encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
-      serverAddress: "Serveradresse",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      connectToServer: "Verbinden",
-      disconnect: "Trennen",
-      mailbox: "Briefkasten",
-      requestMailbox: "Aktivieren",
-      deleteMailbox: "Deaktivieren",
-      mailboxExplanation: "Wenn du offline bist, werden Nachrichten auf dem Server gelagert",
-      primaryChannel: "Hauptkanal",
-      primaryChannelPlaceholder: "mein-kanal",
-      addChat: "Hinzuf\xFCgen",
-      // chat
-      showChatOptions: "Chatoptionen einblenden",
-      configureChatTitle: "Chat konfigurieren",
-      secondaryChannel: "Zweitkanal",
-      secondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
-      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
-      removeSecondaryChannel: "Zweitkanal entfernen",
-      encryptionKey: "Schl\xFCssel",
-      encryptionKeyPlaceholder: "n10d2482dg283hg",
-      showKey: "Schl\xFCssel anzeigen",
-      clearObjects: "Alle Objekte l\xF6schen",
-      clearChatMessages: "Nachrichtenverlauf leeren",
-      removeChat: "Chat l\xF6schen",
-      messageInOutbox: "Ausstehend",
-      noChatSelected: "Kein Chat ausgew\xE4hlt",
-      composerPlaceholder: "Neue Nachricht...",
-      sendMessage: "Senden",
-      // messages
-      resendMessage: "Erneut senden",
-      decryptMessage: "Nachricht entschl\xFCsseln",
-      copyMessage: "Nachricht kopieren",
-      deleteMessage: "Nachricht l\xF6schen",
-      // objects
-      showObjects: "Objekte anzeigen",
-      createObject: "Neues Objekt erstellen",
-      untitledObject: "Unbenannt",
-      viewAll: "Alle",
-      viewNotes: "Notizen",
-      noObjects: "Keine Objekte",
-      noNotes: "Keine Notizen",
-      objectTitle: "Titel",
-      objectTitlePlaceholder: "Mein Objekt",
-      objectVersion: "Version des Objekts",
-      noteContent: "Notiz",
-      noteContentPlaceholder: "Notiz eingeben...",
-      resendObjects: "Objekte erneut senden",
-      deleteObject: "Objekt l\xF6schen"
-    }
-  };
-  var language = navigator.language.substring(0, 2);
-  var translation = allTranslations[language] ?? allTranslations.en;
 
   // src/Views/Objects/allObjectsView.tsx
   function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
@@ -1733,7 +1783,7 @@
       },
       translation.requestMailbox,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )));
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.outbox), /* @__PURE__ */ createElement("span", { "set:class": outboxTextStyle, "subscribe:innerText": outboxText }))));
   }
 
   // src/Views/Overview/personalSection.tsx
