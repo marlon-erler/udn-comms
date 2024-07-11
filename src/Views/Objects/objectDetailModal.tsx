@@ -21,13 +21,30 @@ export function ObjectDetailModal(
       chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
   );
 
+  // properties
   const didEditContent = new React.State(false);
   const editingNoteContent = React.createProxyState(
     [selectedMessageObject],
     () => selectedMessageObject.value.noteContent ?? ""
   );
+  const editingCategory = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.categoryName ?? ""
+  );
+  const editingDate = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.isoDate ?? new Date().toISOString()
+  );
+  const editingTime = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.isoTime ?? new Date().toISOString()
+  );
+  const editingPriority = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.priority ?? 0
+  );
   React.bulkSubscribe(
-    [editingNoteContent],
+    [editingNoteContent, editingCategory, editingDate, editingPriority],
     () => (didEditContent.value = true)
   );
 
@@ -56,6 +73,10 @@ export function ObjectDetailModal(
         id: React.UUID(),
 
         noteContent: editingNoteContent.value,
+        priority: editingPriority.value,
+        categoryName: editingCategory.value,
+        isoDate: editingDate.value,
+        isoTime: editingTime.value,
       });
     }
 
@@ -115,15 +136,58 @@ export function ObjectDetailModal(
               </div>
             </label>
 
+            <hr></hr>
+
             <label class="tile">
               <span class="icon">sticky_note_2</span>
               <div>
-                <span>{translation.noteContent}</span>
+                <span>{translation.note}</span>
                 <textarea
                   rows="5"
                   bind:value={editingNoteContent}
                   placeholder={translation.noteContentPlaceholder}
                 ></textarea>
+              </div>
+            </label>
+
+            <label class="tile">
+              <span class="icon">category</span>
+              <div>
+                <span>{translation.category}</span>
+                <input
+                  bind:value={editingCategory}
+                  placeholder={translation.categoryPlaceholder}
+                ></input>
+              </div>
+            </label>
+
+            <label class="tile">
+              <span class="icon">priority_high</span>
+              <div>
+                <span>{translation.priority}</span>
+                <input
+                  type="number"
+                  bind:value={editingPriority}
+                  placeholder={translation.priorityPlaceholder}
+                ></input>
+              </div>
+            </label>
+
+            <hr></hr>
+
+            <label class="tile">
+              <span class="icon">calendar_month</span>
+              <div>
+                <span>{translation.date}</span>
+                <input type="date" bind:value={editingDate}></input>
+              </div>
+            </label>
+
+            <label class="tile">
+              <span class="icon">schedule</span>
+              <div>
+                <span>{translation.time}</span>
+                <input type="time" bind:value={editingTime}></input>
               </div>
             </label>
 

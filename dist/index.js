@@ -492,8 +492,14 @@
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
     objectVersion: "Object version",
-    noteContent: "Note",
+    note: "Note",
     noteContentPlaceholder: "Take a note...",
+    category: "Category",
+    priority: "Priority",
+    priorityPlaceholder: "2",
+    categoryPlaceholder: "Define a category",
+    date: "Date",
+    time: "Time",
     resendObjects: "Resend all objects",
     deleteObject: "Delete object"
   };
@@ -572,7 +578,7 @@
       objectTitle: "T\xEDtulo",
       objectTitlePlaceholder: "Mi objeto",
       objectVersion: "Version del objeto",
-      noteContent: "Nota",
+      note: "Nota",
       noteContentPlaceholder: "Toma nota...",
       resendObjects: "Reenviar todos objetos",
       deleteObject: "Eliminar objeto"
@@ -650,7 +656,7 @@
       objectTitle: "Titel",
       objectTitlePlaceholder: "Mein Objekt",
       objectVersion: "Version des Objekts",
-      noteContent: "Notiz",
+      note: "Notiz",
       noteContentPlaceholder: "Notiz eingeben...",
       resendObjects: "Objekte erneut senden",
       deleteObject: "Objekt l\xF6schen"
@@ -1298,8 +1304,24 @@
       [selectedMessageObject],
       () => selectedMessageObject.value.noteContent ?? ""
     );
+    const editingCategory = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.categoryName ?? ""
+    );
+    const editingDate = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.isoDate ?? (/* @__PURE__ */ new Date()).toISOString()
+    );
+    const editingTime = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.isoTime ?? (/* @__PURE__ */ new Date()).toISOString()
+    );
+    const editingPriority = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.priority ?? 0
+    );
     bulkSubscribe(
-      [editingNoteContent],
+      [editingNoteContent, editingCategory, editingDate, editingPriority],
       () => didEditContent.value = true
     );
     function handleKeyDown(e) {
@@ -1320,7 +1342,11 @@
         chat.addObjectContent(messageObject, {
           isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
           id: UUID(),
-          noteContent: editingNoteContent.value
+          noteContent: editingNoteContent.value,
+          priority: editingPriority.value,
+          categoryName: editingCategory.value,
+          isoDate: editingDate.value,
+          isoTime: editingTime.value
         });
       }
       chat.addObjectAndSend(messageObject);
@@ -1340,14 +1366,27 @@
     isPresented.subscribe(() => setTimeout(() => input.focus(), 100));
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), input)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
       content.isoDateVersionCreated
-    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.noteContent), /* @__PURE__ */ createElement(
+    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.note), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "5",
         "bind:value": editingNoteContent,
         placeholder: translation.noteContentPlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": editingCategory,
+        placeholder: translation.categoryPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
+      "input",
+      {
+        type: "number",
+        "bind:value": editingPriority,
+        placeholder: translation.priorityPlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/chatObjectView.tsx

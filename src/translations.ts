@@ -96,8 +96,14 @@ const englishTranslations = {
   objectTitlePlaceholder: "My object",
 
   objectVersion: "Object version",
-  noteContent: "Note",
+  note: "Note",
   noteContentPlaceholder: "Take a note...",
+  category: "Category",
+  priority: "Priority",
+  priorityPlaceholder: "2",
+  categoryPlaceholder: "Define a category",
+  date: "Date",
+  time: "Time",
 
   resendObjects: "Resend all objects",
   deleteObject: "Delete object",
@@ -203,7 +209,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     objectTitlePlaceholder: "Mi objeto",
 
     objectVersion: "Version del objeto",
-    noteContent: "Nota",
+    note: "Nota",
     noteContentPlaceholder: "Toma nota...",
 
     resendObjects: "Reenviar todos objetos",
@@ -307,7 +313,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     objectTitlePlaceholder: "Mein Objekt",
 
     objectVersion: "Version des Objekts",
-    noteContent: "Notiz",
+    note: "Notiz",
     noteContentPlaceholder: "Notiz eingeben...",
 
     resendObjects: "Objekte erneut senden",
