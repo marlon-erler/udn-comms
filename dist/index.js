@@ -682,7 +682,7 @@
     getSortedContents = (messageObject) => {
       const contents = Object.values(messageObject.contentVersions);
       contents.sort(
-        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? 0 : 1
+        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? -1 : 1
       );
       return contents;
     };
