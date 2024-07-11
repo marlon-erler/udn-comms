@@ -1297,7 +1297,7 @@
       "div",
       {
         class: "grid gap padding",
-        style: "grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))",
+        style: "grid-template-columns: repeat(auto-fill, minmax(170px, 1fr))",
         "children:prepend": [messageObjects, objectConverter]
       }
     );
