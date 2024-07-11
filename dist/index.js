@@ -1465,14 +1465,9 @@
         boards.value.get(boardTitle)?.items.push(messageObject);
       });
     });
-    const converter = (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal);
-    const content = createProxyState([chat.objects], () => /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding",
-        "children:append": [boards, converter]
-      }
-    ));
+    const content = createProxyState([chat.objects], () => /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.title.localeCompare(b.title)).map(
+      (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
+    )));
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {

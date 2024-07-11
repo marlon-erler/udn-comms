@@ -33,14 +33,14 @@ export function KanbanView(
     });
   });
 
-  const converter: React.StateItemConverter<KanbanBoard> = (board) =>
-    KanbanBoardView(chat, board, selectedObject, isShowingObjectModal);
-
   const content = React.createProxyState([chat.objects], () => (
-    <div
-      class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding"
-      children:append={[boards, converter]}
-    ></div>
+    <div class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding">
+      {...[...boards.value.values()]
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map((board) =>
+          KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
+        )}
+    </div>
   ));
 
   return (
