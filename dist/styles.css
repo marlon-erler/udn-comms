@@ -489,7 +489,7 @@ input[type="radio"],
 }
 
 .justify-center {
-  justify-content: center !important;
+  justify-content: safe center !important;
 }
 
 .justify-end {
@@ -584,6 +584,10 @@ textarea,
 
 .padding {
   padding: var(--control-padding) !important;
+}
+
+.padding-sm {
+  padding: var(--gap-between-tiles) !important;
 }
 
 .modal main {
@@ -971,7 +975,6 @@ main {
 .scroll-v {
   overflow-y: scroll !important;
 }
-
 
 .ellipsis {
   text-overflow: ellipsis;

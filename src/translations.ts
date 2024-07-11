@@ -71,6 +71,12 @@ const englishTranslations = {
   createObject: "create object",
   untitledObject: "Untitled Object",
 
+  viewAll: "All",
+  viewNotes: "Notes",
+
+  noObjects: "No objects",
+  noNotes: "No notes",
+
   objectTitle: "Object title",
   objectTitlePlaceholder: "My object",
 

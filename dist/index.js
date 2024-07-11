@@ -975,7 +975,7 @@
     serverAddress: "Server Address",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectToServer: "Connect",
-    disconnect: "Disonnect",
+    disconnect: "Disconnect",
     mailbox: "Mailbox",
     requestMailbox: "Enable",
     deleteMailbox: "Disable",
@@ -1009,6 +1009,10 @@
     showObjects: "show objects",
     createObject: "create object",
     untitledObject: "Untitled Object",
+    viewAll: "All",
+    viewNotes: "Notes",
+    noObjects: "No objects",
+    noNotes: "No notes",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
     objectVersion: "Object version",
@@ -1022,18 +1026,20 @@
     es: {
       // general
       set: "Guardar",
+      save: "Guardar",
       back: "Atr\xE1s",
       undoChanges: "Deshacer",
       close: "Cerrar",
+      discard: "Descartar",
       // overview
       overview: "Resumen",
-      connection: "Conexion",
+      connection: "Conexi\xF3n",
       chats: "Chats",
       yourName: "Tu nombre",
       namePlaceholder: "Juan P\xE9rez",
       encryptionUnavailableTitle: "Cifrado no disponible",
       encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
-      serverAddress: "Direccion del servidor",
+      serverAddress: "Direcci\xF3n del servidor",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
       connectToServer: "Conectar",
       disconnect: "Desconectar",
@@ -1044,33 +1050,48 @@
       primaryChannel: "Canal principal",
       primaryChannelPlaceholder: "mi-canal",
       addChat: "A\xF1adir",
-      // messages
+      // chat
       showChatOptions: "Mostrar opciones del chat",
       configureChatTitle: "Configurar chat",
-      secondaryChannel: "Canal segundario",
-      secondaryChannelPlaceholder: "A\xF1adir canal segundario",
-      addSecondaryChannel: "A\xF1adir canal segundario",
-      removeSecondaryChannel: "Eliminar canal segundario",
+      secondaryChannel: "Canal secundario",
+      secondaryChannelPlaceholder: "A\xF1adir canal secundario",
+      addSecondaryChannel: "A\xF1adir canal secundario",
+      removeSecondaryChannel: "Eliminar canal secundario",
       encryptionKey: "Clave de cifrado",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
       showKey: "Mostrar clave",
+      clearObjects: "Eliminar todos los objetos",
+      clearChatMessages: "Eliminar todos los mensajes",
       removeChat: "Eliminar chat",
-      clearChatMessages: "Eliminar todos mensajes",
-      noChatSelected: "Selecciona un chat",
       messageInOutbox: "Pendiente",
+      noChatSelected: "Selecciona un chat",
       composerPlaceholder: "Escribe un mensaje...",
       sendMessage: "Enviar",
-      resendMessage: "Enviar de nuevo",
+      // messages
+      resendMessage: "Reenviar mensaje",
       decryptMessage: "Descifrar mensaje",
       copyMessage: "Copiar mensaje",
-      deleteMessage: "Eliminar este mensaje"
+      deleteMessage: "Eliminar este mensaje",
+      // objects
+      showObjects: "mostrar objetos",
+      createObject: "a\xF1adir nuevo objeto",
+      untitledObject: "Sin T\xEDtulo",
+      objectTitle: "T\xEDtulo",
+      objectTitlePlaceholder: "Mi objeto",
+      objectVersion: "Version del objeto",
+      noteContent: "Nota",
+      noteContentPlaceholder: "Toma nota...",
+      resendObjects: "Reenviar todos objetos",
+      deleteObject: "Eliminar objeto"
     },
     de: {
       // general
       set: "OK",
+      save: "Sichern",
       back: "Zur\xFCck",
       undoChanges: "\xC4nderungen verwerfen",
       close: "Schlie\xDFen",
+      discard: "Verwerfen",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -1090,7 +1111,7 @@
       primaryChannel: "Hauptkanal",
       primaryChannelPlaceholder: "mein-kanal",
       addChat: "Hinzuf\xFCgen",
-      // messages
+      // chat
       showChatOptions: "Chatoptionen einblenden",
       configureChatTitle: "Chat konfigurieren",
       secondaryChannel: "Zweitkanal",
@@ -1100,20 +1121,79 @@
       encryptionKey: "Schl\xFCssel",
       encryptionKeyPlaceholder: "n10d2482dg283hg",
       showKey: "Schl\xFCssel anzeigen",
-      removeChat: "Chat l\xF6schen",
+      clearObjects: "Alle Objekte l\xF6schen",
       clearChatMessages: "Nachrichtenverlauf leeren",
-      noChatSelected: "Kein Chat ausgew\xE4hlt",
+      removeChat: "Chat l\xF6schen",
       messageInOutbox: "Ausstehend",
+      noChatSelected: "Kein Chat ausgew\xE4hlt",
       composerPlaceholder: "Neue Nachricht...",
       sendMessage: "Senden",
+      // messages
       resendMessage: "Erneut senden",
       decryptMessage: "Nachricht entschl\xFCsseln",
       copyMessage: "Nachricht kopieren",
-      deleteMessage: "Nachricht l\xF6schen"
+      deleteMessage: "Nachricht l\xF6schen",
+      // objects
+      showObjects: "Objekte anzeigen",
+      createObject: "Neues Objekt erstellen",
+      untitledObject: "Unbenannt",
+      objectTitle: "Titel",
+      objectTitlePlaceholder: "Mein Objekt",
+      objectVersion: "Version des Objekts",
+      noteContent: "Notiz",
+      noteContentPlaceholder: "Notiz eingeben...",
+      resendObjects: "Objekte erneut senden",
+      deleteObject: "Objekt l\xF6schen"
     }
   };
   var language = navigator.language.substring(0, 2);
   var translation = allTranslations[language] ?? allTranslations.en;
+
+  // src/Views/Objects/allObjectsView.tsx
+  function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
+    const objectConverter = (messageObject) => {
+      function select() {
+        selectedObject.value = messageObject;
+        isShowingObjectModal.value = true;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+    };
+    const content = createProxyState(
+      [chat.objects],
+      () => chat.objects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noObjects) : /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap padding",
+          style: "grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))",
+          "children:prepend": [chat.objects, objectConverter]
+        }
+      )
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+  }
+
+  // src/Views/Objects/noteObjectsView.tsx
+  function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
+    const objectConverter = (messageObject) => {
+      function select() {
+        selectedObject.value = messageObject;
+        isShowingObjectModal.value = true;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+    };
+    const content = createProxyState(
+      [chat.objects],
+      () => chat.objects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noNotes) : /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap padding",
+          style: "grid-template-columns: repeat(auto-fit, minmax(350px, 1fr))",
+          "children:prepend": [chat.objects, objectConverter]
+        }
+      )
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+  }
 
   // src/Views/Objects/objectDetailModal.tsx
   function ObjectDetailModal(chat, messageObject, isPresented) {
@@ -1165,6 +1245,7 @@
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), /* @__PURE__ */ createElement(
       "input",
       {
+        autofocus: true,
         "bind:value": editingTitle,
         placeholder: translation.objectTitlePlaceholder
       }
@@ -1180,12 +1261,11 @@
     ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
-  // src/Views/Objects/objectListEntry.tsx
-  function ObjectListEntry(messageObject, onclick) {
-    return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": onclick }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, messageObject.title), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
-  }
-
   // src/Views/Objects/chatObjectView.tsx
+  var viewTypes = {
+    all: [translation.viewAll, "grid_view"],
+    notes: [translation.viewNotes, "sticky_note_2"]
+  };
   function ChatObjectView(chat) {
     const isShowingObjectModal = new State(false);
     const selectedObject = new State(void 0);
@@ -1200,35 +1280,60 @@
         );
       }
     );
+    const selectedViewType = new State("all");
+    const mainView = createProxyState([selectedViewType], () => {
+      function getViewFunction() {
+        switch (selectedViewType.value) {
+          case "notes":
+            return NoteObjectsView;
+          default:
+            return AllObjectsView;
+        }
+      }
+      return getViewFunction()(chat, selectedObject, isShowingObjectModal);
+    });
     function createObject() {
       const newObject = chat.createObjectFromTitle(translation.untitledObject);
       chat.addObjectAndSend(newObject);
       selectedObject.value = newObject;
       isShowingObjectModal.value = true;
     }
-    const objectConverter = (messageObject) => {
-      function select() {
-        selectedObject.value = messageObject;
-        isShowingObjectModal.value = true;
-      }
-      return ObjectListEntry(messageObject, select);
-    };
-    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center scroll-h border-bottom" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary",
+        class: "primary height-100",
         "on:click": createObject,
         "aria-label": translation.createObject
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
+      (key) => ViewTypeToggle(key, selectedViewType)
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "height-100",
+        "on:click": createObject,
+        "aria-label": translation.createObject
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility")
     )), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "grid gap padding",
-        style: "grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))",
-        "children:prepend": [chat.objects, objectConverter]
+        class: "width-100 height-100 flex-1 scroll-h",
+        "children:set": mainView
       }
     ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+  }
+  function ViewTypeToggle(key, selection) {
+    const [label, icon] = viewTypes[key];
+    function select() {
+      selection.value = key;
+    }
+    const isSelected = createProxyState(
+      [selection],
+      () => selection.value == key
+    );
+    return /* @__PURE__ */ createElement("button", { "aria-label": label, "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon));
   }
 
   // src/Views/Chat/chatOptionModal.tsx

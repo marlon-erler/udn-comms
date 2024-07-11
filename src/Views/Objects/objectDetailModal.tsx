@@ -83,6 +83,7 @@ export function ObjectDetailModal(
               <div>
                 <span>{translation.objectTitle}</span>
                 <input
+                autofocus
                   bind:value={editingTitle}
                   placeholder={translation.objectTitlePlaceholder}
                 ></input>
