@@ -13,7 +13,6 @@ export function ObjectDetailModal(
   const editingTitle = new React.State(messageObject.title);
 
   const selectedMessageObjectIndex = new React.State(0);
-  selectedMessageObjectIndex.subscribe(console.log);
   const selectedMessageObject = React.createProxyState(
     [selectedMessageObjectIndex],
     () =>
