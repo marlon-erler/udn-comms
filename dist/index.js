@@ -487,6 +487,7 @@
     untitledObject: "Untitled Object",
     viewAll: "All",
     viewNotes: "Notes",
+    viewKanban: "Kanban",
     noObjects: "No objects",
     noNotes: "No notes",
     objectTitle: "Object title",
@@ -573,6 +574,7 @@
       untitledObject: "Sin T\xEDtulo",
       viewAll: "Todos",
       viewNotes: "Notas",
+      viewKanban: "Kanban",
       noObjects: "Sin objetos",
       noNotes: "Sin notas",
       objectTitle: "T\xEDtulo",
@@ -657,6 +659,7 @@
       untitledObject: "Unbenannt",
       viewAll: "Alle",
       viewNotes: "Notizen",
+      viewKanban: "Kanban",
       noObjects: "Keine Objekte",
       noNotes: "Keine Notizen",
       objectTitle: "Titel",
@@ -1244,6 +1247,136 @@
     connect();
   }
 
+  // src/Views/Chat/chatOptionModal.tsx
+  function ChatOptionModal(chat, isPresented) {
+    function closeModal() {
+      isPresented.value = false;
+    }
+    function deleteChat() {
+      chat.deleteSelf();
+      closeModal();
+      closeChatView();
+    }
+    const shouldShowKey = new State(false);
+    const inputType = createProxyState(
+      [shouldShowKey],
+      () => shouldShowKey.value == true ? "text" : "password"
+    );
+    const secondaryChannelConverter = (secondaryChannel) => {
+      function remove() {
+        chat.removeSecondaryChannel(secondaryChannel);
+      }
+      return /* @__PURE__ */ createElement("div", { class: "tile width-input padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "padding-h" }, secondaryChannel), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "danger",
+          "aria-label": translation.removeSecondaryChannel,
+          "on:click": remove
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+      )));
+    };
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.configureChatTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": chat.primaryChannelInput,
+        placeholder: translation.primaryChannelPlaceholder,
+        "on:enter": chat.setChannel
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translation.undoChanges,
+        class: "flex justify-center",
+        "on:click": chat.undoChannelChange,
+        "toggle:disabled": chat.cannotUndoChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translation.set,
+        class: "flex justify-center primary",
+        "on:click": chat.setChannel,
+        "toggle:disabled": chat.cannotSetChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row margin-bottom width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "aria-label": translation.secondaryChannel,
+        placeholder: translation.secondaryChannelPlaceholder,
+        "bind:value": chat.newSecondaryChannelName,
+        "on:enter": chat.addSecondaryChannel
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "toggle:disabled": chat.cannotAddSecondaryChannel,
+        "aria-label": translation.addSecondaryChannel,
+        "on:click": chat.addSecondaryChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:prepend": [
+          chat.secondaryChannels,
+          secondaryChannelConverter
+        ]
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translation.encryptionKeyPlaceholder,
+        "bind:value": chat.encryptionKey,
+        "set:type": inputType
+      }
+    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement("button", { "on:click": chat.resendObjects }, translation.resendObjects, /* @__PURE__ */ createElement("span", { class: "icon" }, "replay"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "on:click": chat.clearObjects,
+        "toggle:disabled": chat.cannotClearObjects
+      },
+      translation.clearObjects,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "on:click": chat.clearMessages,
+        "toggle:disabled": chat.cannotClearMessages
+      },
+      translation.clearChatMessages,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
+    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/Views/Chat/messageComposer.tsx
+  function MessageComposer(chat) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "width-100 flex-1",
+        style: "max-width: unset",
+        placeholder: translation.composerPlaceholder,
+        "bind:value": chat.composingMessage,
+        "on:enter": chat.sendMessageFromComposer
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": chat.sendMessageFromComposer,
+        "toggle:disabled": chat.cannotSendMessage
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+    ));
+  }
+
   // src/icons.ts
   var icons = {
     objectTitle: "label",
@@ -1296,7 +1429,7 @@
     return messageObjects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, placeholderText) : /* @__PURE__ */ createElement(
       "div",
       {
-        class: "grid gap padding",
+        class: "width-100 grid gap padding scroll-v",
         style: "grid-template-columns: repeat(auto-fill, minmax(170px, 1fr))",
         "children:prepend": [messageObjects, objectConverter]
       }
@@ -1316,6 +1449,41 @@
       )
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+  }
+
+  // src/Views/Objects/kanbanView.tsx
+  function KanbanView(chat, selectedObject, isShowingObjectModal) {
+    const boards = new MapState();
+    chat.objects.subscribe(() => {
+      boards.clear();
+      chat.objects.value.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        if (!latest.categoryName) return;
+        const boardTitle = latest.categoryName;
+        if (!boards.value.has(boardTitle))
+          boards.set(boardTitle, { title: boardTitle, items: [] });
+        boards.value.get(boardTitle)?.items.push(messageObject);
+      });
+    });
+    const converter = (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal);
+    const content = createProxyState([chat.objects], () => /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding",
+        "children:append": [boards, converter]
+      }
+    ));
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
+  }
+  function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", style: "min-width: 280px" }, /* @__PURE__ */ createElement("b", { class: "flex-row width-100" }, kanbanBoard.title), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.map(
+      (messageObject) => ObjectEntryView(
+        chat,
+        messageObject,
+        selectedObject,
+        isShowingObjectModal
+      )
+    )));
   }
 
   // src/Views/Objects/noteObjectsView.tsx
@@ -1448,12 +1616,13 @@
     ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
-  // src/Views/Objects/chatObjectView.tsx
+  // src/Views/Objects/objectPane.tsx
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
-    notes: [translation.viewNotes, icons.noteContent]
+    notes: [translation.viewNotes, icons.noteContent],
+    kanban: [translation.viewKanban, "view_kanban"]
   };
-  function ChatObjectView(chat) {
+  function ObjectPane(chat) {
     const isShowingObjectModal = new State(false);
     const selectedObject = new State(void 0);
     const objectModal = createProxyState(
@@ -1473,6 +1642,8 @@
         switch (selectedViewType.value) {
           case "notes":
             return NoteObjectsView;
+          case "kanban":
+            return KanbanView;
           default:
             return AllObjectsView;
         }
@@ -1485,7 +1656,7 @@
       selectedObject.value = newObject;
       isShowingObjectModal.value = true;
     }
-    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column scroll-no" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary height-100",
@@ -1495,13 +1666,7 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
       (key) => ViewTypeToggle(key, selectedViewType)
-    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "width-100 height-100 flex-1 scroll-h",
-        "children:set": mainView
-      }
-    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex scroll-no", "children:set": mainView }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
   function ViewTypeToggle(key, selection) {
     const [label, icon] = viewTypes[key];
@@ -1513,136 +1678,6 @@
       () => selection.value == key
     );
     return /* @__PURE__ */ createElement("button", { "aria-label": label, "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon));
-  }
-
-  // src/Views/Chat/chatOptionModal.tsx
-  function ChatOptionModal(chat, isPresented) {
-    function closeModal() {
-      isPresented.value = false;
-    }
-    function deleteChat() {
-      chat.deleteSelf();
-      closeModal();
-      closeChatView();
-    }
-    const shouldShowKey = new State(false);
-    const inputType = createProxyState(
-      [shouldShowKey],
-      () => shouldShowKey.value == true ? "text" : "password"
-    );
-    const secondaryChannelConverter = (secondaryChannel) => {
-      function remove() {
-        chat.removeSecondaryChannel(secondaryChannel);
-      }
-      return /* @__PURE__ */ createElement("div", { class: "tile width-input padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "padding-h" }, secondaryChannel), /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "danger",
-          "aria-label": translation.removeSecondaryChannel,
-          "on:click": remove
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-      )));
-    };
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.configureChatTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": chat.primaryChannelInput,
-        placeholder: translation.primaryChannelPlaceholder,
-        "on:enter": chat.setChannel
-      }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        "aria-label": translation.undoChanges,
-        class: "flex justify-center",
-        "on:click": chat.undoChannelChange,
-        "toggle:disabled": chat.cannotUndoChannel
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        "aria-label": translation.set,
-        class: "flex justify-center primary",
-        "on:click": chat.setChannel,
-        "toggle:disabled": chat.cannotSetChannel
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row margin-bottom width-input" }, /* @__PURE__ */ createElement(
-      "input",
-      {
-        "aria-label": translation.secondaryChannel,
-        placeholder: translation.secondaryChannelPlaceholder,
-        "bind:value": chat.newSecondaryChannelName,
-        "on:enter": chat.addSecondaryChannel
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "toggle:disabled": chat.cannotAddSecondaryChannel,
-        "aria-label": translation.addSecondaryChannel,
-        "on:click": chat.addSecondaryChannel
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "children:prepend": [
-          chat.secondaryChannels,
-          secondaryChannelConverter
-        ]
-      }
-    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
-      "input",
-      {
-        placeholder: translation.encryptionKeyPlaceholder,
-        "bind:value": chat.encryptionKey,
-        "set:type": inputType
-      }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement("button", { "on:click": chat.resendObjects }, translation.resendObjects, /* @__PURE__ */ createElement("span", { class: "icon" }, "replay"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger",
-        "on:click": chat.clearObjects,
-        "toggle:disabled": chat.cannotClearObjects
-      },
-      translation.clearObjects,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger",
-        "on:click": chat.clearMessages,
-        "toggle:disabled": chat.cannotClearMessages
-      },
-      translation.clearChatMessages,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
-    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-  }
-
-  // src/Views/Chat/messageComposer.tsx
-  function MessageComposer(chat) {
-    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
-      "input",
-      {
-        class: "width-100 flex-1",
-        style: "max-width: unset",
-        placeholder: translation.composerPlaceholder,
-        "bind:value": chat.composingMessage,
-        "on:enter": chat.sendMessageFromComposer
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "on:click": chat.sendMessageFromComposer,
-        "toggle:disabled": chat.cannotSendMessage
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    ));
   }
 
   // src/Views/Chat/threadView.tsx
@@ -1759,7 +1794,7 @@
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
         ))),
-        ChatObjectView(chat),
+        ObjectPane(chat),
         ThreadView(chat),
         /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)),
         ChatOptionModal(chat, isShowingOptions)

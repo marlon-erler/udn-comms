@@ -88,6 +88,7 @@ const englishTranslations = {
 
   viewAll: "All",
   viewNotes: "Notes",
+  viewKanban: "Kanban",
 
   noObjects: "No objects",
   noNotes: "No notes",
@@ -201,6 +202,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     viewAll: "Todos",
     viewNotes: "Notas",
+    viewKanban: "Kanban",
 
     noObjects: "Sin objetos",
     noNotes: "Sin notas",
@@ -311,6 +313,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     viewAll: "Alle",
     viewNotes: "Notizen",
+    viewKanban: "Kanban",
 
     noObjects: "Keine Objekte",
     noNotes: "Keine Notizen",

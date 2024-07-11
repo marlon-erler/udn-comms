@@ -3,7 +3,6 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
-import { icons } from "../../icons";
 
 export function ObjectGridView(
   chat: Chat,
@@ -31,7 +30,7 @@ export function ObjectGridView(
     </div>
   ) : (
     <div
-      class="grid gap padding"
+      class="width-100 grid gap padding scroll-v"
       style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr))"
       children:prepend={[messageObjects, objectConverter]}
     ></div>

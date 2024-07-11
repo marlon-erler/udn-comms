@@ -968,6 +968,10 @@ main,
   overflow: hidden;
 }
 
+.scroll-no {
+  overflow: hidden !important;
+}
+
 article > div,
 .modal main {
   overflow: scroll;

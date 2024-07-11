@@ -2,7 +2,6 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
-import { ObjectEntryView } from "./objectEntryView";
 import { ObjectGridView } from "./objectGridView";
 import { translation } from "../../translations";
 

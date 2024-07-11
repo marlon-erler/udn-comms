@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { AllObjectsView } from "./allObjectsView";
+import { KanbanView } from "./kanbanView";
 import { NoteObjectsView } from "./noteObjectsView";
 import { ObjectDetailModal } from "./objectDetailModal";
 import { icons } from "../../icons";
@@ -11,9 +12,10 @@ import { translation } from "../../translations";
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
   notes: [translation.viewNotes, icons.noteContent],
+  kanban: [translation.viewKanban, "view_kanban"],
 };
 
-export function ChatObjectView(chat: Chat) {
+export function ObjectPane(chat: Chat) {
   // selection and modal
   const isShowingObjectModal = new React.State(false);
   const selectedObject = new React.State<MessageObject | undefined>(undefined);
@@ -37,6 +39,8 @@ export function ChatObjectView(chat: Chat) {
       switch (selectedViewType.value) {
         case "notes":
           return NoteObjectsView;
+        case "kanban":
+          return KanbanView;
         default:
           return AllObjectsView;
       }
@@ -54,7 +58,7 @@ export function ChatObjectView(chat: Chat) {
   }
 
   return (
-    <div class="chat-object-view flex-column">
+    <div class="chat-object-view flex-column scroll-no">
       <div class="flex-row align-center border-bottom">
         <button
           class="primary height-100"
@@ -75,10 +79,7 @@ export function ChatObjectView(chat: Chat) {
         </button>
       </div>
 
-      <div
-        class="width-100 height-100 flex-1 scroll-h"
-        children:set={mainView}
-      ></div>
+      <div class="width-100 height-100 flex scroll-no" children:set={mainView}></div>
 
       <div children:set={objectModal}></div>
     </div>

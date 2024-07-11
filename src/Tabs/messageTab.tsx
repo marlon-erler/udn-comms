@@ -2,9 +2,9 @@ import * as React from "bloatless-react";
 
 import { closeChatView, isShowingObjects, selectedChat, toggleChatTools } from "../Model/model";
 
-import { ChatObjectView } from "../Views/Objects/chatObjectView";
 import { ChatOptionModal } from "../Views/Chat/chatOptionModal";
 import { MessageComposer } from "../Views/Chat/messageComposer";
+import { ObjectPane } from "../Views/Objects/objectPane";
 import { ThreadView } from "../Views/Chat/threadView";
 import { translation } from "../translations";
 
@@ -50,7 +50,7 @@ export function MessageTab() {
         </span>
       </header>,
 
-      ChatObjectView(chat),
+      ObjectPane(chat),
       ThreadView(chat),
 
       <footer>{MessageComposer(chat)}</footer>,
