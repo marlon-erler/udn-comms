@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
+import { ObjectGridView } from "./objectGridView";
 import { translation } from "../../translations";
 
 export function NoteObjectsView(
@@ -10,17 +11,6 @@ export function NoteObjectsView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const objectConverter: React.StateItemConverter<MessageObject> = (
-    messageObject
-  ) => {
-    return ObjectEntryView(
-      chat,
-      messageObject,
-      selectedObject,
-      isShowingObjectModal
-    );
-  };
-
   const notes = new React.ListState<MessageObject>();
   chat.objects.subscribe(() => {
     notes.clear();
@@ -33,16 +23,12 @@ export function NoteObjectsView(
   });
 
   const content = React.createProxyState([chat.objects], () =>
-    notes.value.size == 0 ? (
-      <div class="flex-column width-100 height-100 align-center justify-center secondary">
-        {translation.noNotes}
-      </div>
-    ) : (
-      <div
-        class="grid gap padding"
-        style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))"
-        children:prepend={[notes, objectConverter]}
-      ></div>
+    ObjectGridView(
+      chat,
+      notes,
+      selectedObject,
+      isShowingObjectModal,
+      translation.noNotes
     )
   );
 

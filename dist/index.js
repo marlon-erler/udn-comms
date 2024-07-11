@@ -1271,8 +1271,8 @@
     return /* @__PURE__ */ createElement("button", { class: "tile justify-start", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements)));
   }
 
-  // src/Views/Objects/allObjectsView.tsx
-  function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
+  // src/Views/Objects/objectGridView.tsx
+  function ObjectGridView(chat, messageObjects, selectedObject, isShowingObjectModal, placeholderText) {
     const objectConverter = (messageObject) => {
       return ObjectEntryView(
         chat,
@@ -1281,15 +1281,26 @@
         isShowingObjectModal
       );
     };
+    return messageObjects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, placeholderText) : /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap padding",
+        style: "grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))",
+        "children:prepend": [messageObjects, objectConverter]
+      }
+    );
+  }
+
+  // src/Views/Objects/allObjectsView.tsx
+  function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
     const content = createProxyState(
       [chat.objects],
-      () => chat.objects.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noObjects) : /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "grid gap padding",
-          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
-          "children:prepend": [chat.objects, objectConverter]
-        }
+      () => ObjectGridView(
+        chat,
+        chat.objects,
+        selectedObject,
+        isShowingObjectModal,
+        translation.noObjects
       )
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
@@ -1297,14 +1308,6 @@
 
   // src/Views/Objects/noteObjectsView.tsx
   function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
-    const objectConverter = (messageObject) => {
-      return ObjectEntryView(
-        chat,
-        messageObject,
-        selectedObject,
-        isShowingObjectModal
-      );
-    };
     const notes = new ListState();
     chat.objects.subscribe(() => {
       notes.clear();
@@ -1316,13 +1319,12 @@
     });
     const content = createProxyState(
       [chat.objects],
-      () => notes.value.size == 0 ? /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noNotes) : /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "grid gap padding",
-          style: "grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))",
-          "children:prepend": [notes, objectConverter]
-        }
+      () => ObjectGridView(
+        chat,
+        notes,
+        selectedObject,
+        isShowingObjectModal,
+        translation.noNotes
       )
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
