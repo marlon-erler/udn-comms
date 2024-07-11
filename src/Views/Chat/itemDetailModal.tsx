@@ -21,7 +21,7 @@ export function ItemDetailModal(
   }
 
   function deleteAndClose() {
-    chat.objects.remove(object.id);
+    chat.deleteObject(object);
     closeModal();
   }
 

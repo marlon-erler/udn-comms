@@ -595,15 +595,21 @@
       const messageString = JSON.stringify(chatMessage);
       UDN.sendMessage(chatMessage.channel, messageString);
       this.outbox.remove(chatMessage);
+      if (chatMessage.messageObject)
+        this.objectOutbox.remove(chatMessage.messageObject.id);
     };
     // objects
-    async addObjectAndSend(object) {
+    addObjectAndSend(object) {
       this.objects.set(object.id, object);
-      await this.sendObject(object);
+      this.sendObject(object);
     }
-    async sendObject(object) {
+    sendObject(object) {
       this.objectOutbox.set(object.id, object);
       this.sendMessagesInOutbox();
+    }
+    deleteObject(object) {
+      this.objects.remove(object.id);
+      this.objectOutbox.remove(object.id);
     }
     // channel
     setChannel = () => {
@@ -1133,7 +1139,7 @@
       closeModal();
     }
     function deleteAndClose() {
-      chat.objects.remove(object.id);
+      chat.deleteObject(object);
       closeModal();
     }
     const editingTitle = new State(object.title);

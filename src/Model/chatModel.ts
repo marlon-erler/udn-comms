@@ -267,6 +267,8 @@ export class Chat {
     UDN.sendMessage(chatMessage.channel, messageString);
 
     this.outbox.remove(chatMessage);
+    if (chatMessage.messageObject)
+      this.objectOutbox.remove(chatMessage.messageObject.id);
   };
 
   // objects
