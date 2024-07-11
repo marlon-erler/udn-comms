@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
+import { ObjectEntryView } from "./objectEntryView";
 import { translation } from "../../translations";
 
 export function AllObjectsView(
@@ -12,18 +13,11 @@ export function AllObjectsView(
   const objectConverter: React.StateItemConverter<MessageObject> = (
     messageObject
   ) => {
-    function select() {
-      selectedObject.value = messageObject;
-      isShowingObjectModal.value = true;
-    }
-
-    return (
-      <button class="tile" on:click={select}>
-        <div>
-        <b>{chat.getObjectTitle(messageObject)}</b>
-          <span class="secondary">{messageObject.id}</span>
-        </div>
-      </button>
+    return ObjectEntryView(
+      chat,
+      messageObject,
+      selectedObject,
+      isShowingObjectModal
     );
   };
 

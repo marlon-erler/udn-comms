@@ -5,11 +5,12 @@ import { Chat, MessageObject } from "../../Model/chatModel";
 import { AllObjectsView } from "./allObjectsView";
 import { NoteObjectsView } from "./noteObjectsView";
 import { ObjectDetailModal } from "./objectDetailModal";
+import { icons } from "../../icons";
 import { translation } from "../../translations";
 
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
-  notes: [translation.viewNotes, "sticky_note_2"],
+  notes: [translation.viewNotes, icons.noteContent],
 };
 
 export function ChatObjectView(chat: Chat) {

@@ -39,10 +39,10 @@ export interface MessageObjectContent {
   id: string;
 
   noteContent?: string;
-  categoryName?: string;
-  isoDate?: string;
-  isoTime?: string;
   priority?: number;
+  categoryName?: string;
+  date?: string;
+  time?: string;
 }
 
 // chat

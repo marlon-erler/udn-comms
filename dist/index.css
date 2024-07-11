@@ -1,6 +1,6 @@
 /* src/styles.css */
 [unread] {
-  border-left: 10px solid var(--text-warning);
+  border-left: 10px solid var(--text-warn);
 }
 :root {
   --thread-view-height-with-tools: 8rem;
@@ -17,21 +17,21 @@
 .chat-object-view {
   display: none;
 }
-[showingchattools] :is(.thread-view, .chat-object-view) {
+#message-tab:has([showingchattools]) :is(.thread-view, .chat-object-view) {
   overflow: scroll;
   position: absolute;
   padding: 0px;
 }
-[showingchattools] header {
+#message-tab:has([showingchattools]) header {
   border-bottom: 1px solid var(--border);
 }
-[showingchattools] .chat-object-view {
+#message-tab:has([showingchattools]) .chat-object-view {
   display: flex;
   top: var(--header-height);
   bottom: calc(var(--thread-view-height-with-tools) + var(--footer-top-line));
   border-bottom: 1px solid var(--border);
 }
-[showingchattools] .thread-view {
+#message-tab:has([showingchattools]) .thread-view {
   display: flex;
   height: var(--thread-view-height-with-tools);
   top: unset;
@@ -39,25 +39,25 @@
   flex: 1;
 }
 @media (min-width: 640px) and (max-width: 1400px) {
-  main.split:has([showingchattools]) {
+  main.split:has(#message-tab [showingchattools]) {
     display: flex;
   }
-  main.split:has([showingchattools]) #settings-tab {
+  main.split:has(#message-tab [showingchattools]) #settings-tab {
     display: none;
   }
 }
 @media (min-width: 640px) {
-  [showingchattools] :is(.thread-view, .chat-object-view) {
+  #message-tab:has([showingchattools]) :is(.thread-view, .chat-object-view) {
     top: var(--header-height);
     bottom: var(--footer-top-line);
   }
-  [showingchattools] .chat-object-view {
+  #message-tab:has([showingchattools]) .chat-object-view {
     left: 0px;
     right: var(--thread-view-width-with-tools);
     border-bottom: none;
     border-right: 1px solid var(--border);
   }
-  [showingchattools] .thread-view {
+  #message-tab:has([showingchattools]) .thread-view {
     display: flex;
     left: unset;
     right: 0px;

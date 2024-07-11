@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
+import { icons } from "../../icons";
 import { translation } from "../../translations";
 
 export function ObjectDetailModal(
@@ -33,18 +34,24 @@ export function ObjectDetailModal(
   );
   const editingDate = React.createProxyState(
     [selectedMessageObject],
-    () => selectedMessageObject.value.isoDate ?? new Date().toISOString()
+    () => selectedMessageObject.value.date ?? ""
   );
   const editingTime = React.createProxyState(
     [selectedMessageObject],
-    () => selectedMessageObject.value.isoTime ?? new Date().toISOString()
+    () => selectedMessageObject.value.time ?? ""
   );
   const editingPriority = React.createProxyState(
     [selectedMessageObject],
     () => selectedMessageObject.value.priority ?? 0
   );
   React.bulkSubscribe(
-    [editingNoteContent, editingCategory, editingDate, editingPriority],
+    [
+      editingNoteContent,
+      editingCategory,
+      editingDate,
+      editingTime,
+      editingPriority,
+    ],
     () => (didEditContent.value = true)
   );
 
@@ -75,8 +82,8 @@ export function ObjectDetailModal(
         noteContent: editingNoteContent.value,
         priority: editingPriority.value,
         categoryName: editingCategory.value,
-        isoDate: editingDate.value,
-        isoTime: editingTime.value,
+        date: editingDate.value,
+        time: editingTime.value,
       });
     }
 
@@ -108,7 +115,7 @@ export function ObjectDetailModal(
 
           <div class="flex-column gap">
             <label class="tile">
-              <span class="icon">label</span>
+              <span class="icon">{icons.objectTitle}</span>
               <div>
                 <span>{translation.objectTitle}</span>
                 {input}
@@ -118,7 +125,7 @@ export function ObjectDetailModal(
             <hr></hr>
 
             <label class="tile">
-              <span class="icon">history</span>
+              <span class="icon">{icons.objectHistory}</span>
               <div>
                 <span>{translation.objectVersion}</span>
                 <select bind:value={selectedMessageObjectId}>
@@ -139,7 +146,7 @@ export function ObjectDetailModal(
             <hr></hr>
 
             <label class="tile">
-              <span class="icon">sticky_note_2</span>
+              <span class="icon">{icons.noteContent}</span>
               <div>
                 <span>{translation.note}</span>
                 <textarea
@@ -151,7 +158,7 @@ export function ObjectDetailModal(
             </label>
 
             <label class="tile">
-              <span class="icon">category</span>
+              <span class="icon">{icons.categoryName}</span>
               <div>
                 <span>{translation.category}</span>
                 <input
@@ -162,7 +169,7 @@ export function ObjectDetailModal(
             </label>
 
             <label class="tile">
-              <span class="icon">priority_high</span>
+              <span class="icon">{icons.priority}</span>
               <div>
                 <span>{translation.priority}</span>
                 <input
@@ -176,7 +183,7 @@ export function ObjectDetailModal(
             <hr></hr>
 
             <label class="tile">
-              <span class="icon">calendar_month</span>
+              <span class="icon">{icons.date}</span>
               <div>
                 <span>{translation.date}</span>
                 <input type="date" bind:value={editingDate}></input>
@@ -184,7 +191,7 @@ export function ObjectDetailModal(
             </label>
 
             <label class="tile">
-              <span class="icon">schedule</span>
+              <span class="icon">{icons.time}</span>
               <div>
                 <span>{translation.time}</span>
                 <input type="time" bind:value={editingTime}></input>

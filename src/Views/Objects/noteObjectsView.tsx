@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
+import { ObjectEntryView } from "./objectEntryView";
 import { translation } from "../../translations";
 
 export function NoteObjectsView(
@@ -12,22 +13,11 @@ export function NoteObjectsView(
   const objectConverter: React.StateItemConverter<MessageObject> = (
     messageObject
   ) => {
-    const latest = chat.getMostRecentContent(messageObject);
-
-    function select() {
-      selectedObject.value = messageObject;
-      isShowingObjectModal.value = true;
-    }
-
-    return (
-      <button class="tile" on:click={select}>
-        <div>
-          <b>{chat.getObjectTitle(messageObject)}</b>
-          <span class="secondary ellipsis">
-            {latest.noteContent!.split("\n")[0]}
-          </span>
-        </div>
-      </button>
+    return ObjectEntryView(
+      chat,
+      messageObject,
+      selectedObject,
+      isShowingObjectModal
     );
   };
 

@@ -1232,14 +1232,54 @@
     connect();
   }
 
+  // src/icons.ts
+  var icons = {
+    objectTitle: "label",
+    objectHistory: "history",
+    noteContent: "sticky_note_2",
+    categoryName: "category",
+    priority: "priority_high",
+    date: "calendar_month",
+    time: "schedule"
+  };
+
+  // src/Views/Objects/objectEntryView.tsx
+  function ObjectEntryView(chat, messageObject, selectedObject, isShowingObjectModal) {
+    const latest = chat.getMostRecentContent(messageObject);
+    function select() {
+      selectedObject.value = messageObject;
+      isShowingObjectModal.value = true;
+    }
+    const fields = {
+      [icons.noteContent]: "---",
+      [icons.priority]: "---",
+      [icons.categoryName]: "---",
+      [icons.date]: "---",
+      [icons.time]: "---"
+    };
+    Object.entries(latest).forEach((entry) => {
+      let [key, value] = entry;
+      if (!value) return;
+      const icon = icons[key];
+      if (!icon) return;
+      fields[icon] = value;
+    });
+    const fieldElements = Object.entries(fields).map((field) => {
+      const [icon, value] = field;
+      return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap align-center" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), value);
+    });
+    return /* @__PURE__ */ createElement("button", { class: "tile justify-start", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements)));
+  }
+
   // src/Views/Objects/allObjectsView.tsx
   function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
     const objectConverter = (messageObject) => {
-      function select() {
-        selectedObject.value = messageObject;
-        isShowingObjectModal.value = true;
-      }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id)));
+      return ObjectEntryView(
+        chat,
+        messageObject,
+        selectedObject,
+        isShowingObjectModal
+      );
     };
     const content = createProxyState(
       [chat.objects],
@@ -1258,12 +1298,12 @@
   // src/Views/Objects/noteObjectsView.tsx
   function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
     const objectConverter = (messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      function select() {
-        selectedObject.value = messageObject;
-        isShowingObjectModal.value = true;
-      }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, latest.noteContent.split("\n")[0])));
+      return ObjectEntryView(
+        chat,
+        messageObject,
+        selectedObject,
+        isShowingObjectModal
+      );
     };
     const notes = new ListState();
     chat.objects.subscribe(() => {
@@ -1309,18 +1349,24 @@
     );
     const editingDate = createProxyState(
       [selectedMessageObject],
-      () => selectedMessageObject.value.isoDate ?? (/* @__PURE__ */ new Date()).toISOString()
+      () => selectedMessageObject.value.date ?? ""
     );
     const editingTime = createProxyState(
       [selectedMessageObject],
-      () => selectedMessageObject.value.isoTime ?? (/* @__PURE__ */ new Date()).toISOString()
+      () => selectedMessageObject.value.time ?? ""
     );
     const editingPriority = createProxyState(
       [selectedMessageObject],
       () => selectedMessageObject.value.priority ?? 0
     );
     bulkSubscribe(
-      [editingNoteContent, editingCategory, editingDate, editingPriority],
+      [
+        editingNoteContent,
+        editingCategory,
+        editingDate,
+        editingTime,
+        editingPriority
+      ],
       () => didEditContent.value = true
     );
     function handleKeyDown(e) {
@@ -1344,8 +1390,8 @@
           noteContent: editingNoteContent.value,
           priority: editingPriority.value,
           categoryName: editingCategory.value,
-          isoDate: editingDate.value,
-          isoTime: editingTime.value
+          date: editingDate.value,
+          time: editingTime.value
         });
       }
       chat.addObjectAndSend(messageObject);
@@ -1363,35 +1409,35 @@
       }
     );
     isPresented.subscribe(() => setTimeout(() => input.focus(), 100));
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), input)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.objectTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), input)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.objectHistory), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
       content.isoDateVersionCreated
-    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "sticky_note_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.note), /* @__PURE__ */ createElement(
+    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.noteContent), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.note), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "5",
         "bind:value": editingNoteContent,
         placeholder: translation.noteContentPlaceholder
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingCategory,
         placeholder: translation.categoryPlaceholder
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.priority), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
       "input",
       {
         type: "number",
         "bind:value": editingPriority,
         placeholder: translation.priorityPlaceholder
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/chatObjectView.tsx
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
-    notes: [translation.viewNotes, "sticky_note_2"]
+    notes: [translation.viewNotes, icons.noteContent]
   };
   function ChatObjectView(chat) {
     const isShowingObjectModal = new State(false);
@@ -1648,7 +1694,15 @@
         "children:append": [chat.outbox, outboxMessageConverter]
       }
     );
-    const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
+    const listWrapper = /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "thread-view flex-column gap",
+        "toggle:showingchattools": isShowingObjects
+      },
+      messageList,
+      outboxList
+    );
     function scrollToBottom() {
       listWrapper.scrollTop = listWrapper.scrollHeight;
     }
@@ -1700,7 +1754,6 @@
     return /* @__PURE__ */ createElement(
       "article",
       {
-        "toggle:showingchattools": isShowingObjects,
         id: "message-tab",
         "children:set": messageTabContent
       }

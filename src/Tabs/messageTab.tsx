@@ -61,7 +61,6 @@ export function MessageTab() {
 
   return (
     <article
-      toggle:showingchattools={isShowingObjects}
       id="message-tab"
       children:set={messageTabContent}
     ></article>

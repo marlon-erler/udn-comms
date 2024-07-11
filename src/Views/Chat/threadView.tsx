@@ -117,7 +117,10 @@ export function ThreadView(chat: Chat) {
     ></div>
   );
   const listWrapper = (
-    <div class="thread-view flex-column gap">
+    <div
+      class="thread-view flex-column gap"
+      toggle:showingchattools={isShowingObjects}
+    >
       {messageList}
       {outboxList}
     </div>
