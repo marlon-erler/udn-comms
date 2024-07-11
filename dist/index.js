@@ -1319,7 +1319,7 @@
             "on:click": toggleChatTools,
             "toggle:selected": isShowingChatTools
           },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "architecture")
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
         ), /* @__PURE__ */ createElement(
           "button",
           {

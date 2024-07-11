@@ -39,7 +39,7 @@ export function MessageTab() {
             on:click={toggleChatTools}
             toggle:selected={isShowingChatTools}
           >
-            <span class="icon">architecture</span>
+            <span class="icon">deployed_code</span>
           </button>
           <button
             aria-label={translation.showChatOptions}
