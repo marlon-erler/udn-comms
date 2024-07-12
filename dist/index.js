@@ -446,6 +446,7 @@
     encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
     serverAddress: "Server Address",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    previousConnections: "Previous connections",
     connectToServer: "Connect",
     disconnect: "Disconnect",
     mailbox: "Mailbox",
@@ -536,6 +537,7 @@
       encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
       serverAddress: "Direcci\xF3n del servidor",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      previousConnections: "Conexiones anteriores",
       connectToServer: "Conectar",
       disconnect: "Desconectar",
       mailbox: "Buz\xF3n",
@@ -624,6 +626,7 @@
       encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
       serverAddress: "Serveradresse",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      previousConnections: "Vorherige Adressen",
       connectToServer: "Verbinden",
       disconnect: "Trennen",
       mailbox: "Briefkasten",
@@ -2193,7 +2196,13 @@
         id: "previous-addresses",
         "children:append": [previousAddresses, stringToOptionTag]
       }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.previousConnections), /* @__PURE__ */ createElement(
+      "select",
+      {
+        "bind:value": serverAddressInput,
+        "children:append": [previousAddresses, stringToOptionTag]
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger width-100 flex-1 justify-center",
@@ -2237,7 +2246,13 @@
       },
       translation.requestMailbox,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.outbox), /* @__PURE__ */ createElement("span", { "set:class": outboxTextStyle, "subscribe:innerText": outboxText }))));
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.outbox), /* @__PURE__ */ createElement(
+      "span",
+      {
+        "set:class": outboxTextStyle,
+        "subscribe:innerText": outboxText
+      }
+    ))));
   }
 
   // src/Views/Overview/personalSection.tsx

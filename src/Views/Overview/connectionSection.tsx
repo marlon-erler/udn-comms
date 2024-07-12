@@ -42,6 +42,17 @@ export function ConnectionSection() {
           ></datalist>
         </div>
       </label>
+      <label class="tile">
+        <span class="icon">history</span>
+        <div>
+        <span>{translation.previousConnections}</span>
+          <select
+            bind:value={serverAddressInput}
+            children:append={[previousAddresses, stringToOptionTag]}
+          ></select>
+          <span class="icon">arrow_drop_down</span>
+        </div>
+      </label>
       <div class="flex-row width-input justify-end">
         <button
           class="danger width-100 flex-1 justify-center"
@@ -102,7 +113,10 @@ export function ConnectionSection() {
         <span class="icon">outbox</span>
         <div>
           <b>{translation.outbox}</b>
-          <span set:class={outboxTextStyle} subscribe:innerText={outboxText}></span>
+          <span
+            set:class={outboxTextStyle}
+            subscribe:innerText={outboxText}
+          ></span>
         </div>
       </div>
     </div>

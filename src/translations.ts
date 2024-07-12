@@ -26,6 +26,7 @@ const englishTranslations = {
 
   serverAddress: "Server Address",
   serverAddressPlaceholder: "wss://192.168.0.69:3000",
+  previousConnections: "Previous connections",
 
   connectToServer: "Connect",
   disconnect: "Disconnect",
@@ -143,6 +144,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     serverAddress: "Dirección del servidor",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    previousConnections: "Conexiones anteriores",
 
     connectToServer: "Conectar",
     disconnect: "Desconectar",
@@ -257,6 +259,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     serverAddress: "Serveradresse",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
+    previousConnections: "Vorherige Adressen",
 
     connectToServer: "Verbinden",
     disconnect: "Trennen",
