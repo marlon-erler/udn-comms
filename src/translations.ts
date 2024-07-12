@@ -84,6 +84,8 @@ const englishTranslations = {
   deleteMessage: "Delete message",
 
   // objects
+  objectsInTotal: "Objects in total: ",
+
   showObjects: "show objects",
   createObject: "create object",
   untitledObject: "Untitled Object",
@@ -202,6 +204,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     deleteMessage: "Eliminar este mensaje",
 
     // objects
+    objectsInTotal: "Objetos en total: ",
+
     showObjects: "mostrar objetos",
     createObject: "añadir nuevo objeto",
     untitledObject: "Sin Título",
@@ -317,6 +321,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     deleteMessage: "Nachricht löschen",
 
     // objects
+    objectsInTotal: "Objekte insgesamt: ",
+
     showObjects: "Objekte anzeigen",
     createObject: "Neues Objekt erstellen",
     untitledObject: "Unbenannt",

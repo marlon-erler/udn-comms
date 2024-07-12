@@ -490,6 +490,7 @@
     copyMessage: "Copy message",
     deleteMessage: "Delete message",
     // objects
+    objectsInTotal: "Objects in total: ",
     showObjects: "show objects",
     createObject: "create object",
     untitledObject: "Untitled Object",
@@ -581,6 +582,7 @@
       copyMessage: "Copiar mensaje",
       deleteMessage: "Eliminar este mensaje",
       // objects
+      objectsInTotal: "Objetos en total: ",
       showObjects: "mostrar objetos",
       createObject: "a\xF1adir nuevo objeto",
       untitledObject: "Sin T\xEDtulo",
@@ -670,6 +672,7 @@
       copyMessage: "Nachricht kopieren",
       deleteMessage: "Nachricht l\xF6schen",
       // objects
+      objectsInTotal: "Objekte insgesamt: ",
       showObjects: "Objekte anzeigen",
       createObject: "Neues Objekt erstellen",
       untitledObject: "Unbenannt",
@@ -1482,7 +1485,7 @@
     return /* @__PURE__ */ createElement(
       "div",
       {
-        class: "width-100 max-height-100 grid gap padding scroll-v",
+        class: "grid gap padding",
         style: "grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));",
         "children:prepend": [messageObjects, objectConverter]
       }
@@ -1491,7 +1494,11 @@
 
   // src/Views/Objects/allObjectsView.tsx
   function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100" }, ObjectGridView(chat, chat.objects, selectedObject, isShowingObjectModal));
+    const objectCount = createProxyState(
+      [chat.objects],
+      () => chat.objects.value.size
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding-top" }, /* @__PURE__ */ createElement("b", { class: "secondary padding" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(chat, chat.objects, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/renameView.tsx
@@ -1629,7 +1636,7 @@
         () => notes.remove(messageObject)
       );
     });
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/Objects/objectDetailModal.tsx
