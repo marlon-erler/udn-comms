@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import {
+  clearAddresses,
   clearCategories,
   clearStatuses,
   isPresentingSettingsModal,
@@ -43,6 +44,10 @@ export function SettingsModal() {
           <hr></hr>
 
           <div class="flex-column width-input gap">
+            <button class="width-100 flex-1" on:click={clearAddresses}>
+              {translation.clearAddresses}
+              <span class="icon">cell_tower</span>
+            </button>
             <button class="width-100 flex-1" on:click={clearCategories}>
               {translation.clearCategories}
               <span class="icon">{icons.categoryName}</span>
