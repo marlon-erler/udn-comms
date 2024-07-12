@@ -3,7 +3,6 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
-import { PlaceholderView } from "./placeholderView";
 
 export function ObjectGridView(
   chat: Chat,
