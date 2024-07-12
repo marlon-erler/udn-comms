@@ -7,6 +7,10 @@
   --thread-view-width-with-tools: 20rem;
   --footer-top-line: calc(var(--control-height) + var(--safe-area-bottom));
 }
+.object-entry-wide {
+  width: 280px;
+  min-width: 280px;
+}
 #message-tab {
   flex-direction: column;
 }

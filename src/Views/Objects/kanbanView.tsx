@@ -3,12 +3,12 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
-import { ObjectGridView } from "./objectGridView";
 import { PlaceholderView } from "./placeholderView";
+import { RenameView } from "../renameView";
 import { translation } from "../../translations";
 
 interface KanbanBoard {
-  title: string;
+  category: string;
   items: KanbanBoardItem[];
 }
 
@@ -33,7 +33,7 @@ export function KanbanView(
       const boardTitle = latest.categoryName;
 
       if (!boards.value.has(boardTitle))
-        boards.set(boardTitle, { title: boardTitle, items: [] });
+        boards.set(boardTitle, { category: boardTitle, items: [] });
 
       boards.value.get(boardTitle)?.items.push({
         priority: latest.priority ?? 0,
@@ -48,7 +48,7 @@ export function KanbanView(
     ) : (
       <div class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding">
         {...[...boards.value.values()]
-          .sort((a, b) => a.title.localeCompare(b.title))
+          .sort((a, b) => a.category.localeCompare(b.category))
           .map((board) =>
             KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
           )}
@@ -67,20 +67,13 @@ function KanbanBoardView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const editingBoardTitle = new React.State(kanbanBoard.title);
-  const isEditing = new React.State(false);
-  const cannotRename = React.createProxyState(
-    [editingBoardTitle],
-    () =>
-      editingBoardTitle.value == kanbanBoard.title ||
-      editingBoardTitle.value == ""
-  );
+  const editingCategory = new React.State(kanbanBoard.category);
 
   function renameBoard() {
     kanbanBoard.items.forEach((kanbanBoardItem) => {
       const { messageObject } = kanbanBoardItem;
       const latest = chat.getMostRecentContent(messageObject);
-      latest.categoryName = editingBoardTitle.value;
+      latest.categoryName = editingCategory.value;
       chat.addObjectAndSend(messageObject);
     });
   }
@@ -98,32 +91,17 @@ function KanbanBoardView(
     if (!messageObject) return;
 
     const latest = chat.getMostRecentContent(messageObject);
-    latest.categoryName = kanbanBoard.title;
+    latest.categoryName = kanbanBoard.category;
     chat.addObjectAndSend(messageObject);
   }
 
-  const titleInput = (
-    <input bind:value={editingBoardTitle} on:enter={renameBoard}></input>
-  );
-
   return (
     <div
-      class="flex-column flex-no"
-      style="min-width: 280px"
+      class="flex-column flex-no object-entry-wide"
       on:dragover={dragOver}
       on:drop={drop}
     >
-      <div class="flex-row align-center justify-apart">
-        {titleInput}
-        <button
-          class="primary"
-          aria-label={translation.rename}
-          on:click={renameBoard}
-          toggle:disabled={cannotRename}
-        >
-          <span class="icon">edit</span>
-        </button>
-      </div>
+      {RenameView(editingCategory, kanbanBoard.category, renameBoard)}
       <hr></hr>
       <div class="flex-column gap padding-bottom">
         {...kanbanBoard.items

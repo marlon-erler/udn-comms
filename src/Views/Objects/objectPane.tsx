@@ -6,6 +6,7 @@ import { AllObjectsView } from "./allObjectsView";
 import { KanbanView } from "./kanbanView";
 import { NoteObjectsView } from "./noteObjectsView";
 import { ObjectDetailModal } from "./objectDetailModal";
+import { StatusView } from "./statusView";
 import { icons } from "../../icons";
 import { translation } from "../../translations";
 
@@ -13,6 +14,7 @@ export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
   notes: [translation.viewNotes, icons.noteContent],
   kanban: [translation.viewKanban, "view_kanban"],
+  status: [translation.viewStatus, icons.status],
 };
 
 export function ObjectPane(chat: Chat) {
@@ -40,6 +42,8 @@ export function ObjectPane(chat: Chat) {
           return NoteObjectsView;
         case "kanban":
           return KanbanView;
+        case "status":
+          return StatusView;
         default:
           return AllObjectsView;
       }
@@ -78,7 +82,10 @@ export function ObjectPane(chat: Chat) {
         </button>
       </div>
 
-      <div class="width-100 height-100 flex scroll-no" children:set={mainView}></div>
+      <div
+        class="width-100 height-100 flex scroll-no"
+        children:set={mainView}
+      ></div>
 
       <div children:set={objectModal}></div>
     </div>

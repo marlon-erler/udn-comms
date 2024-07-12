@@ -43,6 +43,7 @@ export interface MessageObjectContent {
   noteContent?: string;
   priority?: number;
   categoryName?: string;
+  status?: string;
   date?: string;
   time?: string;
 }

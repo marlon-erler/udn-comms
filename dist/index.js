@@ -495,6 +495,7 @@
     viewAll: "All",
     viewNotes: "Notes",
     viewKanban: "Kanban",
+    viewStatus: "Status",
     noObjects: "No objects",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
@@ -502,9 +503,11 @@
     note: "Note",
     noteContentPlaceholder: "Take a note...",
     category: "Category",
+    categoryPlaceholder: "Define a category",
     priority: "Priority",
     priorityPlaceholder: "2",
-    categoryPlaceholder: "Define a category",
+    status: "Status",
+    statusPlaceholder: "Pending",
     date: "Date",
     time: "Time",
     resendObjects: "Resend all objects",
@@ -582,6 +585,7 @@
       viewAll: "Todos",
       viewNotes: "Notas",
       viewKanban: "Kanban",
+      viewStatus: "Estado",
       noObjects: "Sin objetos",
       objectTitle: "T\xEDtulo",
       objectTitlePlaceholder: "Mi objeto",
@@ -589,9 +593,11 @@
       note: "Nota",
       noteContentPlaceholder: "Toma nota...",
       category: "Categor\xEDa",
+      categoryPlaceholder: "Define una categor\xEDa",
       priority: "Prioridad",
       priorityPlaceholder: "2",
-      categoryPlaceholder: "Define una categor\xEDa",
+      status: "Estado",
+      statusPlaceholder: "Pendiente",
       date: "Fecha",
       time: "Hora",
       resendObjects: "Reenviar todos objetos",
@@ -667,6 +673,7 @@
       viewAll: "Alle",
       viewNotes: "Notizen",
       viewKanban: "Kanban",
+      viewStatus: "Status",
       noObjects: "Keine Objekte",
       objectTitle: "Titel",
       objectTitlePlaceholder: "Mein Objekt",
@@ -674,9 +681,11 @@
       note: "Notiz",
       noteContentPlaceholder: "Notiz eingeben...",
       category: "Kategorie",
+      categoryPlaceholder: "Kategorie eingeben...",
       priority: "Priorit\xE4t",
       priorityPlaceholder: "2",
-      categoryPlaceholder: "Kategorie eingeben...",
+      status: "Status",
+      statusPlaceholder: "Ausstehend",
       date: "Datum",
       time: "Uhrzeit",
       resendObjects: "Objekte erneut senden",
@@ -1398,6 +1407,7 @@
     objectHistory: "history",
     noteContent: "sticky_note_2",
     categoryName: "category",
+    status: "trending_up",
     priority: "priority_high",
     date: "calendar_month",
     time: "schedule"
@@ -1416,7 +1426,7 @@
     const fields = {
       [icons.noteContent]: "---",
       [icons.priority]: "---",
-      [icons.categoryName]: "---",
+      [icons.status]: "---",
       [icons.date]: "---",
       [icons.time]: "---"
     };
@@ -1425,6 +1435,7 @@
       if (!value) return;
       const icon = icons[key];
       if (!icon) return;
+      if (!fields[icon]) return;
       fields[icon] = value;
     });
     const fieldElements = Object.entries(fields).map((field) => {
@@ -1439,7 +1450,7 @@
         draggable: "true",
         "on:dragstart": dragStart
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements))
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "flex-column gap height-100 flex secondary ellipsis " }, ...fieldElements))
     );
   }
 
@@ -1482,6 +1493,24 @@
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
   }
 
+  // src/Views/renameView.tsx
+  function RenameView(editingName, initialName, rename) {
+    const cannotRename = createProxyState(
+      [editingName],
+      () => editingName.value == initialName || editingName.value == ""
+    );
+    return /* @__PURE__ */ createElement("div", { class: "flex-row align-center justify-apart object-entry-wide" }, /* @__PURE__ */ createElement("input", { "bind:value": editingName, "on:enter": rename }), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translation.rename,
+        "on:click": rename,
+        "toggle:disabled": cannotRename
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
+    ));
+  }
+
   // src/Views/Objects/kanbanView.tsx
   function KanbanView(chat, selectedObject, isShowingObjectModal) {
     const boards = new MapState();
@@ -1492,7 +1521,7 @@
         if (!latest.categoryName) return;
         const boardTitle = latest.categoryName;
         if (!boards.value.has(boardTitle))
-          boards.set(boardTitle, { title: boardTitle, items: [] });
+          boards.set(boardTitle, { category: boardTitle, items: [] });
         boards.value.get(boardTitle)?.items.push({
           priority: latest.priority ?? 0,
           messageObject
@@ -1501,24 +1530,19 @@
     });
     const content = createProxyState(
       [chat.objects],
-      () => boards.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.title.localeCompare(b.title)).map(
+      () => boards.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.category.localeCompare(b.category)).map(
         (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
       ))
     );
     return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
-    const editingBoardTitle = new State(kanbanBoard.title);
-    const isEditing = new State(false);
-    const cannotRename = createProxyState(
-      [editingBoardTitle],
-      () => editingBoardTitle.value == kanbanBoard.title || editingBoardTitle.value == ""
-    );
+    const editingCategory = new State(kanbanBoard.category);
     function renameBoard() {
       kanbanBoard.items.forEach((kanbanBoardItem) => {
         const { messageObject } = kanbanBoardItem;
         const latest = chat.getMostRecentContent(messageObject);
-        latest.categoryName = editingBoardTitle.value;
+        latest.categoryName = editingCategory.value;
         chat.addObjectAndSend(messageObject);
       });
     }
@@ -1532,28 +1556,17 @@
       const messageObject = chat.objects.value.get(id);
       if (!messageObject) return;
       const latest = chat.getMostRecentContent(messageObject);
-      latest.categoryName = kanbanBoard.title;
+      latest.categoryName = kanbanBoard.category;
       chat.addObjectAndSend(messageObject);
     }
-    const titleInput = /* @__PURE__ */ createElement("input", { "bind:value": editingBoardTitle, "on:enter": renameBoard });
     return /* @__PURE__ */ createElement(
       "div",
       {
-        class: "flex-column flex-no",
-        style: "min-width: 280px",
+        class: "flex-column flex-no object-entry-wide",
         "on:dragover": dragOver,
         "on:drop": drop
       },
-      /* @__PURE__ */ createElement("div", { class: "flex-row align-center justify-apart" }, titleInput, /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "primary",
-          "aria-label": translation.rename,
-          "on:click": renameBoard,
-          "toggle:disabled": cannotRename
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
-      )),
+      RenameView(editingCategory, kanbanBoard.category, renameBoard),
       /* @__PURE__ */ createElement("hr", null),
       /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.sort((a, b) => b.priority - a.priority).map(
         (kanbanBoardItem) => ObjectEntryView(
@@ -1608,6 +1621,10 @@
       [selectedMessageObject],
       () => selectedMessageObject.value.categoryName ?? ""
     );
+    const editingStatus = createProxyState(
+      [selectedMessageObject],
+      () => selectedMessageObject.value.status ?? ""
+    );
     const editingDate = createProxyState(
       [selectedMessageObject],
       () => selectedMessageObject.value.date ?? ""
@@ -1624,6 +1641,7 @@
       [
         editingNoteContent,
         editingCategory,
+        editingStatus,
         editingDate,
         editingTime,
         editingPriority
@@ -1651,6 +1669,7 @@
           noteContent: editingNoteContent.value,
           priority: editingPriority.value,
           categoryName: editingCategory.value,
+          status: editingStatus.value,
           date: editingDate.value,
           time: editingTime.value
         });
@@ -1675,12 +1694,12 @@
     ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.noteContent), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.note), /* @__PURE__ */ createElement(
       "textarea",
       {
-        rows: "5",
+        rows: "10",
         class: "height-auto",
         "bind:value": editingNoteContent,
         placeholder: translation.noteContentPlaceholder
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": editingCategory,
@@ -1701,14 +1720,138 @@
         "bind:value": editingPriority,
         placeholder: translation.priorityPlaceholder
       }
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.status), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": editingStatus,
+        placeholder: translation.statusPlaceholder
+      }
     ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/Views/Objects/statusView.tsx
+  function StatusView(chat, selectedObject, isShowingObjectModal) {
+    const rows = new MapState();
+    const statuses = /* @__PURE__ */ new Map();
+    chat.objects.subscribe(() => {
+      rows.clear();
+      statuses.clear();
+      chat.objects.value.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        if (!latest.categoryName || !latest.status) return;
+        const category = latest.categoryName;
+        const status = latest.status;
+        if (!statuses.has(status)) {
+          statuses.set(status, { title: status, items: [] });
+        }
+        statuses.get(status).items.push(messageObject);
+        if (!rows.value.has(category)) {
+          rows.set(category, { category, statusColumns: /* @__PURE__ */ new Map() });
+        }
+        const row = rows.value.get(category);
+        if (!row.statusColumns.has(status)) {
+          row.statusColumns.set(status, { title: status, items: [] });
+        }
+        const column = row.statusColumns.get(status);
+        column.items.push({
+          priority: latest.priority ?? 0,
+          status,
+          messageObject
+        });
+      });
+      statuses.forEach((statusItemList) => {
+        rows.value.forEach((row) => {
+          if (row.statusColumns.has(statusItemList.title)) return;
+          row.statusColumns.set(statusItemList.title, {
+            title: statusItemList.title,
+            items: []
+          });
+        });
+      });
+    });
+    const content = createProxyState(
+      [chat.objects],
+      () => rows.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-column large-gap width-100 height-100 scroll-v scroll-h padding" }, /* @__PURE__ */ createElement("div", { class: "flex-row large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-column object-entry-wide" }), ...[...statuses.values()].sort((a, b) => a.title.localeCompare(b.title)).map((status) => StatusHeaderView(chat, status))), ...[...rows.value.values()].sort((a, b) => a.category.localeCompare(b.category)).map(
+        (board) => KanbanRowView(chat, board, selectedObject, isShowingObjectModal)
+      ))
+    );
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
+  }
+  function StatusHeaderView(chat, status) {
+    const editingStatus = new State(status.title);
+    function rename() {
+      status.items.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        if (!latest) return;
+        latest.status = editingStatus.value;
+        chat.addObject(messageObject);
+      });
+    }
+    return /* @__PURE__ */ createElement("div", { class: "object-entry-wide" }, RenameView(editingStatus, status.title, rename), /* @__PURE__ */ createElement("hr", null));
+  }
+  function KanbanRowView(chat, kanbanRow, selectedObject, isShowingObjectModal) {
+    const editingCategory = new State(kanbanRow.category);
+    const cellItemEntries = [...kanbanRow.statusColumns.entries()];
+    function renameCategory() {
+      kanbanRow.statusColumns.forEach((statusColumns) => {
+        statusColumns.items.forEach((statusCellItem) => {
+          const { messageObject } = statusCellItem;
+          const latest = chat.getMostRecentContent(messageObject);
+          latest.categoryName = editingCategory.value;
+          chat.addObjectAndSend(messageObject);
+        });
+      });
+    }
+    return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-start" }, RenameView(editingCategory, kanbanRow.category, renameCategory)), ...cellItemEntries.sort((a, b) => a[0].localeCompare(b[0])).map(
+      (entry) => StatusColumnView(
+        chat,
+        entry[1].items,
+        kanbanRow.category,
+        entry[1].title,
+        selectedObject,
+        isShowingObjectModal
+      )
+    ), /* @__PURE__ */ createElement("hr", null));
+  }
+  function StatusColumnView(chat, items, category, status, selectedObject, isShowingObjectModal) {
+    function dragOver(event) {
+      event.preventDefault();
+    }
+    function drop(event) {
+      event.preventDefault();
+      var id = event.dataTransfer?.getData("text");
+      if (!id) return;
+      const messageObject = chat.objects.value.get(id);
+      if (!messageObject) return;
+      const latest = chat.getMostRecentContent(messageObject);
+      latest.status = status;
+      latest.categoryName = category;
+      chat.addObjectAndSend(messageObject);
+    }
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap object-entry-wide",
+        "on:dragover": dragOver,
+        "on:drop": drop
+      },
+      ...items.sort((a, b) => b.priority - a.priority).map(
+        (kanbanBoardItem) => ObjectEntryView(
+          chat,
+          kanbanBoardItem.messageObject,
+          selectedObject,
+          isShowingObjectModal
+        )
+      )
+    );
   }
 
   // src/Views/Objects/objectPane.tsx
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
     notes: [translation.viewNotes, icons.noteContent],
-    kanban: [translation.viewKanban, "view_kanban"]
+    kanban: [translation.viewKanban, "view_kanban"],
+    status: [translation.viewStatus, icons.status]
   };
   function ObjectPane(chat) {
     const isShowingObjectModal = new State(false);
@@ -1731,6 +1874,8 @@
             return NoteObjectsView;
           case "kanban":
             return KanbanView;
+          case "status":
+            return StatusView;
           default:
             return AllObjectsView;
         }
@@ -1753,7 +1898,13 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
       (key) => ViewTypeToggle(key, chat.viewType)
-    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex scroll-no", "children:set": mainView }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "width-100 height-100 flex scroll-no",
+        "children:set": mainView
+      }
+    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
   function ViewTypeToggle(key, selection) {
     const [label, icon] = viewTypes[key];

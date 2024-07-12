@@ -90,6 +90,7 @@ const englishTranslations = {
   viewAll: "All",
   viewNotes: "Notes",
   viewKanban: "Kanban",
+  viewStatus: "Status",
 
   noObjects: "No objects",
 
@@ -100,9 +101,11 @@ const englishTranslations = {
   note: "Note",
   noteContentPlaceholder: "Take a note...",
   category: "Category",
+  categoryPlaceholder: "Define a category",
   priority: "Priority",
   priorityPlaceholder: "2",
-  categoryPlaceholder: "Define a category",
+  status: "Status",
+  statusPlaceholder: "Pending",
   date: "Date",
   time: "Time",
 
@@ -204,6 +207,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewAll: "Todos",
     viewNotes: "Notas",
     viewKanban: "Kanban",
+    viewStatus: "Estado",
 
     noObjects: "Sin objetos",
 
@@ -214,9 +218,11 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     note: "Nota",
     noteContentPlaceholder: "Toma nota...",
     category: "Categoría",
+    categoryPlaceholder: "Define una categoría",
     priority: "Prioridad",
     priorityPlaceholder: "2",
-    categoryPlaceholder: "Define una categoría",
+    status: "Estado",
+    statusPlaceholder: "Pendiente",
     date: "Fecha",
     time: "Hora",
 
@@ -315,6 +321,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewAll: "Alle",
     viewNotes: "Notizen",
     viewKanban: "Kanban",
+    viewStatus: "Status",
 
     noObjects: "Keine Objekte",
 
@@ -325,9 +332,11 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     note: "Notiz",
     noteContentPlaceholder: "Notiz eingeben...",
     category: "Kategorie",
+    categoryPlaceholder: "Kategorie eingeben...",
     priority: "Priorität",
     priorityPlaceholder: "2",
-    categoryPlaceholder: "Kategorie eingeben...",
+    status: "Status",
+    statusPlaceholder: "Ausstehend",
     date: "Datum",
     time: "Uhrzeit",
 

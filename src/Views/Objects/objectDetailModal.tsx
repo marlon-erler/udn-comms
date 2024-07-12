@@ -34,6 +34,10 @@ export function ObjectDetailModal(
     [selectedMessageObject],
     () => selectedMessageObject.value.categoryName ?? ""
   );
+  const editingStatus = React.createProxyState(
+    [selectedMessageObject],
+    () => selectedMessageObject.value.status ?? ""
+  );
   const editingDate = React.createProxyState(
     [selectedMessageObject],
     () => selectedMessageObject.value.date ?? ""
@@ -50,6 +54,7 @@ export function ObjectDetailModal(
     [
       editingNoteContent,
       editingCategory,
+      editingStatus,
       editingDate,
       editingTime,
       editingPriority,
@@ -84,6 +89,7 @@ export function ObjectDetailModal(
         noteContent: editingNoteContent.value,
         priority: editingPriority.value,
         categoryName: editingCategory.value,
+        status: editingStatus.value,
         date: editingDate.value,
         time: editingTime.value,
       });
@@ -152,13 +158,15 @@ export function ObjectDetailModal(
               <div>
                 <span>{translation.note}</span>
                 <textarea
-                  rows="5"
+                  rows="10"
                   class="height-auto"
                   bind:value={editingNoteContent}
                   placeholder={translation.noteContentPlaceholder}
                 ></textarea>
               </div>
             </label>
+
+            <hr></hr>
 
             <label class="tile">
               <span class="icon">{icons.categoryName}</span>
@@ -185,6 +193,17 @@ export function ObjectDetailModal(
                   type="number"
                   bind:value={editingPriority}
                   placeholder={translation.priorityPlaceholder}
+                ></input>
+              </div>
+            </label>
+
+            <label class="tile">
+              <span class="icon">{icons.status}</span>
+              <div>
+                <span>{translation.status}</span>
+                <input
+                  bind:value={editingStatus}
+                  placeholder={translation.statusPlaceholder}
                 ></input>
               </div>
             </label>
