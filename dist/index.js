@@ -949,14 +949,11 @@
     addObject = (messageObject) => {
       const existingObject = this.objects.value.get(messageObject.id);
       if (existingObject) {
-        let didChangeObject = existingObject.title != messageObject.title;
         existingObject.title = messageObject.title;
         Object.values(messageObject.contentVersions).forEach((content) => {
           if (existingObject.contentVersions[content.id]) return;
           this.addObjectContent(existingObject, content);
-          didChangeObject = true;
         });
-        if (didChangeObject == false) return;
         this.objects.set(existingObject.id, existingObject);
       } else {
         this.objects.set(messageObject.id, messageObject);
