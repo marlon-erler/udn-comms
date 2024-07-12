@@ -745,6 +745,10 @@ select + .icon,
   height: 100% !important;
 }
 
+.height-auto {
+  height: auto !important;
+}
+
 button:not(.tile):not(header *),
 footer,
 input:not([type="checkbox"]):not([type="radio"]),

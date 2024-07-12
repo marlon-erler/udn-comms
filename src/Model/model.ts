@@ -157,6 +157,9 @@ export function zoomIn() {
   pageZoom.value += zoomStep;
 }
 
+export const usedObjectCategories =
+  React.restoreListState<string>("object-categories");
+
 // CHAT
 export const chats = new React.ListState<Chat>();
 export const chatIds = React.restoreListState<string>("chat-ids");

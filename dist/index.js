@@ -387,7 +387,7 @@
     return new Uint8Array(array);
   }
 
-  // src/utility.ts
+  // src/utility.tsx
   var storageKeys = {
     hasUnread(id) {
       return id + "has-unread-messages";
@@ -416,6 +416,9 @@
     composingMessage(id) {
       return id + "composing-message";
     }
+  };
+  var stringToOptionTag = (value) => {
+    return /* @__PURE__ */ createElement("option", null, value);
   };
 
   // src/translations.ts
@@ -919,6 +922,9 @@
       } else {
         this.objects.set(messageObject.id, messageObject);
       }
+      const latest = this.getMostRecentContent(messageObject);
+      if (!latest || !latest.categoryName) return;
+      usedObjectCategories.add(latest.categoryName);
     };
     addObjectAndSend = (messageObject) => {
       this.addObject(messageObject);
@@ -1216,6 +1222,7 @@
   function zoomIn() {
     pageZoom.value += zoomStep;
   }
+  var usedObjectCategories = restoreListState("object-categories");
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
@@ -1661,6 +1668,7 @@
       "textarea",
       {
         rows: "5",
+        class: "height-auto",
         "bind:value": editingNoteContent,
         placeholder: translation.noteContentPlaceholder
       }
@@ -1668,9 +1676,17 @@
       "input",
       {
         "bind:value": editingCategory,
-        placeholder: translation.categoryPlaceholder
+        placeholder: translation.categoryPlaceholder,
+        list: "object-categories"
       }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.priority), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: "object-categories",
+        "children:append": [usedObjectCategories, stringToOptionTag]
+      }
+    ), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.priority), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
       "input",
       {
         type: "number",
@@ -1921,9 +1937,6 @@
   }
 
   // src/Views/Overview/connectionSection.tsx
-  var addressConverter = (address) => {
-    return /* @__PURE__ */ createElement("option", null, address);
-  };
   function ConnectionSection() {
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
       "input",
@@ -1938,7 +1951,7 @@
       {
         hidden: true,
         id: "previous-addresses",
-        "children:append": [previousAddresses, addressConverter]
+        "children:append": [previousAddresses, stringToOptionTag]
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",

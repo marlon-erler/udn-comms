@@ -3,7 +3,9 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { icons } from "../../icons";
+import { stringToOptionTag } from "../../utility";
 import { translation } from "../../translations";
+import { usedObjectCategories } from "../../Model/model";
 
 export function ObjectDetailModal(
   chat: Chat,
@@ -151,6 +153,7 @@ export function ObjectDetailModal(
                 <span>{translation.note}</span>
                 <textarea
                   rows="5"
+                  class="height-auto"
                   bind:value={editingNoteContent}
                   placeholder={translation.noteContentPlaceholder}
                 ></textarea>
@@ -164,9 +167,15 @@ export function ObjectDetailModal(
                 <input
                   bind:value={editingCategory}
                   placeholder={translation.categoryPlaceholder}
+                  list="object-categories"
                 ></input>
               </div>
             </label>
+            <datalist
+              hidden
+              id="object-categories"
+              children:append={[usedObjectCategories, stringToOptionTag]}
+            ></datalist>
 
             <label class="tile">
               <span class="icon">{icons.priority}</span>

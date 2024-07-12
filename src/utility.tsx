@@ -1,8 +1,10 @@
+import * as React from "bloatless-react";
+
 export const storageKeys = {
   hasUnread(id: string): string {
     return id + "has-unread-messages";
   },
-  
+
   primaryChannel(id: string): string {
     return id + "primary-channel";
   },
@@ -34,4 +36,8 @@ export const storageKeys = {
   composingMessage(id: string): string {
     return id + "composing-message";
   },
+};
+
+export const stringToOptionTag: React.StateItemConverter<string> = (value) => {
+  return <option>{value}</option>;
 };

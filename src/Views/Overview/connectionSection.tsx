@@ -17,11 +17,8 @@ import {
   serverAddressInput,
 } from "../../Model/model";
 
+import { stringToOptionTag } from "../../utility";
 import { translation } from "../../translations";
-
-const addressConverter: React.StateItemConverter<string> = (address) => {
-  return <option>{address}</option>;
-};
 
 export function ConnectionSection() {
   return (
@@ -41,7 +38,7 @@ export function ConnectionSection() {
           <datalist
             hidden
             id="previous-addresses"
-            children:append={[previousAddresses, addressConverter]}
+            children:append={[previousAddresses, stringToOptionTag]}
           ></datalist>
         </div>
       </label>
