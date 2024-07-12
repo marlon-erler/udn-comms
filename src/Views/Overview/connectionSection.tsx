@@ -21,6 +21,13 @@ import { stringToOptionTag } from "../../utility";
 import { translation } from "../../translations";
 
 export function ConnectionSection() {
+  const stringToPreviouAddressOption: React.StateItemConverter<string> = (
+    value
+  ) => {
+    const isSelected = value == serverAddressInput.value;
+    return <option toggle:selected={isSelected}>{value}</option>;
+  };
+
   return (
     <div class="flex-column">
       <h2>{translation.connection}</h2>
@@ -45,10 +52,10 @@ export function ConnectionSection() {
       <label class="tile">
         <span class="icon">history</span>
         <div>
-        <span>{translation.previousConnections}</span>
+          <span>{translation.previousConnections}</span>
           <select
             bind:value={serverAddressInput}
-            children:append={[previousAddresses, stringToOptionTag]}
+            children:append={[previousAddresses, stringToPreviouAddressOption]}
           ></select>
           <span class="icon">arrow_drop_down</span>
         </div>

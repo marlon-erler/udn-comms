@@ -42,7 +42,6 @@ export function connect(): void {
   if (cannotConnect.value == true) return;
 
   currentAddress.value = serverAddressInput.value;
-  previousAddresses.add(currentAddress.value);
 
   isConnected.value = false;
   didRequestConnection.value = true;
@@ -71,6 +70,10 @@ export function subscribeChannels() {
 // listeners
 UDN.onconnect = () => {
   isConnected.value = true;
+  if (!previousAddresses.value.has(currentAddress.value)) {
+    previousAddresses.add(currentAddress.value);
+  }
+
   subscribeChannels();
   if (mailboxId.value != "") UDN.connectMailbox(mailboxId.value);
 };

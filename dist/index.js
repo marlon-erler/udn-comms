@@ -1154,7 +1154,6 @@
   function connect() {
     if (cannotConnect.value == true) return;
     currentAddress.value = serverAddressInput.value;
-    previousAddresses.add(currentAddress.value);
     isConnected.value = false;
     didRequestConnection.value = true;
     UDN.connect(serverAddressInput.value);
@@ -1175,6 +1174,9 @@
   }
   UDN.onconnect = () => {
     isConnected.value = true;
+    if (!previousAddresses.value.has(currentAddress.value)) {
+      previousAddresses.add(currentAddress.value);
+    }
     subscribeChannels();
     if (mailboxId.value != "") UDN.connectMailbox(mailboxId.value);
   };
@@ -2181,6 +2183,10 @@
 
   // src/Views/Overview/connectionSection.tsx
   function ConnectionSection() {
+    const stringToPreviouAddressOption = (value) => {
+      const isSelected = value == serverAddressInput.value;
+      return /* @__PURE__ */ createElement("option", { "toggle:selected": isSelected }, value);
+    };
     return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
@@ -2200,7 +2206,7 @@
       "select",
       {
         "bind:value": serverAddressInput,
-        "children:append": [previousAddresses, stringToOptionTag]
+        "children:append": [previousAddresses, stringToPreviouAddressOption]
       }
     ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
       "button",
