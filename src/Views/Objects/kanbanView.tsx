@@ -9,7 +9,12 @@ import { translation } from "../../translations";
 
 interface KanbanBoard {
   title: string;
-  items: MessageObject[];
+  items: KanbanBoardItem[];
+}
+
+interface KanbanBoardItem {
+  priority: number;
+  messageObject: MessageObject;
 }
 
 export function KanbanView(
@@ -30,7 +35,10 @@ export function KanbanView(
       if (!boards.value.has(boardTitle))
         boards.set(boardTitle, { title: boardTitle, items: [] });
 
-      boards.value.get(boardTitle)?.items.push(messageObject);
+      boards.value.get(boardTitle)?.items.push({
+        priority: latest.priority ?? 0,
+        messageObject,
+      });
     });
   });
 
@@ -69,7 +77,8 @@ function KanbanBoardView(
   );
 
   function renameBoard() {
-    kanbanBoard.items.forEach((messageObject) => {
+    kanbanBoard.items.forEach((kanbanBoardItem) => {
+      const { messageObject } = kanbanBoardItem;
       const latest = chat.getMostRecentContent(messageObject);
       latest.categoryName = editingBoardTitle.value;
       chat.addObjectAndSend(messageObject);
@@ -117,14 +126,16 @@ function KanbanBoardView(
       </div>
       <hr></hr>
       <div class="flex-column gap padding-bottom">
-        {...kanbanBoard.items.map((messageObject) =>
-          ObjectEntryView(
-            chat,
-            messageObject,
-            selectedObject,
-            isShowingObjectModal
-          )
-        )}
+        {...kanbanBoard.items
+          .sort((a, b) => b.priority - a.priority)
+          .map((kanbanBoardItem) =>
+            ObjectEntryView(
+              chat,
+              kanbanBoardItem.messageObject,
+              selectedObject,
+              isShowingObjectModal
+            )
+          )}
       </div>
     </div>
   );

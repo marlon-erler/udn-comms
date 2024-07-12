@@ -1478,7 +1478,10 @@
         const boardTitle = latest.categoryName;
         if (!boards.value.has(boardTitle))
           boards.set(boardTitle, { title: boardTitle, items: [] });
-        boards.value.get(boardTitle)?.items.push(messageObject);
+        boards.value.get(boardTitle)?.items.push({
+          priority: latest.priority ?? 0,
+          messageObject
+        });
       });
     });
     const content = createProxyState(
@@ -1497,7 +1500,8 @@
       () => editingBoardTitle.value == kanbanBoard.title || editingBoardTitle.value == ""
     );
     function renameBoard() {
-      kanbanBoard.items.forEach((messageObject) => {
+      kanbanBoard.items.forEach((kanbanBoardItem) => {
+        const { messageObject } = kanbanBoardItem;
         const latest = chat.getMostRecentContent(messageObject);
         latest.categoryName = editingBoardTitle.value;
         chat.addObjectAndSend(messageObject);
@@ -1536,10 +1540,10 @@
         /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
       )),
       /* @__PURE__ */ createElement("hr", null),
-      /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.map(
-        (messageObject) => ObjectEntryView(
+      /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.sort((a, b) => b.priority - a.priority).map(
+        (kanbanBoardItem) => ObjectEntryView(
           chat,
-          messageObject,
+          kanbanBoardItem.messageObject,
           selectedObject,
           isShowingObjectModal
         )
