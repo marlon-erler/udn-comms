@@ -1,5 +1,8 @@
 import * as React from "bloatless-react";
 
+import { MessageObject } from "./Model/chatModel";
+import { ObjectEntryView } from "./Views/Objects/objectEntryView";
+
 export const storageKeys = {
   viewType(id: string): string {
     return id + "view-type";

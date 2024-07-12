@@ -3,18 +3,16 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
-import { PlaceholderView } from "./placeholderView";
 import { RenameView } from "../renameView";
-import { translation } from "../../translations";
 
-interface KanbanRow {
+interface CategoryRow {
   category: string;
-  statusColumns: Map<string, StatusColumn>;
+  statusColumns: React.MapState<StatusColumn>;
 }
 
 interface StatusColumn {
-  title: string;
-  items: StatusCellItem[];
+  status: string;
+  items: React.ListState<StatusCellItem>;
 }
 
 interface StatusCellItem {
@@ -23,7 +21,8 @@ interface StatusCellItem {
   messageObject: MessageObject;
 }
 
-interface StatusItemList {
+// data only
+interface StatusData {
   title: string;
   items: MessageObject[];
 }
@@ -33,8 +32,18 @@ export function StatusView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const rows = new React.MapState<KanbanRow>();
-  const statuses = new Map<string, StatusItemList>();
+  const rows = new React.MapState<CategoryRow>();
+  const statuses = new React.MapState<StatusData>();
+  const sortedStatuses = React.createProxyState([statuses], () =>
+    [...statuses.value.values()]
+      .map((statusData) => statusData.title)
+      .sort((a, b) => a.localeCompare(b))
+  );
+  const sortedCategoryNames = React.createProxyState([rows], () =>
+    [...rows.value.values()]
+      .map((row) => row.category)
+      .sort((a, b) => a.localeCompare(b))
+  );
 
   chat.objects.subscribe(() => {
     rows.clear();
@@ -48,22 +57,28 @@ export function StatusView(
       const category = latest.categoryName;
       const status = latest.status;
 
-      if (!statuses.has(status)) {
+      if (!statuses.value.has(status)) {
         statuses.set(status, { title: status, items: [] });
       }
-      statuses.get(status)!.items.push(messageObject);
+      statuses.value.get(status)!.items.push(messageObject);
 
       if (!rows.value.has(category)) {
-        rows.set(category, { category: category, statusColumns: new Map() });
+        rows.set(category, {
+          category: category,
+          statusColumns: new React.MapState(),
+        });
       }
       const row = rows.value.get(category)!;
 
-      if (!row.statusColumns.has(status)) {
-        row.statusColumns.set(status, { title: status, items: [] });
+      if (!row.statusColumns.value.has(status)) {
+        row.statusColumns.set(status, {
+          status: status,
+          items: new React.ListState(),
+        });
       }
-      const column = row.statusColumns.get(status)!;
+      const column = row.statusColumns.value.get(status)!;
 
-      column.items.push({
+      column.items.add({
         priority: latest.priority ?? 0,
         status,
         messageObject,
@@ -71,43 +86,59 @@ export function StatusView(
     });
 
     // add status placeholders
-    statuses.forEach((statusItemList) => {
+    statuses.value.forEach((statusItemList) => {
       rows.value.forEach((row) => {
-        if (row.statusColumns.has(statusItemList.title)) return;
+        if (row.statusColumns.value.has(statusItemList.title)) return;
         row.statusColumns.set(statusItemList.title, {
-          title: statusItemList.title,
-          items: [],
+          status: statusItemList.title,
+          items: new React.ListState(),
         });
       });
     });
   });
 
-  const content = React.createProxyState([chat.objects], () =>
-    rows.value.size == 0 ? (
-      PlaceholderView()
-    ) : (
-      <div class="flex-column large-gap width-100 height-100 scroll-v scroll-h padding">
-        <div class="flex-row large-gap">
-          <div class="flex-column object-entry-wide"></div>
-          {...[...statuses.values()]
-            .sort((a, b) => a.title.localeCompare(b.title))
-            .map((status) => StatusHeaderView(chat, status))}
-        </div>
-        {...[...rows.value.values()]
-          .sort((a, b) => a.category.localeCompare(b.category))
-          .map((board) =>
-            KanbanRowView(chat, board, selectedObject, isShowingObjectModal)
-          )}
-      </div>
-    )
-  );
+  const statusDataToHeaderView: React.StateItemConverter<StatusData> = (
+    statusData
+  ) => {
+    const view = StatusHeaderView(chat, statusData);
+    sortedStatuses.subscribe(
+      () => (view.style.order = sortedStatuses.value.indexOf(statusData.title))
+    );
+    return view;
+  };
+
+  const categoryRowToView: React.StateItemConverter<CategoryRow> = (row) => {
+    const view = KanbanRowView(
+      chat,
+      row,
+      sortedStatuses,
+      selectedObject,
+      isShowingObjectModal
+    );
+    sortedCategoryNames.subscribe(
+      () => (view.style.order = sortedCategoryNames.value.indexOf(row.category))
+    );
+    return view;
+  };
 
   return (
-    <div class="width-100 height-100 scroll-no" children:set={content}></div>
+    <div class="flex-column large-gap width-100 height-100 scroll-v scroll-h padding">
+      <div class="flex-row large-gap">
+        <div class="flex-column object-entry-wide"></div>
+        <div
+          class="flex-row large-gap"
+          children:append={[statuses, statusDataToHeaderView]}
+        ></div>
+      </div>
+      <div
+        class="flex-column large-gap"
+        children:append={[rows, categoryRowToView]}
+      ></div>
+    </div>
   );
 }
 
-function StatusHeaderView(chat: Chat, status: StatusItemList) {
+function StatusHeaderView(chat: Chat, status: StatusData) {
   const editingStatus = new React.State(status.title);
 
   function rename() {
@@ -130,17 +161,16 @@ function StatusHeaderView(chat: Chat, status: StatusItemList) {
 
 function KanbanRowView(
   chat: Chat,
-  kanbanRow: KanbanRow,
+  kanbanRow: CategoryRow,
+  sortedStatuses: React.State<string[]>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
   const editingCategory = new React.State(kanbanRow.category);
 
-  const cellItemEntries = [...kanbanRow.statusColumns.entries()];
-
   function renameCategory() {
-    kanbanRow.statusColumns.forEach((statusColumns) => {
-      statusColumns.items.forEach((statusCellItem) => {
+    kanbanRow.statusColumns.value.forEach((statusColumns) => {
+      statusColumns.items.value.forEach((statusCellItem) => {
         const { messageObject } = statusCellItem;
         const latest = chat.getMostRecentContent(messageObject);
         latest.categoryName = editingCategory.value;
@@ -149,33 +179,40 @@ function KanbanRowView(
     });
   }
 
+  const statusColumnToEntryView: React.StateItemConverter<StatusColumn> = (
+    statusColumn
+  ) => {
+    const view = StatusColumnView(
+      chat,
+      statusColumn.items,
+      kanbanRow.category,
+      statusColumn.status,
+      selectedObject,
+      isShowingObjectModal
+    );
+    sortedStatuses.subscribe(
+      () =>
+        (view.style.order = sortedStatuses.value.indexOf(statusColumn.status))
+    );
+    return view;
+  };
   return (
     <div class="flex-row flex-no large-gap">
       <div class="flex-row align-start">
         {RenameView(editingCategory, kanbanRow.category, renameCategory)}
       </div>
 
-      {...cellItemEntries
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .map((entry) =>
-          StatusColumnView(
-            chat,
-            entry[1].items,
-            kanbanRow.category,
-            entry[1].title,
-            selectedObject,
-            isShowingObjectModal
-          )
-        )}
-
-      <hr></hr>
+      <div
+        class="flex-row large-gap"
+        children:append={[kanbanRow.statusColumns, statusColumnToEntryView]}
+      ></div>
     </div>
   );
 }
 
 function StatusColumnView(
   chat: Chat,
-  items: StatusCellItem[],
+  items: React.ListState<StatusCellItem>,
   category: string,
   status: string,
   selectedObject: React.State<MessageObject | undefined>,
@@ -199,22 +236,22 @@ function StatusColumnView(
     chat.addObjectAndSend(messageObject);
   }
 
+  const cellItemToEntryView: React.StateItemConverter<StatusCellItem> = (
+    cellItem
+  ) =>
+    ObjectEntryView(
+      chat,
+      cellItem.messageObject,
+      selectedObject,
+      isShowingObjectModal
+    );
+
   return (
     <div
       class="flex-column gap object-entry-wide"
       on:dragover={dragOver}
       on:drop={drop}
-    >
-      {...items
-        .sort((a, b) => b.priority - a.priority)
-        .map((kanbanBoardItem) =>
-          ObjectEntryView(
-            chat,
-            kanbanBoardItem.messageObject,
-            selectedObject,
-            isShowingObjectModal
-          )
-        )}
-    </div>
+      children:append={[items, cellItemToEntryView]}
+    ></div>
   );
 }

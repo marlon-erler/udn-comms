@@ -24,9 +24,7 @@ export function ObjectGridView(
     );
   };
 
-  return messageObjects.value.size == 0 ? (
-    PlaceholderView()
-  ) : (
+  return (
     <div
       class="width-100 max-height-100 grid gap padding scroll-v"
       style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"

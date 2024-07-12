@@ -5,11 +5,10 @@ import { Chat, MessageObject } from "../../Model/chatModel";
 import { ObjectEntryView } from "./objectEntryView";
 import { PlaceholderView } from "./placeholderView";
 import { RenameView } from "../renameView";
-import { translation } from "../../translations";
 
 interface KanbanBoard {
   category: string;
-  items: KanbanBoardItem[];
+  items: React.ListState<KanbanBoardItem>;
 }
 
 interface KanbanBoardItem {
@@ -23,41 +22,60 @@ export function KanbanView(
   isShowingObjectModal: React.State<boolean>
 ) {
   const boards = new React.MapState<KanbanBoard>();
+  const sortedBoardNames = React.createProxyState([boards], () =>
+    [...boards.value.values()]
+      .map((board) => board.category)
+      .sort((a, b) => a.localeCompare(b))
+  );
 
-  chat.objects.subscribe(() => {
-    boards.clear();
-    chat.objects.value.forEach((messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.categoryName) return;
+  chat.objects.handleAddition((messageObject) => {
+    const latest = chat.getMostRecentContent(messageObject);
+    if (!latest) return;
+    if (!latest.categoryName) return;
 
-      const boardTitle = latest.categoryName;
-
-      if (!boards.value.has(boardTitle))
-        boards.set(boardTitle, { category: boardTitle, items: [] });
-
-      boards.value.get(boardTitle)?.items.push({
-        priority: latest.priority ?? 0,
-        messageObject,
+    const categoryName = latest.categoryName!;
+    if (!boards.value.has(categoryName)) {
+      const listState = new React.ListState<KanbanBoardItem>();
+      listState.subscribeSilent(() => {
+        if (listState.value.size != 0) return;
+        boards.remove(categoryName);
       });
+
+      boards.set(categoryName, {
+        category: categoryName,
+        items: listState,
+      });
+    }
+
+    const boardItem: KanbanBoardItem = {
+      priority: latest.priority ?? 0,
+      messageObject,
+    };
+    boards.value.get(categoryName)?.items.add(boardItem);
+
+    chat.objects.handleRemoval(messageObject, () => {
+      boards.value.get(categoryName)?.items.remove(boardItem);
     });
   });
 
-  const content = React.createProxyState([chat.objects], () =>
-    boards.value.size == 0 ? (
-      PlaceholderView()
-    ) : (
-      <div class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding">
-        {...[...boards.value.values()]
-          .sort((a, b) => a.category.localeCompare(b.category))
-          .map((board) =>
-            KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
-          )}
-      </div>
-    )
-  );
+  const boardToBoardView: React.StateItemConverter<KanbanBoard> = (board) => {
+    const view = KanbanBoardView(
+      chat,
+      board,
+      selectedObject,
+      isShowingObjectModal
+    );
+    sortedBoardNames.subscribe((sortedBoardNames) => {
+      view.style.order = sortedBoardNames.indexOf(board.category);
+    });
+    return view;
+  };
 
   return (
-    <div class="width-100 height-100 scroll-no" children:set={content}></div>
+    <div
+      class="flex-row large-gap width-100 height-100 scroll-v scroll-h padding"
+      children:append={[boards, boardToBoardView]}
+    ></div>
   );
 }
 
@@ -70,7 +88,7 @@ function KanbanBoardView(
   const editingCategory = new React.State(kanbanBoard.category);
 
   function renameBoard() {
-    kanbanBoard.items.forEach((kanbanBoardItem) => {
+    kanbanBoard.items.value.forEach((kanbanBoardItem) => {
       const { messageObject } = kanbanBoardItem;
       const latest = chat.getMostRecentContent(messageObject);
       latest.categoryName = editingCategory.value;
@@ -95,6 +113,19 @@ function KanbanBoardView(
     chat.addObjectAndSend(messageObject);
   }
 
+  const itemToViewEntry: React.StateItemConverter<KanbanBoardItem> = (
+    kanbanBoardItem
+  ) => {
+    const view = ObjectEntryView(
+      chat,
+      kanbanBoardItem.messageObject,
+      selectedObject,
+      isShowingObjectModal
+    );
+    view.style.order = kanbanBoardItem.priority * -1;
+    return view;
+  };
+
   return (
     <div
       class="flex-column flex-no object-entry-wide"
@@ -103,18 +134,10 @@ function KanbanBoardView(
     >
       {RenameView(editingCategory, kanbanBoard.category, renameBoard)}
       <hr></hr>
-      <div class="flex-column gap padding-bottom">
-        {...kanbanBoard.items
-          .sort((a, b) => b.priority - a.priority)
-          .map((kanbanBoardItem) =>
-            ObjectEntryView(
-              chat,
-              kanbanBoardItem.messageObject,
-              selectedObject,
-              isShowingObjectModal
-            )
-          )}
-      </div>
+      <div
+        class="flex-column gap padding-bottom"
+        children:append={[kanbanBoard.items, itemToViewEntry]}
+      ></div>
     </div>
   );
 }

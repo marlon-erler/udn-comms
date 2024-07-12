@@ -1464,11 +1464,6 @@
     );
   }
 
-  // src/Views/Objects/placeholderView.tsx
-  function PlaceholderView() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column width-100 height-100 align-center justify-center secondary" }, translation.noObjects);
-  }
-
   // src/Views/Objects/objectGridView.tsx
   function ObjectGridView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const objectConverter = (messageObject) => {
@@ -1479,7 +1474,7 @@
         isShowingObjectModal
       );
     };
-    return messageObjects.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement(
       "div",
       {
         class: "width-100 max-height-100 grid gap padding scroll-v",
@@ -1491,16 +1486,7 @@
 
   // src/Views/Objects/allObjectsView.tsx
   function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
-    const content = createProxyState(
-      [chat.objects],
-      () => ObjectGridView(
-        chat,
-        chat.objects,
-        selectedObject,
-        isShowingObjectModal
-      )
-    );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100" }, ObjectGridView(chat, chat.objects, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/renameView.tsx
@@ -1524,32 +1510,59 @@
   // src/Views/Objects/kanbanView.tsx
   function KanbanView(chat, selectedObject, isShowingObjectModal) {
     const boards = new MapState();
-    chat.objects.subscribe(() => {
-      boards.clear();
-      chat.objects.value.forEach((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        if (!latest.categoryName) return;
-        const boardTitle = latest.categoryName;
-        if (!boards.value.has(boardTitle))
-          boards.set(boardTitle, { category: boardTitle, items: [] });
-        boards.value.get(boardTitle)?.items.push({
-          priority: latest.priority ?? 0,
-          messageObject
+    const sortedBoardNames = createProxyState(
+      [boards],
+      () => [...boards.value.values()].map((board) => board.category).sort((a, b) => a.localeCompare(b))
+    );
+    chat.objects.handleAddition((messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest) return;
+      if (!latest.categoryName) return;
+      const categoryName = latest.categoryName;
+      if (!boards.value.has(categoryName)) {
+        const listState = new ListState();
+        listState.subscribeSilent(() => {
+          if (listState.value.size != 0) return;
+          boards.remove(categoryName);
         });
+        boards.set(categoryName, {
+          category: categoryName,
+          items: listState
+        });
+      }
+      const boardItem = {
+        priority: latest.priority ?? 0,
+        messageObject
+      };
+      boards.value.get(categoryName)?.items.add(boardItem);
+      chat.objects.handleRemoval(messageObject, () => {
+        boards.value.get(categoryName)?.items.remove(boardItem);
       });
     });
-    const content = createProxyState(
-      [chat.objects],
-      () => boards.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding" }, ...[...boards.value.values()].sort((a, b) => a.category.localeCompare(b.category)).map(
-        (board) => KanbanBoardView(chat, board, selectedObject, isShowingObjectModal)
-      ))
+    const boardToBoardView = (board) => {
+      const view = KanbanBoardView(
+        chat,
+        board,
+        selectedObject,
+        isShowingObjectModal
+      );
+      sortedBoardNames.subscribe((sortedBoardNames2) => {
+        view.style.order = sortedBoardNames2.indexOf(board.category);
+      });
+      return view;
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding",
+        "children:append": [boards, boardToBoardView]
+      }
     );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
   }
   function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
     const editingCategory = new State(kanbanBoard.category);
     function renameBoard() {
-      kanbanBoard.items.forEach((kanbanBoardItem) => {
+      kanbanBoard.items.value.forEach((kanbanBoardItem) => {
         const { messageObject } = kanbanBoardItem;
         const latest = chat.getMostRecentContent(messageObject);
         latest.categoryName = editingCategory.value;
@@ -1569,6 +1582,16 @@
       latest.categoryName = kanbanBoard.category;
       chat.addObjectAndSend(messageObject);
     }
+    const itemToViewEntry = (kanbanBoardItem) => {
+      const view = ObjectEntryView(
+        chat,
+        kanbanBoardItem.messageObject,
+        selectedObject,
+        isShowingObjectModal
+      );
+      view.style.order = kanbanBoardItem.priority * -1;
+      return view;
+    };
     return /* @__PURE__ */ createElement(
       "div",
       {
@@ -1578,38 +1601,30 @@
       },
       RenameView(editingCategory, kanbanBoard.category, renameBoard),
       /* @__PURE__ */ createElement("hr", null),
-      /* @__PURE__ */ createElement("div", { class: "flex-column gap padding-bottom" }, ...kanbanBoard.items.sort((a, b) => b.priority - a.priority).map(
-        (kanbanBoardItem) => ObjectEntryView(
-          chat,
-          kanbanBoardItem.messageObject,
-          selectedObject,
-          isShowingObjectModal
-        )
-      ))
+      /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap padding-bottom",
+          "children:append": [kanbanBoard.items, itemToViewEntry]
+        }
+      )
     );
   }
 
   // src/Views/Objects/noteObjectsView.tsx
   function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
     const notes = new ListState();
-    chat.objects.subscribe(() => {
-      notes.clear();
-      chat.objects.value.forEach((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        if (!latest.noteContent) return;
-        notes.add(messageObject);
-      });
+    chat.objects.handleAddition((messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest) return;
+      if (!latest.noteContent) return;
+      notes.add(messageObject);
+      chat.objects.handleRemoval(
+        messageObject,
+        () => notes.remove(messageObject)
+      );
     });
-    const content = createProxyState(
-      [chat.objects],
-      () => ObjectGridView(
-        chat,
-        notes,
-        selectedObject,
-        isShowingObjectModal
-      )
-    );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100", "children:set": content });
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/Objects/objectDetailModal.tsx
@@ -1750,7 +1765,15 @@
   // src/Views/Objects/statusView.tsx
   function StatusView(chat, selectedObject, isShowingObjectModal) {
     const rows = new MapState();
-    const statuses = /* @__PURE__ */ new Map();
+    const statuses = new MapState();
+    const sortedStatuses = createProxyState(
+      [statuses],
+      () => [...statuses.value.values()].map((statusData) => statusData.title).sort((a, b) => a.localeCompare(b))
+    );
+    const sortedCategoryNames = createProxyState(
+      [rows],
+      () => [...rows.value.values()].map((row) => row.category).sort((a, b) => a.localeCompare(b))
+    );
     chat.objects.subscribe(() => {
       rows.clear();
       statuses.clear();
@@ -1759,41 +1782,73 @@
         if (!latest.categoryName || !latest.status) return;
         const category = latest.categoryName;
         const status = latest.status;
-        if (!statuses.has(status)) {
+        if (!statuses.value.has(status)) {
           statuses.set(status, { title: status, items: [] });
         }
-        statuses.get(status).items.push(messageObject);
+        statuses.value.get(status).items.push(messageObject);
         if (!rows.value.has(category)) {
-          rows.set(category, { category, statusColumns: /* @__PURE__ */ new Map() });
+          rows.set(category, {
+            category,
+            statusColumns: new MapState()
+          });
         }
         const row = rows.value.get(category);
-        if (!row.statusColumns.has(status)) {
-          row.statusColumns.set(status, { title: status, items: [] });
+        if (!row.statusColumns.value.has(status)) {
+          row.statusColumns.set(status, {
+            status,
+            items: new ListState()
+          });
         }
-        const column = row.statusColumns.get(status);
-        column.items.push({
+        const column = row.statusColumns.value.get(status);
+        column.items.add({
           priority: latest.priority ?? 0,
           status,
           messageObject
         });
       });
-      statuses.forEach((statusItemList) => {
+      statuses.value.forEach((statusItemList) => {
         rows.value.forEach((row) => {
-          if (row.statusColumns.has(statusItemList.title)) return;
+          if (row.statusColumns.value.has(statusItemList.title)) return;
           row.statusColumns.set(statusItemList.title, {
-            title: statusItemList.title,
-            items: []
+            status: statusItemList.title,
+            items: new ListState()
           });
         });
       });
     });
-    const content = createProxyState(
-      [chat.objects],
-      () => rows.value.size == 0 ? PlaceholderView() : /* @__PURE__ */ createElement("div", { class: "flex-column large-gap width-100 height-100 scroll-v scroll-h padding" }, /* @__PURE__ */ createElement("div", { class: "flex-row large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-column object-entry-wide" }), ...[...statuses.values()].sort((a, b) => a.title.localeCompare(b.title)).map((status) => StatusHeaderView(chat, status))), ...[...rows.value.values()].sort((a, b) => a.category.localeCompare(b.category)).map(
-        (board) => KanbanRowView(chat, board, selectedObject, isShowingObjectModal)
-      ))
-    );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-no", "children:set": content });
+    const statusDataToHeaderView = (statusData) => {
+      const view = StatusHeaderView(chat, statusData);
+      sortedStatuses.subscribe(
+        () => view.style.order = sortedStatuses.value.indexOf(statusData.title)
+      );
+      return view;
+    };
+    const categoryRowToView = (row) => {
+      const view = KanbanRowView(
+        chat,
+        row,
+        sortedStatuses,
+        selectedObject,
+        isShowingObjectModal
+      );
+      sortedCategoryNames.subscribe(
+        () => view.style.order = sortedCategoryNames.value.indexOf(row.category)
+      );
+      return view;
+    };
+    return /* @__PURE__ */ createElement("div", { class: "flex-column large-gap width-100 height-100 scroll-v scroll-h padding" }, /* @__PURE__ */ createElement("div", { class: "flex-row large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-column object-entry-wide" }), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-row large-gap",
+        "children:append": [statuses, statusDataToHeaderView]
+      }
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column large-gap",
+        "children:append": [rows, categoryRowToView]
+      }
+    ));
   }
   function StatusHeaderView(chat, status) {
     const editingStatus = new State(status.title);
@@ -1807,12 +1862,11 @@
     }
     return /* @__PURE__ */ createElement("div", { class: "object-entry-wide" }, RenameView(editingStatus, status.title, rename), /* @__PURE__ */ createElement("hr", null));
   }
-  function KanbanRowView(chat, kanbanRow, selectedObject, isShowingObjectModal) {
+  function KanbanRowView(chat, kanbanRow, sortedStatuses, selectedObject, isShowingObjectModal) {
     const editingCategory = new State(kanbanRow.category);
-    const cellItemEntries = [...kanbanRow.statusColumns.entries()];
     function renameCategory() {
-      kanbanRow.statusColumns.forEach((statusColumns) => {
-        statusColumns.items.forEach((statusCellItem) => {
+      kanbanRow.statusColumns.value.forEach((statusColumns) => {
+        statusColumns.items.value.forEach((statusCellItem) => {
           const { messageObject } = statusCellItem;
           const latest = chat.getMostRecentContent(messageObject);
           latest.categoryName = editingCategory.value;
@@ -1820,16 +1874,27 @@
         });
       });
     }
-    return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-start" }, RenameView(editingCategory, kanbanRow.category, renameCategory)), ...cellItemEntries.sort((a, b) => a[0].localeCompare(b[0])).map(
-      (entry) => StatusColumnView(
+    const statusColumnToEntryView = (statusColumn) => {
+      const view = StatusColumnView(
         chat,
-        entry[1].items,
+        statusColumn.items,
         kanbanRow.category,
-        entry[1].title,
+        statusColumn.status,
         selectedObject,
         isShowingObjectModal
-      )
-    ), /* @__PURE__ */ createElement("hr", null));
+      );
+      sortedStatuses.subscribe(
+        () => view.style.order = sortedStatuses.value.indexOf(statusColumn.status)
+      );
+      return view;
+    };
+    return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-start" }, RenameView(editingCategory, kanbanRow.category, renameCategory)), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-row large-gap",
+        "children:append": [kanbanRow.statusColumns, statusColumnToEntryView]
+      }
+    ));
   }
   function StatusColumnView(chat, items, category, status, selectedObject, isShowingObjectModal) {
     function dragOver(event) {
@@ -1846,21 +1911,20 @@
       latest.categoryName = category;
       chat.addObjectAndSend(messageObject);
     }
+    const cellItemToEntryView = (cellItem) => ObjectEntryView(
+      chat,
+      cellItem.messageObject,
+      selectedObject,
+      isShowingObjectModal
+    );
     return /* @__PURE__ */ createElement(
       "div",
       {
         class: "flex-column gap object-entry-wide",
         "on:dragover": dragOver,
-        "on:drop": drop
-      },
-      ...items.sort((a, b) => b.priority - a.priority).map(
-        (kanbanBoardItem) => ObjectEntryView(
-          chat,
-          kanbanBoardItem.messageObject,
-          selectedObject,
-          isShowingObjectModal
-        )
-      )
+        "on:drop": drop,
+        "children:append": [items, cellItemToEntryView]
+      }
     );
   }
 
