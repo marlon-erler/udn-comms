@@ -28,6 +28,7 @@ export function ObjectEntryView(
   const fields = {
     [icons.noteContent]: "---",
     [icons.priority]: "---",
+    [icons.categoryName]: "---",
     [icons.status]: "---",
     [icons.date]: "---",
     [icons.time]: "---",
@@ -46,7 +47,7 @@ export function ObjectEntryView(
   const fieldElements = Object.entries(fields).map((field) => {
     const [icon, value] = field;
     return (
-      <span class="flex-row control-gap align-center">
+      <span class="flex-row control-gap flex align-center padding-right ellipsis">
         <span class="icon">{icon}</span>
         <span class="ellipsis">{value}</span>
       </span>
@@ -63,7 +64,10 @@ export function ObjectEntryView(
       <div>
         <b class="ellipsis">{chat.getObjectTitle(messageObject)}</b>
         <hr></hr>
-        <span class="flex-column gap height-100 flex secondary ellipsis ">
+        <span
+          class="grid height-100 flex secondary"
+          style="grid-template-columns: 1fr 1fr"
+        >
           {...fieldElements}
         </span>
       </div>

@@ -8,8 +8,8 @@
   --footer-top-line: calc(var(--control-height) + var(--safe-area-bottom));
 }
 .object-entry-wide {
-  width: 280px;
-  min-width: 280px;
+  width: 320px;
+  min-width: 320px;
 }
 #message-tab {
   flex-direction: column;

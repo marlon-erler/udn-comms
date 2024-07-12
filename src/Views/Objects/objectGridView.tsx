@@ -29,7 +29,7 @@ export function ObjectGridView(
   ) : (
     <div
       class="width-100 max-height-100 grid gap padding scroll-v"
-      style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));"
+      style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"
       children:prepend={[messageObjects, objectConverter]}
     ></div>
   );
