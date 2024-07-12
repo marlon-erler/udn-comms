@@ -167,6 +167,18 @@ function removeSetDuplicates(listState: React.ListState<any>) {
   listState.value = new Set([...listState.value]);
 }
 
+export function clearAddresses() {
+  previousAddresses.clear();
+}
+
+export function clearCategories() {
+  usedObjectCategories.clear();
+}
+
+export function clearStatuses() {
+  usedObjectStatuses.clear();
+}
+
 const zoomStep = 10;
 export function zoomOut() {
   pageZoom.value -= zoomStep;

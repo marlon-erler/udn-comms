@@ -215,7 +215,7 @@ export class Chat {
   };
 
   handleMessageObject = (messageObject: MessageObject): void => {
-    this.addObject(messageObject);
+    this.addObject(messageObject, true);
   };
 
   // sending
@@ -348,7 +348,10 @@ export class Chat {
     messageObject.contentVersions[content.id] = content;
   };
 
-  addObject = (messageObject: MessageObject): void => {
+  addObject = (
+    messageObject: MessageObject,
+    ignoreIfUnchanged: boolean = false
+  ): void => {
     const existingObject = this.objects.value.get(messageObject.id);
     if (existingObject) {
       existingObject.title = messageObject.title;

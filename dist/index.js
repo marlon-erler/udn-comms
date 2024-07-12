@@ -440,6 +440,9 @@
     zoomOut: "Zoom Out",
     zoomIn: "Zoom In",
     repairApp: "Repair App",
+    clearAddresses: "Clear previous connections",
+    clearCategories: "Clear suggestions for object categories",
+    clearStatuses: "Clear suggestions for object statuses",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -536,6 +539,9 @@
       zoomOut: "Alejar",
       zoomIn: "Acercar",
       repairApp: "Reparar Aplicaci\xF3n",
+      clearAddresses: "Borrar conexiones previas",
+      clearCategories: "Borrar sugerencias para categor\xEDas de objetos",
+      clearStatuses: "Borrar sugerencias para estados de objetos",
       // overview
       overview: "Resumen",
       connection: "Conexi\xF3n",
@@ -630,6 +636,9 @@
       zoomOut: "Verkleinern",
       zoomIn: "Vergr\xF6\xDFern",
       repairApp: "App reparieren",
+      clearAddresses: "Vorherige Verbindungen l\xF6schen",
+      clearCategories: "Vorschl\xE4ge f\xFCr Objektkategorien l\xF6schen",
+      clearStatuses: "Vorschl\xE4ge f\xFCr Objektstaten l\xF6schen",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -640,7 +649,7 @@
       encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
       serverAddress: "Serveradresse",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      previousConnections: "Vorherige Adressen",
+      previousConnections: "Vorherige Verbindungen",
       connectToServer: "Verbinden",
       disconnect: "Trennen",
       mailbox: "Briefkasten",
@@ -847,7 +856,7 @@
       if (selectedChat.value != this) this.hasUnreadMessages.value = true;
     };
     handleMessageObject = (messageObject) => {
-      this.addObject(messageObject);
+      this.addObject(messageObject, true);
     };
     // sending
     sendMessagesInOutbox = () => {
@@ -946,7 +955,7 @@
     addObjectContent = (messageObject, content) => {
       messageObject.contentVersions[content.id] = content;
     };
-    addObject = (messageObject) => {
+    addObject = (messageObject, ignoreIfUnchanged = false) => {
       const existingObject = this.objects.value.get(messageObject.id);
       if (existingObject) {
         existingObject.title = messageObject.title;
@@ -1265,6 +1274,12 @@
   }
   function removeSetDuplicates(listState) {
     listState.value = /* @__PURE__ */ new Set([...listState.value]);
+  }
+  function clearCategories() {
+    usedObjectCategories.clear();
+  }
+  function clearStatuses() {
+    usedObjectStatuses.clear();
   }
   var zoomStep = 10;
   function zoomOut() {
@@ -2311,7 +2326,7 @@
 
   // src/Views/settingsModal.tsx
   function SettingsModal() {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex-1", "on:click": repairApp }, translation.repairApp, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman")))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex-1", "on:click": repairApp }, translation.repairApp, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex-1", "on:click": clearCategories }, translation.clearCategories, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName)), /* @__PURE__ */ createElement("button", { class: "width-100 flex-1", "on:click": clearStatuses }, translation.clearStatuses, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status)))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/index.tsx

@@ -16,6 +16,9 @@ const englishTranslations = {
   zoomIn: "Zoom In",
 
   repairApp: "Repair App",
+  clearAddresses: "Clear previous connections",
+  clearCategories: "Clear suggestions for object categories",
+  clearStatuses: "Clear suggestions for object statuses",
 
   // overview
   overview: "Overview",
@@ -142,6 +145,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     zoomIn: "Acercar",
 
     repairApp: "Reparar Aplicación",
+    clearAddresses: "Borrar conexiones previas",
+    clearCategories: "Borrar sugerencias para categorías de objetos",
+    clearStatuses: "Borrar sugerencias para estados de objetos",
 
     // overview
     overview: "Resumen",
@@ -265,6 +271,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     zoomIn: "Vergrößern",
 
     repairApp: "App reparieren",
+    clearAddresses: "Vorherige Verbindungen löschen",
+    clearCategories: "Vorschläge für Objektkategorien löschen",
+    clearStatuses: "Vorschläge für Objektstaten löschen",
 
     // overview
     overview: "Übersicht",
@@ -281,7 +290,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     serverAddress: "Serveradresse",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    previousConnections: "Vorherige Adressen",
+    previousConnections: "Vorherige Verbindungen",
 
     connectToServer: "Verbinden",
     disconnect: "Trennen",
