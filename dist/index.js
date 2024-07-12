@@ -940,8 +940,9 @@
         this.objects.set(messageObject.id, messageObject);
       }
       const latest = this.getMostRecentContent(messageObject);
-      if (!latest || !latest.categoryName) return;
-      usedObjectCategories.add(latest.categoryName);
+      if (!latest) return;
+      if (latest.categoryName) usedObjectCategories.add(latest.categoryName);
+      if (latest.status) usedObjectStatuses.add(latest.status);
     };
     addObjectAndSend = (messageObject) => {
       this.addObject(messageObject);
@@ -1240,6 +1241,7 @@
     pageZoom.value += zoomStep;
   }
   var usedObjectCategories = restoreListState("object-categories");
+  var usedObjectStatuses = restoreListState("object-statuses");
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
@@ -1724,9 +1726,17 @@
       "input",
       {
         "bind:value": editingStatus,
-        placeholder: translation.statusPlaceholder
+        placeholder: translation.statusPlaceholder,
+        list: "object-statuses"
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: "object-statuses",
+        "children:append": [usedObjectStatuses, stringToOptionTag]
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/Views/Objects/statusView.tsx

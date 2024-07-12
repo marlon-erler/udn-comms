@@ -10,6 +10,7 @@ import {
   senderName,
   updateMailbox,
   usedObjectCategories,
+  usedObjectStatuses,
 } from "../Model/model";
 import { decryptString, encryptString } from "../cryptUtility";
 
@@ -360,8 +361,9 @@ export class Chat {
     }
 
     const latest = this.getMostRecentContent(messageObject);
-    if (!latest || !latest.categoryName) return;
-    usedObjectCategories.add(latest.categoryName);
+    if (!latest) return;
+    if (latest.categoryName) usedObjectCategories.add(latest.categoryName);
+    if (latest.status) usedObjectStatuses.add(latest.status);
   };
 
   addObjectAndSend = (messageObject: MessageObject): void => {

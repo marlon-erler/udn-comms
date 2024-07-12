@@ -1,11 +1,11 @@
 import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
+import { usedObjectCategories, usedObjectStatuses } from "../../Model/model";
 
 import { icons } from "../../icons";
 import { stringToOptionTag } from "../../utility";
 import { translation } from "../../translations";
-import { usedObjectCategories } from "../../Model/model";
 
 export function ObjectDetailModal(
   chat: Chat,
@@ -204,9 +204,15 @@ export function ObjectDetailModal(
                 <input
                   bind:value={editingStatus}
                   placeholder={translation.statusPlaceholder}
+                  list="object-statuses"
                 ></input>
               </div>
             </label>
+            <datalist
+              hidden
+              id="object-statuses"
+              children:append={[usedObjectStatuses, stringToOptionTag]}
+            ></datalist>
 
             <hr></hr>
 
