@@ -145,12 +145,27 @@ export const outboxTextStyle = React.createProxyState([outboxItemCount], () =>
 );
 
 // MISC
+export const isPresentingSettingsModal = new React.State(false);
 export const isEncryptionAvailable = window.crypto.subtle != undefined;
 export const senderName = React.restoreState("sender-name", "");
 export const pageZoom = React.restoreState("page-zoom", 100);
 pageZoom.subscribe(() => {
   document.body.style.zoom = `${pageZoom.value}%`;
 });
+
+export function toggleSettings() {
+  isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
+}
+
+export function repairApp() {
+  removeSetDuplicates(previousAddresses);
+  removeSetDuplicates(usedObjectCategories);
+  removeSetDuplicates(usedObjectStatuses);
+}
+
+function removeSetDuplicates(listState: React.ListState<any>) {
+  listState.value = new Set([...listState.value]);
+}
 
 const zoomStep = 10;
 export function zoomOut() {

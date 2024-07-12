@@ -8,8 +8,14 @@ const englishTranslations = {
   discard: "Discard",
   rename: "Rename",
 
-  zoomOut: "zoom out",
-  zoomIn: "zoom in",
+  // settings
+  settings: "Settings",
+  showSettings: "Show settings",
+
+  zoomOut: "Zoom Out",
+  zoomIn: "Zoom In",
+
+  repairApp: "Repair App",
 
   // overview
   overview: "Overview",
@@ -128,8 +134,14 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Descartar",
     rename: "Renombrar",
 
-    zoomOut: "alejar",
-    zoomIn: "acercar",
+    // settings
+    settings: "Configuración",
+    showSettings: "Mostrar configuración",
+
+    zoomOut: "Alejar",
+    zoomIn: "Acercar",
+
+    repairApp: "Reparar Aplicación",
 
     // overview
     overview: "Resumen",
@@ -245,8 +257,14 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Verwerfen",
     rename: "Umbenennen",
 
-    zoomOut: "verkleinern",
-    zoomIn: "vergrößern",
+    // settings
+    settings: "Einstellungen",
+    showSettings: "Einstellungen anzeigen",
+
+    zoomOut: "Verkleinern",
+    zoomIn: "Vergrößern",
+
+    repairApp: "App reparieren",
 
     // overview
     overview: "Übersicht",

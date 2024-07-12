@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { isConnected, isEncryptionAvailable, zoomIn, zoomOut } from "../Model/model";
+import { isConnected, isEncryptionAvailable, toggleSettings, zoomIn, zoomOut } from "../Model/model";
 
 import { ChatListSection } from "../Views/Overview/chatListSection";
 import { ConnectionSection } from "../Views/Overview/connectionSection";
@@ -12,14 +12,9 @@ export function OverviewTab() {
     <article id="settings-tab" toggle:connected={isConnected}>
       <header>
         {translation.overview}
-        <span>
-          <button on:click={zoomOut} aria-label={translation.zoomOut}>
-            <span class="icon">zoom_out</span>
-          </button>
-          <button on:click={zoomIn} aria-label={translation.zoomIn}>
-            <span class="icon">zoom_in</span>
-          </button>
-        </span>
+        <button aria-label={translation.showSettings} on:click={toggleSettings}>
+          <span class="icon">settings</span>
+        </button>
       </header>
 
       <div class="flex-column large-gap">

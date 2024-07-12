@@ -434,8 +434,12 @@
     close: "Close",
     discard: "Discard",
     rename: "Rename",
-    zoomOut: "zoom out",
-    zoomIn: "zoom in",
+    // settings
+    settings: "Settings",
+    showSettings: "Show settings",
+    zoomOut: "Zoom Out",
+    zoomIn: "Zoom In",
+    repairApp: "Repair App",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -526,8 +530,12 @@
       close: "Cerrar",
       discard: "Descartar",
       rename: "Renombrar",
-      zoomOut: "alejar",
-      zoomIn: "acercar",
+      // settings
+      settings: "Configuraci\xF3n",
+      showSettings: "Mostrar configuraci\xF3n",
+      zoomOut: "Alejar",
+      zoomIn: "Acercar",
+      repairApp: "Reparar Aplicaci\xF3n",
       // overview
       overview: "Resumen",
       connection: "Conexi\xF3n",
@@ -616,8 +624,12 @@
       close: "Schlie\xDFen",
       discard: "Verwerfen",
       rename: "Umbenennen",
-      zoomOut: "verkleinern",
-      zoomIn: "vergr\xF6\xDFern",
+      // settings
+      settings: "Einstellungen",
+      showSettings: "Einstellungen anzeigen",
+      zoomOut: "Verkleinern",
+      zoomIn: "Vergr\xF6\xDFern",
+      repairApp: "App reparieren",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -937,8 +949,8 @@
     addObject = (messageObject) => {
       const existingObject = this.objects.value.get(messageObject.id);
       if (existingObject) {
+        let didChangeObject = existingObject.title != messageObject.title;
         existingObject.title = messageObject.title;
-        let didChangeObject = false;
         Object.values(messageObject.contentVersions).forEach((content) => {
           if (existingObject.contentVersions[content.id]) return;
           this.addObjectContent(existingObject, content);
@@ -1239,12 +1251,24 @@
     [outboxItemCount],
     () => outboxItemCount.value == 0 ? "success" : "warning"
   );
+  var isPresentingSettingsModal = new State(false);
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
   var pageZoom = restoreState("page-zoom", 100);
   pageZoom.subscribe(() => {
     document.body.style.zoom = `${pageZoom.value}%`;
   });
+  function toggleSettings() {
+    isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
+  }
+  function repairApp() {
+    removeSetDuplicates(previousAddresses);
+    removeSetDuplicates(usedObjectCategories);
+    removeSetDuplicates(usedObjectStatuses);
+  }
+  function removeSetDuplicates(listState) {
+    listState.value = /* @__PURE__ */ new Set([...listState.value]);
+  }
   var zoomStep = 10;
   function zoomOut() {
     pageZoom.value -= zoomStep;
@@ -2285,10 +2309,15 @@
 
   // src/Tabs/overviewTab.tsx
   function OverviewTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement("button", { "on:click": zoomOut, "aria-label": translation.zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out")), /* @__PURE__ */ createElement("button", { "on:click": zoomIn, "aria-label": translation.zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in")))), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
+    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview, /* @__PURE__ */ createElement("button", { "aria-label": translation.showSettings, "on:click": toggleSettings }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"))), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
+  }
+
+  // src/Views/settingsModal.tsx
+  function SettingsModal() {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex-1", "on:click": repairApp }, translation.repairApp, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman")))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/index.tsx
-  document.querySelector("main").append(OverviewTab(), MessageTab());
+  document.querySelector("main").append(OverviewTab(), MessageTab(), SettingsModal());
   document.querySelector("main").classList.add("split");
 })();
