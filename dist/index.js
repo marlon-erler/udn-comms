@@ -389,6 +389,9 @@
 
   // src/utility.tsx
   var storageKeys = {
+    viewType(id) {
+      return id + "view-type";
+    },
     hasUnread(id) {
       return id + "has-unread-messages";
     },
@@ -686,6 +689,7 @@
   // src/Model/chatModel.ts
   var Chat = class {
     id;
+    viewType;
     isSubscribed = new State(false);
     primaryChannel = new State("");
     hasUnreadMessages;
@@ -709,6 +713,10 @@
     // init
     constructor(id = UUID()) {
       this.id = id;
+      this.viewType = restoreState(
+        storageKeys.viewType(id),
+        "all"
+      );
       this.primaryChannel = restoreState(
         storageKeys.primaryChannel(id),
         ""
@@ -1716,10 +1724,9 @@
         );
       }
     );
-    const selectedViewType = new State("all");
-    const mainView = createProxyState([selectedViewType], () => {
+    const mainView = createProxyState([chat.viewType], () => {
       function getViewFunction() {
-        switch (selectedViewType.value) {
+        switch (chat.viewType.value) {
           case "notes":
             return NoteObjectsView;
           case "kanban":
@@ -1745,7 +1752,7 @@
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
-      (key) => ViewTypeToggle(key, selectedViewType)
+      (key) => ViewTypeToggle(key, chat.viewType)
     )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex scroll-no", "children:set": mainView }), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
   function ViewTypeToggle(key, selection) {

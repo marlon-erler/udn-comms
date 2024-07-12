@@ -33,10 +33,9 @@ export function ObjectPane(chat: Chat) {
   );
 
   // view type
-  const selectedViewType = new React.State<keyof typeof viewTypes>("all");
-  const mainView = React.createProxyState([selectedViewType], () => {
+  const mainView = React.createProxyState([chat.viewType], () => {
     function getViewFunction() {
-      switch (selectedViewType.value) {
+      switch (chat.viewType.value) {
         case "notes":
           return NoteObjectsView;
         case "kanban":
@@ -70,7 +69,7 @@ export function ObjectPane(chat: Chat) {
 
         <div class="padding-sm flex flex-row gap justify-center scroll-h width-100">
           {...Object.keys(viewTypes).map((key: any) =>
-            ViewTypeToggle(key, selectedViewType)
+            ViewTypeToggle(key, chat.viewType)
           )}
         </div>
 

@@ -16,6 +16,7 @@ import { decryptString, encryptString } from "../cryptUtility";
 import { Message } from "udn-frontend";
 import { storageKeys } from "../utility";
 import { translation } from "../translations";
+import { viewTypes } from "../Views/Objects/objectPane";
 
 // TYPES
 // message
@@ -50,6 +51,8 @@ export interface MessageObjectContent {
 export class Chat {
   id: string;
 
+  viewType: React.State<keyof typeof viewTypes>;
+
   isSubscribed = new React.State(false);
   primaryChannel = new React.State("");
   hasUnreadMessages: React.State<boolean>;
@@ -77,6 +80,11 @@ export class Chat {
   // init
   constructor(id: string = React.UUID()) {
     this.id = id;
+
+    this.viewType = React.restoreState<keyof typeof viewTypes>(
+      storageKeys.viewType(id),
+      "all"
+    );
 
     // channels
     this.primaryChannel = React.restoreState(

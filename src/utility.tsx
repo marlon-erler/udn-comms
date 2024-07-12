@@ -1,6 +1,10 @@
 import * as React from "bloatless-react";
 
 export const storageKeys = {
+  viewType(id: string): string {
+    return id + "view-type";
+  },
+
   hasUnread(id: string): string {
     return id + "has-unread-messages";
   },
