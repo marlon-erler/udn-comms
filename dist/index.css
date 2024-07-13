@@ -60,7 +60,7 @@
   }
   [showingobjects][chatvisible][chatopen] .thread-view {
     top: unset;
-    bottom: var(--control-height);
+    bottom: calc(var(--control-height) + var(--safe-area-bottom));
     width: 100%;
     height: var(--split-thread-height);
     padding: 0px;

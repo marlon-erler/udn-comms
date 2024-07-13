@@ -1331,6 +1331,9 @@
     [isShowingObjects, isShowingChatInSplit],
     () => isShowingObjects.value == false || isShowingChatInSplit.value == true
   );
+  isShowingObjects.subscribeSilent(() => {
+    setTimeout(() => scrollToChat("instant"), 1);
+  });
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
     [newChatName],
@@ -1348,7 +1351,10 @@
   function selectChat(chat) {
     selectedChat.value = chat;
     chat.hasUnreadMessages.value = false;
-    document.getElementById("message-tab")?.scrollIntoView();
+    scrollToChat();
+  }
+  function scrollToChat(behavior = "smooth") {
+    document.getElementById("message-tab")?.scrollIntoView({ behavior });
   }
   function toggleObjects() {
     isShowingObjects.value = !isShowingObjects.value;

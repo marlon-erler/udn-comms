@@ -223,6 +223,9 @@ export const isChatVisible = React.createProxyState(
   [isShowingObjects, isShowingChatInSplit],
   () => isShowingObjects.value == false || isShowingChatInSplit.value == true
 );
+isShowingObjects.subscribeSilent(() => {
+  setTimeout(() => scrollToChat("instant"), 1);
+});
 
 export const newChatName = new React.State("");
 
@@ -246,7 +249,11 @@ export function closeChatView() {
 export function selectChat(chat: Chat) {
   selectedChat.value = chat;
   chat.hasUnreadMessages.value = false;
-  document.getElementById("message-tab")?.scrollIntoView();
+  scrollToChat();
+}
+
+export function scrollToChat(behavior: ScrollBehavior = "smooth") {
+  document.getElementById("message-tab")?.scrollIntoView({ behavior });
 }
 
 export function toggleObjects() {
