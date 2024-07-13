@@ -35,26 +35,26 @@ export function SettingsModal() {
           <hr></hr>
 
           <div class="flex-column width-input">
-            <button class="width-100 flex-1" on:click={repairApp}>
-              {translation.repairApp}
+            <button class="tile width-100 flex-1" on:click={repairApp}>
               <span class="icon">handyman</span>
+              {translation.repairApp}
             </button>
           </div>
 
           <hr></hr>
 
           <div class="flex-column width-input gap">
-            <button class="width-100 flex-1" on:click={clearAddresses}>
-              {translation.clearAddresses}
+            <button class="tile width-100 flex-1" on:click={clearAddresses}>
               <span class="icon">cell_tower</span>
+              {translation.clearAddresses}
             </button>
-            <button class="width-100 flex-1" on:click={clearCategories}>
-              {translation.clearCategories}
+            <button class="tile width-100 flex-1" on:click={clearCategories}>
               <span class="icon">{icons.categoryName}</span>
+              {translation.clearCategories}
             </button>
-            <button class="width-100 flex-1" on:click={clearStatuses}>
-              {translation.clearStatuses}
+            <button class="tile width-100 flex-1" on:click={clearStatuses}>
               <span class="icon">{icons.status}</span>
+              {translation.clearStatuses}
             </button>
           </div>
         </main>
