@@ -955,6 +955,14 @@
     addObjectContent = (messageObject, content) => {
       messageObject.contentVersions[content.id] = content;
     };
+    updateObjectContent = (messageObject, content) => {
+      const latest = this.getMostRecentContent(messageObject);
+      Object.entries(content).forEach((entry) => {
+        const [key, value] = entry;
+        latest[key] = value;
+      });
+      this.addObjectContent(messageObject, latest);
+    };
     addObject = (messageObject, ignoreIfUnchanged = false) => {
       const existingObject = this.objects.value.get(messageObject.id);
       if (existingObject) {
@@ -1167,8 +1175,6 @@
   );
   var currentAddress = restoreState("current-address", "");
   var previousAddresses = restoreListState("previous-addresses");
-  previousAddresses.add("a", "a", "A");
-  previousAddresses.add("a", "a", "A");
   var cannotDisonnect = createProxyState(
     [isConnected],
     () => isConnected.value == false
@@ -1648,8 +1654,9 @@
       if (!id) return;
       const messageObject = chat.objects.value.get(id);
       if (!messageObject) return;
-      const latest = chat.getMostRecentContent(messageObject);
-      latest.categoryName = kanbanBoard.category;
+      const newContent = chat.createObjectContent();
+      newContent.categoryName = kanbanBoard.category;
+      chat.updateObjectContent(messageObject, newContent);
       chat.addObjectAndSend(messageObject);
     }
     const itemToViewEntry = (kanbanBoardItem) => {
@@ -1976,9 +1983,10 @@
       if (!id) return;
       const messageObject = chat.objects.value.get(id);
       if (!messageObject) return;
-      const latest = chat.getMostRecentContent(messageObject);
-      latest.status = status;
-      latest.categoryName = category;
+      const newContent = chat.createObjectContent();
+      newContent.categoryName = category;
+      newContent.status = status;
+      chat.updateObjectContent(messageObject, newContent);
       chat.addObjectAndSend(messageObject);
     }
     const cellItemToEntryView = (cellItem) => ObjectEntryView(

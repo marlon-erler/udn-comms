@@ -230,9 +230,10 @@ function StatusColumnView(
     const messageObject = chat.objects.value.get(id);
     if (!messageObject) return;
 
-    const latest = chat.getMostRecentContent(messageObject);
-    latest.status = status;
-    latest.categoryName = category;
+    const newContent = chat.createObjectContent();
+    newContent.categoryName = category;
+    newContent.status = status;
+    chat.updateObjectContent(messageObject, newContent);
     chat.addObjectAndSend(messageObject);
   }
 

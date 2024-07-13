@@ -334,7 +334,7 @@ export class Chat {
     return messageObject;
   };
 
-  createObjectContent = () => {
+  createObjectContent = (): MessageObjectContent => {
     return {
       id: React.UUID(),
       isoDateVersionCreated: new Date().toISOString(),
@@ -346,6 +346,18 @@ export class Chat {
     content: MessageObjectContent
   ): void => {
     messageObject.contentVersions[content.id] = content;
+  };
+
+  updateObjectContent = (
+    messageObject: MessageObject,
+    content: MessageObjectContent
+  ): void => {
+    const latest = this.getMostRecentContent(messageObject);
+    Object.entries(content).forEach((entry) => {
+      const [key, value] = entry;
+      latest[key] = value;
+    });
+    this.addObjectContent(messageObject, latest);
   };
 
   addObject = (

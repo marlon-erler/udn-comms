@@ -108,8 +108,9 @@ function KanbanBoardView(
     const messageObject = chat.objects.value.get(id);
     if (!messageObject) return;
 
-    const latest = chat.getMostRecentContent(messageObject);
-    latest.categoryName = kanbanBoard.category;
+    const newContent = chat.createObjectContent();
+    newContent.categoryName = kanbanBoard.category;
+    chat.updateObjectContent(messageObject, newContent);
     chat.addObjectAndSend(messageObject);
   }
 
