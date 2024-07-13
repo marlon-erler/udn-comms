@@ -241,6 +241,12 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     untitledObject: "Sin Título",
 
     filterObjects: "filtrar objetos",
+    searchByTitle: "Buscar por título",
+    searchByTitlePlaceholder: "Mi Objeto",
+    searchTitleText: (term: string, resultCount: number) =>
+      term == ""
+        ? `Objetos en total: ${resultCount}`
+        : `Resultados por "${term}": ${resultCount}`,
 
     viewAll: "Todos",
     viewNotes: "Notas",
@@ -371,6 +377,12 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     untitledObject: "Unbenannt",
 
     filterObjects: "Objekte filtern",
+    searchByTitle: "Nach Titel suchen",
+    searchByTitlePlaceholder: "Mein Objekt",
+    searchTitleText: (term: string, resultCount: number) =>
+      term == ""
+        ? `Objekte insgesamt: ${resultCount}`
+        : `Ergebnisse für "${term}": ${resultCount}`,
 
     viewAll: "Alle",
     viewNotes: "Notizen",
