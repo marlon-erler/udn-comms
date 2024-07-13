@@ -240,7 +240,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     createObject: "añadir nuevo objeto",
     untitledObject: "Sin Título",
 
-    filterObjects: "filtrar objetos",
+    filterObjects: "Filtrar objetos",
     searchByTitle: "Buscar por título",
     searchByTitlePlaceholder: "Mi Objeto",
     searchTitleText: (term: string, resultCount: number) =>
