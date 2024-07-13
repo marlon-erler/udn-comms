@@ -144,17 +144,19 @@ export function ObjectPane(chat: Chat) {
           <main>
             <h2>{translation.filterObjects}</h2>
 
-            <label class="tile">
-              <span class="icon">search</span>
-              <div>
-                <span>{translation.searchByTitle}</span>
-                <input
-                  bind:value={filterInput}
-                  on:enter={applyFilter}
-                  placeholder={translation.searchByTitlePlaceholder}
-                ></input>
-              </div>
-            </label>
+            <div class="flex-column">
+              <label class="tile">
+                <span class="icon">search</span>
+                <div>
+                  <span>{translation.searchByTitle}</span>
+                  <input
+                    bind:value={filterInput}
+                    on:enter={applyFilter}
+                    placeholder={translation.searchByTitlePlaceholder}
+                  ></input>
+                </div>
+              </label>
+            </div>
             <div class="flex-row width-input">
               <button
                 class="width-50 flex"

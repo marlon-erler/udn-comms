@@ -2157,14 +2157,14 @@
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": filterInput,
         "on:enter": applyFilter,
         placeholder: translation.searchByTitlePlaceholder
       }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    )))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "width-50 flex",
