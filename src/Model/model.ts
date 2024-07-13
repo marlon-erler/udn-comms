@@ -41,6 +41,7 @@ export const cannotResetAddress = React.createProxyState(
 export function connect(): void {
   if (cannotConnect.value == true) return;
 
+  serverAddressInput.value = serverAddressInput.value.toLowerCase();
   currentAddress.value = serverAddressInput.value;
 
   isConnected.value = false;
@@ -70,8 +71,9 @@ export function subscribeChannels() {
 // listeners
 UDN.onconnect = () => {
   isConnected.value = true;
-  if (!previousAddresses.value.has(currentAddress.value)) {
-    previousAddresses.add(currentAddress.value);
+  const lowerCasedAddress = currentAddress.value.toLowerCase();
+  if (!previousAddresses.value.has(lowerCasedAddress)) {
+    previousAddresses.add(lowerCasedAddress);
   }
 
   subscribeChannels();
