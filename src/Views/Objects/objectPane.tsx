@@ -61,7 +61,7 @@ export function ObjectPane(chat: Chat) {
   }
 
   return (
-    <div class="chat-object-view flex-column scroll-no">
+    <div class="chat-object-view flex-column scroll-no padding-0">
       <div class="flex-row align-center border-bottom">
         <button
           class="primary height-100"
@@ -83,7 +83,7 @@ export function ObjectPane(chat: Chat) {
       </div>
 
       <div
-        class="width-100 height-100 flex scroll-no"
+        class="object-content width-100 height-100 flex scroll-no"
         children:set={mainView}
       ></div>
 

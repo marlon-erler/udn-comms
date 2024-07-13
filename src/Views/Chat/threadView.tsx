@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { Chat, ChatMessage } from "../../Model/chatModel";
 
+import { MessageComposer } from "./messageComposer";
 import { isShowingObjects } from "../../Model/model";
 import { translation } from "../../translations";
 
@@ -117,10 +118,7 @@ export function ThreadView(chat: Chat) {
     ></div>
   );
   const listWrapper = (
-    <div
-      class="thread-view flex-column gap"
-      toggle:showingchattools={isShowingObjects}
-    >
+    <div class="thread-view flex-column gap">
       {messageList}
       {outboxList}
     </div>

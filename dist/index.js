@@ -1319,6 +1319,18 @@
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
   var isShowingObjects = restoreState("showing-objects", false);
+  var isShowingChatInSplit = restoreState(
+    "showing-chat-split",
+    false
+  );
+  var isChatOpen = createProxyState(
+    [selectedChat],
+    () => selectedChat.value != void 0
+  );
+  var isChatVisible = createProxyState(
+    [isShowingObjects, isShowingChatInSplit],
+    () => isShowingObjects.value == false || isShowingChatInSplit.value == true
+  );
   var newChatName = new State("");
   var cannotCreateChat = createProxyState(
     [newChatName],
@@ -1338,8 +1350,11 @@
     chat.hasUnreadMessages.value = false;
     document.getElementById("message-tab")?.scrollIntoView();
   }
-  function toggleChatTools() {
+  function toggleObjects() {
     isShowingObjects.value = !isShowingObjects.value;
+  }
+  function toggleChat() {
+    isShowingChatInSplit.value = !isShowingChatInSplit.value;
   }
   chatIds.value.forEach((id) => chats.add(new Chat(id)));
   if (serverAddressInput.value != "" && didRequestConnection.value == true) {
@@ -2049,7 +2064,7 @@
       selectedObject.value = newObject;
       isShowingObjectModal.value = true;
     }
-    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column scroll-no" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column scroll-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary height-100",
@@ -2062,7 +2077,7 @@
     )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "width-100 height-100 flex scroll-no",
+        class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
     ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
@@ -2142,15 +2157,7 @@
         "children:append": [chat.outbox, outboxMessageConverter]
       }
     );
-    const listWrapper = /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "thread-view flex-column gap",
-        "toggle:showingchattools": isShowingObjects
-      },
-      messageList,
-      outboxList
-    );
+    const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
     function scrollToBottom() {
       listWrapper.scrollTop = listWrapper.scrollHeight;
     }
@@ -2181,10 +2188,18 @@
           "button",
           {
             "aria-label": translation.showObjects,
-            "on:click": toggleChatTools,
+            "on:click": toggleObjects,
             "toggle:selected": isShowingObjects
           },
           /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            "aria-label": translation.showObjects,
+            "on:click": toggleChat,
+            "toggle:selected": isChatVisible
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "forum")
         ), /* @__PURE__ */ createElement(
           "button",
           {
@@ -2203,7 +2218,10 @@
       "article",
       {
         id: "message-tab",
-        "children:set": messageTabContent
+        "children:set": messageTabContent,
+        "toggle:showingobjects": isShowingObjects,
+        "toggle:chatvisible": isChatVisible,
+        "toggle:chatopen": isChatOpen
       }
     );
   }

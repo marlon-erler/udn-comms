@@ -209,7 +209,21 @@ export const chats = new React.ListState<Chat>();
 export const chatIds = React.restoreListState<string>("chat-ids");
 
 export const selectedChat = new React.State<Chat | undefined>(undefined);
+
 export const isShowingObjects = React.restoreState("showing-objects", false);
+export const isShowingChatInSplit = React.restoreState(
+  "showing-chat-split",
+  false
+);
+export const isChatOpen = React.createProxyState(
+  [selectedChat],
+  () => selectedChat.value != undefined
+);
+export const isChatVisible = React.createProxyState(
+  [isShowingObjects, isShowingChatInSplit],
+  () => isShowingObjects.value == false || isShowingChatInSplit.value == true
+);
+
 export const newChatName = new React.State("");
 
 export const cannotCreateChat = React.createProxyState(
@@ -235,8 +249,12 @@ export function selectChat(chat: Chat) {
   document.getElementById("message-tab")?.scrollIntoView();
 }
 
-export function toggleChatTools() {
+export function toggleObjects() {
   isShowingObjects.value = !isShowingObjects.value;
+}
+
+export function toggleChat() {
+  isShowingChatInSplit.value = !isShowingChatInSplit.value;
 }
 
 chatIds.value.forEach((id) => chats.add(new Chat(id)));
