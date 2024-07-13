@@ -7,6 +7,7 @@ import { translation } from "../../translations";
 
 export function AllObjectsView(
   chat: Chat,
+  messageObjects: React.MapState<MessageObject>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
@@ -21,7 +22,12 @@ export function AllObjectsView(
         {translation.objectsInTotal}{" "}
         <span subscribe:innerText={objectCount}></span>
       </b>
-      {ObjectGridView(chat, chat.objects, selectedObject, isShowingObjectModal)}
+      {ObjectGridView(
+        chat,
+        messageObjects,
+        selectedObject,
+        isShowingObjectModal
+      )}
     </div>
   );
 }

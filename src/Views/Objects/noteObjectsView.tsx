@@ -6,17 +6,18 @@ import { ObjectGridView } from "./objectGridView";
 
 export function NoteObjectsView(
   chat: Chat,
+  messageObjects: React.MapState<MessageObject>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
   const notes = new React.ListState<MessageObject>();
-  chat.objects.handleAddition((messageObject) => {
+  messageObjects.handleAddition((messageObject) => {
     const latest = chat.getMostRecentContent(messageObject);
     if (!latest) return;
     if (!latest.noteContent) return;
 
     notes.add(messageObject);
-    chat.objects.handleRemoval(messageObject, () =>
+    messageObjects.handleRemoval(messageObject, () =>
       notes.remove(messageObject)
     );
   });

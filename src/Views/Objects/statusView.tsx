@@ -29,6 +29,7 @@ interface StatusData {
 
 export function StatusView(
   chat: Chat,
+  messageObjects: React.MapState<MessageObject>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
@@ -45,12 +46,12 @@ export function StatusView(
       .sort((a, b) => a.localeCompare(b))
   );
 
-  chat.objects.subscribe(() => {
+  messageObjects.subscribe(() => {
     rows.clear();
     statuses.clear();
 
     // add items
-    chat.objects.value.forEach((messageObject) => {
+    messageObjects.value.forEach((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
       if (!latest.categoryName || !latest.status) return;
 

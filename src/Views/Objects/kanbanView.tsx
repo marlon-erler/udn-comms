@@ -3,7 +3,6 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
-import { PlaceholderView } from "./placeholderView";
 import { RenameView } from "../renameView";
 
 interface KanbanBoard {
@@ -18,6 +17,7 @@ interface KanbanBoardItem {
 
 export function KanbanView(
   chat: Chat,
+  messageObjects: React.MapState<MessageObject>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
@@ -28,7 +28,7 @@ export function KanbanView(
       .sort((a, b) => a.localeCompare(b))
   );
 
-  chat.objects.handleAddition((messageObject) => {
+  messageObjects.handleAddition((messageObject) => {
     const latest = chat.getMostRecentContent(messageObject);
     if (!latest) return;
     if (!latest.categoryName) return;
@@ -53,7 +53,7 @@ export function KanbanView(
     };
     boards.value.get(categoryName)?.items.add(boardItem);
 
-    chat.objects.handleRemoval(messageObject, () => {
+    messageObjects.handleRemoval(messageObject, () => {
       boards.value.get(categoryName)?.items.remove(boardItem);
     });
   });

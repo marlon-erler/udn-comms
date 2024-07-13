@@ -2,6 +2,8 @@ const englishTranslations = {
   // general
   set: "Set",
   save: "Save",
+  search: "Search",
+  reset: "Reset",
   back: "Back",
   undoChanges: "Undo changes",
   close: "Close",
@@ -99,6 +101,14 @@ const englishTranslations = {
   createObject: "create object",
   untitledObject: "Untitled Object",
 
+  filterObjects: "Filter Objects",
+  searchByTitle: "Search by title",
+  searchByTitlePlaceholder: "My Object",
+  searchTitleText: (term: string, resultCount: number) =>
+    term == ""
+      ? `Objects in total: ${resultCount}`
+      : `Objects containing "${term}": ${resultCount}`,
+
   viewAll: "All",
   viewNotes: "Notes",
   viewKanban: "Kanban",
@@ -131,6 +141,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     // general
     set: "Guardar",
     save: "Guardar",
+    search: "Buscar",
+    reset: "Restablecer",
     back: "Atrás",
     undoChanges: "Deshacer",
     close: "Cerrar",
@@ -228,6 +240,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     createObject: "añadir nuevo objeto",
     untitledObject: "Sin Título",
 
+    filterObjects: "filtrar objetos",
+
     viewAll: "Todos",
     viewNotes: "Notas",
     viewKanban: "Kanban",
@@ -257,6 +271,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     // general
     set: "OK",
     save: "Sichern",
+    search: "Suchen",
+    reset: "Zurücksetzen",
     back: "Zurück",
     undoChanges: "Änderungen verwerfen",
     close: "Schließen",
@@ -353,6 +369,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     showObjects: "Objekte anzeigen",
     createObject: "Neues Objekt erstellen",
     untitledObject: "Unbenannt",
+
+    filterObjects: "Objekte filtern",
 
     viewAll: "Alle",
     viewNotes: "Notizen",

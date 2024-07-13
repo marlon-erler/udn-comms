@@ -429,6 +429,8 @@
     // general
     set: "Set",
     save: "Save",
+    search: "Search",
+    reset: "Reset",
     back: "Back",
     undoChanges: "Undo changes",
     close: "Close",
@@ -501,6 +503,10 @@
     showObjects: "show objects",
     createObject: "create object",
     untitledObject: "Untitled Object",
+    filterObjects: "Filter Objects",
+    searchByTitle: "Search by title",
+    searchByTitlePlaceholder: "My Object",
+    searchTitleText: (term, resultCount) => term == "" ? `Objects in total: ${resultCount}` : `Objects containing "${term}": ${resultCount}`,
     viewAll: "All",
     viewNotes: "Notes",
     viewKanban: "Kanban",
@@ -528,6 +534,8 @@
       // general
       set: "Guardar",
       save: "Guardar",
+      search: "Buscar",
+      reset: "Restablecer",
       back: "Atr\xE1s",
       undoChanges: "Deshacer",
       close: "Cerrar",
@@ -600,6 +608,7 @@
       showObjects: "mostrar objetos",
       createObject: "a\xF1adir nuevo objeto",
       untitledObject: "Sin T\xEDtulo",
+      filterObjects: "filtrar objetos",
       viewAll: "Todos",
       viewNotes: "Notas",
       viewKanban: "Kanban",
@@ -625,6 +634,8 @@
       // general
       set: "OK",
       save: "Sichern",
+      search: "Suchen",
+      reset: "Zur\xFCcksetzen",
       back: "Zur\xFCck",
       undoChanges: "\xC4nderungen verwerfen",
       close: "Schlie\xDFen",
@@ -697,6 +708,7 @@
       showObjects: "Objekte anzeigen",
       createObject: "Neues Objekt erstellen",
       untitledObject: "Unbenannt",
+      filterObjects: "Objekte filtern",
       viewAll: "Alle",
       viewNotes: "Notizen",
       viewKanban: "Kanban",
@@ -1579,12 +1591,17 @@
   }
 
   // src/Views/Objects/allObjectsView.tsx
-  function AllObjectsView(chat, selectedObject, isShowingObjectModal) {
+  function AllObjectsView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const objectCount = createProxyState(
       [chat.objects],
       () => chat.objects.value.size
     );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding-top" }, /* @__PURE__ */ createElement("b", { class: "secondary padding" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(chat, chat.objects, selectedObject, isShowingObjectModal));
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding-top" }, /* @__PURE__ */ createElement("b", { class: "secondary padding" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(
+      chat,
+      messageObjects,
+      selectedObject,
+      isShowingObjectModal
+    ));
   }
 
   // src/Views/renameView.tsx
@@ -1606,13 +1623,13 @@
   }
 
   // src/Views/Objects/kanbanView.tsx
-  function KanbanView(chat, selectedObject, isShowingObjectModal) {
+  function KanbanView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const boards = new MapState();
     const sortedBoardNames = createProxyState(
       [boards],
       () => [...boards.value.values()].map((board) => board.category).sort((a, b) => a.localeCompare(b))
     );
-    chat.objects.handleAddition((messageObject) => {
+    messageObjects.handleAddition((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
       if (!latest) return;
       if (!latest.categoryName) return;
@@ -1633,7 +1650,7 @@
         messageObject
       };
       boards.value.get(categoryName)?.items.add(boardItem);
-      chat.objects.handleRemoval(messageObject, () => {
+      messageObjects.handleRemoval(messageObject, () => {
         boards.value.get(categoryName)?.items.remove(boardItem);
       });
     });
@@ -1711,14 +1728,14 @@
   }
 
   // src/Views/Objects/noteObjectsView.tsx
-  function NoteObjectsView(chat, selectedObject, isShowingObjectModal) {
+  function NoteObjectsView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const notes = new ListState();
-    chat.objects.handleAddition((messageObject) => {
+    messageObjects.handleAddition((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
       if (!latest) return;
       if (!latest.noteContent) return;
       notes.add(messageObject);
-      chat.objects.handleRemoval(
+      messageObjects.handleRemoval(
         messageObject,
         () => notes.remove(messageObject)
       );
@@ -1862,7 +1879,7 @@
   }
 
   // src/Views/Objects/statusView.tsx
-  function StatusView(chat, selectedObject, isShowingObjectModal) {
+  function StatusView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const rows = new MapState();
     const statuses = new MapState();
     const sortedStatuses = createProxyState(
@@ -1873,10 +1890,10 @@
       [rows],
       () => [...rows.value.values()].map((row) => row.category).sort((a, b) => a.localeCompare(b))
     );
-    chat.objects.subscribe(() => {
+    messageObjects.subscribe(() => {
       rows.clear();
       statuses.clear();
-      chat.objects.value.forEach((messageObject) => {
+      messageObjects.value.forEach((messageObject) => {
         const latest = chat.getMostRecentContent(messageObject);
         if (!latest.categoryName || !latest.status) return;
         const category = latest.categoryName;
@@ -2037,7 +2054,48 @@
   };
   function ObjectPane(chat) {
     const isShowingObjectModal = new State(false);
+    const isShowingFilterModel = new State(false);
     const selectedObject = new State(void 0);
+    function createObject() {
+      const newObject = chat.createObjectFromTitle("");
+      chat.addObjectAndSend(newObject);
+      selectedObject.value = newObject;
+      isShowingObjectModal.value = true;
+    }
+    function showFilters() {
+      isShowingFilterModel.value = true;
+    }
+    function closeFilters() {
+      isShowingFilterModel.value = false;
+    }
+    const filterInput = new State("");
+    const appliedFilter = new State("");
+    const resultCount = new State(0);
+    const resultText = createProxyState(
+      [appliedFilter, resultCount],
+      () => translation.searchTitleText(appliedFilter.value, resultCount.value)
+    );
+    const messageObjects = new MapState();
+    const cannotReset = createProxyState(
+      [appliedFilter],
+      () => appliedFilter.value == ""
+    );
+    function resetFilter() {
+      filterInput.value = "";
+      applyFilter();
+    }
+    function applyFilter() {
+      appliedFilter.value = filterInput.value;
+    }
+    appliedFilter.subscribe((filterTerm) => {
+      const allObjects = [...chat.objects.value.entries()];
+      const matchingObjects = allObjects.filter(
+        (entry) => entry[1].title.indexOf(filterTerm) != -1
+      );
+      resultCount.value = matchingObjects.length;
+      messageObjects.clear();
+      matchingObjects.forEach((entry) => messageObjects.set(...entry));
+    });
     const objectModal = createProxyState(
       [chat.objects, selectedObject],
       () => {
@@ -2062,14 +2120,13 @@
             return AllObjectsView;
         }
       }
-      return getViewFunction()(chat, selectedObject, isShowingObjectModal);
+      return getViewFunction()(
+        chat,
+        messageObjects,
+        selectedObject,
+        isShowingObjectModal
+      );
     });
-    function createObject() {
-      const newObject = chat.createObjectFromTitle("");
-      chat.addObjectAndSend(newObject);
-      selectedObject.value = newObject;
-      isShowingObjectModal.value = true;
-    }
     return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column scroll-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
       "button",
       {
@@ -2080,13 +2137,36 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
       (key) => ViewTypeToggle(key, chat.viewType)
-    )), /* @__PURE__ */ createElement("button", { class: "height-100", disabled: true }, /* @__PURE__ */ createElement("span", { class: "icon" }, "visibility"))), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "height-100",
+        "aria-label": translation.filterObjects,
+        "on:click": showFilters
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "filter_list")
+    )), /* @__PURE__ */ createElement(
       "div",
       {
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
+    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": filterInput,
+        "on:enter": applyFilter,
+        placeholder: translation.searchByTitlePlaceholder
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50 flex",
+        "on:click": resetFilter,
+        "toggle:disabled": cannotReset
+      },
+      translation.reset
+    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "secondary", "subscribe:innerText": resultText })), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))));
   }
   function ViewTypeToggle(key, selection) {
     const [label, icon] = viewTypes[key];
