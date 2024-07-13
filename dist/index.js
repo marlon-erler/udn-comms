@@ -1167,6 +1167,8 @@
   );
   var currentAddress = restoreState("current-address", "");
   var previousAddresses = restoreListState("previous-addresses");
+  previousAddresses.add("a", "a", "A");
+  previousAddresses.add("a", "a", "A");
   var cannotDisonnect = createProxyState(
     [isConnected],
     () => isConnected.value == false
@@ -1273,12 +1275,20 @@
     isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
   }
   function repairApp() {
+    mapSetToLowercase(previousAddresses);
     removeSetDuplicates(previousAddresses);
     removeSetDuplicates(usedObjectCategories);
     removeSetDuplicates(usedObjectStatuses);
   }
+  function mapSetToLowercase(listState) {
+    const lowerCased = [...listState.value].map((x) => x.toLowerCase());
+    listState.clear();
+    listState.add(...lowerCased);
+  }
   function removeSetDuplicates(listState) {
-    listState.value = /* @__PURE__ */ new Set([...listState.value]);
+    const values = [...listState.value];
+    listState.clear();
+    listState.add(...values);
   }
   function clearAddresses() {
     previousAddresses.clear();

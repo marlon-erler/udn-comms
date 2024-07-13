@@ -160,13 +160,22 @@ export function toggleSettings() {
 }
 
 export function repairApp() {
+  mapSetToLowercase(previousAddresses);
   removeSetDuplicates(previousAddresses);
   removeSetDuplicates(usedObjectCategories);
   removeSetDuplicates(usedObjectStatuses);
 }
 
+function mapSetToLowercase(listState: React.ListState<string>) {
+  const lowerCased = [...listState.value].map((x) => x.toLowerCase());
+  listState.clear();
+  listState.add(...lowerCased);
+}
+
 function removeSetDuplicates(listState: React.ListState<any>) {
-  listState.value = new Set([...listState.value]);
+  const values = [...listState.value];
+  listState.clear();
+  listState.add(...values);
 }
 
 export function clearAddresses() {
