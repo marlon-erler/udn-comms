@@ -250,7 +250,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     date: "Fecha",
     time: "Hora",
 
-    resendObjects: "Reenviar todos objetos",
+    resendObjects: "Reenviar todos los objetos",
     deleteObject: "Eliminar objeto",
   },
   de: {
