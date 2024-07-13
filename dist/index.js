@@ -618,7 +618,7 @@
       statusPlaceholder: "Pendiente",
       date: "Fecha",
       time: "Hora",
-      resendObjects: "Reenviar todos objetos",
+      resendObjects: "Reenviar todos los objetos",
       deleteObject: "Eliminar objeto"
     },
     de: {
@@ -1276,6 +1276,7 @@
   var pageZoom = restoreState("page-zoom", 100);
   pageZoom.subscribe(() => {
     document.body.style.zoom = `${pageZoom.value}%`;
+    document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
   });
   function toggleSettings() {
     isPresentingSettingsModal.value = !isPresentingSettingsModal.value;

@@ -153,6 +153,7 @@ export const senderName = React.restoreState("sender-name", "");
 export const pageZoom = React.restoreState("page-zoom", 100);
 pageZoom.subscribe(() => {
   document.body.style.zoom = `${pageZoom.value}%`;
+  document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
 });
 
 export function toggleSettings() {
