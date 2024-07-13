@@ -34,6 +34,7 @@ COLORS
   --surface-border: #8d8d8d;
 
   --text-normal: #161616;
+  --text-placeholder: hsla(0, 0%, 0%, 30%);
   --text-on-color: #ffffff;
 
   --text-success: #24a148;
@@ -70,6 +71,7 @@ COLORS
     --surface-border: #6f6f6f;
 
     --text-normal: #f4f4f4;
+    --text-placeholder: hsla(0, 0%, 100%, 30%);
 
     --text-success: #42be65;
     --text-warning: #f1c21b;
@@ -93,6 +95,10 @@ COLORS
 html {
   background-color: var(--background);
   color: var(--text-normal);
+}
+
+::placeholder {
+  color: var(--text-placeholder);
 }
 
 .modal > div {
@@ -854,7 +860,7 @@ code {
 .secondary *,
 .helper-text,
 .error-text,
-label {
+label.tile > div > span:not(.icon) {
   font-size: 0.9rem;
 }
 
