@@ -61,15 +61,17 @@ export function ObjectPane(chat: Chat) {
     appliedFilter.value = filterInput.value;
   }
 
-  appliedFilter.subscribe((filterTerm) => {
+  function updateObjects() {
     const allObjects = [...chat.objects.value.entries()];
     const matchingObjects = allObjects.filter(
-      (entry) => entry[1].title.indexOf(filterTerm) != -1
+      (entry) => entry[1].title.indexOf(appliedFilter.value) != -1
     );
     resultCount.value = matchingObjects.length;
     messageObjects.clear();
     matchingObjects.forEach((entry) => messageObjects.set(...entry));
-  });
+  }
+  React.bulkSubscribe([appliedFilter, chat.objects], updateObjects);
+  updateObjects();
 
   // view
   const objectModal = React.createProxyState(

@@ -608,7 +608,7 @@
       showObjects: "mostrar objetos",
       createObject: "a\xF1adir nuevo objeto",
       untitledObject: "Sin T\xEDtulo",
-      filterObjects: "filtrar objetos",
+      filterObjects: "Filtrar objetos",
       searchByTitle: "Buscar por t\xEDtulo",
       searchByTitlePlaceholder: "Mi Objeto",
       searchTitleText: (term, resultCount) => term == "" ? `Objetos en total: ${resultCount}` : `Resultados por "${term}": ${resultCount}`,
@@ -2093,15 +2093,17 @@
     function applyFilter() {
       appliedFilter.value = filterInput.value;
     }
-    appliedFilter.subscribe((filterTerm) => {
+    function updateObjects() {
       const allObjects = [...chat.objects.value.entries()];
       const matchingObjects = allObjects.filter(
-        (entry) => entry[1].title.indexOf(filterTerm) != -1
+        (entry) => entry[1].title.indexOf(appliedFilter.value) != -1
       );
       resultCount.value = matchingObjects.length;
       messageObjects.clear();
       matchingObjects.forEach((entry) => messageObjects.set(...entry));
-    });
+    }
+    bulkSubscribe([appliedFilter, chat.objects], updateObjects);
+    updateObjects();
     const objectModal = createProxyState(
       [chat.objects, selectedObject],
       () => {
