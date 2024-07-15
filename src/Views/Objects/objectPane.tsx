@@ -6,6 +6,7 @@ import { AllObjectsView } from "./allObjectsView";
 import { KanbanView } from "./kanbanView";
 import { NoteObjectsView } from "./noteObjectsView";
 import { ObjectDetailModal } from "./objectDetailModal";
+import { ObjectGridView } from "./objectGridView";
 import { StatusView } from "./statusView";
 import { icons } from "../../icons";
 import { translation } from "../../translations";
@@ -63,9 +64,11 @@ export function ObjectPane(chat: Chat) {
 
   function updateObjects() {
     const allObjects = [...chat.objects.value.entries()];
-    const matchingObjects = allObjects.filter(
-      (entry) => entry[1].title.indexOf(appliedFilter.value) != -1
-    );
+    const matchingObjects = allObjects.filter((entry) => {
+      let objectTitle = entry[1].title || translation.untitledObject;
+      const regex = new RegExp(appliedFilter.value.toLowerCase());
+      return regex.test(objectTitle.toLowerCase());
+    });
     resultCount.value = matchingObjects.length;
     messageObjects.clear();
     matchingObjects.forEach((entry) => messageObjects.set(...entry));
@@ -140,9 +143,8 @@ export function ObjectPane(chat: Chat) {
         children:set={mainView}
       ></div>
 
-      <div children:set={objectModal}></div>
       <div class="modal" toggle:open={isShowingFilterModel}>
-        <div>
+        <div style="max-width: unset; width: 100%">
           <main>
             <h2>{translation.filterObjects}</h2>
 
@@ -176,6 +178,13 @@ export function ObjectPane(chat: Chat) {
             <hr></hr>
 
             <span class="secondary" subscribe:innerText={resultText}></span>
+
+            {ObjectGridView(
+              chat,
+              messageObjects,
+              selectedObject,
+              isShowingObjectModal
+            )}
           </main>
           <button on:click={closeFilters}>
             {translation.close}
@@ -183,6 +192,7 @@ export function ObjectPane(chat: Chat) {
           </button>
         </div>
       </div>
+      <div children:set={objectModal}></div>
     </div>
   );
 }

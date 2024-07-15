@@ -2095,9 +2095,11 @@
     }
     function updateObjects() {
       const allObjects = [...chat.objects.value.entries()];
-      const matchingObjects = allObjects.filter(
-        (entry) => entry[1].title.indexOf(appliedFilter.value) != -1
-      );
+      const matchingObjects = allObjects.filter((entry) => {
+        let objectTitle = entry[1].title || translation.untitledObject;
+        const regex = new RegExp(appliedFilter.value.toLowerCase());
+        return regex.test(objectTitle.toLowerCase());
+      });
       resultCount.value = matchingObjects.length;
       messageObjects.clear();
       matchingObjects.forEach((entry) => messageObjects.set(...entry));
@@ -2159,7 +2161,7 @@
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { "children:set": objectModal }), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: unset; width: 100%" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": filterInput,
@@ -2174,7 +2176,12 @@
         "toggle:disabled": cannotReset
       },
       translation.reset
-    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "secondary", "subscribe:innerText": resultText })), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))));
+    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
+      chat,
+      messageObjects,
+      selectedObject,
+      isShowingObjectModal
+    )), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
   }
   function ViewTypeToggle(key, selection) {
     const [label, icon] = viewTypes[key];
