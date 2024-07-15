@@ -103,7 +103,7 @@
       items.forEach((item) => {
         this.value.delete(item);
         if (!this.removalHandlers.has(item)) return;
-        this.removalHandlers.get(item)(item);
+        this.removalHandlers.get(item).forEach((handler) => handler(item));
         this.removalHandlers.delete(item);
       });
       this.callSubscriptions();
@@ -117,7 +117,9 @@
       [...this.value.values()].forEach(handler);
     }
     handleRemoval(item, handler) {
-      this.removalHandlers.set(item, handler);
+      if (!this.removalHandlers.has(item))
+        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
+      this.removalHandlers.get(item).add(handler);
     }
     // stringification
     toString() {
@@ -146,7 +148,7 @@
       this.value.delete(key);
       this.callSubscriptions();
       if (!this.removalHandlers.has(item)) return;
-      this.removalHandlers.get(item)(item);
+      this.removalHandlers.get(item).forEach((handler) => handler(item));
       this.removalHandlers.delete(item);
     }
     clear() {
@@ -158,7 +160,9 @@
       [...this.value.values()].forEach(handler);
     }
     handleRemoval(item, handler) {
-      this.removalHandlers.set(item, handler);
+      if (!this.removalHandlers.has(item))
+        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
+      this.removalHandlers.get(item).add(handler);
     }
     // stringification
     toString() {
