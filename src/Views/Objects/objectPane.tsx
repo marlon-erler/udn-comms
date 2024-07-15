@@ -48,7 +48,7 @@ export function ObjectPane(chat: Chat) {
   const resultText = React.createProxyState([appliedFilter, resultCount], () =>
     translation.searchTitleText(appliedFilter.value, resultCount.value)
   );
-  const messageObjects = new React.MapState<MessageObject>();
+  const showingMessageObjects = new React.MapState<MessageObject>();
   const cannotReset = React.createProxyState(
     [appliedFilter],
     () => appliedFilter.value == ""
@@ -60,21 +60,31 @@ export function ObjectPane(chat: Chat) {
   }
   function applyFilter() {
     appliedFilter.value = filterInput.value;
-  }
 
-  function updateObjects() {
     const allObjects = [...chat.objects.value.entries()];
     const matchingObjects = allObjects.filter((entry) => {
-      let objectTitle = entry[1].title || translation.untitledObject;
-      const regex = new RegExp(appliedFilter.value.toLowerCase());
-      return regex.test(objectTitle.toLowerCase());
+      return checkMatchesFilter(entry[1]);
     });
     resultCount.value = matchingObjects.length;
-    messageObjects.clear();
-    matchingObjects.forEach((entry) => messageObjects.set(...entry));
+    showingMessageObjects.clear();
+    matchingObjects.forEach((entry) => showingMessageObjects.set(...entry));
   }
-  React.bulkSubscribe([appliedFilter, chat.objects], updateObjects);
-  updateObjects();
+
+  chat.objects.handleAddition(messageObject => {
+    if (checkMatchesFilter(messageObject) == false) return;
+    showingMessageObjects.set(messageObject.id, messageObject);
+    chat.objects.handleRemoval(messageObject, () => {
+      showingMessageObjects.remove(messageObject.id);
+    })
+  })
+
+  function checkMatchesFilter(messageObject: MessageObject) {
+    let objectTitle = messageObject.title || translation.untitledObject;
+    const regex = new RegExp(appliedFilter.value.toLowerCase());
+    return regex.test(objectTitle.toLowerCase());
+  }
+
+  applyFilter();
 
   // view
   const objectModal = React.createProxyState(
@@ -106,7 +116,7 @@ export function ObjectPane(chat: Chat) {
 
     return getViewFunction()(
       chat,
-      messageObjects,
+      showingMessageObjects,
       selectedObject,
       isShowingObjectModal
     );
@@ -144,7 +154,7 @@ export function ObjectPane(chat: Chat) {
       ></div>
 
       <div class="modal" toggle:open={isShowingFilterModel}>
-        <div style="max-width: unset; width: 100%">
+        <div style="max-width: 2084px">
           <main>
             <h2>{translation.filterObjects}</h2>
 
@@ -181,7 +191,7 @@ export function ObjectPane(chat: Chat) {
 
             {ObjectGridView(
               chat,
-              messageObjects,
+              showingMessageObjects,
               selectedObject,
               isShowingObjectModal
             )}

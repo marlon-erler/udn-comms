@@ -787,6 +787,10 @@ header button {
   max-height: 100% !important;
 }
 
+.modal > div > :is(button, div.flex-row) {
+  min-height: var(--control-height);
+}
+
 .ellipsis {
   max-width: 100%;
 }

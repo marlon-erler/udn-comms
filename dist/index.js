@@ -2085,7 +2085,7 @@
       [appliedFilter, resultCount],
       () => translation.searchTitleText(appliedFilter.value, resultCount.value)
     );
-    const messageObjects = new MapState();
+    const showingMessageObjects = new MapState();
     const cannotReset = createProxyState(
       [appliedFilter],
       () => appliedFilter.value == ""
@@ -2096,20 +2096,27 @@
     }
     function applyFilter() {
       appliedFilter.value = filterInput.value;
-    }
-    function updateObjects() {
       const allObjects = [...chat.objects.value.entries()];
       const matchingObjects = allObjects.filter((entry) => {
-        let objectTitle = entry[1].title || translation.untitledObject;
-        const regex = new RegExp(appliedFilter.value.toLowerCase());
-        return regex.test(objectTitle.toLowerCase());
+        return checkMatchesFilter(entry[1]);
       });
       resultCount.value = matchingObjects.length;
-      messageObjects.clear();
-      matchingObjects.forEach((entry) => messageObjects.set(...entry));
+      showingMessageObjects.clear();
+      matchingObjects.forEach((entry) => showingMessageObjects.set(...entry));
     }
-    bulkSubscribe([appliedFilter, chat.objects], updateObjects);
-    updateObjects();
+    chat.objects.handleAddition((messageObject) => {
+      if (checkMatchesFilter(messageObject) == false) return;
+      showingMessageObjects.set(messageObject.id, messageObject);
+      chat.objects.handleRemoval(messageObject, () => {
+        showingMessageObjects.remove(messageObject.id);
+      });
+    });
+    function checkMatchesFilter(messageObject) {
+      let objectTitle = messageObject.title || translation.untitledObject;
+      const regex = new RegExp(appliedFilter.value.toLowerCase());
+      return regex.test(objectTitle.toLowerCase());
+    }
+    applyFilter();
     const objectModal = createProxyState(
       [chat.objects, selectedObject],
       () => {
@@ -2136,7 +2143,7 @@
       }
       return getViewFunction()(
         chat,
-        messageObjects,
+        showingMessageObjects,
         selectedObject,
         isShowingObjectModal
       );
@@ -2165,7 +2172,7 @@
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: unset; width: 100%" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": filterInput,
@@ -2182,7 +2189,7 @@
       translation.reset
     ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
       chat,
-      messageObjects,
+      showingMessageObjects,
       selectedObject,
       isShowingObjectModal
     )), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
