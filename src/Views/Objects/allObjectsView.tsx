@@ -17,8 +17,8 @@ export function AllObjectsView(
   );
 
   return (
-    <div class="width-100 height-100 scroll-v padding-top">
-      <b class="secondary padding">
+    <div class="width-100 height-100 scroll-v padding flex-column gap">
+      <b class="secondary">
         {translation.objectsInTotal}{" "}
         <span subscribe:innerText={objectCount}></span>
       </b>

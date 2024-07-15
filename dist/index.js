@@ -1593,7 +1593,7 @@
     return /* @__PURE__ */ createElement(
       "div",
       {
-        class: "grid gap padding",
+        class: "grid gap",
         style: "grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));",
         "children:prepend": [messageObjects, objectConverter]
       }
@@ -1606,7 +1606,7 @@
       [chat.objects],
       () => chat.objects.value.size
     );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding-top" }, /* @__PURE__ */ createElement("b", { class: "secondary padding" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding flex-column gap" }, /* @__PURE__ */ createElement("b", { class: "secondary" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(
       chat,
       messageObjects,
       selectedObject,
@@ -1750,7 +1750,7 @@
         () => notes.remove(messageObject)
       );
     });
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/Objects/objectDetailModal.tsx
@@ -2172,7 +2172,7 @@
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", { class: "gap" }, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": filterInput,
@@ -2187,7 +2187,7 @@
         "toggle:disabled": cannotReset
       },
       translation.reset
-    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
+    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("b", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
       chat,
       showingMessageObjects,
       selectedObject,

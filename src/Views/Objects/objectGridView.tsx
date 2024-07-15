@@ -25,7 +25,7 @@ export function ObjectGridView(
 
   return (
     <div
-      class="grid gap padding"
+      class="grid gap"
       style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"
       children:prepend={[messageObjects, objectConverter]}
     ></div>

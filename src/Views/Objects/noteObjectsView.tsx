@@ -22,7 +22,7 @@ export function NoteObjectsView(
     );
   });
 
-  return <div class="width-100 height-100 scroll-v">
+  return <div class="width-100 height-100 scroll-v padding">
     {ObjectGridView(chat, notes, selectedObject, isShowingObjectModal)}
   </div>;
 }

@@ -155,7 +155,7 @@ export function ObjectPane(chat: Chat) {
 
       <div class="modal" toggle:open={isShowingFilterModel}>
         <div style="max-width: 2084px">
-          <main>
+          <main class="gap">
             <h2>{translation.filterObjects}</h2>
 
             <div class="flex-column">
@@ -187,7 +187,7 @@ export function ObjectPane(chat: Chat) {
 
             <hr></hr>
 
-            <span class="secondary" subscribe:innerText={resultText}></span>
+            <b class="secondary" subscribe:innerText={resultText}></b>
 
             {ObjectGridView(
               chat,
