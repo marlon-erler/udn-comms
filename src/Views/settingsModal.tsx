@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import {
   clearAddresses,
   clearCategories,
+  clearObjectSearches,
   clearStatuses,
   isPresentingSettingsModal,
   repairApp,
@@ -55,6 +56,13 @@ export function SettingsModal() {
             <button class="tile width-100 flex-1" on:click={clearStatuses}>
               <span class="icon">{icons.status}</span>
               {translation.clearStatuses}
+            </button>
+            <button
+              class="tile width-100 flex-1"
+              on:click={clearObjectSearches}
+            >
+              <span class="icon">search</span>
+              {translation.clearObjectFilters}
             </button>
           </div>
         </main>

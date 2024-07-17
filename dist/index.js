@@ -449,6 +449,7 @@
     clearAddresses: "Clear previous connections",
     clearCategories: "Clear suggestions for object categories",
     clearStatuses: "Clear suggestions for object statuses",
+    clearObjectFilters: "Clear object filters",
     // overview
     overview: "Overview",
     connection: "Connection",
@@ -554,6 +555,7 @@
       clearAddresses: "Borrar conexiones previas",
       clearCategories: "Borrar sugerencias para categor\xEDas de objetos",
       clearStatuses: "Borrar sugerencias para estados de objetos",
+      clearObjectFilters: "Borrar filtros de objetos",
       // overview
       overview: "Resumen",
       connection: "Conexi\xF3n",
@@ -561,7 +563,7 @@
       yourName: "Tu nombre",
       namePlaceholder: "Juan P\xE9rez",
       encryptionUnavailableTitle: "Cifrado no disponible",
-      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a traves de HTTPS o contin\xFAa sin cifrado",
+      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a trav\xE9s de HTTPS o contin\xFAa sin cifrado",
       serverAddress: "Direcci\xF3n del servidor",
       serverAddressPlaceholder: "wss://192.168.0.69:3000",
       previousConnections: "Conexiones anteriores",
@@ -611,7 +613,7 @@
       objectsInTotal: "Objetos en total: ",
       showObjects: "mostrar objetos",
       createObject: "a\xF1adir nuevo objeto",
-      untitledObject: "Sin T\xEDtulo",
+      untitledObject: "Sin t\xEDtulo",
       filterObjects: "Filtrar objetos",
       searchTitle: "Buscar",
       searchPlaceholder: "Nota 2000-12-31",
@@ -657,6 +659,7 @@
       clearAddresses: "Vorherige Verbindungen l\xF6schen",
       clearCategories: "Vorschl\xE4ge f\xFCr Objektkategorien l\xF6schen",
       clearStatuses: "Vorschl\xE4ge f\xFCr Objektstaten l\xF6schen",
+      clearObjectFilters: "Objektfilter l\xF6schen",
       // overview
       overview: "\xDCbersicht",
       connection: "Verbindung",
@@ -1300,6 +1303,9 @@
     document.body.style.zoom = `${pageZoom.value}%`;
     document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
   });
+  var usedObjectCategories = restoreListState("object-categories");
+  var usedObjectStatuses = restoreListState("object-statuses");
+  var previousObjectSearches = restoreListState("object-searches");
   function toggleSettings() {
     isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
   }
@@ -1308,6 +1314,7 @@
     removeSetDuplicates(previousAddresses);
     removeSetDuplicates(usedObjectCategories);
     removeSetDuplicates(usedObjectStatuses);
+    removeSetDuplicates(previousObjectSearches);
   }
   function mapSetToLowercase(listState) {
     const lowerCased = [...listState.value].map((x) => x.toLowerCase());
@@ -1328,6 +1335,9 @@
   function clearStatuses() {
     usedObjectStatuses.clear();
   }
+  function clearObjectSearches() {
+    previousObjectSearches.clear();
+  }
   var zoomStep = 10;
   function zoomOut() {
     pageZoom.value -= zoomStep;
@@ -1335,8 +1345,6 @@
   function zoomIn() {
     pageZoom.value += zoomStep;
   }
-  var usedObjectCategories = restoreListState("object-categories");
-  var usedObjectStatuses = restoreListState("object-statuses");
   var chats = new ListState();
   var chatIds = restoreListState("chat-ids");
   var selectedChat = new State(void 0);
@@ -2096,6 +2104,7 @@
     }
     function applyFilter() {
       appliedFilter.value = filterInput.value;
+      previousObjectSearches.add(appliedFilter.value);
       const allObjects = [...chat.objects.value.values()];
       allObjects.forEach((object, i) => {
         const doesMatch = checkIfMatchesFilter(object);
@@ -2199,7 +2208,18 @@
       {
         "bind:value": filterInput,
         "on:enter": applyFilter,
-        placeholder: translation.searchPlaceholder
+        placeholder: translation.searchPlaceholder,
+        list: "object-searches"
+      }
+    ), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: "object-searches",
+        "children:append": [
+          previousObjectSearches,
+          stringToOptionTag
+        ]
       }
     )))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "button",
@@ -2505,7 +2525,15 @@
 
   // src/Views/settingsModal.tsx
   function SettingsModal() {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": repairApp }, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"), translation.repairApp)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearAddresses }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), translation.clearAddresses), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearCategories }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), translation.clearCategories), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearStatuses }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), translation.clearStatuses))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": repairApp }, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"), translation.repairApp)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearAddresses }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), translation.clearAddresses), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearCategories }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), translation.clearCategories), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearStatuses }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), translation.clearStatuses), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile width-100 flex-1",
+        "on:click": clearObjectSearches
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "search"),
+      translation.clearObjectFilters
+    ))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/index.tsx

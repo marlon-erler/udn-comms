@@ -156,6 +156,13 @@ pageZoom.subscribe(() => {
   document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
 });
 
+export const usedObjectCategories =
+  React.restoreListState<string>("object-categories");
+export const usedObjectStatuses =
+  React.restoreListState<string>("object-statuses");
+export const previousObjectSearches =
+  React.restoreListState<string>("object-searches");
+
 export function toggleSettings() {
   isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
 }
@@ -165,6 +172,7 @@ export function repairApp() {
   removeSetDuplicates(previousAddresses);
   removeSetDuplicates(usedObjectCategories);
   removeSetDuplicates(usedObjectStatuses);
+  removeSetDuplicates(previousObjectSearches);
 }
 
 function mapSetToLowercase(listState: React.ListState<string>) {
@@ -191,6 +199,10 @@ export function clearStatuses() {
   usedObjectStatuses.clear();
 }
 
+export function clearObjectSearches() {
+  previousObjectSearches.clear();
+}
+
 const zoomStep = 10;
 export function zoomOut() {
   pageZoom.value -= zoomStep;
@@ -198,11 +210,6 @@ export function zoomOut() {
 export function zoomIn() {
   pageZoom.value += zoomStep;
 }
-
-export const usedObjectCategories =
-  React.restoreListState<string>("object-categories");
-export const usedObjectStatuses =
-  React.restoreListState<string>("object-statuses");
 
 // CHAT
 export const chats = new React.ListState<Chat>();

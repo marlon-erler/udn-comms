@@ -21,6 +21,7 @@ const englishTranslations = {
   clearAddresses: "Clear previous connections",
   clearCategories: "Clear suggestions for object categories",
   clearStatuses: "Clear suggestions for object statuses",
+  clearObjectFilters: "Clear object filters",
 
   // overview
   overview: "Overview",
@@ -160,6 +161,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     clearAddresses: "Borrar conexiones previas",
     clearCategories: "Borrar sugerencias para categorías de objetos",
     clearStatuses: "Borrar sugerencias para estados de objetos",
+    clearObjectFilters: "Borrar filtros de objetos",
 
     // overview
     overview: "Resumen",
@@ -172,7 +174,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     encryptionUnavailableTitle: "Cifrado no disponible",
     encryptionUnavailableMessage:
-      "Obtén esta aplicación a traves de HTTPS o continúa sin cifrado",
+      "Obtén esta aplicación a través de HTTPS o continúa sin cifrado",
 
     serverAddress: "Dirección del servidor",
     serverAddressPlaceholder: "wss://192.168.0.69:3000",
@@ -238,7 +240,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
 
     showObjects: "mostrar objetos",
     createObject: "añadir nuevo objeto",
-    untitledObject: "Sin Título",
+    untitledObject: "Sin título",
 
     filterObjects: "Filtrar objetos",
     searchTitle: "Buscar",
@@ -296,6 +298,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     clearAddresses: "Vorherige Verbindungen löschen",
     clearCategories: "Vorschläge für Objektkategorien löschen",
     clearStatuses: "Vorschläge für Objektstaten löschen",
+    clearObjectFilters: "Objektfilter löschen",
 
     // overview
     overview: "Übersicht",

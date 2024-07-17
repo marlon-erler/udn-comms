@@ -10,6 +10,8 @@ import { ObjectGridView } from "./objectGridView";
 import { StatusView } from "./statusView";
 import { icons } from "../../icons";
 import { translation } from "../../translations";
+import { previousObjectSearches } from "../../Model/model";
+import { stringToOptionTag } from "../../utility";
 
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
@@ -61,6 +63,7 @@ export function ObjectPane(chat: Chat) {
 
   function applyFilter() {
     appliedFilter.value = filterInput.value;
+    previousObjectSearches.add(appliedFilter.value);
 
     const allObjects = [...chat.objects.value.values()];
     allObjects.forEach((object, i) => {
@@ -198,7 +201,16 @@ export function ObjectPane(chat: Chat) {
                     bind:value={filterInput}
                     on:enter={applyFilter}
                     placeholder={translation.searchPlaceholder}
+                    list="object-searches"
                   ></input>
+                  <datalist
+                    hidden
+                    id="object-searches"
+                    children:append={[
+                      previousObjectSearches,
+                      stringToOptionTag,
+                    ]}
+                  ></datalist>
                 </div>
               </label>
             </div>
