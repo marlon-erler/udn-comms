@@ -66,7 +66,7 @@ export function ObjectEntryView(
         <hr></hr>
         <span
           class="grid height-100 flex secondary"
-          style="grid-template-columns: 1fr 1fr"
+          style="grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1.7rem)"
         >
           {...fieldElements}
         </span>
