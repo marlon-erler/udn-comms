@@ -2096,39 +2096,45 @@
     }
     function applyFilter() {
       appliedFilter.value = filterInput.value;
-      const allObjects = [...chat.objects.value.entries()];
-      const matchingObjects = allObjects.filter((entry) => {
-        return checkMatchesFilter(entry[1]);
+      const allObjects = [...chat.objects.value.values()];
+      allObjects.forEach((object, i) => {
+        const doesMatch = checkIfMatchesFilter(object);
+        if (doesMatch) {
+          showingMessageObjects.set(object.id, object);
+        } else {
+          showingMessageObjects.remove(object.id);
+        }
       });
-      resultCount.value = matchingObjects.length;
-      showingMessageObjects.clear();
-      matchingObjects.forEach((entry) => showingMessageObjects.set(...entry));
+      resultCount.value = showingMessageObjects.value.size;
     }
     chat.objects.handleAddition((messageObject) => {
-      if (checkMatchesFilter(messageObject) == false) return;
+      if (checkIfMatchesFilter(messageObject) == false) return;
       showingMessageObjects.set(messageObject.id, messageObject);
       chat.objects.handleRemoval(messageObject, () => {
         showingMessageObjects.remove(messageObject.id);
       });
     });
-    function checkMatchesFilter(messageObject) {
+    function checkIfMatchesFilter(messageObject) {
       if (isFilterEmpty.value == true) return true;
-      const wordsOfObject = [];
+      const stringsInObject = [];
       const objectTitle = messageObject.title || translation.untitledObject;
-      wordsOfObject.push(...objectTitle.toLowerCase().split(" "));
+      stringsInObject.push(objectTitle);
       const latest = chat.getMostRecentContent(messageObject);
       if (latest) {
         Object.values(latest).forEach((value) => {
-          wordsOfObject.push(value.toLowerCase());
+          if (typeof value != "string") return;
+          stringsInObject.push(value);
         });
       }
+      const wordsOfObject = stringsInObject.map((string) => string.toLowerCase().split(" ")).flat();
       const wordsOfSearchTerm = appliedFilter.value.toLowerCase().split(" ");
       for (const word of wordsOfSearchTerm) {
         if (word[0] == "-") {
           const wordContent = word.substring(1);
-          console.log(wordContent);
           if (wordsOfObject.includes(wordContent)) return false;
-        } else if (!wordsOfObject.includes(word)) return false;
+        } else {
+          return wordsOfObject.includes(word);
+        }
       }
       return true;
     }
