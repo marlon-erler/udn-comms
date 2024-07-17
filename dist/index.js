@@ -508,9 +508,9 @@
     createObject: "create object",
     untitledObject: "Untitled Object",
     filterObjects: "Filter Objects",
-    searchByTitle: "Search by title",
-    searchByTitlePlaceholder: "My Object",
-    searchTitleText: (term, resultCount) => term == "" ? `Objects in total: ${resultCount}` : `Objects containing "${term}": ${resultCount}`,
+    searchTitle: "Search",
+    searchPlaceholder: "Note 2000-12-31",
+    searchTitleText: (term, resultCount) => term == "" ? `Objects in total: ${resultCount}` : `Matches for "${term}": ${resultCount}`,
     viewAll: "All",
     viewNotes: "Notes",
     viewKanban: "Kanban",
@@ -613,8 +613,8 @@
       createObject: "a\xF1adir nuevo objeto",
       untitledObject: "Sin T\xEDtulo",
       filterObjects: "Filtrar objetos",
-      searchByTitle: "Buscar por t\xEDtulo",
-      searchByTitlePlaceholder: "Mi Objeto",
+      searchTitle: "Buscar",
+      searchPlaceholder: "Nota 2000-12-31",
       searchTitleText: (term, resultCount) => term == "" ? `Objetos en total: ${resultCount}` : `Resultados por "${term}": ${resultCount}`,
       viewAll: "Todos",
       viewNotes: "Notas",
@@ -716,8 +716,8 @@
       createObject: "Neues Objekt erstellen",
       untitledObject: "Unbenannt",
       filterObjects: "Objekte filtern",
-      searchByTitle: "Nach Titel suchen",
-      searchByTitlePlaceholder: "Mein Objekt",
+      searchTitle: "Suchen",
+      searchPlaceholder: "Notiz 2000-12-31",
       searchTitleText: (term, resultCount) => term == "" ? `Objekte insgesamt: ${resultCount}` : `Ergebnisse f\xFCr "${term}": ${resultCount}`,
       viewAll: "Alle",
       viewNotes: "Notizen",
@@ -1573,7 +1573,7 @@
         "span",
         {
           class: "grid height-100 flex secondary",
-          style: "grid-template-columns: 1fr 1fr"
+          style: "grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1.7rem)"
         },
         ...fieldElements
       ))
@@ -2086,7 +2086,7 @@
       () => translation.searchTitleText(appliedFilter.value, resultCount.value)
     );
     const showingMessageObjects = new MapState();
-    const cannotReset = createProxyState(
+    const isFilterEmpty = createProxyState(
       [appliedFilter],
       () => appliedFilter.value == ""
     );
@@ -2112,9 +2112,25 @@
       });
     });
     function checkMatchesFilter(messageObject) {
-      let objectTitle = messageObject.title || translation.untitledObject;
-      const regex = new RegExp(appliedFilter.value.toLowerCase());
-      return regex.test(objectTitle.toLowerCase());
+      if (isFilterEmpty.value == true) return true;
+      const wordsOfObject = [];
+      const objectTitle = messageObject.title || translation.untitledObject;
+      wordsOfObject.push(...objectTitle.toLowerCase().split(" "));
+      const latest = chat.getMostRecentContent(messageObject);
+      if (latest) {
+        Object.values(latest).forEach((value) => {
+          wordsOfObject.push(value.toLowerCase());
+        });
+      }
+      const wordsOfSearchTerm = appliedFilter.value.toLowerCase().split(" ");
+      for (const word of wordsOfSearchTerm) {
+        if (word[0] == "-") {
+          const wordContent = word.substring(1);
+          console.log(wordContent);
+          if (wordsOfObject.includes(wordContent)) return false;
+        } else if (!wordsOfObject.includes(word)) return false;
+      }
+      return true;
     }
     applyFilter();
     const objectModal = createProxyState(
@@ -2172,19 +2188,19 @@
         class: "object-content width-100 height-100 flex scroll-no",
         "children:set": mainView
       }
-    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", { class: "gap" }, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchByTitle), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", { class: "gap" }, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchTitle), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": filterInput,
         "on:enter": applyFilter,
-        placeholder: translation.searchByTitlePlaceholder
+        placeholder: translation.searchPlaceholder
       }
     )))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "width-50 flex",
         "on:click": resetFilter,
-        "toggle:disabled": cannotReset
+        "toggle:disabled": isFilterEmpty
       },
       translation.reset
     ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("b", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(

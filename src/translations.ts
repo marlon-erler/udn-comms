@@ -102,12 +102,12 @@ const englishTranslations = {
   untitledObject: "Untitled Object",
 
   filterObjects: "Filter Objects",
-  searchByTitle: "Search by title",
-  searchByTitlePlaceholder: "My Object",
+  searchTitle: "Search",
+  searchPlaceholder: "Note 2000-12-31",
   searchTitleText: (term: string, resultCount: number) =>
     term == ""
       ? `Objects in total: ${resultCount}`
-      : `Objects containing "${term}": ${resultCount}`,
+      : `Matches for "${term}": ${resultCount}`,
 
   viewAll: "All",
   viewNotes: "Notes",
@@ -241,8 +241,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     untitledObject: "Sin Título",
 
     filterObjects: "Filtrar objetos",
-    searchByTitle: "Buscar por título",
-    searchByTitlePlaceholder: "Mi Objeto",
+    searchTitle: "Buscar",
+    searchPlaceholder: "Nota 2000-12-31",
     searchTitleText: (term: string, resultCount: number) =>
       term == ""
         ? `Objetos en total: ${resultCount}`
@@ -377,8 +377,8 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     untitledObject: "Unbenannt",
 
     filterObjects: "Objekte filtern",
-    searchByTitle: "Nach Titel suchen",
-    searchByTitlePlaceholder: "Mein Objekt",
+    searchTitle: "Suchen",
+    searchPlaceholder: "Notiz 2000-12-31",
     searchTitleText: (term: string, resultCount: number) =>
       term == ""
         ? `Objekte insgesamt: ${resultCount}`

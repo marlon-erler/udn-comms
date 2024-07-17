@@ -49,7 +49,7 @@ export function ObjectPane(chat: Chat) {
     translation.searchTitleText(appliedFilter.value, resultCount.value)
   );
   const showingMessageObjects = new React.MapState<MessageObject>();
-  const cannotReset = React.createProxyState(
+  const isFilterEmpty = React.createProxyState(
     [appliedFilter],
     () => appliedFilter.value == ""
   );
@@ -70,18 +70,39 @@ export function ObjectPane(chat: Chat) {
     matchingObjects.forEach((entry) => showingMessageObjects.set(...entry));
   }
 
-  chat.objects.handleAddition(messageObject => {
+  chat.objects.handleAddition((messageObject) => {
     if (checkMatchesFilter(messageObject) == false) return;
     showingMessageObjects.set(messageObject.id, messageObject);
     chat.objects.handleRemoval(messageObject, () => {
       showingMessageObjects.remove(messageObject.id);
-    })
-  })
+    });
+  });
 
   function checkMatchesFilter(messageObject: MessageObject) {
-    let objectTitle = messageObject.title || translation.untitledObject;
-    const regex = new RegExp(appliedFilter.value.toLowerCase());
-    return regex.test(objectTitle.toLowerCase());
+    if (isFilterEmpty.value == true) return true;
+
+    const wordsOfObject: string[] = [];
+    const objectTitle = messageObject.title || translation.untitledObject;
+    wordsOfObject.push(...objectTitle.toLowerCase().split(" "));
+
+    const latest = chat.getMostRecentContent(messageObject);
+    if (latest) {
+      Object.values(latest).forEach((value) => {
+        wordsOfObject.push(value.toLowerCase());
+      });
+    }
+
+    const wordsOfSearchTerm = appliedFilter.value.toLowerCase().split(" ");
+    for (const word of wordsOfSearchTerm) {
+      if (word[0] == "-") {
+        // exclusion
+        const wordContent = word.substring(1);
+        console.log(wordContent);
+        if (wordsOfObject.includes(wordContent)) return false;
+      } else if (!wordsOfObject.includes(word)) return false;
+    }
+
+    return true;
   }
 
   applyFilter();
@@ -162,11 +183,11 @@ export function ObjectPane(chat: Chat) {
               <label class="tile">
                 <span class="icon">search</span>
                 <div>
-                  <span>{translation.searchByTitle}</span>
+                  <span>{translation.searchTitle}</span>
                   <input
                     bind:value={filterInput}
                     on:enter={applyFilter}
-                    placeholder={translation.searchByTitlePlaceholder}
+                    placeholder={translation.searchPlaceholder}
                   ></input>
                 </div>
               </label>
@@ -175,7 +196,7 @@ export function ObjectPane(chat: Chat) {
               <button
                 class="width-50 flex"
                 on:click={resetFilter}
-                toggle:disabled={cannotReset}
+                toggle:disabled={isFilterEmpty}
               >
                 {translation.reset}
               </button>
