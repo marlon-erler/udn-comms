@@ -12,12 +12,14 @@ import { icons } from "../../icons";
 import { translation } from "../../translations";
 import { previousObjectSearches } from "../../Model/model";
 import { stringToOptionTag } from "../../utility";
+import { CalendarView } from "./calendarView";
 
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
   notes: [translation.viewNotes, icons.noteContent],
   kanban: [translation.viewKanban, "view_kanban"],
   status: [translation.viewStatus, icons.status],
+  calendar: [translation.viewCalendar, icons.date],
 };
 
 export function ObjectPane(chat: Chat) {
@@ -143,6 +145,8 @@ export function ObjectPane(chat: Chat) {
           return KanbanView;
         case "status":
           return StatusView;
+        case "calendar":
+          return CalendarView;
         default:
           return AllObjectsView;
       }

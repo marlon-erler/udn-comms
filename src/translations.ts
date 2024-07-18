@@ -114,6 +114,7 @@ const englishTranslations = {
   viewNotes: "Notes",
   viewKanban: "Kanban",
   viewStatus: "Status",
+  viewCalendar: "Calendar",
 
   noObjects: "No objects",
 
@@ -254,6 +255,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewNotes: "Notas",
     viewKanban: "Kanban",
     viewStatus: "Estado",
+    viewCalendar: "Calendario",
 
     noObjects: "Sin objetos",
 
@@ -391,6 +393,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     viewNotes: "Notizen",
     viewKanban: "Kanban",
     viewStatus: "Status",
+    viewCalendar: "Kalender",
 
     noObjects: "Keine Objekte",
 

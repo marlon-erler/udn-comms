@@ -516,6 +516,7 @@
     viewNotes: "Notes",
     viewKanban: "Kanban",
     viewStatus: "Status",
+    viewCalendar: "Calendar",
     noObjects: "No objects",
     objectTitle: "Object title",
     objectTitlePlaceholder: "My object",
@@ -622,6 +623,7 @@
       viewNotes: "Notas",
       viewKanban: "Kanban",
       viewStatus: "Estado",
+      viewCalendar: "Calendario",
       noObjects: "Sin objetos",
       objectTitle: "T\xEDtulo",
       objectTitlePlaceholder: "Mi objeto",
@@ -726,6 +728,7 @@
       viewNotes: "Notizen",
       viewKanban: "Kanban",
       viewStatus: "Status",
+      viewCalendar: "Kalender",
       noObjects: "Keine Objekte",
       objectTitle: "Titel",
       objectTitlePlaceholder: "Mein Objekt",
@@ -2063,12 +2066,29 @@
     );
   }
 
+  // src/Views/Objects/calendarView.tsx
+  function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
+    const notes = new ListState();
+    messageObjects.handleAddition((messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest) return;
+      if (!latest.date) return;
+      notes.add(messageObject);
+      messageObjects.handleRemoval(
+        messageObject,
+        () => notes.remove(messageObject)
+      );
+    });
+    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
+  }
+
   // src/Views/Objects/objectPane.tsx
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
     notes: [translation.viewNotes, icons.noteContent],
     kanban: [translation.viewKanban, "view_kanban"],
-    status: [translation.viewStatus, icons.status]
+    status: [translation.viewStatus, icons.status],
+    calendar: [translation.viewCalendar, icons.date]
   };
   function ObjectPane(chat) {
     const isShowingObjectModal = new State(false);
@@ -2168,6 +2188,8 @@
             return KanbanView;
           case "status":
             return StatusView;
+          case "calendar":
+            return CalendarView;
           default:
             return AllObjectsView;
         }
