@@ -9,11 +9,11 @@ export function MiniatureDayView(
   messageObjects:
     | React.ListState<MessageObject>
     | React.MapState<MessageObject>,
-  dayToShow: Date
+  dateObject: Date
 ) {
   const objectsForDayView = new React.ListState<MessageObject>();
 
-  const dateString = dayToShow.toISOString().split("T")[0];
+  const dateString = dateObject.toISOString().split("T")[0];
 
   function processObject(messageObject: MessageObject) {
     const latest = chat.getMostRecentContent(messageObject);
@@ -33,7 +33,11 @@ export function MiniatureDayView(
     [dayInCalendar],
     () => dayInCalendar.value == dateString
   );
-  const isToday = new Date().toDateString() == dayToShow.toDateString();
+  const today = new Date();
+  const isToday =
+    today.getDate() == dateObject.getUTCDate() &&
+    today.getMonth() == dateObject.getUTCMonth() &&
+    today.getFullYear() == dateObject.getUTCFullYear();
 
   messageObjects.handleAddition(processObject);
 
@@ -63,7 +67,7 @@ export function MiniatureDayView(
       class="day-miniature tile flex-column align-start"
       style="aspect-ratio: 1/1; overflow: hidden"
     >
-      <h3 class="margin-0">{dayToShow.getDate()}</h3>
+      <h3 class="margin-0">{dateObject.getUTCDate()}</h3>
       <div
         class="flex-column gap"
         children:append={[objectsForDayView, objectConverter]}

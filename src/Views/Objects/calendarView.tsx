@@ -13,16 +13,21 @@ export function CalendarView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const selectedDate = new Date(dayInCalendar.value);
-  const selectedMonth = new React.State(selectedDate.getMonth() + 1);
-  const selectedYear = new React.State(selectedDate.getFullYear());
-  
-  React.bulkSubscribe([selectedMonth, selectedYear], () => updateSelectedDate());
+  let selectedDate = new Date(dayInCalendar.value);
+  const selectedMonth = new React.State(selectedDate.getUTCMonth() + 1);
+  const selectedYear = new React.State(selectedDate.getUTCFullYear());
+
+  React.bulkSubscribe([selectedMonth, selectedYear], () =>
+    updateSelectedDate()
+  );
+  dayInCalendar.subscribeSilent(() => {
+    selectedDate = new Date(dayInCalendar.value);
+  })
   updateSelectedDate();
 
   function updateSelectedDate() {
-    selectedDate.setMonth(selectedMonth.value - 1);
-    selectedDate.setFullYear(selectedYear.value);
+    selectedDate.setUTCMonth(selectedMonth.value - 1);
+    selectedDate.setUTCFullYear(selectedYear.value);
     dayInCalendar.value = selectedDate.toISOString().split("T")[0];
   }
 
@@ -47,13 +52,15 @@ export function CalendarView(
   let monthGridCells = new React.State<HTMLElement[]>([]);
   dayInCalendar.subscribe((newValue) => {
     const newSelectedDate = new Date(newValue);
+    newSelectedDate.setHours(0);
+    newSelectedDate.setMinutes(0);
 
     const currentDate = new Date();
     monthGridCells.value = [];
 
     // initialize to first day of month
-    currentDate.setDate(1);
-    currentDate.setMonth(newSelectedDate.getMonth());
+    currentDate.setUTCDate(1);
+    currentDate.setUTCMonth(newSelectedDate.getMonth());
 
     // labels
     for (let i = 0; i < 7; i++) {
@@ -63,15 +70,15 @@ export function CalendarView(
     }
 
     // create blank dates starting sunday
-    const monthOffset = currentDate.getDay();
+    const monthOffset = currentDate.getDay() - 1;
     for (let i = 0; i < monthOffset; i++) {
       monthGridCells.value.push(<div></div>);
     }
 
     // add day views
-    while (currentDate.getMonth() == newSelectedDate.getMonth()) {
+    while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
       monthGridCells.value.push(
-        MiniatureDayView(chat, messageObjects, new Date(currentDate))
+        MiniatureDayView(chat, messageObjects, currentDate)
       );
       currentDate.setDate(currentDate.getDate() + 1);
     }

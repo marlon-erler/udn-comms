@@ -2133,9 +2133,9 @@
   }
 
   // src/Views/Objects/miniatureDayView.tsx
-  function MiniatureDayView(chat, messageObjects, dayToShow) {
+  function MiniatureDayView(chat, messageObjects, dateObject) {
     const objectsForDayView = new ListState();
-    const dateString = dayToShow.toISOString().split("T")[0];
+    const dateString = dateObject.toISOString().split("T")[0];
     function processObject(messageObject) {
       const latest = chat.getMostRecentContent(messageObject);
       if (!latest.date || latest.date != dateString) return;
@@ -2151,7 +2151,8 @@
       [dayInCalendar],
       () => dayInCalendar.value == dateString
     );
-    const isToday = (/* @__PURE__ */ new Date()).toDateString() == dayToShow.toDateString();
+    const today = /* @__PURE__ */ new Date();
+    const isToday = today.getDate() == dateObject.getUTCDate() && today.getMonth() == dateObject.getUTCMonth() && today.getFullYear() == dateObject.getUTCFullYear();
     messageObjects.handleAddition(processObject);
     const objectConverter = (messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
@@ -2172,7 +2173,7 @@
         class: "day-miniature tile flex-column align-start",
         style: "aspect-ratio: 1/1; overflow: hidden"
       },
-      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dayToShow.getDate()),
+      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dateObject.getUTCDate()),
       /* @__PURE__ */ createElement(
         "div",
         {
@@ -2185,14 +2186,20 @@
 
   // src/Views/Objects/calendarView.tsx
   function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const selectedDate = new Date(dayInCalendar.value);
-    const selectedMonth = new State(selectedDate.getMonth() + 1);
-    const selectedYear = new State(selectedDate.getFullYear());
-    bulkSubscribe([selectedMonth, selectedYear], () => updateSelectedDate());
+    let selectedDate = new Date(dayInCalendar.value);
+    const selectedMonth = new State(selectedDate.getUTCMonth() + 1);
+    const selectedYear = new State(selectedDate.getUTCFullYear());
+    bulkSubscribe(
+      [selectedMonth, selectedYear],
+      () => updateSelectedDate()
+    );
+    dayInCalendar.subscribeSilent(() => {
+      selectedDate = new Date(dayInCalendar.value);
+    });
     updateSelectedDate();
     function updateSelectedDate() {
-      selectedDate.setMonth(selectedMonth.value - 1);
-      selectedDate.setFullYear(selectedYear.value);
+      selectedDate.setUTCMonth(selectedMonth.value - 1);
+      selectedDate.setUTCFullYear(selectedYear.value);
       dayInCalendar.value = selectedDate.toISOString().split("T")[0];
     }
     function previousMonth() {
@@ -2214,22 +2221,24 @@
     let monthGridCells = new State([]);
     dayInCalendar.subscribe((newValue) => {
       const newSelectedDate = new Date(newValue);
+      newSelectedDate.setHours(0);
+      newSelectedDate.setMinutes(0);
       const currentDate = /* @__PURE__ */ new Date();
       monthGridCells.value = [];
-      currentDate.setDate(1);
-      currentDate.setMonth(newSelectedDate.getMonth());
+      currentDate.setUTCDate(1);
+      currentDate.setUTCMonth(newSelectedDate.getMonth());
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
           /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
         );
       }
-      const monthOffset = currentDate.getDay();
+      const monthOffset = currentDate.getDay() - 1;
       for (let i = 0; i < monthOffset; i++) {
         monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
       }
-      while (currentDate.getMonth() == newSelectedDate.getMonth()) {
+      while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
         monthGridCells.value.push(
-          MiniatureDayView(chat, messageObjects, new Date(currentDate))
+          MiniatureDayView(chat, messageObjects, currentDate)
         );
         currentDate.setDate(currentDate.getDate() + 1);
       }
