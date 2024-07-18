@@ -14,14 +14,17 @@ export function CalendarView(
   isShowingObjectModal: React.State<boolean>
 ) {
   const selectedDate = new Date(dayInCalendar.value);
-  const selectedMonth = new React.State(selectedDate.getMonth());
+  const selectedMonth = new React.State(selectedDate.getMonth() + 1);
   const selectedYear = new React.State(selectedDate.getFullYear());
+  
+  React.bulkSubscribe([selectedMonth, selectedYear], () => updateSelectedDate());
+  updateSelectedDate();
 
-  React.bulkSubscribe([selectedMonth, selectedYear], () => {
+  function updateSelectedDate() {
     selectedDate.setMonth(selectedMonth.value - 1);
     selectedDate.setFullYear(selectedYear.value);
     dayInCalendar.value = selectedDate.toISOString().split("T")[0];
-  });
+  }
 
   function previousMonth() {
     if (selectedMonth.value <= 1) {

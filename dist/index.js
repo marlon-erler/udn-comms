@@ -2186,13 +2186,15 @@
   // src/Views/Objects/calendarView.tsx
   function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
     const selectedDate = new Date(dayInCalendar.value);
-    const selectedMonth = new State(selectedDate.getMonth());
+    const selectedMonth = new State(selectedDate.getMonth() + 1);
     const selectedYear = new State(selectedDate.getFullYear());
-    bulkSubscribe([selectedMonth, selectedYear], () => {
+    bulkSubscribe([selectedMonth, selectedYear], () => updateSelectedDate());
+    updateSelectedDate();
+    function updateSelectedDate() {
       selectedDate.setMonth(selectedMonth.value - 1);
       selectedDate.setFullYear(selectedYear.value);
       dayInCalendar.value = selectedDate.toISOString().split("T")[0];
-    });
+    }
     function previousMonth() {
       if (selectedMonth.value <= 1) {
         selectedMonth.value = 12;
