@@ -87,7 +87,10 @@ main:has([showingobjects][chatopen]) #settings-tab {
 .day-miniature[today] h3 {
   color: var(--primary);
 }
-@media (min-width: 900px) {
+.day-miniature:has(> div:not(:empty)):not([selected]) {
+  border: var(--gap-between-tiles) solid var(--text-warning);
+}
+@media (min-width: 750px) {
   .calendar-wrapper:not([chatvisible] *) {
     flex-direction: row;
   }
@@ -111,12 +114,15 @@ main:has([showingobjects][chatopen]) #settings-tab {
     max-width: var(--day-view-width);
   }
 }
-@media (max-width: 500px) {
+@media (min-width: 750px) and (max-width: 1000px) {
   .day-miniature {
     padding: var(--control-padding) !important;
+    align-items: center;
+    justify-content: center;
   }
   .day-miniature h3 {
     font-size: 1rem;
+    text-align: center;
   }
   .day-miniature > div {
     display: none;
