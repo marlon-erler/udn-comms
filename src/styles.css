@@ -60,14 +60,13 @@
   width: var(--split-thread-width);
 }
 
-@media (max-width: 1300px) {
-  main:has([showingobjects][chatopen]) {
-    display: flex;
-  }
+/* hide settings tab */
+main:has([showingobjects][chatopen]) {
+  display: flex;
+}
 
-  main:has([showingobjects][chatopen]) #settings-tab {
-    display: none;
-  }
+main:has([showingobjects][chatopen]) #settings-tab {
+  display: none;
 }
 
 @media (max-width: 640px) {
@@ -91,5 +90,59 @@
 
   [showingobjects][chatvisible][chatopen] footer {
     width: 100%;
+  }
+}
+
+/* calendar */
+:root {
+  --day-view-width: 400px;
+}
+
+.calendar-wrapper {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+}
+
+.calendar-wrapper .month-grid {
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-wrapper > * {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+}
+
+@media (min-width: 900px) {
+  .calendar-wrapper:not([chatvisible] *) {
+    flex-direction: row;
+  }
+
+  .calendar-wrapper:not([chatvisible] *) .month-grid {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+  }
+
+  .calendar-wrapper:not([chatvisible] *) .day-view {
+    max-width: var(--day-view-width);
+  }
+}
+
+
+@media (min-width: 1200px) {
+  .calendar-wrapper {
+    flex-direction: row;
+  }
+
+  .calendar-wrapper .month-grid {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+  }
+
+  .calendar-wrapper .day-view {
+    max-width: var(--day-view-width);
   }
 }

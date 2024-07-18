@@ -151,6 +151,8 @@ export const isPresentingSettingsModal = new React.State(false);
 export const isEncryptionAvailable = window.crypto.subtle != undefined;
 export const senderName = React.restoreState("sender-name", "");
 export const pageZoom = React.restoreState("page-zoom", 100);
+export const dayInCalendar = React.restoreState("calendar-day", new Date().toISOString().split("T")[0])
+
 pageZoom.subscribe(() => {
   document.body.style.zoom = `${pageZoom.value}%`;
   document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;

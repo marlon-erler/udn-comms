@@ -30,7 +30,6 @@ export function KanbanView(
 
   messageObjects.handleAddition((messageObject) => {
     const latest = chat.getMostRecentContent(messageObject);
-    if (!latest) return;
     if (!latest.categoryName) return;
 
     const categoryName = latest.categoryName!;

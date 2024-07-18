@@ -145,7 +145,6 @@ function StatusHeaderView(chat: Chat, status: StatusData) {
   function rename() {
     status.items.forEach((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
-      if (!latest) return;
 
       latest.status = editingStatus.value;
       chat.addObject(messageObject);

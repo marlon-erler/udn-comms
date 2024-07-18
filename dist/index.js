@@ -1007,7 +1007,6 @@
         this.objects.set(messageObject.id, messageObject);
       }
       const latest = this.getMostRecentContent(messageObject);
-      if (!latest) return;
       if (latest.categoryName) usedObjectCategories.add(latest.categoryName);
       if (latest.status) usedObjectStatuses.add(latest.status);
     };
@@ -1302,6 +1301,7 @@
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
   var pageZoom = restoreState("page-zoom", 100);
+  var dayInCalendar = restoreState("calendar-day", (/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
   pageZoom.subscribe(() => {
     document.body.style.zoom = `${pageZoom.value}%`;
     document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
@@ -1652,7 +1652,6 @@
     );
     messageObjects.handleAddition((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
-      if (!latest) return;
       if (!latest.categoryName) return;
       const categoryName = latest.categoryName;
       if (!boards.value.has(categoryName)) {
@@ -1753,7 +1752,6 @@
     const notes = new ListState();
     messageObjects.handleAddition((messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
-      if (!latest) return;
       if (!latest.noteContent) return;
       notes.add(messageObject);
       messageObjects.handleRemoval(
@@ -1992,7 +1990,6 @@
     function rename() {
       status.items.forEach((messageObject) => {
         const latest = chat.getMostRecentContent(messageObject);
-        if (!latest) return;
         latest.status = editingStatus.value;
         chat.addObject(messageObject);
       });
@@ -2066,20 +2063,49 @@
     );
   }
 
+  // src/Views/Objects/dayView.tsx
+  function DayView(chat, messageObjects, selectedObject, isShowingObjectModal) {
+    const objectsForDayView = new ListState();
+    function processObject(messageObject) {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest.date || latest.date != dayInCalendar.value) return;
+      objectsForDayView.add(messageObject);
+      messageObjects.handleRemoval(messageObject, () => {
+        objectsForDayView.remove(messageObject);
+      });
+    }
+    messageObjects.handleAddition(processObject);
+    dayInCalendar.subscribeSilent(() => {
+      objectsForDayView.clear();
+      chat.objects.value.forEach(processObject);
+    });
+    const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      const timeString = latest.time ?? "00:00";
+      const [hour, minute] = timeString.split(":");
+      const hourInMinutes = parseInt(hour) * 60;
+      const minutesTotal = parseInt(minute) + hourInMinutes;
+      const view = ObjectEntryView(
+        chat,
+        messageObject,
+        selectedObject,
+        isShowingObjectModal
+      );
+      view.style.order = minutesTotal;
+      return view;
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "day-view padding flex-column gap",
+        "children:prepend": [objectsForDayView, objectConverter]
+      }
+    );
+  }
+
   // src/Views/Objects/calendarView.tsx
   function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const notes = new ListState();
-    messageObjects.handleAddition((messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest) return;
-      if (!latest.date) return;
-      notes.add(messageObject);
-      messageObjects.handleRemoval(
-        messageObject,
-        () => notes.remove(messageObject)
-      );
-    });
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
+    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid" }, /* @__PURE__ */ createElement("input", { type: "date", "bind:value": dayInCalendar })), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/Objects/objectPane.tsx

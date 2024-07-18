@@ -381,7 +381,6 @@ export class Chat {
     }
 
     const latest = this.getMostRecentContent(messageObject);
-    if (!latest) return;
     if (latest.categoryName) usedObjectCategories.add(latest.categoryName);
     if (latest.status) usedObjectStatuses.add(latest.status);
   };

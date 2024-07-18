@@ -3,6 +3,8 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject } from "../../Model/chatModel";
 
 import { ObjectGridView } from "./objectGridView";
+import { DayView } from "./dayView";
+import { dayInCalendar } from "../../Model/model";
 
 export function CalendarView(
   chat: Chat,
@@ -10,19 +12,10 @@ export function CalendarView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const notes = new React.ListState<MessageObject>();
-  messageObjects.handleAddition((messageObject) => {
-    const latest = chat.getMostRecentContent(messageObject);
-    if (!latest) return;
-    if (!latest.date) return;
-
-    notes.add(messageObject);
-    messageObjects.handleRemoval(messageObject, () =>
-      notes.remove(messageObject)
-    );
-  });
-
-  return <div class="width-100 height-100 scroll-v padding">
-    {ObjectGridView(chat, notes, selectedObject, isShowingObjectModal)}
-  </div>;
+  return <div class="calendar-wrapper">
+      <div class="month-grid">
+        <input type="date" bind:value={dayInCalendar}></input>
+      </div>
+      {DayView(chat, messageObjects, selectedObject, isShowingObjectModal)}
+    </div>
 }

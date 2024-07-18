@@ -13,7 +13,6 @@ export function NoteObjectsView(
   const notes = new React.ListState<MessageObject>();
   messageObjects.handleAddition((messageObject) => {
     const latest = chat.getMostRecentContent(messageObject);
-    if (!latest) return;
     if (!latest.noteContent) return;
 
     notes.add(messageObject);
