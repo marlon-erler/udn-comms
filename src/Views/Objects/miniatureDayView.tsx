@@ -33,6 +33,7 @@ export function MiniatureDayView(
     [dayInCalendar],
     () => dayInCalendar.value == dateString
   );
+  const isToday = new Date().toDateString() == dayToShow.toDateString();
 
   messageObjects.handleAddition(processObject);
 
@@ -45,7 +46,11 @@ export function MiniatureDayView(
     const hourInMinutes = parseInt(hour) * 60;
     const minutesTotal = parseInt(minute) + hourInMinutes;
 
-    const view = <b class="ellipsis">{chat.getObjectTitle(messageObject)}</b>;
+    const view = (
+      <span class="secondary ellipsis">
+        {chat.getObjectTitle(messageObject)}
+      </span>
+    );
     view.style.order = minutesTotal;
     return view;
   };
@@ -54,9 +59,11 @@ export function MiniatureDayView(
     <button
       on:click={select}
       toggle:selected={isSelected}
-      class="tile flex-column align-start"
+      toggle:today={isToday}
+      class="day-miniature tile flex-column align-start"
+      style="aspect-ratio: 1/1; overflow: hidden"
     >
-      <h3>{dayToShow.getDate()}</h3>
+      <h3 class="margin-0">{dayToShow.getDate()}</h3>
       <div
         class="flex-column gap"
         children:append={[objectsForDayView, objectConverter]}

@@ -51,6 +51,8 @@
   padding-top: var(--content-padding);
 }
 
+
+
 [showingobjects][chatvisible] :is(.thread-view, footer) {
   display: flex;
 
@@ -116,6 +118,10 @@ main:has([showingobjects][chatopen]) #settings-tab {
   flex: 1;
 }
 
+.day-miniature[today] h3 {
+  color: var(--primary);
+}
+
 @media (min-width: 900px) {
   .calendar-wrapper:not([chatvisible] *) {
     flex-direction: row;
@@ -144,5 +150,19 @@ main:has([showingobjects][chatopen]) #settings-tab {
 
   .calendar-wrapper .day-view {
     max-width: var(--day-view-width);
+  }
+}
+
+@media (max-width: 500px) {
+  .day-miniature {
+    padding: var(--control-padding) !important;
+  }
+
+  .day-miniature h3 {
+    font-size: 1rem;
+  }
+
+  .day-miniature > div {
+    display: none;
   }
 }

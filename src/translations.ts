@@ -10,6 +10,18 @@ const englishTranslations = {
   discard: "Discard",
   rename: "Rename",
 
+  weekdays: [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ],
+  previousMonth: "previous month",
+  nextMonth: "next month",
+
   // settings
   settings: "Settings",
   showSettings: "Show settings",
@@ -151,6 +163,16 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Descartar",
     rename: "Renombrar",
 
+    weekdays: [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ],
+
     // settings
     settings: "Configuración",
     showSettings: "Mostrar configuración",
@@ -288,6 +310,16 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     close: "Schließen",
     discard: "Verwerfen",
     rename: "Umbenennen",
+
+    weekdays: [
+      "Sonntag",
+      "Montag",
+      "Dienstag",
+      "Mittwoch",
+      "Donnerstag",
+      "Freitag",
+      "Samstag",
+    ],
 
     // settings
     settings: "Einstellungen",

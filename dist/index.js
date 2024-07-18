@@ -440,6 +440,17 @@
     close: "Close",
     discard: "Discard",
     rename: "Rename",
+    weekdays: [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    previousMonth: "previous month",
+    nextMonth: "next month",
     // settings
     settings: "Settings",
     showSettings: "Show settings",
@@ -547,6 +558,15 @@
       close: "Cerrar",
       discard: "Descartar",
       rename: "Renombrar",
+      weekdays: [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Mi\xE9rcoles",
+        "Jueves",
+        "Viernes",
+        "S\xE1bado"
+      ],
       // settings
       settings: "Configuraci\xF3n",
       showSettings: "Mostrar configuraci\xF3n",
@@ -652,6 +672,15 @@
       close: "Schlie\xDFen",
       discard: "Verwerfen",
       rename: "Umbenennen",
+      weekdays: [
+        "Sonntag",
+        "Montag",
+        "Dienstag",
+        "Mittwoch",
+        "Donnerstag",
+        "Freitag",
+        "Samstag"
+      ],
       // settings
       settings: "Einstellungen",
       showSettings: "Einstellungen anzeigen",
@@ -2122,6 +2151,7 @@
       [dayInCalendar],
       () => dayInCalendar.value == dateString
     );
+    const isToday = (/* @__PURE__ */ new Date()).toDateString() == dayToShow.toDateString();
     messageObjects.handleAddition(processObject);
     const objectConverter = (messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
@@ -2129,7 +2159,7 @@
       const [hour, minute] = timeString.split(":");
       const hourInMinutes = parseInt(hour) * 60;
       const minutesTotal = parseInt(minute) + hourInMinutes;
-      const view = /* @__PURE__ */ createElement("b", { class: "ellipsis" }, chat.getObjectTitle(messageObject));
+      const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
       view.style.order = minutesTotal;
       return view;
     };
@@ -2138,9 +2168,11 @@
       {
         "on:click": select,
         "toggle:selected": isSelected,
-        class: "tile flex-column align-start"
+        "toggle:today": isToday,
+        class: "day-miniature tile flex-column align-start",
+        style: "aspect-ratio: 1/1; overflow: hidden"
       },
-      /* @__PURE__ */ createElement("h3", null, dayToShow.getDate()),
+      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dayToShow.getDate()),
       /* @__PURE__ */ createElement(
         "div",
         {
@@ -2153,33 +2185,76 @@
 
   // src/Views/Objects/calendarView.tsx
   function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
+    const selectedDate = new Date(dayInCalendar.value);
+    const selectedMonth = new State(selectedDate.getMonth());
+    const selectedYear = new State(selectedDate.getFullYear());
+    bulkSubscribe([selectedMonth, selectedYear], () => {
+      selectedDate.setMonth(selectedMonth.value - 1);
+      selectedDate.setFullYear(selectedYear.value);
+      dayInCalendar.value = selectedDate.toISOString().split("T")[0];
+    });
+    function previousMonth() {
+      if (selectedMonth.value <= 1) {
+        selectedMonth.value = 12;
+        selectedYear.value -= 1;
+        return;
+      }
+      selectedMonth.value -= 1;
+    }
+    function nextMonth() {
+      if (selectedMonth.value >= 12) {
+        selectedMonth.value = 1;
+        selectedYear.value += 1;
+        return;
+      }
+      selectedMonth.value += 1;
+    }
     let monthGridCells = new State([]);
-    let previousMonth = 0;
     dayInCalendar.subscribe((newValue) => {
-      const selectedDate = new Date(newValue);
-      if (selectedDate.getMonth() == previousMonth) return;
-      previousMonth = selectedDate.getMonth();
+      const newSelectedDate = new Date(newValue);
       const currentDate = /* @__PURE__ */ new Date();
       monthGridCells.value = [];
       currentDate.setDate(1);
-      currentDate.setMonth(selectedDate.getMonth());
+      currentDate.setMonth(newSelectedDate.getMonth());
+      for (let i = 0; i < 7; i++) {
+        monthGridCells.value.push(
+          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
+        );
+      }
       const monthOffset = currentDate.getDay();
-      console.log(monthOffset);
       for (let i = 0; i < monthOffset; i++) {
         monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
       }
-      while (currentDate.getMonth() == selectedDate.getMonth()) {
+      while (currentDate.getMonth() == newSelectedDate.getMonth()) {
         monthGridCells.value.push(
-          MiniatureDayView(
-            chat,
-            messageObjects,
-            new Date(currentDate)
-          )
+          MiniatureDayView(chat, messageObjects, new Date(currentDate))
         );
         currentDate.setDate(currentDate.getDate() + 1);
       }
+      monthGridCells.callSubscriptions();
     });
-    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper scroll-v" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("input", { type: "date", "bind:value": dayInCalendar }), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-center gap" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": previousMonth,
+        "aria-label": translation.previousMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        style: "width: 90px",
+        type: "number",
+        "bind:value": selectedMonth
+      }
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        style: "width: 110px",
+        type: "number",
+        "bind:value": selectedYear
+      }
+    ), /* @__PURE__ */ createElement("button", { "on:click": nextMonth, "aria-label": translation.nextMonth }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
       "div",
       {
         class: "grid gap",
