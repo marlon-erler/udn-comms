@@ -2097,15 +2097,96 @@
     return /* @__PURE__ */ createElement(
       "div",
       {
-        class: "day-view padding flex-column gap",
-        "children:prepend": [objectsForDayView, objectConverter]
+        class: "day-view padding flex-column gap scroll-v",
+        "children:append": [objectsForDayView, objectConverter]
       }
+    );
+  }
+
+  // src/Views/Objects/miniatureDayView.tsx
+  function MiniatureDayView(chat, messageObjects, dayToShow) {
+    const objectsForDayView = new ListState();
+    const dateString = dayToShow.toISOString().split("T")[0];
+    function processObject(messageObject) {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest.date || latest.date != dateString) return;
+      objectsForDayView.add(messageObject);
+      messageObjects.handleRemoval(messageObject, () => {
+        objectsForDayView.remove(messageObject);
+      });
+    }
+    function select() {
+      dayInCalendar.value = dateString;
+    }
+    const isSelected = createProxyState(
+      [dayInCalendar],
+      () => dayInCalendar.value == dateString
+    );
+    messageObjects.handleAddition(processObject);
+    const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      const timeString = latest.time ?? "00:00";
+      const [hour, minute] = timeString.split(":");
+      const hourInMinutes = parseInt(hour) * 60;
+      const minutesTotal = parseInt(minute) + hourInMinutes;
+      const view = /* @__PURE__ */ createElement("b", { class: "ellipsis" }, chat.getObjectTitle(messageObject));
+      view.style.order = minutesTotal;
+      return view;
+    };
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": select,
+        "toggle:selected": isSelected,
+        class: "tile flex-column align-start"
+      },
+      /* @__PURE__ */ createElement("h3", null, dayToShow.getDate()),
+      /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [objectsForDayView, objectConverter]
+        }
+      )
     );
   }
 
   // src/Views/Objects/calendarView.tsx
   function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid" }, /* @__PURE__ */ createElement("input", { type: "date", "bind:value": dayInCalendar })), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
+    let monthGridCells = new State([]);
+    let previousMonth = 0;
+    dayInCalendar.subscribe((newValue) => {
+      const selectedDate = new Date(newValue);
+      if (selectedDate.getMonth() == previousMonth) return;
+      previousMonth = selectedDate.getMonth();
+      const currentDate = /* @__PURE__ */ new Date();
+      monthGridCells.value = [];
+      currentDate.setDate(1);
+      currentDate.setMonth(selectedDate.getMonth());
+      const monthOffset = currentDate.getDay();
+      console.log(monthOffset);
+      for (let i = 0; i < monthOffset; i++) {
+        monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
+      }
+      while (currentDate.getMonth() == selectedDate.getMonth()) {
+        monthGridCells.value.push(
+          MiniatureDayView(
+            chat,
+            messageObjects,
+            new Date(currentDate)
+          )
+        );
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper scroll-v" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("input", { type: "date", "bind:value": dayInCalendar }), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        style: "grid-template-columns: repeat(7, 1fr)",
+        "children:set": monthGridCells
+      }
+    )), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/Objects/objectPane.tsx

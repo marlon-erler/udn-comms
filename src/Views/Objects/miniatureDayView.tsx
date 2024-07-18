@@ -2,34 +2,39 @@ import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
 
-import { ObjectEntryView } from "./objectEntryView";
 import { dayInCalendar } from "../../Model/model";
 
-export function DayView(
+export function MiniatureDayView(
   chat: Chat,
   messageObjects:
     | React.ListState<MessageObject>
     | React.MapState<MessageObject>,
-  selectedObject: React.State<MessageObject | undefined>,
-  isShowingObjectModal: React.State<boolean>
+  dayToShow: Date
 ) {
   const objectsForDayView = new React.ListState<MessageObject>();
 
+  const dateString = dayToShow.toISOString().split("T")[0];
+
   function processObject(messageObject: MessageObject) {
     const latest = chat.getMostRecentContent(messageObject);
-    if (!latest.date || latest.date != dayInCalendar.value) return;
+    if (!latest.date || latest.date != dateString) return;
 
     objectsForDayView.add(messageObject);
     messageObjects.handleRemoval(messageObject, () => {
       objectsForDayView.remove(messageObject);
-    })
+    });
   }
 
+  function select() {
+    dayInCalendar.value = dateString;
+  }
+
+  const isSelected = React.createProxyState(
+    [dayInCalendar],
+    () => dayInCalendar.value == dateString
+  );
+
   messageObjects.handleAddition(processObject);
-  dayInCalendar.subscribeSilent(() => {
-    objectsForDayView.clear();
-    chat.objects.value.forEach(processObject);
-  })
 
   const objectConverter: React.StateItemConverter<MessageObject> = (
     messageObject
@@ -40,20 +45,22 @@ export function DayView(
     const hourInMinutes = parseInt(hour) * 60;
     const minutesTotal = parseInt(minute) + hourInMinutes;
 
-    const view = ObjectEntryView(
-      chat,
-      messageObject,
-      selectedObject,
-      isShowingObjectModal
-    );
+    const view = <b class="ellipsis">{chat.getObjectTitle(messageObject)}</b>;
     view.style.order = minutesTotal;
     return view;
   };
 
   return (
-    <div
-      class="day-view padding flex-column gap scroll-v"
-      children:append={[objectsForDayView, objectConverter]}
-    ></div>
+    <button
+      on:click={select}
+      toggle:selected={isSelected}
+      class="tile flex-column align-start"
+    >
+      <h3>{dayToShow.getDate()}</h3>
+      <div
+        class="flex-column gap"
+        children:append={[objectsForDayView, objectConverter]}
+      ></div>
+    </button>
   );
 }
