@@ -1792,7 +1792,7 @@
       currentDate.setUTCMonth(newSelectedDate.getMonth());
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
-          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
+          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i].substring(0, 3))
         );
       }
       const monthOffset = currentDate.getDay() - 1;

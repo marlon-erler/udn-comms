@@ -11,13 +11,13 @@ const englishTranslations = {
   rename: "Rename",
 
   weekdays: [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
   ],
   previousMonth: "previous month",
   nextMonth: "next month",
@@ -164,13 +164,13 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     rename: "Renombrar",
 
     weekdays: [
-      "Domingo",
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
+      "Dom",
+      "Lun",
+      "Mar",
+      "Mié",
+      "Jue",
+      "Vie",
+      "Sáb",
     ],
 
     // settings
@@ -312,13 +312,13 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     rename: "Umbenennen",
 
     weekdays: [
-      "Sonntag",
-      "Montag",
-      "Dienstag",
-      "Mittwoch",
-      "Donnerstag",
-      "Freitag",
-      "Samstag",
+      "So",
+      "Mo",
+      "Di",
+      "Mi",
+      "Do",
+      "Fr",
+      "Sa",
     ],
 
     // settings
