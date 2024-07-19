@@ -441,13 +441,13 @@
     discard: "Discard",
     rename: "Rename",
     weekdays: [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday"
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
     ],
     previousMonth: "previous month",
     nextMonth: "next month",
@@ -559,13 +559,13 @@
       discard: "Descartar",
       rename: "Renombrar",
       weekdays: [
-        "Domingo",
-        "Lunes",
-        "Martes",
-        "Mi\xE9rcoles",
-        "Jueves",
-        "Viernes",
-        "S\xE1bado"
+        "Dom",
+        "Lun",
+        "Mar",
+        "Mi\xE9",
+        "Jue",
+        "Vie",
+        "S\xE1b"
       ],
       // settings
       settings: "Configuraci\xF3n",
@@ -673,13 +673,13 @@
       discard: "Verwerfen",
       rename: "Umbenennen",
       weekdays: [
-        "Sonntag",
-        "Montag",
-        "Dienstag",
-        "Mittwoch",
-        "Donnerstag",
-        "Freitag",
-        "Samstag"
+        "So",
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa"
       ],
       // settings
       settings: "Einstellungen",
@@ -1792,7 +1792,7 @@
       currentDate.setUTCMonth(newSelectedDate.getMonth());
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
-          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i].substring(0, 3))
+          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
         );
       }
       const monthOffset = currentDate.getDay() - 1;
@@ -2280,9 +2280,9 @@
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
     notes: [translation.viewNotes, icons.noteContent],
+    calendar: [translation.viewCalendar, icons.date],
     kanban: [translation.viewKanban, "view_kanban"],
-    status: [translation.viewStatus, icons.status],
-    calendar: [translation.viewCalendar, icons.date]
+    status: [translation.viewStatus, icons.status]
   };
   function ObjectPane(chat) {
     const isShowingObjectModal = new State(false);

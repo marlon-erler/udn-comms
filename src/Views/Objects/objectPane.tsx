@@ -17,9 +17,9 @@ import { translation } from "../../translations";
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
   notes: [translation.viewNotes, icons.noteContent],
+  calendar: [translation.viewCalendar, icons.date],
   kanban: [translation.viewKanban, "view_kanban"],
   status: [translation.viewStatus, icons.status],
-  calendar: [translation.viewCalendar, icons.date],
 };
 
 export function ObjectPane(chat: Chat) {
