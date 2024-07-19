@@ -1,150 +1,4 @@
 (() => {
-  // node_modules/bloatless-react/index.ts
-  var State = class {
-    _value;
-    _bindings = /* @__PURE__ */ new Set();
-    // init
-    constructor(initialValue) {
-      this._value = initialValue;
-    }
-    // value
-    get value() {
-      return this._value;
-    }
-    set value(newValue) {
-      if (this._value == newValue) return;
-      this._value = newValue;
-      this.callSubscriptions();
-    }
-    // subscriptions
-    callSubscriptions() {
-      this._bindings.forEach((fn) => fn(this._value));
-    }
-    subscribe(fn) {
-      this._bindings.add(fn);
-      fn(this._value);
-    }
-    subscribeSilent(fn) {
-      this._bindings.add(fn);
-    }
-    // stringify
-    toString() {
-      return JSON.stringify(this._value);
-    }
-  };
-  function persistState(localStorageKey, state) {
-    state.subscribe(() => {
-      const stringifiedValue = state.toString();
-      localStorage.setItem(localStorageKey, stringifiedValue);
-    });
-  }
-  function restoreState(localStorageKey, initialStateValue) {
-    const storedString = localStorage.getItem(localStorageKey) ?? JSON.stringify(initialStateValue);
-    const convertedValue = JSON.parse(storedString);
-    const state = new State(convertedValue);
-    persistState(localStorageKey, state);
-    return state;
-  }
-  function createElement(tagName, attributes = {}, ...children) {
-    const element = document.createElement(tagName);
-    if (attributes != null)
-      Object.entries(attributes).forEach((entry) => {
-        const [attributename, value] = entry;
-        const [directiveKey, directiveValue] = attributename.split(":");
-        switch (directiveKey) {
-          case "on": {
-            switch (directiveValue) {
-              case "enter": {
-                element.addEventListener("keydown", (e) => {
-                  if (e.key != "Enter") return;
-                  value();
-                });
-                break;
-              }
-              default: {
-                element.addEventListener(directiveValue, value);
-              }
-            }
-            break;
-          }
-          case "subscribe": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            break;
-          }
-          case "bind": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            element.addEventListener(
-              "input",
-              () => state.value = element[directiveValue]
-            );
-            break;
-          }
-          case "toggle": {
-            if (value.subscribe) {
-              const state = value;
-              state.subscribe(
-                (newValue) => element.toggleAttribute(directiveValue, newValue)
-              );
-            } else {
-              element.toggleAttribute(directiveValue, value);
-            }
-            break;
-          }
-          case "set": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element.setAttribute(directiveValue, newValue)
-            );
-            break;
-          }
-          case "children": {
-            switch (directiveValue) {
-              case "set": {
-                const state = value;
-                state.subscribe((newValue) => {
-                  element.innerHTML = "";
-                  element.append(...[newValue].flat());
-                });
-                break;
-              }
-              case "append":
-              case "appendandscroll":
-              case "prepend": {
-                element.style.scrollBehavior = "smooth";
-                try {
-                  const [listState, toElement] = value;
-                  listState.handleAddition((newItem) => {
-                    const child = toElement(newItem);
-                    listState.handleRemoval(
-                      newItem,
-                      () => child.remove()
-                    );
-                    if (directiveValue == "append") {
-                      element.append(child);
-                    } else if (directiveValue == "prepend") {
-                      element.prepend(child);
-                    }
-                  });
-                } catch {
-                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
-                }
-              }
-            }
-          }
-          default:
-            element.setAttribute(attributename, value);
-        }
-      });
-    children.filter((x) => x).forEach((child) => element.append(child));
-    return element;
-  }
-
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
     ws;
@@ -257,7 +111,7 @@
     }
   };
 
-  // src/utility.ts
+  // src/Model/Utility/utility.ts
   function stringify(data) {
     return JSON.stringify(data);
   }
@@ -308,30 +162,164 @@
     }
   };
 
-  // src/View/maintenance.tsx
-  var addressInput = restoreState("maintenance-address", "");
-  var connectedAddress = new State("");
-  var isConnected = new State(false);
-  var connectionModel = new ConnectionModel({
-    connectionChangeHandler() {
-      isConnected.value = connectionModel.isConnected;
-      connectedAddress.value = connectionModel.address ?? "---";
-    },
-    messageHandler(data) {
-      console.log(data);
-    }
-  });
-  function connect() {
-    connectionModel.connect(addressInput.value);
+  // node_modules/bloatless-react/index.ts
+  function createElement(tagName, attributes = {}, ...children) {
+    const element = document.createElement(tagName);
+    if (attributes != null)
+      Object.entries(attributes).forEach((entry) => {
+        const [attributename, value] = entry;
+        const [directiveKey, directiveValue] = attributename.split(":");
+        switch (directiveKey) {
+          case "on": {
+            switch (directiveValue) {
+              case "enter": {
+                element.addEventListener("keydown", (e) => {
+                  if (e.key != "Enter") return;
+                  value();
+                });
+                break;
+              }
+              default: {
+                element.addEventListener(directiveValue, value);
+              }
+            }
+            break;
+          }
+          case "subscribe": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            break;
+          }
+          case "bind": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            element.addEventListener(
+              "input",
+              () => state.value = element[directiveValue]
+            );
+            break;
+          }
+          case "toggle": {
+            if (value.subscribe) {
+              const state = value;
+              state.subscribe(
+                (newValue) => element.toggleAttribute(directiveValue, newValue)
+              );
+            } else {
+              element.toggleAttribute(directiveValue, value);
+            }
+            break;
+          }
+          case "set": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element.setAttribute(directiveValue, newValue)
+            );
+            break;
+          }
+          case "children": {
+            switch (directiveValue) {
+              case "set": {
+                const state = value;
+                state.subscribe((newValue) => {
+                  element.innerHTML = "";
+                  element.append(...[newValue].flat());
+                });
+                break;
+              }
+              case "append":
+              case "appendandscroll":
+              case "prepend": {
+                element.style.scrollBehavior = "smooth";
+                try {
+                  const [listState, toElement] = value;
+                  listState.handleAddition((newItem) => {
+                    const child = toElement(newItem);
+                    listState.handleRemoval(
+                      newItem,
+                      () => child.remove()
+                    );
+                    if (directiveValue == "append") {
+                      element.append(child);
+                    } else if (directiveValue == "prepend") {
+                      element.prepend(child);
+                    }
+                  });
+                } catch {
+                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                }
+              }
+            }
+          }
+          default:
+            element.setAttribute(attributename, value);
+        }
+      });
+    children.filter((x) => x).forEach((child) => element.append(child));
+    return element;
   }
-  function disconnect() {
-    connectionModel.disconnect();
-  }
-  document.querySelector("main").append(
-    /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("input", { "bind:value": addressInput }), /* @__PURE__ */ createElement("button", { "on:click": connect, "toggle:disabled": isConnected }, "Connect"), /* @__PURE__ */ createElement("button", { "on:click": disconnect }, "Disconnect"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { "subscribe:innerText": connectedAddress }))
-  );
 
-  // src/typeSafety.ts
+  // src/View/translations.ts
+  var englishTranslations = {
+    general: {
+      closeButton: "close"
+    },
+    homePage: {
+      appName: "Comms",
+      ///
+      overviewHeadline: "Overview",
+      statusHeadline: "Status",
+      settingsButton: "Settings",
+      ///
+      chatsHeadline: "Chats",
+      addChatAudioLabel: "name of new chat",
+      addChatPlaceholder: "Add chat",
+      addChatButton: "Add chat"
+    },
+    settings: {
+      settingsHeadline: "Settings"
+      ///
+    }
+  };
+  var allTranslations = {
+    en: englishTranslations
+  };
+  var language = navigator.language.substring(0, 2);
+  var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/homePage.tsx
+  function HomePage() {
+    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h3", null, translations.homePage.statusHeadline))), /* @__PURE__ */ createElement("button", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), /* @__PURE__ */ createElement("div", null, translations.homePage.settingsButton))), /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.homePage.addChatPlaceholder,
+        "aria-label": translations.homePage.addChatAudioLabel
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.homePage.addChatButton
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )))));
+  }
+
+  // src/View/mainPage.tsx
+  function MainPage() {
+    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null));
+  }
+
+  // src/View/setingsModal.tsx
+  function SetttingsModal() {
+    return /* @__PURE__ */ createElement("div", { class: "modal" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.settings.settingsHeadline)), /* @__PURE__ */ createElement("button", null, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/Model/Utility/typeSafety.ts
   var DATA_VERSION = "v2";
 
   // src/Model/storageModel.ts
@@ -421,5 +409,11 @@
 
   // src/index.tsx
   var storageModel = new StorageModel();
-  console.log(storageModel.list("z"));
+  var connectionModel = new ConnectionModel({
+    connectionChangeHandler() {
+    },
+    messageHandler(data) {
+    }
+  });
+  document.querySelector("main").append(HomePage(), MainPage(), SetttingsModal());
 })();

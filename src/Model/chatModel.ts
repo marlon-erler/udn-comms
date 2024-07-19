@@ -2,8 +2,8 @@
 
 import StorageModel, { storageKeys } from "./storageModel";
 
-import { checkIsValidObject } from "../typeSafety";
-import { createTimestamp } from "../utility";
+import { checkIsValidObject } from "./Utility/typeSafety";
+import { createTimestamp } from "./Utility/utility";
 import { v4 } from "uuid";
 
 export class ChatModel {

@@ -1,8 +1,8 @@
 // this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
 
-import { parse, stringify } from "../utility";
+import { parse, stringify } from "./Utility/utility";
 
-import { DATA_VERSION } from "../typeSafety";
+import { DATA_VERSION } from "./Utility/typeSafety";
 
 export default class StorageModel {
   storageEntryTree: StorageEntry = {};

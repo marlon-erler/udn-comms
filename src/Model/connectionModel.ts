@@ -3,7 +3,7 @@
 import UDNFrontend, { Message } from "udn-frontend";
 
 import { ChatMessage } from "./chatModel";
-import { stringify } from "../utility";
+import { stringify } from "./Utility/utility";
 
 export default class ConnectionModel {
   // basic
