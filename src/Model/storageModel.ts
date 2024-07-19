@@ -3,7 +3,9 @@
 import { parse, stringify } from "../utility";
 
 export default class StorageModel {
-  storageEntryTree: StorageEntry = {}; // basic
+  storageEntryTree: StorageEntry = {};
+
+  // basic
   store = (pathComponents: string[], value: string): void => {
     const key = this.pathComponentsToKey(...pathComponents);
     localStorage.setItem(key, value);
@@ -29,20 +31,17 @@ export default class StorageModel {
     return [...Object.keys(currentParent)];
   };
 
-  // array
-  storeArray = (pathComponents: string[], value: any[]): void => {
+  // stringifiable
+  storeStringifiable = (pathComponents: string[], value: any[]): void => {
     const valueString = stringify(value);
     this.store(pathComponents, valueString);
   };
 
-  restoreArray = (pathComponents: string[]): any[] | null => {
+  restoreStringifiable = (pathComponents: string[]): any | null => {
     const valueString = this.restore(pathComponents);
     if (!valueString) return null;
 
-    const parsed = parse(valueString);
-    if (!Array.isArray(parsed)) return null;
-
-    return parsed;
+    return parse(valueString);
   };
 
   // init
@@ -96,4 +95,5 @@ export const storageKeys = {
   chatInfo: (id: string) => `v2/chat/${id}/info`,
   chatMessages: (id: string) => `v2/chat/${id}/messages`,
   chatObjects: (id: string) => `v2/chat/${id}/objects`,
+  chatOutbox: (id: string) => `v2/chat/${id}/outbox`,
 };
