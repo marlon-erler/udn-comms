@@ -1,27 +1,43 @@
-import * as React from 'bloatless-react';
+import * as React from "bloatless-react";
 
-import ConnectionModel from '../Model/connectionModel';
-
-// model
-const connectionModel = new ConnectionModel();
+import ConnectionModel from "../Model/connectionModel";
 
 // state
-const address = new React.State("");
+const addressInput = React.restoreState("maintenance-address", "");
+const connectedAddress = new React.State("");
+const isConnected = new React.State(false);
+
+// model
+const connectionModel = new ConnectionModel({
+  connectionChangeHandler() {
+    isConnected.value = connectionModel.isConnected;
+    connectedAddress.value = connectionModel.address ?? "---";
+  },
+  messageHandler(data) {
+    console.log(data);
+  },
+});
 
 // methods
 function connect() {
-    connectionModel.connect(address.value);
+  connectionModel.connect(addressInput.value);
 }
 
 function disconnect() {
-    connectionModel.disconnect();
+  connectionModel.disconnect();
 }
 
 // view
 document.querySelector("main")!.append(
-    <div class="flex-column">
-        <input bind:value={address}></input>
-        <button on:click={connect}>Connect</button>
-        <button on:click={disconnect}>Disconnect</button>
-    </div>
-)
+  <div class="flex-column">
+    <input bind:value={addressInput}></input>
+    <button on:click={connect} toggle:disabled={isConnected}>
+      Connect
+    </button>
+    <button on:click={disconnect}>Disconnect</button>
+
+    <hr></hr>
+
+    <span subscribe:innerText={connectedAddress}></span>
+  </div>
+);

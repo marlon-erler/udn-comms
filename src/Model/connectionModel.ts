@@ -37,13 +37,27 @@ export default class ConnectionModel {
     return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
   };
 
-  handleMessage = (data: Message) => {};
-
   // setup
-  constructor() {
+  constructor(configuration: ConnectionModelConfiguration) {
+    // create frontend
     this.udn = new UDNFrontend();
-    this.udn.onmessage = this.handleMessage;
-    this.udn.onconnect = this.handleConnectionChange;
-    this.udn.ondisconnect = this.handleConnectionChange;
+
+    // setup handlers
+    this.udn.onmessage = (data: Message) => {
+        configuration.messageHandler(data);
+    };
+    this.udn.onconnect = () => {
+        this.handleConnectionChange();
+        configuration.connectionChangeHandler();
+    };
+    this.udn.ondisconnect = () => {
+        this.handleConnectionChange();
+        configuration.connectionChangeHandler();
+    };
   }
+}
+
+export interface ConnectionModelConfiguration {
+  connectionChangeHandler: () => void;
+  messageHandler: (data: Message) => void;
 }

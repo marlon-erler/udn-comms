@@ -32,6 +32,19 @@
       return JSON.stringify(this._value);
     }
   };
+  function persistState(localStorageKey, state) {
+    state.subscribe(() => {
+      const stringifiedValue = state.toString();
+      localStorage.setItem(localStorageKey, stringifiedValue);
+    });
+  }
+  function restoreState(localStorageKey, initialStateValue) {
+    const storedString = localStorage.getItem(localStorageKey) ?? JSON.stringify(initialStateValue);
+    const convertedValue = JSON.parse(storedString);
+    const state = new State(convertedValue);
+    persistState(localStorageKey, state);
+    return state;
+  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -176,10 +189,10 @@
     }
     // PUBLIC METHODS
     // connection
-    connect(address2) {
+    connect(address) {
       try {
         this.disconnect();
-        this.ws = new WebSocket(address2);
+        this.ws = new WebSocket(address);
         this.ws.addEventListener("open", this.connectionHandler);
         this.ws.addEventListener("close", this.disconnectionHandler);
         this.ws.addEventListener("message", (message) => {
@@ -261,8 +274,8 @@
       return this.udn.ws?.url;
     }
     // connection
-    connect = (address2) => {
-      this.udn.connect(address2);
+    connect = (address) => {
+      this.udn.connect(address);
     };
     disconnect = () => {
       this.udn.disconnect();
@@ -275,27 +288,43 @@
       const stringifiedBody = stringify(chatMessage);
       return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
     };
-    handleMessage = (data) => {
-    };
     // setup
-    constructor() {
+    constructor(configuration) {
       this.udn = new UDNFrontend();
-      this.udn.onmessage = this.handleMessage;
-      this.udn.onconnect = this.handleConnectionChange;
-      this.udn.ondisconnect = this.handleConnectionChange;
+      this.udn.onmessage = (data) => {
+        configuration.messageHandler(data);
+      };
+      this.udn.onconnect = () => {
+        this.handleConnectionChange();
+        configuration.connectionChangeHandler();
+      };
+      this.udn.ondisconnect = () => {
+        this.handleConnectionChange();
+        configuration.connectionChangeHandler();
+      };
     }
   };
 
   // src/View/maintenance.tsx
-  var connectionModel = new ConnectionModel();
-  var address = new State("");
+  var addressInput = restoreState("maintenance-address", "");
+  var connectedAddress = new State("");
+  var isConnected = new State(false);
+  var connectionModel = new ConnectionModel({
+    connectionChangeHandler() {
+      isConnected.value = connectionModel.isConnected;
+      connectedAddress.value = connectionModel.address ?? "---";
+    },
+    messageHandler(data) {
+      console.log(data);
+    }
+  });
   function connect() {
-    connectionModel.connect(address.value);
+    connectionModel.connect(addressInput.value);
   }
   function disconnect() {
     connectionModel.disconnect();
   }
   document.querySelector("main").append(
-    /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("input", { "bind:value": address }), /* @__PURE__ */ createElement("button", { "on:click": connect }, "Connect"), /* @__PURE__ */ createElement("button", { "on:click": disconnect }, "Disconnect"))
+    /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("input", { "bind:value": addressInput }), /* @__PURE__ */ createElement("button", { "on:click": connect, "toggle:disabled": isConnected }, "Connect"), /* @__PURE__ */ createElement("button", { "on:click": disconnect }, "Disconnect"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { "subscribe:innerText": connectedAddress }))
   );
 })();
