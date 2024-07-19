@@ -1,8 +1,10 @@
 import {
   ChatMessage,
   ChatObject,
-  MessageObjectContent,
-} from "../Model/chatTypes";
+  ChatObjectContent,
+} from "../Model/chatModel";
+
+import { v4 } from "uuid";
 
 // ChatMessage
 export interface ChatMessageV1 {
@@ -20,6 +22,8 @@ export function upgradeMessageFromV1(
   const { channel, sender, body, isoDate, messageObjectString } = chatMessageV1;
   return {
     dataVersion: "v2",
+
+    id: v4(),
 
     channel,
     sender,
@@ -41,7 +45,7 @@ export function upgradeMessageObjectFromV1(
 ): ChatObject {
   const { id, title, contentVersions } = messageObjectV1;
 
-  const upgradedContentVersions: { [key: string]: MessageObjectContent } = {};
+  const upgradedContentVersions: { [key: string]: ChatObjectContent } = {};
   for (const entry of Object.entries(contentVersions)) {
     const [id, object] = entry;
     const upgraded = upgradeMessageObjectContentFromV1(object);
@@ -73,7 +77,7 @@ export interface MessageObjectContentV1 {
 
 export function upgradeMessageObjectContentFromV1(
   messageObjectContentV1: MessageObjectContentV1
-): MessageObjectContent {
+): ChatObjectContent {
   const {
     isoDateVersionCreated,
     id,

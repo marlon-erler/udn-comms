@@ -33,7 +33,7 @@ export default class ConnectionModel {
 
   // messaging
   sendChatMessage = (chatMessage: ChatMessage): boolean => {
-    const stringifiedBody = stringify(chatMessage);
+    const stringifiedBody: string = stringify(chatMessage);
     return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
   };
 

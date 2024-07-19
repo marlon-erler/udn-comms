@@ -2,13 +2,15 @@
 
 import { parse, stringify } from "../utility";
 
+import { DATA_VERSION } from "../typeSafety";
+
 export default class StorageModel {
   storageEntryTree: StorageEntry = {};
 
   // basic
   store = (key: string, value: string): void => {
     localStorage.setItem(key, value);
-    const pathComponents = this.keyToPathComponents(key);
+    const pathComponents: string[] = StorageModel.keyToPathComponents(key);
     this.updateTree(...pathComponents);
   };
 
@@ -21,9 +23,9 @@ export default class StorageModel {
   };
 
   list = (key: string): string[] => {
-    const pathComponents = this.keyToPathComponents(key);
-    
-    let currentParent = this.storageEntryTree;
+    const pathComponents: string[] = StorageModel.keyToPathComponents(key);
+
+    let currentParent: StorageEntry = this.storageEntryTree;
     for (const component of pathComponents) {
       currentParent = currentParent[component];
     }
@@ -32,13 +34,13 @@ export default class StorageModel {
   };
 
   // stringifiable
-  storeStringifiable = (key: string, value: any[]): void => {
-    const valueString = stringify(value);
+  storeStringifiable = (key: string, value: any): void => {
+    const valueString: string = stringify(value);
     this.store(key, valueString);
   };
 
   restoreStringifiable = (key: string): any | null => {
-    const valueString = this.restore(key);
+    const valueString: string | null = this.restore(key);
     if (!valueString) return null;
 
     return parse(valueString);
@@ -47,14 +49,14 @@ export default class StorageModel {
   // init
   constructor() {
     for (const key of Object.keys(localStorage)) {
-      const components = this.keyToPathComponents(key);
+      const components: string[] = StorageModel.keyToPathComponents(key);
       this.updateTree(...components);
     }
   }
 
   // utility
   updateTree = (...pathComponents: string[]) => {
-    let currentParent = this.storageEntryTree;
+    let currentParent: StorageEntry = this.storageEntryTree;
     for (const pathPart of pathComponents) {
       if (!currentParent[pathPart]) {
         currentParent[pathPart] = {};
@@ -64,12 +66,21 @@ export default class StorageModel {
     }
   };
 
-  pathComponentsToKey = (...pathComponents: string[]): string => {
+  static pathComponentsToKey = (...pathComponents: string[]): string => {
     return pathComponents.join("/");
   };
 
-  keyToPathComponents = (key: string): string[] => {
+  static keyToPathComponents = (key: string): string[] => {
     return key.split("/");
+  };
+
+  static join = (...items: string[]): string => {
+    let allComponents: string[] = [];
+    for (const item of items) {
+      const parts = this.keyToPathComponents(item);
+      allComponents.push(...parts);
+    }
+    return StorageModel.pathComponentsToKey(...allComponents);
   };
 }
 
@@ -79,21 +90,21 @@ export type StorageEntry = { [key: string]: StorageEntry };
 // keys
 export const storageKeys = {
   // connection
-  socketAddress: "v2/connection/socket-address",
+  socketAddress: `${DATA_VERSION}/connection/socket-address`,
 
   // settings
-  userName: "v2/settings/user-name",
-  firstDayOfWeek: "v2/settings/first-day-of-week",
+  userName: `${DATA_VERSION}/settings/user-name`,
+  firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
 
   // history
-  previousAddresses: "v2/history/previous-addresses",
-  previousObjectCategories: "v2/history/object-categories",
-  previousObjectStatuses: "v2/history/object-statuses",
-  previousObjectFilters: "v2/history/object-filters",
+  previousAddresses: `${DATA_VERSION}/history/previous-addresses`,
+  previousObjectCategories: `${DATA_VERSION}/history/object-categories`,
+  previousObjectStatuses: `${DATA_VERSION}/history/object-statuses`,
+  previousObjectFilters: `${DATA_VERSION}/history/object-filters`,
 
   // chat etc
-  chatInfo: (id: string) => `v2/chat/${id}/info`,
-  chatMessages: (id: string) => `v2/chat/${id}/messages`,
-  chatObjects: (id: string) => `v2/chat/${id}/objects`,
-  chatOutbox: (id: string) => `v2/chat/${id}/outbox`,
+  chatInfo: (id: string) => `${DATA_VERSION}/chat/${id}/info`,
+  chatMessages: (id: string) => `${DATA_VERSION}/chat/${id}/messages`,
+  chatObjects: (id: string) => `${DATA_VERSION}/chat/${id}/objects`,
+  chatOutbox: (id: string) => `${DATA_VERSION}/chat/${id}/outbox`,
 };
