@@ -95,7 +95,7 @@ export const storageKeys = {
   socketAddress: `${DATA_VERSION}/connection/socket-address`,
 
   // settings
-  userName: `${DATA_VERSION}/settings/user-name`,
+  username: `${DATA_VERSION}/settings/user-name`,
   firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
 
   // history
