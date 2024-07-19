@@ -10,15 +10,7 @@ const englishTranslations = {
   discard: "Discard",
   rename: "Rename",
 
-  weekdays: [
-    "Sun",
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-  ],
+  weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   previousMonth: "previous month",
   nextMonth: "next month",
 
@@ -163,15 +155,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Descartar",
     rename: "Renombrar",
 
-    weekdays: [
-      "Dom",
-      "Lun",
-      "Mar",
-      "Mié",
-      "Jue",
-      "Vie",
-      "Sáb",
-    ],
+    weekdays: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    previousMonth: "Último mes",
+    nextMonth: "Próximo mes",
 
     // settings
     settings: "Configuración",
@@ -311,15 +297,9 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Verwerfen",
     rename: "Umbenennen",
 
-    weekdays: [
-      "So",
-      "Mo",
-      "Di",
-      "Mi",
-      "Do",
-      "Fr",
-      "Sa",
-    ],
+    weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+    previousMonth: "Vorheriger Monat",
+    nextMonth: "Nächster Monat",
 
     // settings
     settings: "Einstellungen",

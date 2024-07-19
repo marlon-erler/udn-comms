@@ -440,15 +440,7 @@
     close: "Close",
     discard: "Discard",
     rename: "Rename",
-    weekdays: [
-      "Sun",
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat"
-    ],
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     previousMonth: "previous month",
     nextMonth: "next month",
     // settings
@@ -558,15 +550,9 @@
       close: "Cerrar",
       discard: "Descartar",
       rename: "Renombrar",
-      weekdays: [
-        "Dom",
-        "Lun",
-        "Mar",
-        "Mi\xE9",
-        "Jue",
-        "Vie",
-        "S\xE1b"
-      ],
+      weekdays: ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"],
+      previousMonth: "\xDAltimo mes",
+      nextMonth: "Pr\xF3ximo mes",
       // settings
       settings: "Configuraci\xF3n",
       showSettings: "Mostrar configuraci\xF3n",
@@ -672,15 +658,9 @@
       close: "Schlie\xDFen",
       discard: "Verwerfen",
       rename: "Umbenennen",
-      weekdays: [
-        "So",
-        "Mo",
-        "Di",
-        "Mi",
-        "Do",
-        "Fr",
-        "Sa"
-      ],
+      weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+      previousMonth: "Vorheriger Monat",
+      nextMonth: "N\xE4chster Monat",
       // settings
       settings: "Einstellungen",
       showSettings: "Einstellungen anzeigen",
@@ -2317,7 +2297,8 @@
     }
     function applyFilter() {
       appliedFilter.value = objectFilterInput.value;
-      previousObjectSearches.add(appliedFilter.value);
+      if (!previousObjectSearches.value.has(appliedFilter.value))
+        previousObjectSearches.add(appliedFilter.value);
       const allObjects = [...chat.objects.value.values()];
       allObjects.forEach((object, i) => {
         const doesMatch = checkIfMatchesFilter(object);
