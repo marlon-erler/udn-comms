@@ -12,7 +12,7 @@ interface KanbanBoard {
 
 interface KanbanBoardItem {
   priority: number;
-  messageObject: MessageObject;
+  messageObject: MessageObjectWithIndex;
 }
 
 export function KanbanView(

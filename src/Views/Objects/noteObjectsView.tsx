@@ -10,7 +10,7 @@ export function NoteObjectsView(
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const notes = new React.ListState<MessageObject>();
+  const notes = new React.ListState<MessageObjectWithIndex>();
   messageObjects.handleAddition((messageObject) => {
     const latest = chat.getMostRecentContent(messageObject);
     if (!latest.noteContent) return;

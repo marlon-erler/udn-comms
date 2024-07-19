@@ -18,7 +18,7 @@ interface StatusColumn {
 interface StatusCellItem {
   priority: number;
   status: string;
-  messageObject: MessageObject;
+  messageObject: MessageObjectWithIndex;
 }
 
 // data only
