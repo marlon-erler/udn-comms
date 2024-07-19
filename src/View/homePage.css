@@ -1,8 +1,11 @@
 #home-page > div {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 
   gap: var(--large-gap);
+
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
 }
 
 #home-page > div > div {
@@ -13,21 +16,30 @@
   gap: var(--gap-between-tiles);
 
   width: 100%;
-  flex: 1;
+  min-width: 100%;
+
+  scroll-snap-align: center;
 }
 
-#home-page #overview-section {
-  max-width: var(--max-input-width);
+@media (min-width: 640px) {
+  #home-page #overview-section {
+    width: 20rem;
+    min-width: 20rem;
+  }
+
+  #home-page #chat-section {
+    flex: 1;
+    min-width: unset;
+  }
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1200px) {
   #home-page > div {
-    flex-direction: row;
-
     gap: 8rem;
   }
 
   #home-page #overview-section {
     width: var(--max-input-width);
+    min-width: var(--max-input-width);
   }
 }

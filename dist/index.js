@@ -309,16 +309,6 @@
     )))));
   }
 
-  // src/View/mainPage.tsx
-  function MainPage() {
-    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null));
-  }
-
-  // src/View/setingsModal.tsx
-  function SetttingsModal() {
-    return /* @__PURE__ */ createElement("div", { class: "modal" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.settings.settingsHeadline)), /* @__PURE__ */ createElement("button", null, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-  }
-
   // src/Model/Utility/typeSafety.ts
   var DATA_VERSION = "v2";
 
@@ -415,5 +405,5 @@
     messageHandler(data) {
     }
   });
-  document.querySelector("main").append(HomePage(), MainPage(), SetttingsModal());
+  document.querySelector("main").append(HomePage());
 })();

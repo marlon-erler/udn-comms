@@ -1,7 +1,6 @@
 import ConnectionModel from "./Model/connectionModel";
 import { HomePage } from "./View/homePage";
 import { MainPage } from "./View/mainPage";
-import { SetttingsModal } from "./View/setingsModal";
 import StorageModel from "./Model/storageModel";
 
 // models
@@ -14,4 +13,4 @@ const connectionModel = new ConnectionModel({
 // view
 document
   .querySelector("main")!
-  .append(HomePage(), MainPage(), SetttingsModal());
+  .append(HomePage());
