@@ -49,6 +49,19 @@ export interface MessageObjectContent {
   time?: string;
 }
 
+export interface MessageObjectWithIndex extends MessageObject {
+  index: React.State<number>;
+}
+
+export class MessageObjectWithIndex implements MessageObjectWithIndex {
+  constructor(messageObject: MessageObject, index: number = 0) {
+    this.id = messageObject.id;
+    this.title = messageObject.title;
+    this.contentVersions = messageObject.contentVersions;
+    this.index = new React.State(index);
+  }
+}
+
 // chat
 export class Chat {
   id: string;

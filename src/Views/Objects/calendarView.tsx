@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { DayView } from "./dayView";
 import { MiniatureDayView } from "./miniatureDayView";
@@ -9,7 +9,7 @@ import { translation } from "../../translations";
 
 export function CalendarView(
   chat: Chat,
-  messageObjects: React.MapState<MessageObject>,
+  messageObjects: React.MapState<MessageObjectWithIndex>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {

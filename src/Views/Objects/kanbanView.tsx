@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
 import { RenameView } from "../renameView";
@@ -17,7 +17,7 @@ interface KanbanBoardItem {
 
 export function KanbanView(
   chat: Chat,
-  messageObjects: React.MapState<MessageObject>,
+  messageObjects: React.MapState<MessageObjectWithIndex>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
@@ -116,14 +116,12 @@ function KanbanBoardView(
   const itemToViewEntry: React.StateItemConverter<KanbanBoardItem> = (
     kanbanBoardItem
   ) => {
-    const view = ObjectEntryView(
+    return ObjectEntryView(
       chat,
       kanbanBoardItem.messageObject,
       selectedObject,
       isShowingObjectModal
     );
-    view.style.order = kanbanBoardItem.priority * -1;
-    return view;
   };
 
   return (

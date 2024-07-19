@@ -1,6 +1,11 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import {
+  Chat,
+  MessageObject,
+  MessageObjectWithIndex,
+} from "../../Model/chatModel";
+import { getRawObjectIndex, stringToOptionTag } from "../../utility";
 import { objectFilterInput, previousObjectSearches } from "../../Model/model";
 
 import { AllObjectsView } from "./allObjectsView";
@@ -11,7 +16,6 @@ import { ObjectDetailModal } from "./objectDetailModal";
 import { ObjectGridView } from "./objectGridView";
 import { StatusView } from "./statusView";
 import { icons } from "../../icons";
-import { stringToOptionTag } from "../../utility";
 import { translation } from "../../translations";
 
 export const viewTypes = {
@@ -51,7 +55,7 @@ export function ObjectPane(chat: Chat) {
   const resultText = React.createProxyState([appliedFilter, resultCount], () =>
     translation.searchTitleText(appliedFilter.value, resultCount.value)
   );
-  const showingMessageObjects = new React.MapState<MessageObject>();
+  const visibleMessageObjects = new React.MapState<MessageObjectWithIndex>();
   const isFilterEmpty = React.createProxyState(
     [appliedFilter],
     () => appliedFilter.value == ""
@@ -68,22 +72,22 @@ export function ObjectPane(chat: Chat) {
       previousObjectSearches.add(appliedFilter.value);
 
     const allObjects = [...chat.objects.value.values()];
-    allObjects.forEach((object, i) => {
-      const doesMatch = checkIfMatchesFilter(object);
+    allObjects.forEach((messageObject, i) => {
+      const doesMatch = checkIfMatchesFilter(messageObject);
       if (doesMatch) {
-        showingMessageObjects.set(object.id, object);
+        visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
       } else {
-        showingMessageObjects.remove(object.id);
+        visibleMessageObjects.remove(messageObject.id);
       }
     });
-    resultCount.value = showingMessageObjects.value.size;
+    resultCount.value = visibleMessageObjects.value.size;
   }
 
   chat.objects.handleAddition((messageObject) => {
     if (checkIfMatchesFilter(messageObject) == false) return;
-    showingMessageObjects.set(messageObject.id, messageObject);
+    visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
     chat.objects.handleRemoval(messageObject, () => {
-      showingMessageObjects.remove(messageObject.id);
+      visibleMessageObjects.remove(messageObject.id);
     });
   });
 
@@ -122,6 +126,21 @@ export function ObjectPane(chat: Chat) {
 
   applyFilter();
 
+  // sorting
+  visibleMessageObjects.subscribe((visibleMessageObjects) => {
+    let indices = [...visibleMessageObjects.values()]
+      .map((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        return getRawObjectIndex(latest);
+      })
+      .sort();
+
+    visibleMessageObjects.forEach((messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      messageObject.index.value = indices.indexOf(getRawObjectIndex(latest));
+    });
+  });
+
   // view
   const objectModal = React.createProxyState(
     [chat.objects, selectedObject],
@@ -154,7 +173,7 @@ export function ObjectPane(chat: Chat) {
 
     return getViewFunction()(
       chat,
-      showingMessageObjects,
+      visibleMessageObjects,
       selectedObject,
       isShowingObjectModal
     );
@@ -238,7 +257,7 @@ export function ObjectPane(chat: Chat) {
 
             {ObjectGridView(
               chat,
-              showingMessageObjects,
+              visibleMessageObjects,
               selectedObject,
               isShowingObjectModal
             )}

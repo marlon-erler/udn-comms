@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
 import { RenameView } from "../renameView";
@@ -29,7 +29,7 @@ interface StatusData {
 
 export function StatusView(
   chat: Chat,
-  messageObjects: React.MapState<MessageObject>,
+  messageObjects: React.MapState<MessageObjectWithIndex>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {

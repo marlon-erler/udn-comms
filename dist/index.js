@@ -427,6 +427,19 @@
   var stringToOptionTag = (value) => {
     return /* @__PURE__ */ createElement("option", null, value);
   };
+  function getRawObjectIndex(latest) {
+    const dateString = latest.date || "0000-00-00";
+    const [year, month, date] = dateString.split("-");
+    const timeString = latest.time || "00:00";
+    const [hour, minute] = timeString.split(":");
+    const hourInMinutes = parseInt(hour) * 60;
+    const minutesTotal = parseInt(minute) + hourInMinutes;
+    const paddedMinutes = minutesTotal.toString().padStart(4, "0");
+    const priority = latest.priority ?? 0;
+    const priorityInverse = 100 - priority;
+    const paddedPriority = priorityInverse.toString().padStart(3, "0");
+    return `${year}${month}${date}${paddedMinutes}${paddedPriority}`;
+  }
 
   // src/translations.ts
   var englishTranslations = {
@@ -760,6 +773,14 @@
   var translation = allTranslations[language] ?? allTranslations.en;
 
   // src/Model/chatModel.ts
+  var MessageObjectWithIndex = class {
+    constructor(messageObject, index = 0) {
+      this.id = messageObject.id;
+      this.title = messageObject.title;
+      this.contentVersions = messageObject.contentVersions;
+      this.index = new State(index);
+    }
+  };
   var Chat = class {
     id;
     viewType;
@@ -1582,7 +1603,7 @@
       const [icon, value] = field;
       return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap flex align-center padding-right ellipsis" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), /* @__PURE__ */ createElement("span", { class: "ellipsis" }, value));
     });
-    return /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement(
       "button",
       {
         class: "tile flex-no",
@@ -1599,6 +1620,10 @@
         ...fieldElements
       ))
     );
+    messageObject.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
   }
 
   // src/Views/Objects/objectGridView.tsx
@@ -1652,22 +1677,12 @@
       messageObjects.value.forEach(processObject);
     });
     const objectConverter = (messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time || "00:00";
-      const [hour, minute] = timeString.split(":");
-      const hourInMinutes = parseInt(hour) * 60;
-      const minutesTotal = parseInt(minute) + hourInMinutes;
-      const priority = latest.priority ?? 0;
-      const priorityInverse = 100 - priority;
-      const order = `${minutesTotal}${priorityInverse}`;
-      const view = ObjectEntryView(
+      return ObjectEntryView(
         chat,
         messageObject,
         selectedObject,
         isShowingObjectModal
       );
-      view.style.order = order;
-      return view;
     };
     return /* @__PURE__ */ createElement(
       "div",
@@ -1701,16 +1716,10 @@
     const isToday = today.getDate() == dateObject.getUTCDate() && today.getMonth() == dateObject.getUTCMonth() && today.getFullYear() == dateObject.getUTCFullYear();
     messageObjects.handleAddition(processObject);
     const objectConverter = (messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time || "00:00";
-      const [hour, minute] = timeString.split(":");
-      const hourInMinutes = parseInt(hour) * 60;
-      const minutesTotal = parseInt(minute) + hourInMinutes;
-      const priority = latest.priority ?? 0;
-      const priorityInverse = 100 - priority;
-      const order = `${minutesTotal}${priorityInverse}`;
       const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
-      view.style.order = order;
+      messageObject.index.subscribe((newIndex) => {
+        view.style.order = newIndex;
+      });
       return view;
     };
     return /* @__PURE__ */ createElement(
@@ -1774,7 +1783,6 @@
       monthGridCells.value = [];
       currentDate.setUTCDate(1);
       currentDate.setUTCMonth(newSelectedDate.getMonth());
-      console.log(currentDate);
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
           /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
@@ -1917,14 +1925,12 @@
       chat.addObjectAndSend(messageObject);
     }
     const itemToViewEntry = (kanbanBoardItem) => {
-      const view = ObjectEntryView(
+      return ObjectEntryView(
         chat,
         kanbanBoardItem.messageObject,
         selectedObject,
         isShowingObjectModal
       );
-      view.style.order = kanbanBoardItem.priority * -1;
-      return view;
     };
     return /* @__PURE__ */ createElement(
       "div",
@@ -2291,7 +2297,7 @@
       [appliedFilter, resultCount],
       () => translation.searchTitleText(appliedFilter.value, resultCount.value)
     );
-    const showingMessageObjects = new MapState();
+    const visibleMessageObjects = new MapState();
     const isFilterEmpty = createProxyState(
       [appliedFilter],
       () => appliedFilter.value == ""
@@ -2305,21 +2311,21 @@
       if (!previousObjectSearches.value.has(appliedFilter.value))
         previousObjectSearches.add(appliedFilter.value);
       const allObjects = [...chat.objects.value.values()];
-      allObjects.forEach((object, i) => {
-        const doesMatch = checkIfMatchesFilter(object);
+      allObjects.forEach((messageObject, i) => {
+        const doesMatch = checkIfMatchesFilter(messageObject);
         if (doesMatch) {
-          showingMessageObjects.set(object.id, object);
+          visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
         } else {
-          showingMessageObjects.remove(object.id);
+          visibleMessageObjects.remove(messageObject.id);
         }
       });
-      resultCount.value = showingMessageObjects.value.size;
+      resultCount.value = visibleMessageObjects.value.size;
     }
     chat.objects.handleAddition((messageObject) => {
       if (checkIfMatchesFilter(messageObject) == false) return;
-      showingMessageObjects.set(messageObject.id, messageObject);
+      visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
       chat.objects.handleRemoval(messageObject, () => {
-        showingMessageObjects.remove(messageObject.id);
+        visibleMessageObjects.remove(messageObject.id);
       });
     });
     function checkIfMatchesFilter(messageObject) {
@@ -2347,6 +2353,16 @@
       return true;
     }
     applyFilter();
+    visibleMessageObjects.subscribe((visibleMessageObjects2) => {
+      let indices = [...visibleMessageObjects2.values()].map((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        return getRawObjectIndex(latest);
+      }).sort();
+      visibleMessageObjects2.forEach((messageObject) => {
+        const latest = chat.getMostRecentContent(messageObject);
+        messageObject.index.value = indices.indexOf(getRawObjectIndex(latest));
+      });
+    });
     const objectModal = createProxyState(
       [chat.objects, selectedObject],
       () => {
@@ -2375,7 +2391,7 @@
       }
       return getViewFunction()(
         chat,
-        showingMessageObjects,
+        visibleMessageObjects,
         selectedObject,
         isShowingObjectModal
       );
@@ -2432,7 +2448,7 @@
       translation.reset
     ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("b", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
       chat,
-      showingMessageObjects,
+      visibleMessageObjects,
       selectedObject,
       isShowingObjectModal
     )), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));

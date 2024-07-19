@@ -1,18 +1,18 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { ObjectEntryView } from "./objectEntryView";
 
 export function ObjectGridView(
   chat: Chat,
   messageObjects:
-    | React.ListState<MessageObject>
-    | React.MapState<MessageObject>,
+    | React.ListState<MessageObjectWithIndex>
+    | React.MapState<MessageObjectWithIndex>,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
-  const objectConverter: React.StateItemConverter<MessageObject> = (
+  const objectConverter: React.StateItemConverter<MessageObjectWithIndex> = (
     messageObject
   ) => {
     return ObjectEntryView(

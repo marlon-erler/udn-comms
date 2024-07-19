@@ -1,7 +1,6 @@
 import * as React from "bloatless-react";
 
-import { MessageObject } from "./Model/chatModel";
-import { ObjectEntryView } from "./Views/Objects/objectEntryView";
+import { MessageObjectContent } from "./Model/chatModel";
 
 export const storageKeys = {
   viewType(id: string): string {
@@ -48,3 +47,25 @@ export const storageKeys = {
 export const stringToOptionTag: React.StateItemConverter<string> = (value) => {
   return <option>{value}</option>;
 };
+
+export function getRawObjectIndex(latest: MessageObjectContent): string {
+  // date
+  const dateString = latest.date || "0000-00-00";
+  const [year, month, date] = dateString.split("-")
+
+  // time
+  const timeString = latest.time || "00:00";
+  const [hour, minute] = timeString.split(":");
+
+  const hourInMinutes = parseInt(hour) * 60;
+  const minutesTotal = parseInt(minute) + hourInMinutes;
+  const paddedMinutes = minutesTotal.toString().padStart(4, "0")
+
+  // priority
+  const priority = latest.priority ?? 0;
+  const priorityInverse = 100 - priority;
+  const paddedPriority = priorityInverse.toString().padStart(3, "0");
+
+  // final
+  return `${year}${month}${date}${paddedMinutes}${paddedPriority}`;
+}

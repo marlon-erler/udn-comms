@@ -4,13 +4,14 @@ import {
   Chat,
   MessageObject,
   MessageObjectContent,
+  MessageObjectWithIndex,
 } from "../../Model/chatModel";
 
 import { icons } from "../../icons";
 
 export function ObjectEntryView(
   chat: Chat,
-  messageObject: MessageObject,
+  messageObject: MessageObjectWithIndex,
   selectedObject: React.State<MessageObject | undefined>,
   isShowingObjectModal: React.State<boolean>
 ) {
@@ -54,7 +55,7 @@ export function ObjectEntryView(
     );
   });
 
-  return (
+  const view = (
     <button
       class="tile flex-no"
       on:click={select}
@@ -73,4 +74,8 @@ export function ObjectEntryView(
       </div>
     </button>
   );
+  messageObject.index.subscribe(newIndex => {
+    view.style.order = newIndex;
+  })
+  return view;
 }

@@ -1,21 +1,22 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject } from "../../Model/chatModel";
+import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { dayInCalendar } from "../../Model/model";
+import { getRawObjectIndex } from "../../utility";
 
 export function MiniatureDayView(
   chat: Chat,
   messageObjects:
-    | React.ListState<MessageObject>
-    | React.MapState<MessageObject>,
+    | React.ListState<MessageObjectWithIndex>
+    | React.MapState<MessageObjectWithIndex>,
   dateObject: Date
 ) {
   const objectsForDayView = new React.ListState<MessageObject>();
 
   const dateString = dateObject.toISOString().split("T")[0];
 
-  function processObject(messageObject: MessageObject) {
+  function processObject(messageObject: MessageObjectWithIndex) {
     const latest = chat.getMostRecentContent(messageObject);
     if (!latest.date || latest.date != dateString) return;
 
@@ -41,24 +42,17 @@ export function MiniatureDayView(
 
   messageObjects.handleAddition(processObject);
 
-  const objectConverter: React.StateItemConverter<MessageObject> = (
+  const objectConverter: React.StateItemConverter<MessageObjectWithIndex> = (
     messageObject
   ) => {
-    const latest = chat.getMostRecentContent(messageObject);
-    const timeString = latest.time || "00:00";
-    const [hour, minute] = timeString.split(":");
-    const hourInMinutes = parseInt(hour) * 60;
-    const minutesTotal = parseInt(minute) + hourInMinutes;
-    const priority = latest.priority ?? 0;
-    const priorityInverse = 100 - priority;
-    const order = `${minutesTotal}${priorityInverse}`;
-
     const view = (
       <span class="secondary ellipsis">
         {chat.getObjectTitle(messageObject)}
       </span>
     );
-    view.style.order = order;
+    messageObject.index.subscribe(newIndex => {
+      view.style.order = newIndex;
+    })
     return view;
   };
 
