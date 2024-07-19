@@ -64,7 +64,8 @@ export function ObjectPane(chat: Chat) {
 
   function applyFilter() {
     appliedFilter.value = objectFilterInput.value;
-    previousObjectSearches.add(appliedFilter.value);
+    if (!previousObjectSearches.value.has(appliedFilter.value))
+      previousObjectSearches.add(appliedFilter.value);
 
     const allObjects = [...chat.objects.value.values()];
     allObjects.forEach((object, i) => {
