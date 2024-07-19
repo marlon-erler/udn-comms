@@ -70,7 +70,7 @@ export function CalendarView(
     }
 
     // create blank dates starting sunday
-    const monthOffset = currentDate.getDay() - 1;
+    const monthOffset = currentDate.getDay();
     for (let i = 0; i < monthOffset; i++) {
       monthGridCells.value.push(<div></div>);
     }

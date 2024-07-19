@@ -1795,7 +1795,7 @@
           /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
         );
       }
-      const monthOffset = currentDate.getDay() - 1;
+      const monthOffset = currentDate.getDay();
       for (let i = 0; i < monthOffset; i++) {
         monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
       }
