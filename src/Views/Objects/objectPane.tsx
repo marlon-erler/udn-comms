@@ -1,18 +1,18 @@
 import * as React from "bloatless-react";
 
 import { Chat, MessageObject } from "../../Model/chatModel";
+import { objectFilterInput, previousObjectSearches } from "../../Model/model";
 
 import { AllObjectsView } from "./allObjectsView";
+import { CalendarView } from "./calendarView";
 import { KanbanView } from "./kanbanView";
 import { NoteObjectsView } from "./noteObjectsView";
 import { ObjectDetailModal } from "./objectDetailModal";
 import { ObjectGridView } from "./objectGridView";
 import { StatusView } from "./statusView";
 import { icons } from "../../icons";
-import { translation } from "../../translations";
-import { previousObjectSearches } from "../../Model/model";
 import { stringToOptionTag } from "../../utility";
-import { CalendarView } from "./calendarView";
+import { translation } from "../../translations";
 
 export const viewTypes = {
   all: [translation.viewAll, "grid_view"],
@@ -46,7 +46,6 @@ export function ObjectPane(chat: Chat) {
   }
 
   // filter
-  const filterInput = new React.State("");
   const appliedFilter = new React.State("");
   const resultCount = new React.State(0);
   const resultText = React.createProxyState([appliedFilter, resultCount], () =>
@@ -59,12 +58,12 @@ export function ObjectPane(chat: Chat) {
   );
 
   function resetFilter() {
-    filterInput.value = "";
+    objectFilterInput.value = "";
     applyFilter();
   }
 
   function applyFilter() {
-    appliedFilter.value = filterInput.value;
+    appliedFilter.value = objectFilterInput.value;
     previousObjectSearches.add(appliedFilter.value);
 
     const allObjects = [...chat.objects.value.values()];
@@ -202,7 +201,7 @@ export function ObjectPane(chat: Chat) {
                 <div>
                   <span>{translation.searchTitle}</span>
                   <input
-                    bind:value={filterInput}
+                    bind:value={objectFilterInput}
                     on:enter={applyFilter}
                     placeholder={translation.searchPlaceholder}
                     list="object-searches"

@@ -1330,6 +1330,7 @@
   var isEncryptionAvailable = window.crypto.subtle != void 0;
   var senderName = restoreState("sender-name", "");
   var pageZoom = restoreState("page-zoom", 100);
+  var objectFilterInput = restoreState("object-filter", "");
   var dayInCalendar = restoreState("calendar-day", (/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
   pageZoom.subscribe(() => {
     document.body.style.zoom = `${pageZoom.value}%`;
@@ -1652,6 +1653,189 @@
       selectedObject,
       isShowingObjectModal
     ));
+  }
+
+  // src/Views/Objects/dayView.tsx
+  function DayView(chat, messageObjects, selectedObject, isShowingObjectModal) {
+    const objectsForDayView = new ListState();
+    function processObject(messageObject) {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest.date || latest.date != dayInCalendar.value) return;
+      objectsForDayView.add(messageObject);
+      messageObjects.handleRemoval(messageObject, () => {
+        objectsForDayView.remove(messageObject);
+      });
+    }
+    messageObjects.handleAddition(processObject);
+    dayInCalendar.subscribeSilent(() => {
+      objectsForDayView.clear();
+      chat.objects.value.forEach(processObject);
+    });
+    const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      const timeString = latest.time ?? "00:00";
+      const [hour, minute] = timeString.split(":");
+      const hourInMinutes = parseInt(hour) * 60;
+      const minutesTotal = parseInt(minute) + hourInMinutes;
+      const view = ObjectEntryView(
+        chat,
+        messageObject,
+        selectedObject,
+        isShowingObjectModal
+      );
+      view.style.order = minutesTotal;
+      return view;
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "day-view padding flex-column gap scroll-v",
+        "children:append": [objectsForDayView, objectConverter]
+      }
+    );
+  }
+
+  // src/Views/Objects/miniatureDayView.tsx
+  function MiniatureDayView(chat, messageObjects, dateObject) {
+    const objectsForDayView = new ListState();
+    const dateString = dateObject.toISOString().split("T")[0];
+    function processObject(messageObject) {
+      const latest = chat.getMostRecentContent(messageObject);
+      if (!latest.date || latest.date != dateString) return;
+      objectsForDayView.add(messageObject);
+      messageObjects.handleRemoval(messageObject, () => {
+        objectsForDayView.remove(messageObject);
+      });
+    }
+    function select() {
+      dayInCalendar.value = dateString;
+    }
+    const isSelected = createProxyState(
+      [dayInCalendar],
+      () => dayInCalendar.value == dateString
+    );
+    const today = /* @__PURE__ */ new Date();
+    const isToday = today.getDate() == dateObject.getUTCDate() && today.getMonth() == dateObject.getUTCMonth() && today.getFullYear() == dateObject.getUTCFullYear();
+    messageObjects.handleAddition(processObject);
+    const objectConverter = (messageObject) => {
+      const latest = chat.getMostRecentContent(messageObject);
+      const timeString = latest.time ?? "00:00";
+      const [hour, minute] = timeString.split(":");
+      const hourInMinutes = parseInt(hour) * 60;
+      const minutesTotal = parseInt(minute) + hourInMinutes;
+      const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
+      view.style.order = minutesTotal;
+      return view;
+    };
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": select,
+        "toggle:selected": isSelected,
+        "toggle:today": isToday,
+        class: "day-miniature tile flex-column align-start",
+        style: "aspect-ratio: 1/1; overflow: hidden"
+      },
+      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dateObject.getUTCDate()),
+      /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [objectsForDayView, objectConverter]
+        }
+      )
+    );
+  }
+
+  // src/Views/Objects/calendarView.tsx
+  function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
+    let selectedDate = new Date(dayInCalendar.value);
+    const selectedMonth = new State(selectedDate.getUTCMonth() + 1);
+    const selectedYear = new State(selectedDate.getUTCFullYear());
+    bulkSubscribe(
+      [selectedMonth, selectedYear],
+      () => updateSelectedDate()
+    );
+    dayInCalendar.subscribeSilent(() => {
+      selectedDate = new Date(dayInCalendar.value);
+    });
+    updateSelectedDate();
+    function updateSelectedDate() {
+      selectedDate.setUTCMonth(selectedMonth.value - 1);
+      selectedDate.setUTCFullYear(selectedYear.value);
+      dayInCalendar.value = selectedDate.toISOString().split("T")[0];
+    }
+    function previousMonth() {
+      if (selectedMonth.value <= 1) {
+        selectedMonth.value = 12;
+        selectedYear.value -= 1;
+        return;
+      }
+      selectedMonth.value -= 1;
+    }
+    function nextMonth() {
+      if (selectedMonth.value >= 12) {
+        selectedMonth.value = 1;
+        selectedYear.value += 1;
+        return;
+      }
+      selectedMonth.value += 1;
+    }
+    let monthGridCells = new State([]);
+    dayInCalendar.subscribe((newValue) => {
+      const newSelectedDate = new Date(newValue);
+      newSelectedDate.setHours(0);
+      newSelectedDate.setMinutes(0);
+      const currentDate = /* @__PURE__ */ new Date();
+      monthGridCells.value = [];
+      currentDate.setUTCDate(1);
+      currentDate.setUTCMonth(newSelectedDate.getMonth());
+      for (let i = 0; i < 7; i++) {
+        monthGridCells.value.push(
+          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
+        );
+      }
+      const monthOffset = currentDate.getDay() - 1;
+      for (let i = 0; i < monthOffset; i++) {
+        monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
+      }
+      while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
+        monthGridCells.value.push(
+          MiniatureDayView(chat, messageObjects, currentDate)
+        );
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      monthGridCells.callSubscriptions();
+    });
+    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-center gap" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": previousMonth,
+        "aria-label": translation.previousMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        style: "width: 90px",
+        type: "number",
+        "bind:value": selectedMonth
+      }
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        style: "width: 110px",
+        type: "number",
+        "bind:value": selectedYear
+      }
+    ), /* @__PURE__ */ createElement("button", { "on:click": nextMonth, "aria-label": translation.nextMonth }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        style: "grid-template-columns: repeat(7, 1fr)",
+        "children:set": monthGridCells
+      }
+    )), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
   }
 
   // src/Views/renameView.tsx
@@ -2092,189 +2276,6 @@
     );
   }
 
-  // src/Views/Objects/dayView.tsx
-  function DayView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const objectsForDayView = new ListState();
-    function processObject(messageObject) {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.date || latest.date != dayInCalendar.value) return;
-      objectsForDayView.add(messageObject);
-      messageObjects.handleRemoval(messageObject, () => {
-        objectsForDayView.remove(messageObject);
-      });
-    }
-    messageObjects.handleAddition(processObject);
-    dayInCalendar.subscribeSilent(() => {
-      objectsForDayView.clear();
-      chat.objects.value.forEach(processObject);
-    });
-    const objectConverter = (messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time ?? "00:00";
-      const [hour, minute] = timeString.split(":");
-      const hourInMinutes = parseInt(hour) * 60;
-      const minutesTotal = parseInt(minute) + hourInMinutes;
-      const view = ObjectEntryView(
-        chat,
-        messageObject,
-        selectedObject,
-        isShowingObjectModal
-      );
-      view.style.order = minutesTotal;
-      return view;
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "day-view padding flex-column gap scroll-v",
-        "children:append": [objectsForDayView, objectConverter]
-      }
-    );
-  }
-
-  // src/Views/Objects/miniatureDayView.tsx
-  function MiniatureDayView(chat, messageObjects, dateObject) {
-    const objectsForDayView = new ListState();
-    const dateString = dateObject.toISOString().split("T")[0];
-    function processObject(messageObject) {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.date || latest.date != dateString) return;
-      objectsForDayView.add(messageObject);
-      messageObjects.handleRemoval(messageObject, () => {
-        objectsForDayView.remove(messageObject);
-      });
-    }
-    function select() {
-      dayInCalendar.value = dateString;
-    }
-    const isSelected = createProxyState(
-      [dayInCalendar],
-      () => dayInCalendar.value == dateString
-    );
-    const today = /* @__PURE__ */ new Date();
-    const isToday = today.getDate() == dateObject.getUTCDate() && today.getMonth() == dateObject.getUTCMonth() && today.getFullYear() == dateObject.getUTCFullYear();
-    messageObjects.handleAddition(processObject);
-    const objectConverter = (messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time ?? "00:00";
-      const [hour, minute] = timeString.split(":");
-      const hourInMinutes = parseInt(hour) * 60;
-      const minutesTotal = parseInt(minute) + hourInMinutes;
-      const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
-      view.style.order = minutesTotal;
-      return view;
-    };
-    return /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": select,
-        "toggle:selected": isSelected,
-        "toggle:today": isToday,
-        class: "day-miniature tile flex-column align-start",
-        style: "aspect-ratio: 1/1; overflow: hidden"
-      },
-      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dateObject.getUTCDate()),
-      /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap",
-          "children:append": [objectsForDayView, objectConverter]
-        }
-      )
-    );
-  }
-
-  // src/Views/Objects/calendarView.tsx
-  function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    let selectedDate = new Date(dayInCalendar.value);
-    const selectedMonth = new State(selectedDate.getUTCMonth() + 1);
-    const selectedYear = new State(selectedDate.getUTCFullYear());
-    bulkSubscribe(
-      [selectedMonth, selectedYear],
-      () => updateSelectedDate()
-    );
-    dayInCalendar.subscribeSilent(() => {
-      selectedDate = new Date(dayInCalendar.value);
-    });
-    updateSelectedDate();
-    function updateSelectedDate() {
-      selectedDate.setUTCMonth(selectedMonth.value - 1);
-      selectedDate.setUTCFullYear(selectedYear.value);
-      dayInCalendar.value = selectedDate.toISOString().split("T")[0];
-    }
-    function previousMonth() {
-      if (selectedMonth.value <= 1) {
-        selectedMonth.value = 12;
-        selectedYear.value -= 1;
-        return;
-      }
-      selectedMonth.value -= 1;
-    }
-    function nextMonth() {
-      if (selectedMonth.value >= 12) {
-        selectedMonth.value = 1;
-        selectedYear.value += 1;
-        return;
-      }
-      selectedMonth.value += 1;
-    }
-    let monthGridCells = new State([]);
-    dayInCalendar.subscribe((newValue) => {
-      const newSelectedDate = new Date(newValue);
-      newSelectedDate.setHours(0);
-      newSelectedDate.setMinutes(0);
-      const currentDate = /* @__PURE__ */ new Date();
-      monthGridCells.value = [];
-      currentDate.setUTCDate(1);
-      currentDate.setUTCMonth(newSelectedDate.getMonth());
-      for (let i = 0; i < 7; i++) {
-        monthGridCells.value.push(
-          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
-        );
-      }
-      const monthOffset = currentDate.getDay() - 1;
-      for (let i = 0; i < monthOffset; i++) {
-        monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
-      }
-      while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
-        monthGridCells.value.push(
-          MiniatureDayView(chat, messageObjects, currentDate)
-        );
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      monthGridCells.callSubscriptions();
-    });
-    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-center gap" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": previousMonth,
-        "aria-label": translation.previousMonth
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
-    ), /* @__PURE__ */ createElement(
-      "input",
-      {
-        style: "width: 90px",
-        type: "number",
-        "bind:value": selectedMonth
-      }
-    ), /* @__PURE__ */ createElement(
-      "input",
-      {
-        style: "width: 110px",
-        type: "number",
-        "bind:value": selectedYear
-      }
-    ), /* @__PURE__ */ createElement("button", { "on:click": nextMonth, "aria-label": translation.nextMonth }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "grid gap",
-        style: "grid-template-columns: repeat(7, 1fr)",
-        "children:set": monthGridCells
-      }
-    )), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
-  }
-
   // src/Views/Objects/objectPane.tsx
   var viewTypes = {
     all: [translation.viewAll, "grid_view"],
@@ -2299,7 +2300,6 @@
     function closeFilters() {
       isShowingFilterModel.value = false;
     }
-    const filterInput = new State("");
     const appliedFilter = new State("");
     const resultCount = new State(0);
     const resultText = createProxyState(
@@ -2312,11 +2312,11 @@
       () => appliedFilter.value == ""
     );
     function resetFilter() {
-      filterInput.value = "";
+      objectFilterInput.value = "";
       applyFilter();
     }
     function applyFilter() {
-      appliedFilter.value = filterInput.value;
+      appliedFilter.value = objectFilterInput.value;
       previousObjectSearches.add(appliedFilter.value);
       const allObjects = [...chat.objects.value.values()];
       allObjects.forEach((object, i) => {
@@ -2421,7 +2421,7 @@
     ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", { class: "gap" }, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchTitle), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": filterInput,
+        "bind:value": objectFilterInput,
         "on:enter": applyFilter,
         placeholder: translation.searchPlaceholder,
         list: "object-searches"

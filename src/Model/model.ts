@@ -151,6 +151,7 @@ export const isPresentingSettingsModal = new React.State(false);
 export const isEncryptionAvailable = window.crypto.subtle != undefined;
 export const senderName = React.restoreState("sender-name", "");
 export const pageZoom = React.restoreState("page-zoom", 100);
+export const objectFilterInput = React.restoreState("object-filter", "");
 export const dayInCalendar = React.restoreState("calendar-day", new Date().toISOString().split("T")[0])
 
 pageZoom.subscribe(() => {
