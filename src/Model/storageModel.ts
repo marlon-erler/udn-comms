@@ -6,23 +6,23 @@ export default class StorageModel {
   storageEntryTree: StorageEntry = {};
 
   // basic
-  store = (pathComponents: string[], value: string): void => {
-    const key = this.pathComponentsToKey(...pathComponents);
+  store = (key: string, value: string): void => {
     localStorage.setItem(key, value);
+    const pathComponents = this.keyToPathComponents(key);
     this.updateTree(...pathComponents);
   };
 
-  restore = (pathComponents: string[]): string | null => {
-    const key = this.pathComponentsToKey(...pathComponents);
+  restore = (key: string): string | null => {
     return localStorage.getItem(key);
   };
 
-  remove = (pathComponents: string[]): void => {
-    const key = this.pathComponentsToKey(...pathComponents);
+  remove = (key: string): void => {
     localStorage.removeItem(key);
   };
 
-  list = (...pathComponents: string[]): string[] => {
+  list = (key: string): string[] => {
+    const pathComponents = this.keyToPathComponents(key);
+    
     let currentParent = this.storageEntryTree;
     for (const component of pathComponents) {
       currentParent = currentParent[component];
@@ -32,13 +32,13 @@ export default class StorageModel {
   };
 
   // stringifiable
-  storeStringifiable = (pathComponents: string[], value: any[]): void => {
+  storeStringifiable = (key: string, value: any[]): void => {
     const valueString = stringify(value);
-    this.store(pathComponents, valueString);
+    this.store(key, valueString);
   };
 
-  restoreStringifiable = (pathComponents: string[]): any | null => {
-    const valueString = this.restore(pathComponents);
+  restoreStringifiable = (key: string): any | null => {
+    const valueString = this.restore(key);
     if (!valueString) return null;
 
     return parse(valueString);

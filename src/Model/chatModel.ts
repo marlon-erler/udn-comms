@@ -1,6 +1,21 @@
 // this file is responsible for managing chats and chat messages. objects are delegated to objectModel.ts.
 
+import StorageModel, { storageKeys } from "./storageModel";
+
 import { createTimestamp } from "../utility";
+
+export class ChatModel {
+    info: ChatInfo;
+
+    messages: ChatMessage[];
+    objects: ChatObject[];
+    outbox: ChatMessage[];
+
+    constructor(storageModel: StorageModel, chatId: string) {
+      const infoPath = storageKeys.chatInfo(chatId)
+      const info = storageModel.restoreStringifiable(infoPath);
+    }
+}
 
 // creation methods
 export function createChatMessage(channel: string, sender: string, body: string): ChatMessage {
@@ -15,6 +30,14 @@ export function createChatMessage(channel: string, sender: string, body: string)
 }
 
 // types
+export interface ChatInfo {
+    primaryChannel: string;
+    secondaryChannels: string[];
+    encryptionKey: string;
+    
+    hasUnreadMessages: boolean;
+}
+
 export interface ChatMessage {
     dataVersion: "v2";
   
