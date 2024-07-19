@@ -41,6 +41,17 @@ export class ChatModel {
     return StorageModel.join(this.objectDirPath, id);
   }
 
+  // set
+  setPrimaryChannel(primaryChannel: string): void {
+    this.info.primaryChannel = primaryChannel;
+    this.storeInfo();
+  }
+
+  setSecondaryChannels(secondaryChannels: string[]): void {
+    this.info.secondaryChannels = secondaryChannels;
+    this.storeInfo();
+  }
+
   // store & add
   storeInfo(): void {
     this.storageModel.storeStringifiable(this.infoPath, this.info);
@@ -105,6 +116,15 @@ export class ChatModel {
 }
 
 // creation methods
+export function createChat(storageModel: StorageModel, primaryChannel: string): ChatModel {
+  const id: string = v4();
+
+  const chatModel = new ChatModel(storageModel, id);
+  chatModel.setPrimaryChannel(primaryChannel);
+  
+  return chatModel;
+}
+
 export function generateChatInfo(primaryChannel: string): ChatInfo {
   return {
     primaryChannel,

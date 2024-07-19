@@ -331,71 +331,95 @@
     /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("input", { "bind:value": addressInput }), /* @__PURE__ */ createElement("button", { "on:click": connect, "toggle:disabled": isConnected }, "Connect"), /* @__PURE__ */ createElement("button", { "on:click": disconnect }, "Disconnect"), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("span", { "subscribe:innerText": connectedAddress }))
   );
 
+  // src/typeSafety.ts
+  var DATA_VERSION = "v2";
+
   // src/Model/storageModel.ts
-  var StorageModel = class {
+  var StorageModel = class _StorageModel {
     storageEntryTree = {};
     // basic
-    store = (directoryNames, key, value) => {
-      const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-      localStorage.setItem(unifiedPath, value);
-      this.updateTree(...directoryNames, key);
+    store = (key, value) => {
+      localStorage.setItem(key, value);
+      const pathComponents = _StorageModel.keyToPathComponents(key);
+      this.updateTree(...pathComponents);
     };
-    restore = (directoryNames, key) => {
-      const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-      return localStorage.getItem(unifiedPath);
+    restore = (key) => {
+      return localStorage.getItem(key);
     };
-    remove = (directoryNames, key) => {
-      const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-      localStorage.removeItem(unifiedPath);
+    remove = (key) => {
+      localStorage.removeItem(key);
     };
-    list = (...directoryNames) => {
+    list = (key) => {
+      const pathComponents = _StorageModel.keyToPathComponents(key);
       let currentParent = this.storageEntryTree;
-      for (const directoryName of directoryNames) {
-        currentParent = currentParent[directoryName];
+      for (const component of pathComponents) {
+        const nextParent = currentParent[component];
+        if (nextParent == void 0) return [];
+        currentParent = nextParent;
       }
       return [...Object.keys(currentParent)];
     };
-    // array
-    storeArray = (directoryNames, key, value) => {
+    // stringifiable
+    storeStringifiable = (key, value) => {
       const valueString = stringify(value);
-      this.store(directoryNames, key, valueString);
+      this.store(key, valueString);
     };
-    restoreArray = (directoryNames, key) => {
-      const valueString = this.restore(directoryNames, key);
+    restoreStringifiable = (key) => {
+      const valueString = this.restore(key);
       if (!valueString) return null;
-      const parsed = parse(valueString);
-      if (!Array.isArray(parsed)) return null;
-      return parsed;
+      return parse(valueString);
     };
     // init
     constructor() {
       for (const key of Object.keys(localStorage)) {
-        const directoryNames = this.keyToDirectoryNames(key);
-        this.updateTree(...directoryNames);
+        const components = _StorageModel.keyToPathComponents(key);
+        this.updateTree(...components);
       }
     }
     // utility
-    updateTree = (...pathParts) => {
+    updateTree = (...pathComponents) => {
       let currentParent = this.storageEntryTree;
-      for (const pathPart of pathParts) {
+      for (const pathPart of pathComponents) {
         if (!currentParent[pathPart]) {
           currentParent[pathPart] = {};
         }
         currentParent = currentParent[pathPart];
       }
     };
-    directoryNamesToKey = (...directoryNames) => {
-      return directoryNames.join("/");
+    static pathComponentsToKey = (...pathComponents) => {
+      return pathComponents.join("/");
     };
-    keyToDirectoryNames = (key) => {
+    static keyToPathComponents = (key) => {
       return key.split("/");
     };
+    static join = (...items) => {
+      let allComponents = [];
+      for (const item of items) {
+        const parts = this.keyToPathComponents(item);
+        allComponents.push(...parts);
+      }
+      return _StorageModel.pathComponentsToKey(...allComponents);
+    };
+  };
+  var storageKeys = {
+    // connection
+    socketAddress: `${DATA_VERSION}/connection/socket-address`,
+    // settings
+    userName: `${DATA_VERSION}/settings/user-name`,
+    firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
+    // history
+    previousAddresses: `${DATA_VERSION}/history/previous-addresses`,
+    previousObjectCategories: `${DATA_VERSION}/history/object-categories`,
+    previousObjectStatuses: `${DATA_VERSION}/history/object-statuses`,
+    previousObjectFilters: `${DATA_VERSION}/history/object-filters`,
+    // chat etc
+    chatInfo: (id) => `${DATA_VERSION}/chat/${id}/info`,
+    chatMessages: (id) => `${DATA_VERSION}/chat/${id}/messages`,
+    chatObjects: (id) => `${DATA_VERSION}/chat/${id}/objects`,
+    chatOutbox: (id) => `${DATA_VERSION}/chat/${id}/outbox`
   };
 
   // src/index.tsx
   var storageModel = new StorageModel();
-  console.log(storageModel.list("a"));
-  console.log(storageModel.list("b"));
-  console.log(storageModel.list("b", "c"));
-  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
+  console.log(storageModel.list("z"));
 })();
