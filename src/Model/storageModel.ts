@@ -27,7 +27,9 @@ export default class StorageModel {
 
     let currentParent: StorageEntry = this.storageEntryTree;
     for (const component of pathComponents) {
-      currentParent = currentParent[component];
+      const nextParent: StorageEntry | undefined = currentParent[component];
+      if (nextParent == undefined) return [];
+      currentParent = nextParent;
     }
 
     return [...Object.keys(currentParent)];
