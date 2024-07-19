@@ -57,6 +57,7 @@ export default class ConnectionModel {
   }
 }
 
+// types
 export interface ConnectionModelConfiguration {
   connectionChangeHandler: () => void;
   messageHandler: (data: Message) => void;
