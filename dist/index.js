@@ -1649,7 +1649,7 @@
     messageObjects.handleAddition(processObject);
     dayInCalendar.subscribeSilent(() => {
       objectsForDayView.clear();
-      chat.objects.value.forEach(processObject);
+      messageObjects.value.forEach(processObject);
     });
     const objectConverter = (messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
@@ -1709,7 +1709,6 @@
       const priority = latest.priority ?? 0;
       const priorityInverse = 100 - priority;
       const order = `${minutesTotal}${priorityInverse}`;
-      console.log(order);
       const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
       view.style.order = order;
       return view;

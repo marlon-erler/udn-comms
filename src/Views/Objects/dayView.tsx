@@ -28,7 +28,7 @@ export function DayView(
   messageObjects.handleAddition(processObject);
   dayInCalendar.subscribeSilent(() => {
     objectsForDayView.clear();
-    chat.objects.value.forEach(processObject);
+    messageObjects.value.forEach(processObject);
   })
 
   const objectConverter: React.StateItemConverter<MessageObject> = (
