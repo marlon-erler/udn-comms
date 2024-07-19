@@ -4,39 +4,39 @@ import { parse, stringify } from "../utility";
 
 export default class StorageModel {
   storageEntryTree: StorageEntry = {}; // basic
-  store = (directoryNames: string[], key: string, value: string): void => {
-    const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-    localStorage.setItem(unifiedPath, value);
-    this.updateTree(...directoryNames, key);
+  store = (pathComponents: string[], value: string): void => {
+    const key = this.pathComponentsToKey(...pathComponents);
+    localStorage.setItem(key, value);
+    this.updateTree(...pathComponents);
   };
 
-  restore = (directoryNames: string[], key: string): string | null => {
-    const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-    return localStorage.getItem(unifiedPath);
+  restore = (pathComponents: string[]): string | null => {
+    const key = this.pathComponentsToKey(...pathComponents);
+    return localStorage.getItem(key);
   };
 
-  remove = (directoryNames: string[], key: string): void => {
-    const unifiedPath = this.directoryNamesToKey(...directoryNames, key);
-    localStorage.removeItem(unifiedPath);
+  remove = (pathComponents: string[]): void => {
+    const key = this.pathComponentsToKey(...pathComponents);
+    localStorage.removeItem(key);
   };
 
-  list = (...directoryNames: string[]): string[] => {
+  list = (...pathComponents: string[]): string[] => {
     let currentParent = this.storageEntryTree;
-    for (const directoryName of directoryNames) {
-      currentParent = currentParent[directoryName];
+    for (const component of pathComponents) {
+      currentParent = currentParent[component];
     }
 
     return [...Object.keys(currentParent)];
   };
 
   // array
-  storeArray = (directoryNames: string[], key: string, value: any[]): void => {
+  storeArray = (pathComponents: string[], value: any[]): void => {
     const valueString = stringify(value);
-    this.store(directoryNames, key, valueString);
+    this.store(pathComponents, valueString);
   };
 
-  restoreArray = (directoryNames: string[], key: string): any[] | null => {
-    const valueString = this.restore(directoryNames, key);
+  restoreArray = (pathComponents: string[]): any[] | null => {
+    const valueString = this.restore(pathComponents);
     if (!valueString) return null;
 
     const parsed = parse(valueString);
@@ -48,15 +48,15 @@ export default class StorageModel {
   // init
   constructor() {
     for (const key of Object.keys(localStorage)) {
-      const directoryNames = this.keyToDirectoryNames(key);
-      this.updateTree(...directoryNames);
+      const components = this.keyToPathComponents(key);
+      this.updateTree(...components);
     }
   }
 
   // utility
-  updateTree = (...pathParts: string[]) => {
+  updateTree = (...pathComponents: string[]) => {
     let currentParent = this.storageEntryTree;
-    for (const pathPart of pathParts) {
+    for (const pathPart of pathComponents) {
       if (!currentParent[pathPart]) {
         currentParent[pathPart] = {};
       }
@@ -65,11 +65,11 @@ export default class StorageModel {
     }
   };
 
-  directoryNamesToKey = (...directoryNames: string[]): string => {
-    return directoryNames.join("/");
+  pathComponentsToKey = (...pathComponents: string[]): string => {
+    return pathComponents.join("/");
   };
 
-  keyToDirectoryNames = (key: string): string[] => {
+  keyToPathComponents = (key: string): string[] => {
     return key.split("/");
   };
 }
