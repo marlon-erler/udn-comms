@@ -15,6 +15,18 @@
   min-width: 100%;
   scroll-snap-align: center;
 }
+@media (max-width: 640px) {
+  #home-page > div {
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+  }
+  #home-page > div > div {
+    height: 100%;
+    overflow: scroll;
+    padding: var(--content-padding);
+  }
+}
 @media (min-width: 640px) {
   #home-page #overview-section {
     width: 20rem;

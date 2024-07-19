@@ -274,7 +274,9 @@
       overviewHeadline: "Overview",
       statusHeadline: "Status",
       settingsButton: "Settings",
+      scrollToChatButton: "Chats",
       ///
+      backToOverviewAudioLabel: "go back to overview",
       chatsHeadline: "Chats",
       addChatAudioLabel: "name of new chat",
       addChatPlaceholder: "Add chat",
@@ -293,7 +295,8 @@
 
   // src/View/homePage.tsx
   function HomePage() {
-    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("h3", null, translations.homePage.statusHeadline))), /* @__PURE__ */ createElement("button", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), /* @__PURE__ */ createElement("div", null, translations.homePage.settingsButton))), /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.statusHeadline))), /* @__PURE__ */ createElement("button", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), /* @__PURE__ */ createElement("div", null, translations.homePage.settingsButton)), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translations.homePage.addChatPlaceholder,
@@ -306,7 +309,11 @@
         "aria-label": translations.homePage.addChatButton
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )))));
+    )));
+    function scrollToChat() {
+      chatSection.scrollIntoView();
+    }
+    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null, overviewSection, chatSection));
   }
 
   // src/Model/Utility/typeSafety.ts

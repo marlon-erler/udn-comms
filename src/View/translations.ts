@@ -13,8 +13,11 @@ const englishTranslations = {
     statusHeadline: "Status",
     settingsButton: "Settings",
 
+    scrollToChatButton: "Chats",
+
     ///
 
+    backToOverviewAudioLabel: "go back to overview",
     chatsHeadline: "Chats",
 
     addChatAudioLabel: "name of new chat",
