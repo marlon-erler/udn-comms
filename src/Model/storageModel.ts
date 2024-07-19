@@ -79,16 +79,16 @@ export type StorageEntry = { [key: string]: StorageEntry };
 
 // keys
 export enum storageKeys {
-  // current
-  socketAddress = "v2-socket-address",
+  // connection
+  socketAddress = "v2/connection/socket-address",
 
   // settings
-  userName = "v2-user-name",
-  firstDayOfWeek = "v2-first-day-of-week",
+  userName = "v2/settings/user-name",
+  firstDayOfWeek = "v2/settings/first-day-of-week",
 
   // history
-  previousAddresses = "v2-previous-addresses",
-  previousObjectCategories = "v2-object-categories",
-  previousObjectStatuses = "v2-object-statuses",
-  previousObjectFilters = "v2-object-filters",
+  previousAddresses = "v2/history/previous-addresses",
+  previousObjectCategories = "v2/history/object-categories",
+  previousObjectStatuses = "v2/history/object-statuses",
+  previousObjectFilters = "v2/history/object-filters",
 }
