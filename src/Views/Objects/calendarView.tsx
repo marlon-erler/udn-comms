@@ -52,8 +52,6 @@ export function CalendarView(
   let monthGridCells = new React.State<HTMLElement[]>([]);
   dayInCalendar.subscribe((newValue) => {
     const newSelectedDate = new Date(newValue);
-    newSelectedDate.setHours(0);
-    newSelectedDate.setMinutes(0);
 
     const currentDate = new Date();
     monthGridCells.value = [];

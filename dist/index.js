@@ -1770,12 +1770,11 @@
     let monthGridCells = new State([]);
     dayInCalendar.subscribe((newValue) => {
       const newSelectedDate = new Date(newValue);
-      newSelectedDate.setHours(0);
-      newSelectedDate.setMinutes(0);
       const currentDate = /* @__PURE__ */ new Date();
       monthGridCells.value = [];
       currentDate.setUTCDate(1);
       currentDate.setUTCMonth(newSelectedDate.getMonth());
+      console.log(currentDate);
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
           /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
