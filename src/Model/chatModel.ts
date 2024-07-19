@@ -1,9 +1,9 @@
 // this file is responsible for managing chats and chat messages. objects are delegated to objectModel.ts.
 
 import StorageModel, { storageKeys } from "./storageModel";
-import { createTimestamp, stringify } from "../utility";
 
 import { checkIsValidObject } from "../typeSafety";
+import { createTimestamp } from "../utility";
 import { v4 } from "uuid";
 
 export class ChatModel {
