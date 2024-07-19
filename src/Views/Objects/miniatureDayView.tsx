@@ -45,17 +45,20 @@ export function MiniatureDayView(
     messageObject
   ) => {
     const latest = chat.getMostRecentContent(messageObject);
-    const timeString = latest.time ?? "00:00";
+    const timeString = latest.time || "00:00";
     const [hour, minute] = timeString.split(":");
     const hourInMinutes = parseInt(hour) * 60;
     const minutesTotal = parseInt(minute) + hourInMinutes;
+    const priority = latest.priority ?? 0;
+    const priorityInverse = 100 - priority;
+    const order = `${minutesTotal}${priorityInverse}`;
 
     const view = (
       <span class="secondary ellipsis">
         {chat.getObjectTitle(messageObject)}
       </span>
     );
-    view.style.order = minutesTotal;
+    view.style.order = order;
     return view;
   };
 

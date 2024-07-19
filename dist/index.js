@@ -1653,17 +1653,20 @@
     });
     const objectConverter = (messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time ?? "00:00";
+      const timeString = latest.time || "00:00";
       const [hour, minute] = timeString.split(":");
       const hourInMinutes = parseInt(hour) * 60;
       const minutesTotal = parseInt(minute) + hourInMinutes;
+      const priority = latest.priority ?? 0;
+      const priorityInverse = 100 - priority;
+      const order = `${minutesTotal}${priorityInverse}`;
       const view = ObjectEntryView(
         chat,
         messageObject,
         selectedObject,
         isShowingObjectModal
       );
-      view.style.order = minutesTotal;
+      view.style.order = order;
       return view;
     };
     return /* @__PURE__ */ createElement(
@@ -1699,12 +1702,16 @@
     messageObjects.handleAddition(processObject);
     const objectConverter = (messageObject) => {
       const latest = chat.getMostRecentContent(messageObject);
-      const timeString = latest.time ?? "00:00";
+      const timeString = latest.time || "00:00";
       const [hour, minute] = timeString.split(":");
       const hourInMinutes = parseInt(hour) * 60;
       const minutesTotal = parseInt(minute) + hourInMinutes;
+      const priority = latest.priority ?? 0;
+      const priorityInverse = 100 - priority;
+      const order = `${minutesTotal}${priorityInverse}`;
+      console.log(order);
       const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
-      view.style.order = minutesTotal;
+      view.style.order = order;
       return view;
     };
     return /* @__PURE__ */ createElement(
