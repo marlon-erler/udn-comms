@@ -863,7 +863,9 @@ code {
 .secondary,
 .secondary *,
 .helper-text,
-.error-text,
+.error,
+.warning,
+.success,
 label.tile > div > span:not(.icon) {
   font-size: 0.9rem;
 }

@@ -10,16 +10,82 @@ export function HomePage() {
     <div id="overview-section">
       <h2>{translations.homePage.overviewHeadline}</h2>
 
-      <div class="tile flex-no">
+      <label class="tile flex-no">
         <span class="icon">cell_tower</span>
         <div>
-          <b>{translations.homePage.statusHeadline}</b>
+          <span>{translations.homePage.serverAddress}</span>
+          <input></input>
+        </div>
+      </label>
+
+      <div class="flex-row">
+        <button
+          class="danger flex justify-center"
+          aria-label={translations.homePage.disconnectAudioLabel}
+        >
+          <span class="icon">link_off</span>
+        </button>
+        <button
+          class="flex justify-center"
+          aria-label={translations.homePage.manageConnectionsAudioLabel}
+        >
+          <span class="icon">build</span>
+        </button>
+        <button
+          class="primary flex justify-center"
+          aria-label={translations.homePage.connectAudioLabel}
+        >
+          <span class="icon">link</span>
+        </button>
+      </div>
+
+      <hr></hr>
+
+      <div class="tile flex-no">
+        <span class="icon">inbox</span>
+        <div>
+          <b>{translations.homePage.mailboxHeadline}</b>
+          <span class="error">
+            {translations.homePage.mailboxDisabled}
+          </span>
         </div>
       </div>
-      <button class="tile flex-no">
-        <span class="icon">settings</span>
-        <div>{translations.homePage.settingsButton}</div>
-      </button>
+
+      <div class="tile flex-no">
+        <span class="icon">outbox</span>
+        <div>
+          <b>{translations.homePage.outboxHeadline}</b>
+          <span class="success">
+            {translations.homePage.outboxAllItemsSent}
+          </span>
+        </div>
+      </div>
+
+      <hr></hr>
+
+      <label class="tile flex-no">
+        <span class="icon">account_circle</span>
+        <div>
+          <span>{translations.homePage.yourNameLabel}</span>
+          <input></input>
+        </div>
+      </label>
+      <div class="flex-row justify-end">
+        <button class="width-50">
+          {translations.homePage.setNameButton}
+          <span class="icon">check</span>
+        </button>
+      </div>
+
+      <hr></hr>
+
+      <label class="tile flex-no">
+        <span class="icon">calendar_month</span>
+        <div>
+          <span>{translations.homePage.firstDayOfWeekLabel}</span>
+          <select></select>
+        </div>
+      </label>
 
       <div class="mobile-only">
         <hr></hr>

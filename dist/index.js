@@ -268,12 +268,44 @@
     general: {
       closeButton: "close"
     },
+    regional: {
+      weekdays: {
+        full: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        abbreviated: [
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat"
+        ]
+      }
+    },
     homePage: {
       appName: "Comms",
       ///
       overviewHeadline: "Overview",
-      statusHeadline: "Status",
-      settingsButton: "Settings",
+      serverAddress: "Server address",
+      connectAudioLabel: "connect to server",
+      disconnectAudioLabel: "disconnect from server",
+      manageConnectionsAudioLabel: "manage connections",
+      mailboxHeadline: "Server Mailbox",
+      mailboxDisabled: "Mailbox disabled. You will miss out on messages sent while you're away",
+      mailboxEnabled: "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
+      outboxHeadline: "Outbox",
+      outboxAllItemsSent: "All items sent",
+      yourNameLabel: "Your name",
+      setNameButton: "Set",
+      firstDayOfWeekLabel: "First day of week",
       scrollToChatButton: "Chats",
       ///
       backToOverviewAudioLabel: "go back to overview",
@@ -295,7 +327,28 @@
 
   // src/View/homePage.tsx
   function HomePage() {
-    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.statusHeadline))), /* @__PURE__ */ createElement("button", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"), /* @__PURE__ */ createElement("div", null, translations.homePage.settingsButton)), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement("input", null))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex justify-center",
+        "aria-label": translations.homePage.disconnectAudioLabel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "link_off")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex justify-center",
+        "aria-label": translations.homePage.manageConnectionsAudioLabel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "build")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex justify-center",
+        "aria-label": translations.homePage.connectAudioLabel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement("input", null))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "width-50" }, translations.homePage.setNameButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "check"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.firstDayOfWeekLabel), /* @__PURE__ */ createElement("select", null))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -390,7 +443,7 @@
     // connection
     socketAddress: `${DATA_VERSION}/connection/socket-address`,
     // settings
-    userName: `${DATA_VERSION}/settings/user-name`,
+    username: `${DATA_VERSION}/settings/user-name`,
     firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
     // history
     previousAddresses: `${DATA_VERSION}/history/previous-addresses`,
