@@ -5,6 +5,7 @@ import {
   clearCategories,
   clearObjectSearches,
   clearStatuses,
+  firstDayOfWeek,
   isPresentingSettingsModal,
   repairApp,
   toggleSettings,
@@ -16,11 +17,31 @@ import { icons } from "../icons";
 import { translation } from "../translations";
 
 export function SettingsModal() {
+  const stringToWeekdayOption: React.StateItemConverter<number> = (value) => {
+    const isSelected = value == firstDayOfWeek.value;
+    return <option toggle:selected={isSelected} value={value}>{translation.weekdays[value]}</option>;
+  };
+
   return (
     <div class="modal" toggle:open={isPresentingSettingsModal}>
       <div>
         <main>
           <h2>{translation.settings}</h2>
+
+          <label class="tile">
+            <span class="icon">calendar_month</span>
+            <div>
+              <span>{translation.firstDayOfWeek}</span>
+              <select bind:value={firstDayOfWeek}>
+                {...translation.weekdays.map((weekday, i) =>
+                  stringToWeekdayOption(i)
+                )}
+              </select>
+              <span class="icon">arrow_drop_down</span>
+            </div>
+          </label>
+
+          <hr></hr>
 
           <div class="flex-row width-input gap">
             <button class="width-100 flex justify-start" on:click={zoomOut}>

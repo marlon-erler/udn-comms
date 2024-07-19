@@ -10,6 +10,7 @@ const englishTranslations = {
   discard: "Discard",
   rename: "Rename",
 
+  firstDayOfWeek: "First day of week",
   weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   previousMonth: "previous month",
   nextMonth: "next month",
@@ -155,6 +156,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Descartar",
     rename: "Renombrar",
 
+    firstDayOfWeek: "Primer día de la semana",
     weekdays: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
     previousMonth: "Último mes",
     nextMonth: "Próximo mes",
@@ -297,6 +299,7 @@ const allTranslations: { [key: string]: typeof englishTranslations } = {
     discard: "Verwerfen",
     rename: "Umbenennen",
 
+    firstDayOfWeek: "Erster Wochentag",
     weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
     previousMonth: "Vorheriger Monat",
     nextMonth: "Nächster Monat",

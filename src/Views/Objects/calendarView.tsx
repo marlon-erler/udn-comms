@@ -1,10 +1,14 @@
 import * as React from "bloatless-react";
 
-import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
+import {
+  Chat,
+  MessageObject,
+  MessageObjectWithIndex,
+} from "../../Model/chatModel";
+import { dayInCalendar, firstDayOfWeek } from "../../Model/model";
 
 import { DayView } from "./dayView";
 import { MonthGridCell } from "./monthGridCell";
-import { dayInCalendar } from "../../Model/model";
 import { translation } from "../../translations";
 
 export function CalendarView(
@@ -22,7 +26,7 @@ export function CalendarView(
   );
   dayInCalendar.subscribeSilent(() => {
     selectedDate = new Date(dayInCalendar.value);
-  })
+  });
   updateSelectedDate();
 
   function updateSelectedDate() {
@@ -50,8 +54,11 @@ export function CalendarView(
   }
 
   let monthGridCells = new React.State<HTMLElement[]>([]);
-  dayInCalendar.subscribe((newValue) => {
-    const newSelectedDate = new Date(newValue);
+  React.bulkSubscribe([dayInCalendar, firstDayOfWeek], updateMonthGrid);
+  updateMonthGrid();
+
+  function updateMonthGrid() {
+    const newSelectedDate = new Date(dayInCalendar.value);
 
     const currentDate = new Date();
     monthGridCells.value = [];
@@ -61,14 +68,19 @@ export function CalendarView(
     currentDate.setUTCMonth(newSelectedDate.getMonth());
 
     // labels
+    let currentLabelIndex = firstDayOfWeek.value;
     for (let i = 0; i < 7; i++) {
       monthGridCells.value.push(
-        <b class="secondary ellipsis width-100">{translation.weekdays[i]}</b>
+        <b class="secondary ellipsis width-100">
+          {translation.weekdays[currentLabelIndex]}
+        </b>
       );
+      currentLabelIndex++;
+      if (currentLabelIndex >= 7) currentLabelIndex = 0;
     }
 
     // create blank dates starting sunday
-    const monthOffset = currentDate.getDay();
+    const monthOffset = currentDate.getDay() - firstDayOfWeek.value;
     for (let i = 0; i < monthOffset; i++) {
       monthGridCells.value.push(<div></div>);
     }
@@ -82,7 +94,7 @@ export function CalendarView(
     }
 
     monthGridCells.callSubscriptions();
-  });
+  }
 
   return (
     <div class="calendar-wrapper">

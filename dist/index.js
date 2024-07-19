@@ -453,6 +453,7 @@
     close: "Close",
     discard: "Discard",
     rename: "Rename",
+    firstDayOfWeek: "First day of week",
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     previousMonth: "previous month",
     nextMonth: "next month",
@@ -563,6 +564,7 @@
       close: "Cerrar",
       discard: "Descartar",
       rename: "Renombrar",
+      firstDayOfWeek: "Primer d\xEDa de la semana",
       weekdays: ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"],
       previousMonth: "\xDAltimo mes",
       nextMonth: "Pr\xF3ximo mes",
@@ -671,6 +673,7 @@
       close: "Schlie\xDFen",
       discard: "Verwerfen",
       rename: "Umbenennen",
+      firstDayOfWeek: "Erster Wochentag",
       weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
       previousMonth: "Vorheriger Monat",
       nextMonth: "N\xE4chster Monat",
@@ -1332,6 +1335,7 @@
   var senderName = restoreState("sender-name", "");
   var pageZoom = restoreState("page-zoom", 100);
   var objectFilterInput = restoreState("object-filter", "");
+  var firstDayOfWeek = restoreState("first-day-of-week", 0);
   var dayInCalendar = restoreState("calendar-day", (/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
   pageZoom.subscribe(() => {
     document.body.style.zoom = `${pageZoom.value}%`;
@@ -1793,18 +1797,23 @@
       selectedMonth.value += 1;
     }
     let monthGridCells = new State([]);
-    dayInCalendar.subscribe((newValue) => {
-      const newSelectedDate = new Date(newValue);
+    bulkSubscribe([dayInCalendar, firstDayOfWeek], updateMonthGrid);
+    updateMonthGrid();
+    function updateMonthGrid() {
+      const newSelectedDate = new Date(dayInCalendar.value);
       const currentDate = /* @__PURE__ */ new Date();
       monthGridCells.value = [];
       currentDate.setUTCDate(1);
       currentDate.setUTCMonth(newSelectedDate.getMonth());
+      let currentLabelIndex = firstDayOfWeek.value;
       for (let i = 0; i < 7; i++) {
         monthGridCells.value.push(
-          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[i])
+          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[currentLabelIndex])
         );
+        currentLabelIndex++;
+        if (currentLabelIndex >= 7) currentLabelIndex = 0;
       }
-      const monthOffset = currentDate.getDay();
+      const monthOffset = currentDate.getDay() - firstDayOfWeek.value;
       for (let i = 0; i < monthOffset; i++) {
         monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
       }
@@ -1815,7 +1824,7 @@
         currentDate.setDate(currentDate.getDate() + 1);
       }
       monthGridCells.callSubscriptions();
-    });
+    }
     return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-center gap" }, /* @__PURE__ */ createElement(
       "button",
       {
@@ -2758,7 +2767,13 @@
 
   // src/Views/settingsModal.tsx
   function SettingsModal() {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": repairApp }, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"), translation.repairApp)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearAddresses }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), translation.clearAddresses), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearCategories }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), translation.clearCategories), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearStatuses }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), translation.clearStatuses), /* @__PURE__ */ createElement(
+    const stringToWeekdayOption = (value) => {
+      const isSelected = value == firstDayOfWeek.value;
+      return /* @__PURE__ */ createElement("option", { "toggle:selected": isSelected, value }, translation.weekdays[value]);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.firstDayOfWeek), /* @__PURE__ */ createElement("select", { "bind:value": firstDayOfWeek }, ...translation.weekdays.map(
+      (weekday, i) => stringToWeekdayOption(i)
+    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": repairApp }, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"), translation.repairApp)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearAddresses }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), translation.clearAddresses), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearCategories }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), translation.clearCategories), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearStatuses }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), translation.clearStatuses), /* @__PURE__ */ createElement(
       "button",
       {
         class: "tile width-100 flex-1",
