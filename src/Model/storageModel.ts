@@ -78,17 +78,22 @@ export default class StorageModel {
 export type StorageEntry = { [key: string]: StorageEntry };
 
 // keys
-export enum storageKeys {
+export const storageKeys = {
   // connection
-  socketAddress = "v2/connection/socket-address",
+  socketAddress: "v2/connection/socket-address",
 
   // settings
-  userName = "v2/settings/user-name",
-  firstDayOfWeek = "v2/settings/first-day-of-week",
+  userName: "v2/settings/user-name",
+  firstDayOfWeek: "v2/settings/first-day-of-week",
 
   // history
-  previousAddresses = "v2/history/previous-addresses",
-  previousObjectCategories = "v2/history/object-categories",
-  previousObjectStatuses = "v2/history/object-statuses",
-  previousObjectFilters = "v2/history/object-filters",
-}
+  previousAddresses: "v2/history/previous-addresses",
+  previousObjectCategories: "v2/history/object-categories",
+  previousObjectStatuses: "v2/history/object-statuses",
+  previousObjectFilters: "v2/history/object-filters",
+
+  // chat etc
+  chatInfo: (id: string) => `v2/chat/${id}/info`,
+  chatMessages: (id: string) => `v2/chat/${id}/messages`,
+  chatObjects: (id: string) => `v2/chat/${id}/objects`,
+};
