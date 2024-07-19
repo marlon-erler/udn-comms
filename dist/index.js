@@ -1693,8 +1693,8 @@
     );
   }
 
-  // src/Views/Objects/miniatureDayView.tsx
-  function MiniatureDayView(chat, messageObjects, dateObject) {
+  // src/Views/Objects/monthGridCell.tsx
+  function MonthGridCell(chat, messageObjects, dateObject) {
     const objectsForDayView = new ListState();
     const dateString = dateObject.toISOString().split("T")[0];
     function processObject(messageObject) {
@@ -1722,10 +1722,26 @@
       });
       return view;
     };
+    function dragOver(event) {
+      event.preventDefault();
+    }
+    function drop(event) {
+      event.preventDefault();
+      var id = event.dataTransfer?.getData("text");
+      if (!id) return;
+      const messageObject = chat.objects.value.get(id);
+      if (!messageObject) return;
+      const newContent = chat.createObjectContent();
+      newContent.date = dateString;
+      chat.updateObjectContent(messageObject, newContent);
+      chat.addObjectAndSend(messageObject);
+    }
     return /* @__PURE__ */ createElement(
       "button",
       {
         "on:click": select,
+        "on:dragover": dragOver,
+        "on:drop": drop,
         "toggle:selected": isSelected,
         "toggle:today": isToday,
         class: "day-miniature tile flex-column align-start",
@@ -1794,7 +1810,7 @@
       }
       while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
         monthGridCells.value.push(
-          MiniatureDayView(chat, messageObjects, currentDate)
+          MonthGridCell(chat, messageObjects, currentDate)
         );
         currentDate.setDate(currentDate.getDate() + 1);
       }

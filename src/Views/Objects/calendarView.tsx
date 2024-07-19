@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import { Chat, MessageObject, MessageObjectWithIndex } from "../../Model/chatModel";
 
 import { DayView } from "./dayView";
-import { MiniatureDayView } from "./miniatureDayView";
+import { MonthGridCell } from "./monthGridCell";
 import { dayInCalendar } from "../../Model/model";
 import { translation } from "../../translations";
 
@@ -76,7 +76,7 @@ export function CalendarView(
     // add day views
     while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
       monthGridCells.value.push(
-        MiniatureDayView(chat, messageObjects, currentDate)
+        MonthGridCell(chat, messageObjects, currentDate)
       );
       currentDate.setDate(currentDate.getDate() + 1);
     }
