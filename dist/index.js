@@ -257,30 +257,32 @@
     get isConnected() {
       return this.udn.ws != void 0 && this.udn.ws.readyState == 1;
     }
-    get url() {
+    get address() {
       return this.udn.ws?.url;
     }
     // connection
-    connect(address2) {
+    connect = (address2) => {
       this.udn.connect(address2);
-    }
-    disconnect() {
+    };
+    disconnect = () => {
       this.udn.disconnect();
-    }
-    handleDisconnect() {
-    }
+    };
+    handleConnectionChange = () => {
+      console.log("connection status:", this.isConnected, this.address);
+    };
     // messaging
-    sendChatMessage(chatMessage) {
+    sendChatMessage = (chatMessage) => {
       const stringifiedBody = stringify(chatMessage);
       return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
-    }
-    handleMessage(data) {
-    }
+    };
+    handleMessage = (data) => {
+    };
     // setup
     constructor() {
       this.udn = new UDNFrontend();
       this.udn.onmessage = this.handleMessage;
-      this.udn.ondisconnect = this.handleDisconnect;
+      this.udn.onconnect = this.handleConnectionChange;
+      this.udn.ondisconnect = this.handleConnectionChange;
     }
   };
 

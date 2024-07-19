@@ -14,33 +14,36 @@ export default class ConnectionModel {
     return this.udn.ws != undefined && this.udn.ws.readyState == 1;
   }
 
-  get url(): string | undefined {
+  get address(): string | undefined {
     return this.udn.ws?.url;
   }
 
   // connection
-  connect(address: string): void {
+  connect = (address: string): void => {
     this.udn.connect(address);
-  }
+  };
 
-  disconnect(): void {
+  disconnect = (): void => {
     this.udn.disconnect();
-  }
+  };
 
-  handleDisconnect() {}
+  handleConnectionChange = () => {
+    console.log("connection status:", this.isConnected, this.address);
+  };
 
   // messaging
-  sendChatMessage(chatMessage: ChatMessage): boolean {
+  sendChatMessage = (chatMessage: ChatMessage): boolean => {
     const stringifiedBody = stringify(chatMessage);
     return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
-  }
+  };
 
-  handleMessage(data: Message) {}
+  handleMessage = (data: Message) => {};
 
   // setup
   constructor() {
     this.udn = new UDNFrontend();
     this.udn.onmessage = this.handleMessage;
-    this.udn.ondisconnect = this.handleDisconnect;
+    this.udn.onconnect = this.handleConnectionChange;
+    this.udn.ondisconnect = this.handleConnectionChange;
   }
 }
