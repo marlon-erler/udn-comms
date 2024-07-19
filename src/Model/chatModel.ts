@@ -1,0 +1,1 @@
+// this file is responsible for managing chats and chat messages. objects are delegated to objectModel.ts.
