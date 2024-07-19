@@ -5,17 +5,17 @@ import { parse, stringify } from "../utility";
 // keys
 export enum storageKeys {
     // current
-    socketAddress = "socket-address",
+    socketAddress = "v2-socket-address",
 
     // settings
-    userName = "user-name",
-    firstDayOfWeek = "first-day-of-week",
+    userName = "v2-user-name",
+    firstDayOfWeek = "v2-first-day-of-week",
 
     // history
-    previousAddresses = "previous-addresses",
-    previousObjectCategories = "object-categories",
-    previousObjectStatuses = "object-statuses",
-    previousObjectFilters = "object-filters",
+    previousAddresses = "v2-previous-addresses",
+    previousObjectCategories = "v2-object-categories",
+    previousObjectStatuses = "v2-object-statuses",
+    previousObjectFilters = "v2-object-filters",
 }
 
 // basic
