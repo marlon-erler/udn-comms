@@ -139,6 +139,82 @@
     return element;
   }
 
+  // src/View/translations.ts
+  var englishTranslations = {
+    general: {
+      closeButton: "close"
+    },
+    regional: {
+      weekdays: {
+        full: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        abbreviated: [
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat"
+        ]
+      }
+    },
+    homePage: {
+      appName: "Comms",
+      ///
+      overviewHeadline: "Overview",
+      serverAddress: "Server address",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectAudioLabel: "connect to server",
+      disconnectAudioLabel: "disconnect from server",
+      manageConnectionsAudioLabel: "manage connections",
+      mailboxHeadline: "Server Mailbox",
+      mailboxDisabled: "Mailbox disabled. You will miss out on messages sent while you're away",
+      mailboxEnabled: "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
+      outboxHeadline: "Outbox",
+      outboxAllItemsSent: "All items sent",
+      yourNameLabel: "Your name",
+      yourNamePlaceholder: "Jane Doe",
+      setNameButton: "Set",
+      firstDayOfWeekLabel: "First day of week",
+      scrollToChatButton: "Chats",
+      ///
+      backToOverviewAudioLabel: "go back to overview",
+      chatsHeadline: "Chats",
+      addChatAudioLabel: "name of new chat",
+      addChatPlaceholder: "Add chat",
+      addChatButton: "Add chat"
+    },
+    settings: {
+      settingsHeadline: "Settings"
+      ///
+    }
+  };
+  var allTranslations = {
+    en: englishTranslations
+  };
+  var language = navigator.language.substring(0, 2);
+  var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/Modals/connectionModal.tsx
+  function ConnectionModal(connectionViewModel2) {
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "modal",
+        "toggle:open": connectionViewModel2.isShowingConnectionModal
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
+    );
+  }
+
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
     ws;
@@ -308,6 +384,7 @@
     // state
     serverAddressInput = new State("");
     isConnected = new State(false);
+    isShowingConnectionModal = new State(false);
     // toggles
     cannotConnect = createProxyState(
       [this.serverAddressInput, this.isConnected],
@@ -333,6 +410,13 @@
     disconnect = () => {
       this.connectionModel.disconnect();
     };
+    // view methods
+    showConnectionModal = () => {
+      this.isShowingConnectionModal.value = true;
+    };
+    hideConnectionModal = () => {
+      this.isShowingConnectionModal.value = false;
+    };
     // init
     constructor() {
       const connectionModel = new ConnectionModel({
@@ -347,70 +431,6 @@
   function Option(text, value, selectedOnCreate) {
     return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
   }
-
-  // src/View/translations.ts
-  var englishTranslations = {
-    general: {
-      closeButton: "close"
-    },
-    regional: {
-      weekdays: {
-        full: [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday"
-        ],
-        abbreviated: [
-          "Sun",
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri",
-          "Sat"
-        ]
-      }
-    },
-    homePage: {
-      appName: "Comms",
-      ///
-      overviewHeadline: "Overview",
-      serverAddress: "Server address",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      connectAudioLabel: "connect to server",
-      disconnectAudioLabel: "disconnect from server",
-      manageConnectionsAudioLabel: "manage connections",
-      mailboxHeadline: "Server Mailbox",
-      mailboxDisabled: "Mailbox disabled. You will miss out on messages sent while you're away",
-      mailboxEnabled: "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
-      outboxHeadline: "Outbox",
-      outboxAllItemsSent: "All items sent",
-      yourNameLabel: "Your name",
-      yourNamePlaceholder: "Jane Doe",
-      setNameButton: "Set",
-      firstDayOfWeekLabel: "First day of week",
-      scrollToChatButton: "Chats",
-      ///
-      backToOverviewAudioLabel: "go back to overview",
-      chatsHeadline: "Chats",
-      addChatAudioLabel: "name of new chat",
-      addChatPlaceholder: "Add chat",
-      addChatButton: "Add chat"
-    },
-    settings: {
-      settingsHeadline: "Settings"
-      ///
-    }
-  };
-  var allTranslations = {
-    en: englishTranslations
-  };
-  var language = navigator.language.substring(0, 2);
-  var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/homePage.tsx
   function HomePage(settingsViewModel2, connectionViewModel2) {
@@ -434,7 +454,8 @@
       "button",
       {
         class: "flex justify-center",
-        "aria-label": translations.homePage.manageConnectionsAudioLabel
+        "aria-label": translations.homePage.manageConnectionsAudioLabel,
+        "on:click": connectionViewModel2.showConnectionModal
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "build")
     ), /* @__PURE__ */ createElement(
@@ -645,5 +666,8 @@
   var storageModel = new StorageModel();
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel();
-  document.querySelector("main").append(HomePage(settingsViewModel, connectionViewModel));
+  document.querySelector("main").append(
+    HomePage(settingsViewModel, connectionViewModel),
+    ConnectionModal(connectionViewModel)
+  );
 })();

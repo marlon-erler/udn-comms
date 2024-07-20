@@ -40,6 +40,7 @@ export function HomePage(
         <button
           class="flex justify-center"
           aria-label={translations.homePage.manageConnectionsAudioLabel}
+          on:click={connectionViewModel.showConnectionModal}
         >
           <span class="icon">build</span>
         </button>

@@ -10,6 +10,8 @@ export default class ConnectionViewModel {
   serverAddressInput: React.State<string> = new React.State("");
   isConnected: React.State<boolean> = new React.State(false);
 
+  isShowingConnectionModal: React.State<boolean> = new React.State(false);
+
   // toggles
   cannotConnect: React.State<boolean> = React.createProxyState(
     [this.serverAddressInput, this.isConnected],
@@ -26,7 +28,7 @@ export default class ConnectionViewModel {
   // handlers
   connectionChangeHandler = (): void => {
     this.isConnected.value = this.connectionModel.isConnected;
-    if (this.connectionModel.address) {
+if (this.connectionModel.address) {
       this.serverAddressInput.value = this.connectionModel.address;
     }
   };
@@ -41,6 +43,15 @@ export default class ConnectionViewModel {
   disconnect = (): void => {
     this.connectionModel.disconnect();
   };
+
+  // view methods
+  showConnectionModal = (): void => {
+    this.isShowingConnectionModal.value = true;
+  }
+
+  hideConnectionModal = (): void => {
+    this.isShowingConnectionModal.value = false;
+  }
 
   // init
   constructor() {

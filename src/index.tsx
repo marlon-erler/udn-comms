@@ -1,3 +1,4 @@
+import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionViewModel from "./ViewModel/connectionViewModel";
 import { HomePage } from "./View/homePage";
 import SettingsViewModel from "./ViewModel/settingsViewModel";
@@ -13,4 +14,7 @@ const connectionViewModel = new ConnectionViewModel();
 // view
 document
   .querySelector("main")!
-  .append(HomePage(settingsViewModel, connectionViewModel));
+  .append(
+    HomePage(settingsViewModel, connectionViewModel),
+    ConnectionModal(connectionViewModel)
+  );
