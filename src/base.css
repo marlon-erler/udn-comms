@@ -26,7 +26,7 @@
   pointer-events: none;
 
   filter: blur(60px);
-  opacity: 0.4;
+  opacity: 0.2;
 }
 
 #background::after,
@@ -43,9 +43,9 @@
   #background {
     background-image: linear-gradient(
       120deg,
-      hsla(210, 100%, 50%, 25%),
-      hsla(210, 100%, 50%, 15%),
-      transparent 70%
+      hsla(210, 100%, 50%, 50%),
+      hsla(210, 100%, 50%, 35%),
+      transparent 40%
     );
   }
 }
@@ -54,34 +54,34 @@
   #background {
     background-image: linear-gradient(
       120deg,
-      hsla(210, 100%, 50%, 25%),
-      hsla(210, 100%, 50%, 15%)
+      hsla(210, 100%, 50%, 50%),
+      hsla(210, 100%, 50%, 25%)
     );
   }
 
   #background::before {
-    top: -150%;
-    left: -50%;
-    right: -500%;
-    bottom: -50%;
+    top: -130%;
+    left: -150%;
+    right: -800%;
+    bottom: -20%;
 
     background-image: radial-gradient(
       transparent 60%,
-      hsla(110, 100%, 40%, 20%) 60%,
+      hsla(110, 100%, 40%, 50%) 60%,
       hsla(110, 100%, 20%, 40%)
     );
   }
 
   #background::after {
-    top: -300%;
-    left: -50%;
-    right: -400%;
+    top: -100%;
+    left: 0%;
+    right: -500%;
     bottom: -50%;
 
     background-image: radial-gradient(
       transparent 70%,
-      hsla(110, 100%, 30%, 30%) 70%,
-      hsla(110, 100%, 30%, 40%)
+      hsla(110, 100%, 30%, 90%) 70%,
+      hsla(110, 100%, 10%, 70%)
     );
   }
 }
