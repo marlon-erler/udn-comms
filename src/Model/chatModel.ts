@@ -61,6 +61,11 @@ export class ChatModel {
     this.storeInfo();
   };
 
+  setEncryptionKey = (key: string): void => {
+    this.info.encryptionKey = key;
+    this.storeInfo();
+  };
+
   setColor = (color: Color): void => {
     this.color = color;
     this.storeColor();

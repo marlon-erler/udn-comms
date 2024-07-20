@@ -21,6 +21,13 @@ export default class ChatViewModel {
   secondaryChannels: React.ListState<string> = new React.ListState();
   newSecondaryChannelInput: React.State<string> = new React.State("");
 
+  encryptionKeyInput: React.State<string> = new React.State("");
+  shouldShowEncryptionKey: React.State<boolean> = new React.State(false);
+  encryptionKeyInputType: React.State<"text" | "password"> =
+    React.createProxyState([this.shouldShowEncryptionKey], () =>
+      this.shouldShowEncryptionKey.value == true ? "text" : "password"
+    );
+
   color: React.State<Color> = new React.State<Color>(Color.Standard);
 
   selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
@@ -34,6 +41,7 @@ export default class ChatViewModel {
       this.primaryChannelInput.value == "" ||
       this.primaryChannelInput.value == this.primaryChannel.value
   );
+  cannotSetEncryptionKey: React.State<boolean>;
 
   // sorting
   updateIndex = (): void => {
@@ -74,6 +82,13 @@ export default class ChatViewModel {
     ]);
   };
 
+  setEncryptionKey = (): void => {
+    this.chatModel.setEncryptionKey(this.encryptionKeyInput.value);
+
+    // disable button
+    this.encryptionKeyInput.callSubscriptions();
+  };
+
   setColor = (newColor: Color): void => {
     this.color.value = newColor;
     this.chatModel.setColor(newColor);
@@ -94,7 +109,9 @@ export default class ChatViewModel {
 
   restoreSecondaryChannels = (): void => {
     this.secondaryChannels.clear();
-    for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(localeCompare)) {
+    for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(
+      localeCompare
+    )) {
       this.secondaryChannels.add(secondaryChannel);
     }
   };
@@ -107,6 +124,12 @@ export default class ChatViewModel {
 
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
+
+    this.encryptionKeyInput.value = chatModel.info.encryptionKey;
+    this.cannotSetEncryptionKey = React.createProxyState(
+      [this.encryptionKeyInput],
+      () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
+    );
 
     this.color.value = chatModel.color;
 

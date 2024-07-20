@@ -417,6 +417,10 @@
       this.info.secondaryChannels = secondaryChannels;
       this.storeInfo();
     };
+    setEncryptionKey = (key) => {
+      this.info.encryptionKey = key;
+      this.storeInfo();
+    };
     setColor = (color) => {
       this.color = color;
       this.storeColor();
@@ -571,6 +575,12 @@
     primaryChannelInput = new State("");
     secondaryChannels = new ListState();
     newSecondaryChannelInput = new State("");
+    encryptionKeyInput = new State("");
+    shouldShowEncryptionKey = new State(false);
+    encryptionKeyInputType = createProxyState(
+      [this.shouldShowEncryptionKey],
+      () => this.shouldShowEncryptionKey.value == true ? "text" : "password"
+    );
     color = new State("standard" /* Standard */);
     selectedPage = new State(
       "messages" /* Messages */
@@ -580,6 +590,7 @@
       [this.primaryChannel, this.primaryChannelInput],
       () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
     );
+    cannotSetEncryptionKey;
     // sorting
     updateIndex = () => {
       const index = this.chatListViewModel.getIndexOfChat(this);
@@ -612,6 +623,10 @@
         ...this.secondaryChannels.value.values()
       ]);
     };
+    setEncryptionKey = () => {
+      this.chatModel.setEncryptionKey(this.encryptionKeyInput.value);
+      this.encryptionKeyInput.callSubscriptions();
+    };
     setColor = (newColor) => {
       this.color.value = newColor;
       this.chatModel.setColor(newColor);
@@ -629,7 +644,9 @@
     };
     restoreSecondaryChannels = () => {
       this.secondaryChannels.clear();
-      for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(localeCompare)) {
+      for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(
+        localeCompare
+      )) {
         this.secondaryChannels.add(secondaryChannel);
       }
     };
@@ -640,6 +657,11 @@
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
+      this.encryptionKeyInput.value = chatModel.info.encryptionKey;
+      this.cannotSetEncryptionKey = createProxyState(
+        [this.encryptionKeyInput],
+        () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
+      );
       this.color.value = chatModel.color;
       this.restoreSecondaryChannels();
       this.restorePageSelection();
@@ -802,7 +824,10 @@
         setPrimaryChannelButtonAudioLabel: "set primary channel",
         newSecondaryChannelPlaceholder: "Add secondary channel",
         newSecondaryChannelAudioLabel: "name of new secondary channel",
-        addSecondaryChannelButtonAudioLabel: "add secondary channel"
+        addSecondaryChannelButtonAudioLabel: "add secondary channel",
+        encryptionKeyLabel: "Encryption key",
+        setEncryptionKeyButtonAudioLabel: "set encryption key",
+        showEncryptionKey: "Show encryption key"
       }
     }
   };
@@ -832,7 +857,7 @@
         chatViewModel.removeSecondaryChannel(secondaryChannel);
       });
     };
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": chatViewModel.primaryChannelInput,
@@ -873,7 +898,30 @@
           secondaryChannelConverter
         ]
       }
-    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.encryptionKeyLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": chatViewModel.encryptionKeyInput,
+        "on:enter": chatViewModel.setEncryptionKey,
+        "set:type": chatViewModel.encryptionKeyInputType
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50",
+        "aria-label": translations.chatPage.settings.setEncryptionKeyButtonAudioLabel,
+        "on:click": chatViewModel.setEncryptionKey,
+        "toggle:disabled": chatViewModel.cannotSetEncryptionKey
+      },
+      translations.general.setButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )), /* @__PURE__ */ createElement("label", { class: "inline" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        type: "checkbox",
+        "bind:checked": chatViewModel.shouldShowEncryptionKey
+      }
+    ), translations.chatPage.settings.showEncryptionKey), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
       const isSelected = createProxyState(
         [chatViewModel.color],
         () => chatViewModel.color.value == color

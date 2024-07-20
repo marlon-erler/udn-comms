@@ -2,7 +2,7 @@ const englishTranslations = {
   general: {
     closeButtonAudioLabel: "close",
     deleteItemButtonAudioLabel: "delete item",
-    
+
     setButton: "Set",
   },
 
@@ -91,7 +91,11 @@ const englishTranslations = {
       newSecondaryChannelPlaceholder: "Add secondary channel",
       newSecondaryChannelAudioLabel: "name of new secondary channel",
       addSecondaryChannelButtonAudioLabel: "add secondary channel",
-    }
+
+      encryptionKeyLabel: "Encryption key",
+      setEncryptionKeyButtonAudioLabel: "set encryption key",
+      showEncryptionKey: "Show encryption key",
+    },
   },
 };
 

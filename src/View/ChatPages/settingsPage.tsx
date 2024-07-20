@@ -21,6 +21,7 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
       </div>
       <div class="content">
         <label class="tile flex-no">
+          <span class="icon">forum</span>
           <div>
             <span>{translations.chatPage.settings.primaryChannelLabel}</span>
             <input
@@ -74,6 +75,41 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             secondaryChannelConverter,
           ]}
         ></div>
+
+        <hr></hr>
+
+        <label class="tile flex-no">
+          <span class="icon">key</span>
+          <div>
+            <span>{translations.chatPage.settings.encryptionKeyLabel}</span>
+            <input
+              bind:value={chatViewModel.encryptionKeyInput}
+              on:enter={chatViewModel.setEncryptionKey}
+              set:type={chatViewModel.encryptionKeyInputType}
+            ></input>
+          </div>
+        </label>
+        <div class="flex-row justify-end width-input">
+          <button
+            class="width-50"
+            aria-label={
+              translations.chatPage.settings.setEncryptionKeyButtonAudioLabel
+            }
+            on:click={chatViewModel.setEncryptionKey}
+            toggle:disabled={chatViewModel.cannotSetEncryptionKey}
+          >
+            {translations.general.setButton}
+            <span class="icon">check</span>
+          </button>
+        </div>
+
+        <label class="inline">
+          <input
+            type="checkbox"
+            bind:checked={chatViewModel.shouldShowEncryptionKey}
+          ></input>
+          {translations.chatPage.settings.showEncryptionKey}
+        </label>
 
         <hr></hr>
 
