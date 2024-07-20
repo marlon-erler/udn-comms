@@ -36,9 +36,7 @@ export default class ConnectionViewModel {
     if (this.connectionModel.address) {
       this.serverAddressInput.value = this.connectionModel.address;
     }
-    
-    this.previousAddresses.clear();
-    this.previousAddresses.add(...this.connectionModel.getAddresses());
+    this.updatePreviousAddresses();
   };
 
   messageHandler = (data: Message): void => {};
@@ -61,6 +59,11 @@ export default class ConnectionViewModel {
     this.isShowingConnectionModal.value = false;
   };
 
+  updatePreviousAddresses = (): void => {
+    this.previousAddresses.clear();
+    this.previousAddresses.add(...this.connectionModel.addresses);
+  }
+
   // init
   constructor(storageModel: StorageModel) {
     const connectionModel = new ConnectionModel({
@@ -69,5 +72,7 @@ export default class ConnectionViewModel {
       messageHandler: this.messageHandler,
     });
     this.connectionModel = connectionModel;
+
+    this.updatePreviousAddresses();
   }
 }

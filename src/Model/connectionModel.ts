@@ -59,7 +59,7 @@ export default class ConnectionModel {
     this.storageModel.remove(addressPath);
   };
 
-  getAddresses = (): string[] => {
+  get addresses(): string[] {
     const dirPath = storageKeys.previousAddresses;
     return this.storageModel.list(dirPath);
   };

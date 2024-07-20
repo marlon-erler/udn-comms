@@ -512,10 +512,10 @@
       const addressPath = this.getAddressPath(address);
       this.storageModel.remove(addressPath);
     };
-    getAddresses = () => {
+    get addresses() {
       const dirPath = storageKeys.previousAddresses;
       return this.storageModel.list(dirPath);
-    };
+    }
     // setup
     constructor(configuration) {
       this.udn = new UDNFrontend();
@@ -558,8 +558,7 @@
       if (this.connectionModel.address) {
         this.serverAddressInput.value = this.connectionModel.address;
       }
-      this.previousAddresses.clear();
-      this.previousAddresses.add(...this.connectionModel.getAddresses());
+      this.updatePreviousAddresses();
     };
     messageHandler = (data) => {
     };
@@ -577,6 +576,10 @@
     hideConnectionModal = () => {
       this.isShowingConnectionModal.value = false;
     };
+    updatePreviousAddresses = () => {
+      this.previousAddresses.clear();
+      this.previousAddresses.add(...this.connectionModel.addresses);
+    };
     // init
     constructor(storageModel2) {
       const connectionModel = new ConnectionModel({
@@ -585,6 +588,7 @@
         messageHandler: this.messageHandler
       });
       this.connectionModel = connectionModel;
+      this.updatePreviousAddresses();
     }
   };
 
@@ -751,7 +755,6 @@
 
   // src/index.tsx
   var storageModel = new StorageModel();
-  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel(storageModel);
   document.querySelector("main").append(
