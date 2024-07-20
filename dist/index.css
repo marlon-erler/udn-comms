@@ -206,16 +206,17 @@ main {
   display: flex;
 }
 #chat-page #main {
+  width: calc(100% - var(--ribbon-size));
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
-  flex: 1;
 }
 #chat-page #main > div,
 #chat-page #main .content {
   width: 100%;
   height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 #chat-page #main .content {
   overflow: auto;
@@ -229,9 +230,13 @@ main {
 #chat-page #ribbon {
   width: var(--ribbon-size);
   border-right: 1px solid var(--border);
-  overflow: auto;
   justify-content: space-between;
   padding-bottom: var(--safe-area-bottom);
+}
+#chat-page #ribbon > span {
+  height: 100%;
+  flex: 1;
+  overflow: auto;
 }
 #chat-page #main .toolbar {
   height: var(--ribbon-size);
@@ -260,8 +265,12 @@ main {
   width: 100%;
   max-width: var(--control-height);
   height: var(--control-height);
+  min-height: var(--control-height);
   align-items: center;
   justify-content: center;
+}
+#chat-page #ribbon > button {
+  margin-top: var(--gap-between-tiles);
 }
 
 /* src/View/homePage.css */

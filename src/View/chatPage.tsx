@@ -25,15 +25,13 @@ export function ChatPage(chatViewModel: ChatViewModel) {
     <article id="chat-page" set:color={chatViewModel.color}>
       <div>
         <div id="ribbon">
-          <span>
-            <button
-              class="ghost"
-              aria-label={translations.chatPage.closeChatAudioLabe}
-              on:click={chatViewModel.close}
-            >
-              <span class="icon">close</span>
-            </button>
-          </span>
+          <button
+            class="ghost"
+            aria-label={translations.chatPage.closeChatAudioLabe}
+            on:click={chatViewModel.close}
+          >
+            <span class="icon">close</span>
+          </button>
 
           <span>
             {ChatViewToggleButton(
