@@ -9,7 +9,7 @@ export function DeletableListItem(
 ) {
   return (
     <div class="tile flex-row justify-apart align-center padding-0">
-      <span class="padding-h">{text}</span>
+      <span class="padding-h ellipsis">{text}</span>
 
       <div class="flex-row justify-end">
         {primaryButton}
