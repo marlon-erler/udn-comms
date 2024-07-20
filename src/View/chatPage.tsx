@@ -22,7 +22,7 @@ export function ChatPage(chatViewModel: ChatViewModel) {
   });
 
   return (
-    <article id="chat-page">
+    <article id="chat-page" set:color={chatViewModel.color}>
       <div>
         <div id="ribbon">
           <span>

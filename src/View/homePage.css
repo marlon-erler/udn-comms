@@ -51,8 +51,10 @@
 }
 
 @media (min-width: 1200px) {
-  #home-page > div {
-    gap: 8rem;
+  #home-page #overview-section,
+  #home-page #chat-section {
+    padding-left: 3rem;
+    padding-right: 3rem;
   }
 
   #home-page #chat-grid {

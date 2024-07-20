@@ -1,6 +1,17 @@
+/* basic */
 [color]:not([color="standard"]) {
-  --primary: hsl(var(--hue), 100%, 80%);
+  --primary: hsl(var(--hue), 100%, var(--accent-luma));
+  --link: hsl(var(--hue), 100%, var(--accent-luma));
+}
 
+@media (prefers-color-scheme: dark) {
+  [color]:not([color="standard"]) {
+    --accent-luma: var(--accent-luma-dark);
+  }
+}
+
+/* tile */
+[color]:not([color="standard"]).tile {
   --gradient-luma-1: 70%;
   --gradient-luma-2: 90%;
 
@@ -21,7 +32,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  [color]:not([color="standard"]) {
+  [color]:not([color="standard"]).tile {
     --gradient-luma-1: 20%;
     --gradient-luma-2: 15%;
 
@@ -32,31 +43,50 @@
   }
 }
 
+/* fill */
 [color]:not([color="standard"]).fill-color {
   color: white;
   background-color: var(--primary);
 }
 
+[color]:not([color="standard"])[selected].fill-color {
+  color: var(--primary);
+  background-color: var(--surface);
+}
+
+/* definitions */
 [color="coral"] {
   --hue: 20;
+  --accent-luma: 50%;
+  --accent-luma-dark: 70%;
 }
 
 [color="yellow"] {
   --hue: 50;
+  --accent-luma: 50%;
+  --accent-luma-dark: 60%;
 }
 
 [color="mint"] {
   --hue: 150;
+  --accent-luma: 40%;
+  --accent-luma-dark: 60%;
 }
 
 [color="lightblue"] {
   --hue: 180;
+  --accent-luma: 40%;
+  --accent-luma-dark: 60%;
 }
 
 [color="blue"] {
   --hue: 220;
+  --accent-luma: 50%;
+  --accent-luma-dark: 70%;
 }
 
 [color="purple"] {
   --hue: 280;
+  --accent-luma: 50%;
+  --accent-luma-dark: 70%;
 }
