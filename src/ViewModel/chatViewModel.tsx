@@ -5,6 +5,7 @@ import StorageModel, { storageKeys } from "../Model/storageModel";
 import ChatListViewModel from "./chatListViewModel";
 import { ChatModel } from "../Model/chatModel";
 import { Color } from "./colors";
+import { localeCompare } from "../Model/Utility/utility";
 
 export default class ChatViewModel {
   chatModel: ChatModel;
@@ -59,6 +60,7 @@ export default class ChatViewModel {
     this.secondaryChannels.add(this.newSecondaryChannelInput.value);
     this.newSecondaryChannelInput.value = "";
     this.storeSecondaryChannels();
+    this.restoreSecondaryChannels();
   };
 
   removeSecondaryChannel = (secondaryChannel: string): void => {
@@ -70,7 +72,7 @@ export default class ChatViewModel {
     this.chatModel.setSecondaryChannels([
       ...this.secondaryChannels.value.values(),
     ]);
-  }
+  };
 
   setColor = (newColor: Color): void => {
     this.color.value = newColor;
@@ -90,6 +92,13 @@ export default class ChatViewModel {
     });
   };
 
+  restoreSecondaryChannels = (): void => {
+    this.secondaryChannels.clear();
+    for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(localeCompare)) {
+      this.secondaryChannels.add(secondaryChannel);
+    }
+  };
+
   // init
   constructor(chatListViewModel: ChatListViewModel, chatModel: ChatModel) {
     this.chatModel = chatModel;
@@ -99,12 +108,9 @@ export default class ChatViewModel {
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
 
-    for (const secondaryChannel of chatModel.info.secondaryChannels) {
-      this.secondaryChannels.add(secondaryChannel);
-    }
-
     this.color.value = chatModel.color;
 
+    this.restoreSecondaryChannels();
     this.restorePageSelection();
     this.updateIndex();
   }

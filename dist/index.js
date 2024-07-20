@@ -239,6 +239,9 @@
   function parse(string) {
     return JSON.parse(string);
   }
+  function localeCompare(a, b) {
+    return a.localeCompare(b);
+  }
 
   // src/Model/Utility/typeSafety.ts
   var DATA_VERSION = "v2";
@@ -539,7 +542,7 @@
       for (const chatModel of this.chatModels) {
         allChannels.push(chatModel.info.primaryChannel);
       }
-      this.sortedPrimaryChannels = allChannels.sort((a, b) => a.localeCompare(b));
+      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
     };
     // restore
     loadChats = () => {
@@ -598,6 +601,7 @@
       this.secondaryChannels.add(this.newSecondaryChannelInput.value);
       this.newSecondaryChannelInput.value = "";
       this.storeSecondaryChannels();
+      this.restoreSecondaryChannels();
     };
     removeSecondaryChannel = (secondaryChannel) => {
       this.secondaryChannels.remove(secondaryChannel);
@@ -623,6 +627,12 @@
         this.storageModel.store(path, newPage);
       });
     };
+    restoreSecondaryChannels = () => {
+      this.secondaryChannels.clear();
+      for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(localeCompare)) {
+        this.secondaryChannels.add(secondaryChannel);
+      }
+    };
     // init
     constructor(chatListViewModel2, chatModel) {
       this.chatModel = chatModel;
@@ -630,10 +640,8 @@
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
-      for (const secondaryChannel of chatModel.info.secondaryChannels) {
-        this.secondaryChannels.add(secondaryChannel);
-      }
       this.color.value = chatModel.color;
+      this.restoreSecondaryChannels();
       this.restorePageSelection();
       this.updateIndex();
     }

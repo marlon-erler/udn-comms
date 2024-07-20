@@ -92,11 +92,13 @@ main {
 /* src/colors.css */
 [color]:not([color=standard]) {
   --primary: hsl(var(--hue), 100%, var(--accent-luma));
+  --text-on-color: hsl(0, 0%, var(--accent-text-luma));
   --link: hsl(var(--hue), 100%, var(--accent-luma));
 }
 @media (prefers-color-scheme: dark) {
   [color]:not([color=standard]) {
     --accent-luma: var(--accent-luma-dark);
+    --accent-text-luma: var(--accent-text-luma-dark);
   }
 }
 [color]:not([color=standard]).tile {
@@ -136,31 +138,43 @@ main {
   --hue: 20;
   --accent-luma: 50%;
   --accent-luma-dark: 70%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 100%;
 }
 [color=yellow] {
   --hue: 50;
   --accent-luma: 50%;
   --accent-luma-dark: 60%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 0%;
 }
 [color=mint] {
   --hue: 150;
   --accent-luma: 40%;
   --accent-luma-dark: 60%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 0%;
 }
 [color=lightblue] {
   --hue: 180;
   --accent-luma: 40%;
   --accent-luma-dark: 60%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 0%;
 }
 [color=blue] {
   --hue: 220;
   --accent-luma: 50%;
   --accent-luma-dark: 70%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 100%;
 }
 [color=purple] {
   --hue: 280;
   --accent-luma: 50%;
   --accent-luma-dark: 70%;
+  --accent-text-luma: 100%;
+  --accent-text-luma-dark: 100%;
 }
 
 /* src/View/chatPage.css */

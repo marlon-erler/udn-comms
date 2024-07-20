@@ -11,3 +11,8 @@ export function stringify(data: any): string {
 export function parse(string: string): any {
   return JSON.parse(string);
 }
+
+// sort
+export function localeCompare(a: string, b: string): number {
+  return a.localeCompare(b);
+}

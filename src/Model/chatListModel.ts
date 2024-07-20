@@ -1,6 +1,7 @@
 import StorageModel, { storageKeys } from "./storageModel";
 
 import { ChatModel } from "./chatModel";
+import { localeCompare } from "./Utility/utility";
 import { v4 } from "uuid";
 
 export default class ChatListModel {
@@ -40,7 +41,7 @@ export default class ChatListModel {
       allChannels.push(chatModel.info.primaryChannel);
     }
 
-    this.sortedPrimaryChannels = allChannels.sort((a, b) => a.localeCompare(b));
+    this.sortedPrimaryChannels = allChannels.sort(localeCompare);
   };
 
   // restore
