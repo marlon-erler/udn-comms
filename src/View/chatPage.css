@@ -76,8 +76,11 @@
 
 #chat-page #ribbon > span {
   height: 100%;
+  
   flex: 1;
   overflow: auto;
+
+  justify-content: flex-end;
 }
 
 #chat-page #main .toolbar {
