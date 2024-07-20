@@ -338,7 +338,7 @@ main {
   padding: 0px;
   overflow: hidden;
   display: grid;
-  grid-template-rows: 1fr var(--control-height);
+  grid-template-rows: 1fr var(--control-height) var(--safe-area-bottom);
 }
 #message-page #message-container {
   overflow: auto;

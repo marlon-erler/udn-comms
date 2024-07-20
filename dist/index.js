@@ -945,7 +945,7 @@
 
   // src/View/Components/deletableListItem.tsx
   function DeletableListItem(text, primaryButton, ondelete) {
-    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger",
@@ -1425,8 +1425,9 @@
     connectionChangeHandler = () => {
       this.isConnected.value = this.connectionModel.isConnected;
       if (this.connectionModel.isConnected == false) return;
-      if (this.connectionModel.address) {
-        this.serverAddressInput.value = this.connectionModel.address;
+      if (this.connectionModel.address == void 0) return;
+      this.serverAddressInput.value = this.connectionModel.address;
+      if (!this.previousAddresses.value.has(this.connectionModel.address)) {
         this.previousAddresses.add(this.connectionModel.address);
       }
     };
