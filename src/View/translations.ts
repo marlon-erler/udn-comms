@@ -2,6 +2,8 @@ const englishTranslations = {
   general: {
     closeButtonAudioLabel: "close",
     deleteItemButtonAudioLabel: "delete item",
+    
+    setButton: "Set",
   },
 
   regional: {
@@ -43,7 +45,7 @@ const englishTranslations = {
 
     yourNameLabel: "Your name",
     yourNamePlaceholder: "Jane Doe",
-    setNameButton: "Set",
+    setNameButtonAudioLabel: "set name",
 
     firstDayOfWeekLabel: "First day of week",
 
@@ -82,6 +84,9 @@ const englishTranslations = {
 
     settings: {
       settingsHeadline: "Settings",
+
+      primaryChannelLabel: "Primary channel",
+      setPrimaryChannelButtonAudioLabel: "set primary channel",
     }
   },
 };

@@ -32,6 +32,12 @@ export default class ChatListViewModel {
     return this.sortedPrimaryChannels.indexOf(chat.primaryChannel.value);
   }
 
+  updateIndices = (): void => {
+    for (const chatViewModel of this.chatViewModels.value) {
+      chatViewModel.updateIndex();
+    }
+  }
+
   // methods
   createChat = (): void => {
     const chatModel: ChatModel = this.chatListModel.createChat(

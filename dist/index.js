@@ -391,6 +391,7 @@
     setPrimaryChannel = (primaryChannel) => {
       this.info.primaryChannel = primaryChannel;
       this.storeInfo();
+      this.chatListModel.updateIndices();
     };
     setSecondaryChannels = (secondaryChannels) => {
       this.info.secondaryChannels = secondaryChannels;
@@ -551,6 +552,11 @@
     close = () => {
       this.chatListViewModel.closeChat();
     };
+    setPrimaryChannel = () => {
+      this.chatModel.setPrimaryChannel(this.primaryChannelInput.value);
+      this.primaryChannel.value = this.chatModel.info.primaryChannel;
+      this.chatListViewModel.updateIndices();
+    };
     // restore
     restorePageSelection = () => {
       const path = storageKeys.chatLastUsedPage(this.chatModel.id);
@@ -594,6 +600,11 @@
     getIndexOfChat(chat) {
       return this.sortedPrimaryChannels.indexOf(chat.primaryChannel.value);
     }
+    updateIndices = () => {
+      for (const chatViewModel of this.chatViewModels.value) {
+        chatViewModel.updateIndex();
+      }
+    };
     // methods
     createChat = () => {
       const chatModel = this.chatListModel.createChat(
@@ -659,7 +670,8 @@
   var englishTranslations = {
     general: {
       closeButtonAudioLabel: "close",
-      deleteItemButtonAudioLabel: "delete item"
+      deleteItemButtonAudioLabel: "delete item",
+      setButton: "Set"
     },
     regional: {
       weekdays: {
@@ -691,7 +703,7 @@
       outboxAllItemsSent: "All items sent",
       yourNameLabel: "Your name",
       yourNamePlaceholder: "Jane Doe",
-      setNameButton: "Set",
+      setNameButtonAudioLabel: "set name",
       firstDayOfWeekLabel: "First day of week",
       scrollToChatButton: "Chats",
       ///
@@ -718,7 +730,9 @@
         progress: "Progress"
       },
       settings: {
-        settingsHeadline: "Settings"
+        settingsHeadline: "Settings",
+        primaryChannelLabel: "Primary channel",
+        setPrimaryChannelButtonAudioLabel: "set primary channel"
       }
     }
   };
@@ -730,7 +744,23 @@
 
   // src/View/ChatPages/settingsPage.tsx
   function SettingsPage(chatViewModel) {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)));
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": chatViewModel.primaryChannelInput,
+        "on:enter": chatViewModel.setPrimaryChannel
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50",
+        "aria-label": translations.chatPage.settings.setPrimaryChannelButtonAudioLabel,
+        "on:click": chatViewModel.setPrimaryChannel,
+        "toggle:disabled": chatViewModel.cannotSetPrimaryChannel
+      },
+      translations.general.setButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    ))));
   }
 
   // src/View/chatPage.tsx
@@ -1201,9 +1231,10 @@
       {
         class: "width-50",
         "on:click": settingsViewModel2.setName,
-        "toggle:disabled": settingsViewModel2.cannotSetName
+        "toggle:disabled": settingsViewModel2.cannotSetName,
+        "aria-label": translations.homePage.setNameButtonAudioLabel
       },
-      translations.homePage.setNameButton,
+      translations.general.setButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
     )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.firstDayOfWeekLabel), /* @__PURE__ */ createElement("select", { "bind:value": settingsViewModel2.firstDayOfWeekInput }, ...translations.regional.weekdays.full.map(
       (weekdayName, i) => Option(

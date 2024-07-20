@@ -47,6 +47,7 @@ export class ChatModel {
   setPrimaryChannel = (primaryChannel: string): void => {
     this.info.primaryChannel = primaryChannel;
     this.storeInfo();
+    this.chatListModel.updateIndices();
   };
 
   setSecondaryChannels = (secondaryChannels: string[]): void => {

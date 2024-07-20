@@ -106,8 +106,9 @@ export function HomePage(
           class="width-50"
           on:click={settingsViewModel.setName}
           toggle:disabled={settingsViewModel.cannotSetName}
+          aria-label={translations.homePage.setNameButtonAudioLabel}
         >
-          {translations.homePage.setNameButton}
+          {translations.general.setButton}
           <span class="icon">check</span>
         </button>
       </div>

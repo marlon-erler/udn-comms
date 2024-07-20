@@ -43,6 +43,12 @@ export default class ChatViewModel {
     this.chatListViewModel.closeChat();
   };
 
+  setPrimaryChannel = (): void => {
+    this.chatModel.setPrimaryChannel(this.primaryChannelInput.value);
+    this.primaryChannel.value = this.chatModel.info.primaryChannel;
+    this.chatListViewModel.updateIndices();
+  }
+
   // restore
   restorePageSelection = (): void => {
     const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);

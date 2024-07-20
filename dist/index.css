@@ -131,6 +131,7 @@ main {
 }
 #chat-page #main .content {
   overflow: auto;
+  padding: var(--content-padding);
 }
 #chat-page #ribbon,
 #chat-page #main,
