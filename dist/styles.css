@@ -313,6 +313,13 @@ TYPE
 /*
 MAIN
  */
+/* animation */
+@media (max-width: 640px) {
+  .modal > div {
+    animation: slide-up var(--animation-duration);
+  }
+}
+
 /* appearance */
 input[type="checkbox"],
 input[type="radio"],
