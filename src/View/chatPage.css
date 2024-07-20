@@ -71,6 +71,8 @@
   overflow: auto;
 
   justify-content: space-between;
+
+  padding-bottom: var(--safe-area-bottom);
 }
 
 #chat-page #main .toolbar {
@@ -80,6 +82,7 @@
   overflow-x: auto;
 
   padding-left: var(--content-padding);
+  border-top: 1px solid var(--border);
 }
 
 #chat-page #ribbon,

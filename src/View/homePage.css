@@ -29,6 +29,10 @@
   scroll-snap-align: center;
 }
 
+#home-page #overview-section {
+  padding-bottom: calc(var(--content-padding) + var(--safe-area-bottom));
+}
+
 #home-page #chat-grid {
   margin-top: var(--content-padding);
 

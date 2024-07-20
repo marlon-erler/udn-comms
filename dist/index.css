@@ -5,7 +5,7 @@
   --surface-hover: hsla(0, 0%, 91%, 40%);
   --surface-active: hsla(0, 0%, 78%, 40%);
 }
-@media (display-mode: browser) and (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   #home-page {
     --background-transparent: hsla(0, 0%, 5%, 30%);
     --surface: hsla(0, 0%, 5%, 30%);
@@ -217,12 +217,14 @@ main {
   border-right: 1px solid var(--border);
   overflow: auto;
   justify-content: space-between;
+  padding-bottom: var(--safe-area-bottom);
 }
 #chat-page #main .toolbar {
   height: var(--ribbon-size);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   padding-left: var(--content-padding);
+  border-top: 1px solid var(--border);
 }
 #chat-page #ribbon,
 #chat-page .toolbar {
@@ -271,6 +273,9 @@ main {
   height: 100%;
   overflow: scroll;
   scroll-snap-align: center;
+}
+#home-page #overview-section {
+  padding-bottom: calc(var(--content-padding) + var(--safe-area-bottom));
 }
 #home-page #chat-grid {
   margin-top: var(--content-padding);

@@ -5,7 +5,7 @@
   --surface-active: hsla(0, 0%, 78%, 40%);
 }
 
-@media (display-mode: browser) and (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   #home-page {
     --background-transparent: hsla(0, 0%, 5%, 30%);
     --surface: hsla(0, 0%, 5%, 30%);
