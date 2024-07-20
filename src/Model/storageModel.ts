@@ -21,10 +21,33 @@ export default class StorageModel {
     return localStorage.getItem(key);
   };
 
-  remove = (pathComponents: string[]): void => {
+  remove = (
+    pathComponents: string[],
+    shouldInitialize: boolean = true
+  ): void => {
     const key: string = StorageModel.pathComponentsToKey(...pathComponents);
     localStorage.removeItem(key);
-    this.initializeTree();
+
+    if (shouldInitialize) {
+      this.initializeTree();
+    }
+  };
+
+  removeRecursive = (pathComponentsOfEntityToDelete: string[]): void => {
+    a: for (const key of Object.keys(localStorage)) {
+      const pathComponentsOfCurrentEntity: string[] =
+        StorageModel.keyToPathComponents(key);
+
+      for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
+        if (!pathComponentsOfCurrentEntity[i]) continue a;
+        if (
+          pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i]
+        )
+          continue a;
+      }
+
+      this.remove(pathComponentsOfCurrentEntity);
+    }
   };
 
   list = (pathComponents: string[]): string[] => {
@@ -113,6 +136,7 @@ export const storageKeys = {
   previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
 
   // chat etc
+  chats: [DATA_VERSION, "chat"],
   chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
   chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],
