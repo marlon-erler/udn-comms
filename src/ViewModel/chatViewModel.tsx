@@ -11,6 +11,8 @@ export default class ChatViewModel {
   storageModel: StorageModel;
 
   // state
+  index: React.State<number> = new React.State(0);
+
   primaryChannel: React.State<string> = new React.State("");
   primaryChannelInput: React.State<string> = new React.State("");
 
@@ -25,6 +27,12 @@ export default class ChatViewModel {
       this.primaryChannelInput.value == "" ||
       this.primaryChannelInput.value == this.primaryChannel.value
   );
+
+  // sorting
+  updateIndex = (): void => {
+    const index = this.chatListViewModel.getIndexOfChat(this);
+    this.index.value = index;
+  };
 
   // methods
   open = (): void => {
@@ -58,6 +66,7 @@ export default class ChatViewModel {
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
 
     this.restorePageSelection();
+    this.updateIndex();
   }
 }
 

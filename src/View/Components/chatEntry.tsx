@@ -5,7 +5,7 @@ import * as React from "bloatless-react";
 import ChatViewModel from "../../ViewModel/chatViewModel";
 
 export function ChatEntry(chatViewModel: ChatViewModel) {
-  return (
+  const view = (
     <button class="chat-entry tile" on:click={chatViewModel.open}>
       <span
         class="shadow"
@@ -14,6 +14,12 @@ export function ChatEntry(chatViewModel: ChatViewModel) {
       <h2 subscribe:innerText={chatViewModel.primaryChannel}></h2>
     </button>
   );
+
+  chatViewModel.index.subscribe((newIndex) => {
+    view.style.order = newIndex;
+  });
+
+  return view;
 }
 
 export const ChatViewModelToChatEntry: React.StateItemConverter<

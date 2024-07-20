@@ -8,10 +8,12 @@ export default class ChatListModel {
 
   // data
   chatModels = new Set<ChatModel>();
+  sortedPrimaryChannels: string[] = [];
 
   // store & add
   addChatModel = (chatModel: ChatModel) => {
     this.chatModels.add(chatModel);
+    this.updateIndices();
   };
 
   createChat = (primaryChannel: string): ChatModel => {
@@ -26,6 +28,19 @@ export default class ChatListModel {
 
   untrackChat = (chat: ChatModel): void => {
     this.chatModels.delete(chat);
+    this.updateIndices();
+  };
+
+  // sorting
+  updateIndices = () => {
+    this.sortedPrimaryChannels = [];
+
+    let allChannels: string[] = [];
+    for (const chatModel of this.chatModels) {
+      allChannels.push(chatModel.info.primaryChannel);
+    }
+
+    this.sortedPrimaryChannels = allChannels.sort((a, b) => a.localeCompare(b));
   };
 
   // restore

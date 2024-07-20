@@ -479,10 +479,12 @@
   var ChatListModel = class {
     storageModel;
     // data
-    chatModels = /* @__PURE__ */ new Map();
+    chatModels = /* @__PURE__ */ new Set();
+    sortedPrimaryChannels = [];
     // store & add
     addChatModel = (chatModel) => {
-      this.chatModels.set(chatModel.id, chatModel);
+      this.chatModels.add(chatModel);
+      this.updateIndices();
     };
     createChat = (primaryChannel) => {
       const id = v4_default();
@@ -492,7 +494,17 @@
       return chatModel;
     };
     untrackChat = (chat) => {
-      this.chatModels.delete(chat.id);
+      this.chatModels.delete(chat);
+      this.updateIndices();
+    };
+    // sorting
+    updateIndices = () => {
+      this.sortedPrimaryChannels = [];
+      let allChannels = [];
+      for (const chatModel of this.chatModels) {
+        allChannels.push(chatModel.info.primaryChannel);
+      }
+      this.sortedPrimaryChannels = allChannels.sort((a, b) => a.localeCompare(b));
     };
     // restore
     loadChats = () => {
@@ -516,6 +528,7 @@
     chatListViewModel;
     storageModel;
     // state
+    index = new State(0);
     primaryChannel = new State("");
     primaryChannelInput = new State("");
     selectedPage = new State(
@@ -526,6 +539,11 @@
       [this.primaryChannel, this.primaryChannelInput],
       () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
     );
+    // sorting
+    updateIndex = () => {
+      const index = this.chatListViewModel.getIndexOfChat(this);
+      this.index.value = index;
+    };
     // methods
     open = () => {
       this.chatListViewModel.openChat(this);
@@ -552,6 +570,7 @@
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
       this.restorePageSelection();
+      this.updateIndex();
     }
   };
 
@@ -568,6 +587,13 @@
       [this.newChatPrimaryChannel],
       () => this.newChatPrimaryChannel.value == ""
     );
+    // sorting
+    get sortedPrimaryChannels() {
+      return this.chatListModel.sortedPrimaryChannels;
+    }
+    getIndexOfChat(chat) {
+      return this.sortedPrimaryChannels.indexOf(chat.primaryChannel.value);
+    }
     // methods
     createChat = () => {
       const chatModel = this.chatListModel.createChat(
@@ -1078,13 +1104,17 @@
 
   // src/View/Components/chatEntry.tsx
   function ChatEntry(chatViewModel) {
-    return /* @__PURE__ */ createElement("button", { class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement("button", { class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
       "span",
       {
         class: "shadow",
         "subscribe:innerText": chatViewModel.primaryChannel
       }
     ), /* @__PURE__ */ createElement("h2", { "subscribe:innerText": chatViewModel.primaryChannel }));
+    chatViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
   }
   var ChatViewModelToChatEntry = (chatViewModel) => {
     return ChatEntry(chatViewModel);

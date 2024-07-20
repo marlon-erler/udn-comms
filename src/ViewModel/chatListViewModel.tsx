@@ -14,7 +14,7 @@ export default class ChatListViewModel {
   chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
 
   selectedChat: React.State<ChatViewModel | undefined> = new React.State<
-  ChatViewModel | undefined
+    ChatViewModel | undefined
   >(undefined);
 
   // guards
@@ -22,6 +22,15 @@ export default class ChatListViewModel {
     [this.newChatPrimaryChannel],
     () => this.newChatPrimaryChannel.value == ""
   );
+
+  // sorting
+  get sortedPrimaryChannels(): string[] {
+    return this.chatListModel.sortedPrimaryChannels;
+  }
+
+  getIndexOfChat(chat: ChatViewModel): number {
+    return this.sortedPrimaryChannels.indexOf(chat.primaryChannel.value);
+  }
 
   // methods
   createChat = (): void => {
