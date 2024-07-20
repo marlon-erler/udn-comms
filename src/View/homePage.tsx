@@ -2,9 +2,11 @@ import "./homePage.css";
 
 import * as React from "bloatless-react";
 
+import { Option } from "./Components/option";
+import SettingsViewModel from "../ViewModel/settingsViewModel";
 import { translations } from "./translations";
 
-export function HomePage() {
+export function HomePage(settingsViewModel: SettingsViewModel) {
   // sections
   const overviewSection = (
     <div id="overview-section">
@@ -45,9 +47,7 @@ export function HomePage() {
         <span class="icon">inbox</span>
         <div>
           <b>{translations.homePage.mailboxHeadline}</b>
-          <span class="error">
-            {translations.homePage.mailboxDisabled}
-          </span>
+          <span class="error">{translations.homePage.mailboxDisabled}</span>
         </div>
       </div>
 
@@ -67,11 +67,18 @@ export function HomePage() {
         <span class="icon">account_circle</span>
         <div>
           <span>{translations.homePage.yourNameLabel}</span>
-          <input></input>
+          <input
+            bind:value={settingsViewModel.nameInput}
+            on:enter={settingsViewModel.setName}
+          ></input>
         </div>
       </label>
       <div class="flex-row justify-end">
-        <button class="width-50">
+        <button
+          class="width-50"
+          on:click={settingsViewModel.setName}
+          toggle:disabled={settingsViewModel.cannotSetName}
+        >
           {translations.homePage.setNameButton}
           <span class="icon">check</span>
         </button>
@@ -83,7 +90,16 @@ export function HomePage() {
         <span class="icon">calendar_month</span>
         <div>
           <span>{translations.homePage.firstDayOfWeekLabel}</span>
-          <select></select>
+          <select bind:value={settingsViewModel.firstDayOfWeekInput}>
+            {...translations.regional.weekdays.full.map((weekdayName, i) =>
+              Option(
+                weekdayName,
+                i.toString(),
+                i == settingsViewModel.firstDayOfWeekInput.value
+              )
+            )}
+          </select>
+          <span class="icon">arrow_drop_down</span>
         </div>
       </label>
 

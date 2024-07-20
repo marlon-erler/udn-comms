@@ -25,13 +25,13 @@ export default class SettingsModel {
   restoreUsername(): void {
     const path = storageKeys.username;
     const content = this.storageModel.restore(path);
-    this.username == content ?? "";
+    this.username = content ?? "";
   }
 
   restoreFirstDayofWeek(): void {
     const path = storageKeys.firstDayOfWeek;
     const content = this.storageModel.restoreStringifiable(path);
-    this.firstDayOfWeek == content ?? 0;
+    this.firstDayOfWeek = content ?? 0;
   }
 
   // init

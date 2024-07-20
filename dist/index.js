@@ -163,6 +163,45 @@
   };
 
   // node_modules/bloatless-react/index.ts
+  var State = class {
+    _value;
+    _bindings = /* @__PURE__ */ new Set();
+    // init
+    constructor(initialValue) {
+      this._value = initialValue;
+    }
+    // value
+    get value() {
+      return this._value;
+    }
+    set value(newValue) {
+      if (this._value == newValue) return;
+      this._value = newValue;
+      this.callSubscriptions();
+    }
+    // subscriptions
+    callSubscriptions() {
+      this._bindings.forEach((fn) => fn(this._value));
+    }
+    subscribe(fn) {
+      this._bindings.add(fn);
+      fn(this._value);
+    }
+    subscribeSilent(fn) {
+      this._bindings.add(fn);
+    }
+    // stringify
+    toString() {
+      return JSON.stringify(this._value);
+    }
+  };
+  function createProxyState(statesToSubscibe, fn) {
+    const proxyState = new State(fn());
+    statesToSubscibe.forEach(
+      (state) => state.subscribe(() => proxyState.value = fn())
+    );
+    return proxyState;
+  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -263,6 +302,11 @@
     return element;
   }
 
+  // src/View/Components/option.tsx
+  function Option(text, value, selectedOnCreate) {
+    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
+  }
+
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -326,7 +370,7 @@
   var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/homePage.tsx
-  function HomePage() {
+  function HomePage(settingsViewModel2) {
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement("input", null))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
       "button",
       {
@@ -348,7 +392,28 @@
         "aria-label": translations.homePage.connectAudioLabel
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement("input", null))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "width-50" }, translations.homePage.setNameButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "check"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.firstDayOfWeekLabel), /* @__PURE__ */ createElement("select", null))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": settingsViewModel2.nameInput,
+        "on:enter": settingsViewModel2.setName
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50",
+        "on:click": settingsViewModel2.setName,
+        "toggle:disabled": settingsViewModel2.cannotSetName
+      },
+      translations.homePage.setNameButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.firstDayOfWeekLabel), /* @__PURE__ */ createElement("select", { "bind:value": settingsViewModel2.firstDayOfWeekInput }, ...translations.regional.weekdays.full.map(
+      (weekdayName, i) => Option(
+        weekdayName,
+        i.toString(),
+        i == settingsViewModel2.firstDayOfWeekInput.value
+      )
+    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -457,13 +522,78 @@
     chatOutbox: (id) => `${DATA_VERSION}/chat/${id}/outbox`
   };
 
+  // src/Model/settingsModel.ts
+  var SettingsModel = class {
+    storageModel;
+    username;
+    firstDayOfWeek;
+    // set
+    setName(newValue) {
+      this.username = newValue;
+      const path = storageKeys.username;
+      this.storageModel.store(path, newValue);
+    }
+    setFirstDayOfWeek(newValue) {
+      this.firstDayOfWeek = newValue;
+      const path = storageKeys.firstDayOfWeek;
+      this.storageModel.storeStringifiable(path, newValue);
+    }
+    // restore
+    restoreUsername() {
+      const path = storageKeys.username;
+      const content = this.storageModel.restore(path);
+      this.username = content ?? "";
+    }
+    restoreFirstDayofWeek() {
+      const path = storageKeys.firstDayOfWeek;
+      const content = this.storageModel.restoreStringifiable(path);
+      this.firstDayOfWeek = content ?? 0;
+    }
+    // init
+    constructor(storageModel2) {
+      this.storageModel = storageModel2;
+      this.restoreUsername();
+      this.restoreFirstDayofWeek();
+    }
+  };
+
+  // src/ViewModel/settingsViewModel.ts
+  var SettingsViewModel = class {
+    settingsModel;
+    // state
+    nameInput = new State("");
+    firstDayOfWeekInput = new State(0);
+    // toggles
+    cannotSetName = createProxyState(
+      [this.nameInput],
+      () => this.nameInput.value == "" || this.nameInput.value == this.settingsModel.username
+    );
+    // set
+    setName = () => {
+      this.settingsModel.setName(this.nameInput.value);
+      this.nameInput.callSubscriptions();
+    };
+    setFirstDayofWeek = () => {
+      this.settingsModel.setFirstDayOfWeek(this.firstDayOfWeekInput.value);
+    };
+    // init
+    constructor(settingsModel2) {
+      this.settingsModel = settingsModel2;
+      this.nameInput.value = settingsModel2.username;
+      this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
+      this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
+    }
+  };
+
   // src/index.tsx
   var storageModel = new StorageModel();
+  var settingsModel = new SettingsModel(storageModel);
   var connectionModel = new ConnectionModel({
     connectionChangeHandler() {
     },
     messageHandler(data) {
     }
   });
-  document.querySelector("main").append(HomePage());
+  var settingsViewModel = new SettingsViewModel(settingsModel);
+  document.querySelector("main").append(HomePage(settingsViewModel));
 })();
