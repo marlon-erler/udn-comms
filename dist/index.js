@@ -380,6 +380,7 @@
       ///
       overviewHeadline: "Overview",
       serverAddress: "Server address",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
       connectAudioLabel: "connect to server",
       disconnectAudioLabel: "disconnect from server",
       manageConnectionsAudioLabel: "manage connections",
@@ -389,6 +390,7 @@
       outboxHeadline: "Outbox",
       outboxAllItemsSent: "All items sent",
       yourNameLabel: "Your name",
+      yourNamePlaceholder: "Jane Doe",
       setNameButton: "Set",
       firstDayOfWeekLabel: "First day of week",
       scrollToChatButton: "Chats",
@@ -415,6 +417,7 @@
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
+        placeholder: translations.homePage.serverAddressPlaceholder,
         "bind:value": connectionViewModel2.serverAddressInput,
         "on:enter": connectionViewModel2.connect
       }
@@ -446,6 +449,7 @@
     )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
       "input",
       {
+        placeholder: translations.homePage.yourNamePlaceholder,
         "bind:value": settingsViewModel2.nameInput,
         "on:enter": settingsViewModel2.setName
       }

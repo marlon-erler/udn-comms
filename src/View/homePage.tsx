@@ -21,6 +21,7 @@ export function HomePage(
         <div>
           <span>{translations.homePage.serverAddress}</span>
           <input
+            placeholder={translations.homePage.serverAddressPlaceholder}
             bind:value={connectionViewModel.serverAddressInput}
             on:enter={connectionViewModel.connect}
           ></input>
@@ -79,6 +80,7 @@ export function HomePage(
         <div>
           <span>{translations.homePage.yourNameLabel}</span>
           <input
+            placeholder={translations.homePage.yourNamePlaceholder}
             bind:value={settingsViewModel.nameInput}
             on:enter={settingsViewModel.setName}
           ></input>

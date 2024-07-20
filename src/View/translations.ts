@@ -34,6 +34,7 @@ const englishTranslations = {
     overviewHeadline: "Overview",
 
     serverAddress: "Server address",
+    serverAddressPlaceholder: "wss://192.168.0.69:3000",
     connectAudioLabel: "connect to server",
     disconnectAudioLabel: "disconnect from server",
     manageConnectionsAudioLabel: "manage connections",
@@ -46,6 +47,7 @@ const englishTranslations = {
     outboxAllItemsSent: "All items sent",
 
     yourNameLabel: "Your name",
+    yourNamePlaceholder: "Jane Doe",
     setNameButton: "Set",
 
     firstDayOfWeekLabel: "First day of week",
