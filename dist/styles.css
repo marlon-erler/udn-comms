@@ -26,9 +26,9 @@ COLORS
 
   --layer: hsla(0, 0%, 96%, 60%);
 
-  --surface: #f4f4f4;
-  --surface-hover: #e8e8e8;
-  --surface-active: #c6c6c6;
+  --surface: hsla(0, 0%, 96%, 100%);
+  --surface-hover: hsla(0, 0%, 91%, 100%);
+  --surface-active: hsla(0, 0%, 78%, 100%);
 
   --border: hsla(0, 0%, 0%, 10%);
   --surface-border: #8d8d8d;
@@ -63,9 +63,9 @@ COLORS
 
     --layer: hsla(0, 0%, 15%, 60%);
 
-    --surface: #262626;
-    --surface-hover: #333333;
-    --surface-active: #6f6f6f;
+    --surface: hsla(0, 0%, 15%, 100%);
+    --surface-hover: hsla(0, 0%, 20%, 100%);
+    --surface-active: hsla(0, 0%, 44%, 100%);
 
     --border: hsla(0, 0%, 100%, 10%);
     --surface-border: #6f6f6f;
@@ -138,11 +138,11 @@ a {
 }
 
 /* controls */
-button,
-footer,
-input,
-textarea,
-select,
+button:not(.tile *),
+footer:not(.tile *),
+input:not(.tile *),
+textarea:not(.tile *),
+select:not(.tile *),
 .surface,
 .tile {
   background-color: var(--surface);
@@ -166,6 +166,7 @@ button.tile.ghost:active,
 [selected]:active {
   background-color: var(--surface-hover);
 }
+.tile *,
 header button {
   background-color: transparent;
 }
@@ -302,6 +303,12 @@ select {
 }
 
 /* backdrop-filter */
+.tile,
+.surface {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 header,
 menu {
   backdrop-filter: blur(70px);

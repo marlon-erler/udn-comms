@@ -1,3 +1,7 @@
+import "./base.css";
+
+import * as React from "bloatless-react";
+
 import ChatListViewModel from "./ViewModel/chatListViewModel";
 import { ChatPageWrapper } from "./View/chatPageWrapper";
 import { ConnectionModal } from "./View/Modals/connectionModal";
@@ -16,6 +20,7 @@ const connectionViewModel = new ConnectionViewModel(storageModel);
 const chatListViewModel = new ChatListViewModel(storageModel);
 
 // view
+document.body.append(<div id="background"></div>);
 document
   .querySelector("main")!
   .append(

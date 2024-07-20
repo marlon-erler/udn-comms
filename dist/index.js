@@ -1177,6 +1177,7 @@
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel(storageModel);
   var chatListViewModel = new ChatListViewModel(storageModel);
+  document.body.append(/* @__PURE__ */ createElement("div", { id: "background" }));
   document.querySelector("main").append(
     HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
     ChatPageWrapper(chatListViewModel),
