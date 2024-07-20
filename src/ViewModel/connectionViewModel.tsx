@@ -34,10 +34,13 @@ export default class ConnectionViewModel {
   // handlers
   connectionChangeHandler = (): void => {
     this.isConnected.value = this.connectionModel.isConnected;
-    if (this.connectionModel.isConnected == false) return;
 
-    if (this.connectionModel.address) {
-      this.serverAddressInput.value = this.connectionModel.address;
+    if (this.connectionModel.isConnected == false) return;
+    if (this.connectionModel.address == undefined) return;
+
+    this.serverAddressInput.value = this.connectionModel.address;
+
+    if (!this.previousAddresses.value.has(this.connectionModel.address)) {
       this.previousAddresses.add(this.connectionModel.address);
     }
   };
