@@ -333,9 +333,23 @@
       const key = _StorageModel.pathComponentsToKey(...pathComponents);
       return localStorage.getItem(key);
     };
-    remove = (pathComponents) => {
+    remove = (pathComponents, shouldInitialize = true) => {
       const key = _StorageModel.pathComponentsToKey(...pathComponents);
       localStorage.removeItem(key);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+    };
+    removeRecursive = (pathComponentsOfEntityToDelete) => {
+      a: for (const key of Object.keys(localStorage)) {
+        const pathComponentsOfCurrentEntity = _StorageModel.keyToPathComponents(key);
+        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue a;
+          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
+            continue a;
+        }
+        this.remove(pathComponentsOfCurrentEntity, false);
+      }
       this.initializeTree();
     };
     list = (pathComponents) => {
@@ -363,6 +377,7 @@
     }
     // utility
     initializeTree = () => {
+      console.log("initializing tree");
       this.storageEntryTree = {};
       for (const key of Object.keys(localStorage)) {
         const components = _StorageModel.keyToPathComponents(key);
@@ -405,6 +420,7 @@
     previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
     previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
     // chat etc
+    chats: [DATA_VERSION, "chat"],
     chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
     chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
     chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],

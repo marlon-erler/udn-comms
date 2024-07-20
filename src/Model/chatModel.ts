@@ -71,6 +71,13 @@ export class ChatModel {
     this.storageModel.storeStringifiable(objectPath, object);
   }
 
+  // remove
+  remove = () => {
+    this.unloadData();
+    const dirPath = [...storageKeys.chats, this.id];
+    this.storageModel.removeRecursive(dirPath);
+  }
+
   // restore
   restoreInfo(): void {
     const info: any = this.storageModel.restoreStringifiable(this.infoPath);
@@ -104,30 +111,27 @@ export class ChatModel {
     }
   }
 
+  // memory
+  loadData(): void {
+    this.restoreMessages();
+    this.restoreObjects();
+  }
+
+  unloadData(): void {
+    this.messages.clear();
+    this.objects.clear();
+  }
+
   // init
   constructor(storageModel: StorageModel, chatId: string) {
     this.id = chatId;
     this.storageModel = storageModel;
 
     this.restoreInfo();
-    this.restoreMessages();
-    this.restoreObjects();
   }
 }
 
 // creation methods
-export function createChat(
-  storageModel: StorageModel,
-  primaryChannel: string
-): ChatModel {
-  const id: string = v4();
-
-  const chatModel = new ChatModel(storageModel, id);
-  chatModel.setPrimaryChannel(primaryChannel);
-
-  return chatModel;
-}
-
 export function generateChatInfo(primaryChannel: string): ChatInfo {
   return {
     primaryChannel,
