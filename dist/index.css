@@ -23,6 +23,12 @@
   overflow: scroll;
   scroll-snap-align: center;
 }
+#home-page #chat-grid {
+  margin-top: var(--content-padding);
+  display: grid;
+  gap: var(--gap-between-tiles);
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
 @media (min-width: 640px) {
   #home-page #overview-section {
     width: 20rem;
@@ -37,8 +43,32 @@
   #home-page > div {
     gap: 8rem;
   }
+  #home-page #chat-grid {
+    margin-top: 3rem;
+  }
   #home-page #overview-section {
     width: var(--max-input-width);
     min-width: var(--max-input-width);
   }
+}
+
+/* src/View/Components/chatEntry.css */
+.chat-entry {
+  position: relative;
+  display: flex;
+  align-items: flex-end !important;
+  justify-content: start;
+  height: 8rem;
+  overflow: hidden;
+}
+.chat-entry h2 {
+  margin: 0px;
+}
+.chat-entry .shadow {
+  position: absolute;
+  left: -15px;
+  bottom: -45px;
+  font-size: 6rem;
+  opacity: 0.1;
+  white-space: nowrap;
 }

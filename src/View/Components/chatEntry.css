@@ -1,0 +1,28 @@
+.chat-entry {
+    position: relative;
+
+    display: flex;
+    align-items: flex-end !important;
+    justify-content: start;
+
+    height: 8rem;
+
+    overflow: hidden;
+}
+
+.chat-entry h2 {
+    margin: 0px;
+}
+
+.chat-entry .shadow {
+    position: absolute;
+
+    left: -15px;
+    bottom: -45px;
+
+    font-size: 6rem;
+
+    opacity: 0.1;
+
+    white-space: nowrap;
+}

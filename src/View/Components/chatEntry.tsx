@@ -1,12 +1,15 @@
+import "./chatEntry.css";
+
 import * as React from "bloatless-react";
 
 import { ChatModel } from "../../Model/chatModel";
 
 export function ChatEntry(chatModel: ChatModel) {
   return (
-    <div class="tile flex-column justify-end align-start">
+    <button class="chat-entry tile">
+      <span class="shadow">{chatModel.info.primaryChannel}</span>
       <h2>{chatModel.info.primaryChannel}</h2>
-    </div>
+    </button>
   );
 }
 

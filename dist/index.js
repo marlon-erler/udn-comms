@@ -928,7 +928,7 @@
 
   // src/View/Components/chatEntry.tsx
   function ChatEntry(chatModel) {
-    return /* @__PURE__ */ createElement("div", { class: "tile flex-column justify-end align-start" }, /* @__PURE__ */ createElement("h2", null, chatModel.info.primaryChannel));
+    return /* @__PURE__ */ createElement("button", { class: "chat-entry tile" }, /* @__PURE__ */ createElement("span", { class: "shadow" }, chatModel.info.primaryChannel), /* @__PURE__ */ createElement("h2", null, chatModel.info.primaryChannel));
   }
   var ChatModelToChatEntry = (chatModel) => {
     return ChatEntry(chatModel);
@@ -1024,7 +1024,7 @@
     )), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "grid gap",
+        id: "chat-grid",
         "children:append": [chatListViewModel2.chatModels, ChatModelToChatEntry]
       }
     ));

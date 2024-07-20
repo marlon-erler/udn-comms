@@ -166,7 +166,7 @@ export function HomePage(
       </div>
 
       <div
-        class="grid gap"
+        id="chat-grid"
         children:append={[chatListViewModel.chatModels, ChatModelToChatEntry]}
       ></div>
     </div>
