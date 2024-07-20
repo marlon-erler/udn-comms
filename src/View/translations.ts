@@ -1,6 +1,6 @@
 const englishTranslations = {
   general: {
-    closeButtonAudioLabel: "close",
+    closeButtonAudioLabel: "Close",
     deleteItemButtonAudioLabel: "delete item",
 
     setButton: "Set",

@@ -20,15 +20,16 @@ COLORS
 /* definition */
 :root {
   --background: hsla(0, 0%, 100%, 100%);
-  --background-transparent: hsla(0, 0%, 100%, 60%);
+  --background-glass: hsla(0, 0%, 100%, 40%);
+  --background-transparent: hsla(0, 0%, 0%, 5%);
   --background-hover: hsla(0, 0%, 55%, 12%);
   --background-active: hsla(0, 0%, 55%, 12%);
 
   --layer: hsla(0, 0%, 96%, 60%);
 
-  --surface: hsla(0, 0%, 96%, 100%);
-  --surface-hover: hsla(0, 0%, 91%, 100%);
-  --surface-active: hsla(0, 0%, 78%, 100%);
+  --surface: hsla(0, 0%, 0%, 5%);
+  --surface-hover: hsla(0, 0%, 5%, 10%);
+  --surface-active: hsla(0, 0%, 5%, 15%);
 
   --border: hsla(0, 0%, 0%, 10%);
   --surface-border: #8d8d8d;
@@ -57,15 +58,16 @@ COLORS
 @media (prefers-color-scheme: dark) {
   :root {
     --background: hsla(0, 0%, 9%, 100%);
-    --background-transparent: hsla(0, 0%, 9%, 60%);
+    --background-glass: hsla(0, 0%, 9%, 40%);
+    --background-transparent: hsla(0, 0%, 100%, 5%);
     --background-hover: hsla(0, 0%, 55%, 16%);
     --background-active: hsla(0, 0%, 55%, 40%);
 
     --layer: hsla(0, 0%, 15%, 60%);
 
-    --surface: hsla(0, 0%, 15%, 100%);
-    --surface-hover: hsla(0, 0%, 20%, 100%);
-    --surface-active: hsla(0, 0%, 44%, 100%);
+    --surface: hsla(0, 0%, 100%, 5%);
+    --surface-hover: hsla(0, 0%, 100%, 10%);
+    --surface-active: hsla(0, 0%, 100%, 15%);
 
     --border: hsla(0, 0%, 100%, 10%);
     --surface-border: #6f6f6f;
@@ -106,7 +108,7 @@ html {
 }
 
 .modal > div {
-  background: var(--background);
+  background: var(--background-glass);
 }
 
 menu,
@@ -314,7 +316,8 @@ select {
 }
 
 header,
-menu {
+menu,
+.modal > div {
   backdrop-filter: blur(70px);
   -webkit-backdrop-filter: blur(70px);
 }

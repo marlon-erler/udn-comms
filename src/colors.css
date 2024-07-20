@@ -12,24 +12,6 @@
   }
 }
 
-#home-page,
-[color]:not([color="standard"]).subtle-background {
-  --background-transparent: hsla(0, 0%, 0%, 5%);
-  --surface: hsla(0, 0%, 0%, 5%);
-  --surface-hover: hsla(0, 0%, 5%, 10%);
-  --surface-active: hsla(0, 0%, 5%, 15%);
-}
-
-@media (prefers-color-scheme: dark) {
-  #home-page,
-  [color]:not([color="standard"]).subtle-background {
-    --background-transparent: hsla(0, 0%, 100%, 5%);
-    --surface: hsla(0, 0%, 100%, 5%);
-    --surface-hover: hsla(0, 0%, 100%, 10%);
-    --surface-active: hsla(0, 0%, 100%, 15%);
-  }
-}
-
 /* tile */
 [color]:not([color="standard"]).tile {
   --gradient-luma-1: 70%;
