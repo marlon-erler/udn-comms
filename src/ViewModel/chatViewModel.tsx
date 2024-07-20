@@ -45,6 +45,11 @@ export default class ChatViewModel {
       this.primaryChannelInput.value == "" ||
       this.primaryChannelInput.value == this.primaryChannel.value
   );
+  cannotAddSecondaryChannel: React.State<boolean> = React.createProxyState(
+    [this.newSecondaryChannelInput],
+    () =>
+      this.newSecondaryChannelInput.value == ""
+  );
   cannotSetEncryptionKey: React.State<boolean>;
   cannotSendMessage: React.State<boolean>;
 

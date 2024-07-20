@@ -653,6 +653,10 @@
       [this.primaryChannel, this.primaryChannelInput],
       () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
     );
+    cannotAddSecondaryChannel = createProxyState(
+      [this.newSecondaryChannelInput],
+      () => this.newSecondaryChannelInput.value == ""
+    );
     cannotSetEncryptionKey;
     cannotSendMessage;
     // sorting
@@ -992,7 +996,8 @@
       {
         class: "primary",
         "aria-label": translations.chatPage.settings.addSecondaryChannelButtonAudioLabel,
-        "on:click": chatViewModel.addSecondaryChannel
+        "on:click": chatViewModel.addSecondaryChannel,
+        "toggle:disabled": chatViewModel.cannotAddSecondaryChannel
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     )), /* @__PURE__ */ createElement(
@@ -1045,7 +1050,15 @@
           "on:click": setColor
         }
       );
-    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input flex-no", "on:click": chatViewModel.remove }, translations.chatPage.settings.deleteChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever"))));
+    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger width-input flex-no",
+        "on:click": chatViewModel.remove
+      },
+      translations.chatPage.settings.deleteChatButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")
+    )));
   }
 
   // src/View/chatPage.tsx

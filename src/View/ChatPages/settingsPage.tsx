@@ -63,6 +63,7 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
               translations.chatPage.settings.addSecondaryChannelButtonAudioLabel
             }
             on:click={chatViewModel.addSecondaryChannel}
+            toggle:disabled={chatViewModel.cannotAddSecondaryChannel}
           >
             <span class="icon">add</span>
           </button>
@@ -138,7 +139,10 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
 
         <hr></hr>
 
-        <button class="danger width-input flex-no" on:click={chatViewModel.remove}>
+        <button
+          class="danger width-input flex-no"
+          on:click={chatViewModel.remove}
+        >
           {translations.chatPage.settings.deleteChatButton}
           <span class="icon">delete_forever</span>
         </button>
