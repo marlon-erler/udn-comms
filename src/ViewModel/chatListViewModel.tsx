@@ -3,11 +3,13 @@ import * as React from "bloatless-react";
 import ChatListModel from "../Model/chatListModel";
 import { ChatModel } from "../Model/chatModel";
 import ChatViewModel from "./chatViewModel";
+import SettingsViewModel from "./settingsViewModel";
 import StorageModel from "../Model/storageModel";
 
 export default class ChatListViewModel {
   chatListModel: ChatListModel;
   storageModel: StorageModel;
+  settingsViewModel: SettingsViewModel;
 
   // state
   newChatPrimaryChannel: React.State<string> = new React.State("");
@@ -42,8 +44,13 @@ export default class ChatListViewModel {
   };
 
   createChatViewModel = (chatModel: ChatModel): ChatViewModel => {
-    return new ChatViewModel(chatModel, this.storageModel, this);
-  }
+    return new ChatViewModel(
+      chatModel,
+      this.storageModel,
+      this.settingsViewModel,
+      this
+    );
+  };
 
   // view
   openChat = (chatViewModel: ChatViewModel): void => {
@@ -59,7 +66,7 @@ export default class ChatListViewModel {
     for (const chatViewModel of this.chatViewModels.value) {
       chatViewModel.updateIndex();
     }
-  }
+  };
 
   // restore
   restoreChats = (): void => {
@@ -71,9 +78,14 @@ export default class ChatListViewModel {
   };
 
   // init
-  constructor(chatListModel: ChatListModel, storageModel: StorageModel) {
+  constructor(
+    chatListModel: ChatListModel,
+    storageModel: StorageModel,
+    settingsViewModel: SettingsViewModel
+  ) {
     this.chatListModel = chatListModel;
     this.storageModel = storageModel;
+    this.settingsViewModel = settingsViewModel;
 
     this.restoreChats();
   }

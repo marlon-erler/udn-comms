@@ -29,7 +29,11 @@ storageModel.print();
 // viewModels
 const settingsViewModel = new SettingsViewModel(settingsModel);
 const connectionViewModel = new ConnectionViewModel(connectionModel);
-const chatListViewModel = new ChatListViewModel(chatListModel, storageModel);
+const chatListViewModel = new ChatListViewModel(
+  chatListModel,
+  storageModel,
+  settingsViewModel
+);
 
 // view
 document.body.append(<div id="background"></div>);

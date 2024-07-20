@@ -6,21 +6,23 @@ export default class SettingsViewModel {
   settingsModel: SettingsModel;
 
   // state
-  nameInput: React.State<string> = new React.State("");
+  username: React.State<string> = new React.State("");
+  usernameInput: React.State<string> = new React.State("");
   firstDayOfWeekInput: React.State<number> = new React.State(0);
 
   // guards
   cannotSetName: React.State<boolean> = React.createProxyState(
-    [this.nameInput],
+    [this.usernameInput],
     () =>
-      this.nameInput.value == "" ||
-      this.nameInput.value == this.settingsModel.username
+      this.usernameInput.value == "" ||
+      this.usernameInput.value == this.settingsModel.username
   );
 
   // set
   setName = (): void => {
-    this.settingsModel.setName(this.nameInput.value);
-    this.nameInput.callSubscriptions();
+    this.settingsModel.setName(this.usernameInput.value);
+    this.username.value = this.settingsModel.username;
+    this.usernameInput.callSubscriptions();
   };
 
   setFirstDayofWeek = (): void => {
@@ -31,7 +33,8 @@ export default class SettingsViewModel {
   constructor(settingsModel: SettingsModel) {
     this.settingsModel = settingsModel;
 
-    this.nameInput.value = settingsModel.username;
+    this.username.value = settingsModel.username;
+    this.usernameInput.value = settingsModel.username;
     this.firstDayOfWeekInput.value = settingsModel.firstDayOfWeek;
 
     // subscriptions

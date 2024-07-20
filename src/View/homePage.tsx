@@ -96,7 +96,7 @@ export function HomePage(
           <span>{translations.homePage.yourNameLabel}</span>
           <input
             placeholder={translations.homePage.yourNamePlaceholder}
-            bind:value={settingsViewModel.nameInput}
+            bind:value={settingsViewModel.usernameInput}
             on:enter={settingsViewModel.setName}
           ></input>
         </div>

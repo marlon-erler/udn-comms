@@ -161,7 +161,10 @@ export class ChatModel {
   };
 
   // messaging
-  sendMessage = (body: string): void => {
+  sendMessage = (body: string): boolean => {
+    const senderName = this.settingsModel.username;
+    if (senderName == "") return false;
+
     const allChannels = [this.info.primaryChannel];
     for (const secondaryChannel of this.info.secondaryChannels) {
       allChannels.push(secondaryChannel);
@@ -171,11 +174,12 @@ export class ChatModel {
 
     const chatMessage: ChatMessage = ChatModel.createChatMessage(
       combinedChannel,
-      this.settingsModel.username,
+      senderName,
       body
     );
-    
+
     this.connectionModel.sendMessageOrStore(chatMessage);
+    return true;
   };
 
   // memory

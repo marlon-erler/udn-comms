@@ -5,11 +5,13 @@ import StorageModel, { storageKeys } from "../Model/storageModel";
 import ChatListViewModel from "./chatListViewModel";
 import { ChatModel } from "../Model/chatModel";
 import { Color } from "./colors";
+import SettingsViewModel from "./settingsViewModel";
 import { localeCompare } from "../Model/Utility/utility";
 
 export default class ChatViewModel {
   chatModel: ChatModel;
   storageModel: StorageModel;
+  settingsViewModel: SettingsViewModel;
   chatListViewModel: ChatListViewModel;
 
   // state
@@ -44,6 +46,7 @@ export default class ChatViewModel {
       this.primaryChannelInput.value == this.primaryChannel.value
   );
   cannotSetEncryptionKey: React.State<boolean>;
+  cannotSendMessage: React.State<boolean>;
 
   // sorting
   updateIndex = (): void => {
@@ -100,13 +103,13 @@ export default class ChatViewModel {
     this.close();
     this.chatModel.delete();
     this.chatListViewModel.restoreChats();
-  }
+  };
 
   // messaging
   sendMessage = (): void => {
     this.chatModel.sendMessage(this.composingMessage.value);
     this.composingMessage.value = "";
-  }
+  };
 
   // restore
   restorePageSelection = (): void => {
@@ -134,10 +137,12 @@ export default class ChatViewModel {
   constructor(
     chatModel: ChatModel,
     storageModel: StorageModel,
+    settingsViewModel: SettingsViewModel,
     chatListViewModel: ChatListViewModel
   ) {
     this.chatModel = chatModel;
     this.storageModel = storageModel;
+    this.settingsViewModel = settingsViewModel;
     this.chatListViewModel = chatListViewModel;
 
     this.primaryChannel.value = chatModel.info.primaryChannel;
@@ -147,6 +152,11 @@ export default class ChatViewModel {
     this.cannotSetEncryptionKey = React.createProxyState(
       [this.encryptionKeyInput],
       () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
+    );
+
+    this.cannotSendMessage = React.createProxyState(
+      [this.settingsViewModel.username],
+    () => this.settingsViewModel.username.value == ""
     );
 
     this.color.value = chatModel.color;
