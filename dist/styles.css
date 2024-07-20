@@ -798,6 +798,10 @@ header button {
   max-height: 100% !important;
 }
 
+button:not(.tile):not(header *),
+footer,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
 .modal > div > :is(button, div.flex-row) {
   min-height: var(--control-height);
 }

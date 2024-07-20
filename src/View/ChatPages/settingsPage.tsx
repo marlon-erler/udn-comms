@@ -135,6 +135,13 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             );
           })}
         </div>
+
+        <hr></hr>
+
+        <button class="danger width-input flex-no" on:click={chatViewModel.remove}>
+          {translations.chatPage.settings.deleteChatButton}
+          <span class="icon">delete_forever</span>
+        </button>
       </div>
     </div>
   );

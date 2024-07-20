@@ -63,6 +63,7 @@ export default class ChatListViewModel {
 
   // restore
   restoreChats = (): void => {
+    this.chatViewModels.clear();
     for (const chatModel of this.chatListModel.chatModels.values()) {
       const chatViewModel = this.createChatViewModel(chatModel);
       this.chatViewModels.add(chatViewModel);

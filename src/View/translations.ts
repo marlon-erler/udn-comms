@@ -95,6 +95,8 @@ const englishTranslations = {
       encryptionKeyLabel: "Encryption key",
       setEncryptionKeyButtonAudioLabel: "set encryption key",
       showEncryptionKey: "Show encryption key",
+
+      deleteChatButton: "Delete entire chat",
     },
   },
 };

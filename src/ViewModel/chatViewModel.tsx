@@ -96,6 +96,12 @@ export default class ChatViewModel {
     this.chatModel.setColor(newColor);
   };
 
+  remove = (): void => {
+    this.close();
+    this.chatModel.delete();
+    this.chatListViewModel.restoreChats();
+  }
+
   // restore
   restorePageSelection = (): void => {
     const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);

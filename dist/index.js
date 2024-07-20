@@ -665,6 +665,11 @@
       this.color.value = newColor;
       this.chatModel.setColor(newColor);
     };
+    remove = () => {
+      this.close();
+      this.chatModel.delete();
+      this.chatListViewModel.restoreChats();
+    };
     // restore
     restorePageSelection = () => {
       const path = storageKeys.chatLastUsedPage(this.chatModel.id);
@@ -748,6 +753,7 @@
     };
     // restore
     restoreChats = () => {
+      this.chatViewModels.clear();
       for (const chatModel of this.chatListModel.chatModels.values()) {
         const chatViewModel = this.createChatViewModel(chatModel);
         this.chatViewModels.add(chatViewModel);
@@ -859,7 +865,8 @@
         addSecondaryChannelButtonAudioLabel: "add secondary channel",
         encryptionKeyLabel: "Encryption key",
         setEncryptionKeyButtonAudioLabel: "set encryption key",
-        showEncryptionKey: "Show encryption key"
+        showEncryptionKey: "Show encryption key",
+        deleteChatButton: "Delete entire chat"
       }
     }
   };
@@ -971,7 +978,7 @@
           "on:click": setColor
         }
       );
-    }))));
+    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input flex-no", "on:click": chatViewModel.remove }, translations.chatPage.settings.deleteChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever"))));
   }
 
   // src/View/chatPage.tsx
