@@ -2,19 +2,22 @@ import "./chatEntry.css";
 
 import * as React from "bloatless-react";
 
-import { ChatModel } from "../../Model/chatModel";
+import ChatViewModel from "../../ViewModel/chatViewModel";
 
-export function ChatEntry(chatModel: ChatModel) {
+export function ChatEntry(chatViewModel: ChatViewModel) {
   return (
-    <button class="chat-entry tile">
-      <span class="shadow">{chatModel.info.primaryChannel}</span>
-      <h2>{chatModel.info.primaryChannel}</h2>
+    <button class="chat-entry tile" on:click={chatViewModel.open}>
+      <span
+        class="shadow"
+        subscribe:innerText={chatViewModel.primaryChannel}
+      ></span>
+      <h2 subscribe:innerText={chatViewModel.primaryChannel}></h2>
     </button>
   );
 }
 
-export const ChatModelToChatEntry: React.StateItemConverter<ChatModel> = (
-  chatModel: ChatModel
-) => {
-  return ChatEntry(chatModel);
+export const ChatViewModelToChatEntry: React.StateItemConverter<
+  ChatViewModel
+> = (chatViewModel: ChatViewModel) => {
+  return ChatEntry(chatViewModel);
 };

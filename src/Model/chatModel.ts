@@ -2,6 +2,7 @@
 
 import StorageModel, { storageKeys } from "./storageModel";
 
+import ChatListModel from "./chatListModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { createTimestamp } from "./Utility/utility";
 import { v4 } from "uuid";
@@ -10,6 +11,7 @@ export class ChatModel {
   // data
   id: string;
   storageModel: StorageModel;
+  chatListModel: ChatListModel;
   info: ChatInfo;
 
   messages = new Set<ChatMessage>();
@@ -71,9 +73,13 @@ export class ChatModel {
     this.storageModel.storeStringifiable(objectPath, object);
   };
 
-  // remove
-  remove = () => {
+  // delete
+  delete = () => {
+    // untrack
     this.unloadData();
+    this.chatListModel.untrackChat(this);
+
+    // delete
     const dirPath = [...storageKeys.chats, this.id];
     this.storageModel.removeRecursive(dirPath);
   };
@@ -128,9 +134,10 @@ export class ChatModel {
   };
 
   // init
-  constructor(storageModel: StorageModel, chatId: string) {
+  constructor(storageModel: StorageModel, chatListModel: ChatListModel, chatId: string) {
     this.id = chatId;
     this.storageModel = storageModel;
+    this.chatListModel = chatListModel;
 
     this.restoreInfo();
   }

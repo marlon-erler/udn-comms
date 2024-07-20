@@ -17,16 +17,11 @@ export default class ChatListModel {
   createChat = (primaryChannel: string): ChatModel => {
     const id: string = v4();
 
-    const chatModel = new ChatModel(this.storageModel, id);
+    const chatModel = new ChatModel(this.storageModel, this, id);
     chatModel.setPrimaryChannel(primaryChannel);
 
     this.addChatModel(chatModel);
     return chatModel;
-  };
-
-  deleteChat = (chat: ChatModel): void => {
-    chat.remove();
-    this.untrackChat(chat);
   };
 
   untrackChat = (chat: ChatModel): void => {
@@ -38,7 +33,7 @@ export default class ChatListModel {
     const chatDir = storageKeys.chats;
     const chatIds = this.storageModel.list(chatDir);
     for (const chatId of chatIds) {
-      const chatModel = new ChatModel(this.storageModel, chatId);
+      const chatModel = new ChatModel(this.storageModel, this, chatId);
       this.addChatModel(chatModel);
     }
   };

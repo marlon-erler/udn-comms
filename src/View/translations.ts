@@ -72,6 +72,10 @@ const englishTranslations = {
 
     connectButtonAudioLabel: "connect",
   },
+
+  chatPage: {
+    
+  }
 };
 
 const allTranslations: { [language: string]: typeof englishTranslations } = {

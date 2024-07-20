@@ -2,14 +2,20 @@ import * as React from "bloatless-react";
 
 import ChatListModel from "../Model/chatListModel";
 import { ChatModel } from "../Model/chatModel";
+import ChatViewModel from "./chatViewModel";
 import StorageModel from "../Model/storageModel";
 
 export default class ChatListViewModel {
+  storageModel: StorageModel;
   chatListModel: ChatListModel;
 
   // state
   newChatPrimaryChannel: React.State<string> = new React.State("");
-  chatModels: React.ListState<ChatModel> = new React.ListState();
+  chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
+
+  selectedChat: React.State<ChatViewModel | undefined> = new React.State<
+  ChatViewModel | undefined
+  >(undefined);
 
   // guards
   cannotCreateChat = React.createProxyState(
@@ -23,23 +29,36 @@ export default class ChatListViewModel {
       this.newChatPrimaryChannel.value
     );
     this.newChatPrimaryChannel.value = "";
-    this.chatModels.add(chatModel);
+
+    const chatViewModel: ChatViewModel = new ChatViewModel(this, chatModel);
+    this.chatViewModels.add(chatViewModel);
   };
 
-  deleteChat = (chat: ChatModel): void => {
-    this.chatListModel.deleteChat(chat);
-    this.chatModels.remove(chat);
+  untrackChat = (chatViewModel: ChatViewModel): void => {
+    this.chatListModel.untrackChat(chatViewModel.chatModel);
+    this.chatViewModels.remove(chatViewModel);
+  };
+
+  openChat = (chatViewModel: ChatViewModel): void => {
+    this.selectedChat.value = chatViewModel;
+  };
+
+  closeChat = (): void => {
+    this.selectedChat.value = undefined;
   };
 
   // restore
   restoreChats = (): void => {
-    for (const chat of this.chatListModel.chatModels.values()) {
-      this.chatModels.add(chat);
+    for (const chatModel of this.chatListModel.chatModels.values()) {
+      const chatViewModel = new ChatViewModel(this, chatModel);
+      this.chatViewModels.add(chatViewModel);
     }
   };
 
   // init
   constructor(storageModel: StorageModel) {
+    this.storageModel = storageModel;
+
     const chatListModel = new ChatListModel(storageModel);
     this.chatListModel = chatListModel;
 

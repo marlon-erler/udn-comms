@@ -1,5 +1,5 @@
-import ChatListModel from "./Model/chatListModel";
 import ChatListViewModel from "./ViewModel/chatListViewModel";
+import { ChatPageWrapper } from "./View/chatPageWrapper";
 import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionViewModel from "./ViewModel/connectionViewModel";
 import { HomePage } from "./View/homePage";
@@ -20,5 +20,6 @@ document
   .querySelector("main")!
   .append(
     HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
+    ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel)
   );

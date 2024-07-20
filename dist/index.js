@@ -362,6 +362,7 @@
     // data
     id;
     storageModel;
+    chatListModel;
     info;
     messages = /* @__PURE__ */ new Set();
     objects = /* @__PURE__ */ new Map();
@@ -410,9 +411,10 @@
       const objectPath = this.getObjectPath(object.id);
       this.storageModel.storeStringifiable(objectPath, object);
     };
-    // remove
-    remove = () => {
+    // delete
+    delete = () => {
       this.unloadData();
+      this.chatListModel.untrackChat(this);
       const dirPath = [...storageKeys.chats, this.id];
       this.storageModel.removeRecursive(dirPath);
     };
@@ -456,9 +458,10 @@
       this.objects.clear();
     };
     // init
-    constructor(storageModel2, chatId) {
+    constructor(storageModel2, chatListModel, chatId) {
       this.id = chatId;
       this.storageModel = storageModel2;
+      this.chatListModel = chatListModel;
       this.restoreInfo();
     }
   };
@@ -482,14 +485,10 @@
     };
     createChat = (primaryChannel) => {
       const id = v4_default();
-      const chatModel = new ChatModel(this.storageModel, id);
+      const chatModel = new ChatModel(this.storageModel, this, id);
       chatModel.setPrimaryChannel(primaryChannel);
       this.addChatModel(chatModel);
       return chatModel;
-    };
-    deleteChat = (chat) => {
-      chat.remove();
-      this.untrackChat(chat);
     };
     untrackChat = (chat) => {
       this.chatModels.delete(chat.id);
@@ -499,7 +498,7 @@
       const chatDir = storageKeys.chats;
       const chatIds = this.storageModel.list(chatDir);
       for (const chatId of chatIds) {
-        const chatModel = new ChatModel(this.storageModel, chatId);
+        const chatModel = new ChatModel(this.storageModel, this, chatId);
         this.addChatModel(chatModel);
       }
     };
@@ -510,12 +509,39 @@
     }
   };
 
+  // src/ViewModel/chatViewModel.tsx
+  var ChatViewModel = class {
+    chatModel;
+    chatListViewModel;
+    // state
+    primaryChannel = new State("");
+    primaryChannelInput = new State("");
+    // guards
+    cannotSetPrimaryChannel = createProxyState(
+      [this.primaryChannel, this.primaryChannelInput],
+      () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
+    );
+    // methods
+    open = () => {
+      this.chatListViewModel.openChat(this);
+    };
+    // init
+    constructor(chatListViewModel2, chatModel) {
+      this.chatModel = chatModel;
+      this.chatListViewModel = chatListViewModel2;
+      this.primaryChannel.value = chatModel.info.primaryChannel;
+      this.primaryChannelInput.value = chatModel.info.primaryChannel;
+    }
+  };
+
   // src/ViewModel/chatListViewModel.tsx
   var ChatListViewModel = class {
+    storageModel;
     chatListModel;
     // state
     newChatPrimaryChannel = new State("");
-    chatModels = new ListState();
+    chatViewModels = new ListState();
+    selectedChat = new State(void 0);
     // guards
     cannotCreateChat = createProxyState(
       [this.newChatPrimaryChannel],
@@ -527,25 +553,65 @@
         this.newChatPrimaryChannel.value
       );
       this.newChatPrimaryChannel.value = "";
-      this.chatModels.add(chatModel);
+      const chatViewModel = new ChatViewModel(this, chatModel);
+      this.chatViewModels.add(chatViewModel);
     };
-    deleteChat = (chat) => {
-      this.chatListModel.deleteChat(chat);
-      this.chatModels.remove(chat);
+    untrackChat = (chatViewModel) => {
+      this.chatListModel.untrackChat(chatViewModel.chatModel);
+      this.chatViewModels.remove(chatViewModel);
+    };
+    openChat = (chatViewModel) => {
+      this.selectedChat.value = chatViewModel;
+    };
+    closeChat = () => {
+      this.selectedChat.value = void 0;
     };
     // restore
     restoreChats = () => {
-      for (const chat of this.chatListModel.chatModels.values()) {
-        this.chatModels.add(chat);
+      for (const chatModel of this.chatListModel.chatModels.values()) {
+        const chatViewModel = new ChatViewModel(this, chatModel);
+        this.chatViewModels.add(chatViewModel);
       }
     };
     // init
     constructor(storageModel2) {
+      this.storageModel = storageModel2;
       const chatListModel = new ChatListModel(storageModel2);
       this.chatListModel = chatListModel;
       this.restoreChats();
     }
   };
+
+  // src/View/chatPage.tsx
+  function ChatPage(chatViewModel) {
+    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", null));
+  }
+
+  // src/View/chatPageWrapper.tsx
+  function ChatPageWrapper(chatListViewModel2) {
+    const chatPageContent = createProxyState(
+      [chatListViewModel2.selectedChat],
+      () => {
+        if (chatListViewModel2.selectedChat.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return ChatPage(chatListViewModel2.selectedChat.value);
+        }
+      }
+    );
+    const isShowingChat = createProxyState(
+      [chatListViewModel2.selectedChat],
+      () => chatListViewModel2.selectedChat.value != void 0
+    );
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "chat-page-wrapper",
+        "toggle:open": isShowingChat,
+        "children:set": chatPageContent
+      }
+    );
+  }
 
   // src/View/translations.ts
   var englishTranslations = {
@@ -605,7 +671,8 @@
       connectionModalHeadline: "Manage Connections",
       ///
       connectButtonAudioLabel: "connect"
-    }
+    },
+    chatPage: {}
   };
   var allTranslations = {
     en: englishTranslations
@@ -927,11 +994,17 @@
   };
 
   // src/View/Components/chatEntry.tsx
-  function ChatEntry(chatModel) {
-    return /* @__PURE__ */ createElement("button", { class: "chat-entry tile" }, /* @__PURE__ */ createElement("span", { class: "shadow" }, chatModel.info.primaryChannel), /* @__PURE__ */ createElement("h2", null, chatModel.info.primaryChannel));
+  function ChatEntry(chatViewModel) {
+    return /* @__PURE__ */ createElement("button", { class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
+      "span",
+      {
+        class: "shadow",
+        "subscribe:innerText": chatViewModel.primaryChannel
+      }
+    ), /* @__PURE__ */ createElement("h2", { "subscribe:innerText": chatViewModel.primaryChannel }));
   }
-  var ChatModelToChatEntry = (chatModel) => {
-    return ChatEntry(chatModel);
+  var ChatViewModelToChatEntry = (chatViewModel) => {
+    return ChatEntry(chatViewModel);
   };
 
   // src/View/homePage.tsx
@@ -1025,7 +1098,7 @@
       "div",
       {
         id: "chat-grid",
-        "children:append": [chatListViewModel2.chatModels, ChatModelToChatEntry]
+        "children:append": [chatListViewModel2.chatViewModels, ChatViewModelToChatEntry]
       }
     ));
     function scrollToChat() {
@@ -1106,6 +1179,7 @@
   var chatListViewModel = new ChatListViewModel(storageModel);
   document.querySelector("main").append(
     HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
+    ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel)
   );
 })();

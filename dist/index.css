@@ -1,3 +1,17 @@
+/* src/View/chatPage.css */
+#chat-page-wrapper {
+  display: none;
+}
+#chat-page-wrapper[open] {
+  display: flex;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: var(--background);
+}
+
 /* src/View/homePage.css */
 #home-page > div {
   display: flex;
