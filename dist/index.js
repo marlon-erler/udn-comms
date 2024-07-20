@@ -201,13 +201,13 @@
                 break;
               }
               case "append":
-              case "appendandscroll":
               case "prepend": {
-                element.style.scrollBehavior = "smooth";
                 try {
                   const [listState, toElement] = value;
                   listState.handleAddition((newItem) => {
+                    console.log(newItem, toElement);
                     const child = toElement(newItem);
+                    console.log(child);
                     listState.handleRemoval(
                       newItem,
                       () => child.remove()
@@ -218,8 +218,10 @@
                       element.prepend(child);
                     }
                   });
-                } catch {
-                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                } catch (error) {
+                  throw `error: cannot process subscribe:children directive. 
+ Error: ${error} 
+ Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation.`;
                 }
               }
             }
@@ -392,8 +394,8 @@
     id;
     info;
     color;
-    messages = /* @__PURE__ */ new Set();
-    objects = /* @__PURE__ */ new Map();
+    chatMessageHandler = () => {
+    };
     // sorting
     get index() {
       return this.chatListModel.getIndexOfPrimaryChannel(
@@ -424,6 +426,7 @@
       this.info.primaryChannel = primaryChannel;
       this.storeInfo();
       this.chatListModel.updateIndices();
+      this.subscribe();
     };
     setSecondaryChannels = (secondaryChannels) => {
       this.info.secondaryChannels = secondaryChannels;
@@ -444,21 +447,17 @@
     storeColor = () => {
       this.storageModel.store(this.colorPath, this.color);
     };
-    addMessage = (message) => {
-      if (!this.messages.has(message)) {
-        this.messages.add(message);
-      }
-      const messagePath = this.getMessagePath(message.id);
-      this.storageModel.storeStringifiable(messagePath, message);
+    addMessage = (chatMessage) => {
+      const messagePath = this.getMessagePath(chatMessage.id);
+      this.storageModel.storeStringifiable(messagePath, chatMessage);
+      this.chatMessageHandler(chatMessage);
     };
-    addObject = (object) => {
-      this.objects.set(object.id, object);
-      const objectPath = this.getObjectPath(object.id);
-      this.storageModel.storeStringifiable(objectPath, object);
+    addObject = (chatObject) => {
+      const objectPath = this.getObjectPath(chatObject.id);
+      this.storageModel.storeStringifiable(objectPath, chatObject);
     };
     // delete
     delete = () => {
-      this.unloadData();
       this.chatListModel.untrackChat(this);
       const dirPath = [...storageKeys.chats, this.id];
       this.storageModel.removeRecursive(dirPath);
@@ -481,27 +480,31 @@
         this.color = color;
       }
     };
-    restoreMessages = () => {
+    get messages() {
       const messageIds = this.storageModel.list(this.messageDirPath);
-      if (!Array.isArray(messageIds)) return;
+      if (!Array.isArray(messageIds)) return [];
+      let messages = [];
       for (const messageId of messageIds) {
         const messagePath = this.getMessagePath(messageId);
         const message = this.storageModel.restoreStringifiable(messagePath);
-        if (checkIsValidObject(message) == false) return;
-        this.messages.add(message);
+        if (checkIsValidObject(message) == false) continue;
+        messages.push(message);
       }
-    };
-    restoreObjects = () => {
+      return messages;
+    }
+    get objects() {
       const objectIds = this.storageModel.list(this.objectDirPath);
-      if (!Array.isArray(objectIds)) return;
+      if (!Array.isArray(objectIds)) return [];
+      let objects = [];
       for (const objectId of objectIds) {
         const objectPathComponents = this.getObjectPath(objectId);
         const object = this.storageModel.restoreStringifiable(objectPathComponents);
-        if (checkIsValidObject(object) == false) return;
-        if (object.id != objectId) return;
-        this.objects.set(objectId, object);
+        if (checkIsValidObject(object) == false) continue;
+        if (object.id != objectId) continue;
+        objects.push(object);
       }
-    };
+      return objects;
+    }
     // messaging
     sendMessage = (body) => {
       const senderName = this.settingsModel.username;
@@ -519,14 +522,16 @@
       this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
     };
-    // memory
-    loadData = () => {
-      this.restoreMessages();
-      this.restoreObjects();
+    handleMessage = (channel, body) => {
+      const chatMessage = _ChatModel.parseMessage(body);
+      if (chatMessage == null) return;
+      this.addMessage(chatMessage);
     };
-    unloadData = () => {
-      this.messages.clear();
-      this.objects.clear();
+    setMessageHandler = (handler) => {
+      this.chatMessageHandler = handler;
+    };
+    subscribe = () => {
+      this.connectionModel.addChannel(this.info.primaryChannel);
     };
     // init
     constructor(storageModel2, connectionModel2, settingsModel2, chatListModel2, chatId) {
@@ -537,6 +542,7 @@
       this.chatListModel = chatListModel2;
       this.restoreInfo();
       this.restoreColor();
+      this.subscribe();
     }
     // utility
     static generateChatInfo = (primaryChannel) => {
@@ -557,6 +563,15 @@
         dateSent: createTimestamp()
       };
     };
+    static parseMessage = (string) => {
+      try {
+        const parsed = parse(string);
+        if (checkIsValidObject(parsed) == false) return null;
+        return parsed;
+      } catch {
+        return null;
+      }
+    };
   };
 
   // src/Model/chatListModel.ts
@@ -567,6 +582,21 @@
     // data
     chatModels = /* @__PURE__ */ new Set();
     sortedPrimaryChannels = [];
+    // handlers
+    messageHandler = (data) => {
+      for (const chatModel of this.chatModels) {
+        const channel = data.messageChannel;
+        const body = data.messageBody;
+        if (channel == void 0) return;
+        if (body == void 0) return;
+        const allChannels = channel.split("/");
+        for (const channel2 of allChannels) {
+          if (channel2 != chatModel.info.primaryChannel) continue;
+          chatModel.handleMessage(channel2, body);
+          break;
+        }
+      }
+    };
     // store & add
     addChatModel = (chatModel) => {
       this.chatModels.add(chatModel);
@@ -622,10 +652,28 @@
       this.settingsModel = settingsModel2;
       this.connectionModel = connectionModel2;
       this.loadChats();
+      connectionModel2.setMessageHandler(this.messageHandler);
     }
   };
 
-  // src/ViewModel/chatViewModel.tsx
+  // src/Model/chatMessageViewModel.ts
+  var ChatMessageViewModel = class {
+    chatModel;
+    // data
+    channel;
+    sender;
+    dateSent;
+    body = new State("");
+    constructor(chatModel, chatMessage) {
+      this.chatModel = chatModel;
+      this.channel = chatMessage.channel;
+      this.sender = chatMessage.sender;
+      this.dateSent = new Date(chatMessage.dateSent).toLocaleString();
+      this.body.value = chatMessage.body;
+    }
+  };
+
+  // src/ViewModel/chatViewModel.ts
   var ChatViewModel = class {
     chatModel;
     storageModel;
@@ -647,6 +695,7 @@
     selectedPage = new State(
       "messages" /* Messages */
     );
+    chatMessageViewModels = new ListState();
     composingMessage = new State("");
     // guards
     cannotSetPrimaryChannel = createProxyState(
@@ -669,6 +718,11 @@
     };
     close = () => {
       this.chatListViewModel.closeChat();
+    };
+    // add
+    addChatMessage = (chatMessage) => {
+      const chatMessageModel = new ChatMessageViewModel(this.chatModel, chatMessage);
+      this.chatMessageViewModels.add(chatMessageModel);
     };
     // settings
     setPrimaryChannel = () => {
@@ -734,6 +788,9 @@
       this.storageModel = storageModel2;
       this.settingsViewModel = settingsViewModel2;
       this.chatListViewModel = chatListViewModel2;
+      chatModel.setMessageHandler((chatMessage) => {
+        this.addChatMessage(chatMessage);
+      });
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
       this.encryptionKeyInput.value = chatModel.info.encryptionKey;
@@ -741,18 +798,21 @@
         [this.encryptionKeyInput],
         () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
       );
-      this.cannotSendMessage = createProxyState(
-        [this.settingsViewModel.username, this.composingMessage],
-        () => this.settingsViewModel.username.value == "" || this.composingMessage.value == ""
-      );
       this.color.value = chatModel.color;
       this.restoreSecondaryChannels();
       this.restorePageSelection();
       this.updateIndex();
+      for (const chatMessage of chatModel.messages) {
+        this.addChatMessage(chatMessage);
+      }
+      this.cannotSendMessage = createProxyState(
+        [this.settingsViewModel.username, this.composingMessage],
+        () => this.settingsViewModel.username.value == "" || this.composingMessage.value == ""
+      );
     }
   };
 
-  // src/ViewModel/chatListViewModel.tsx
+  // src/ViewModel/chatListViewModel.ts
   var ChatListViewModel = class {
     chatListModel;
     storageModel;
@@ -838,6 +898,15 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
     );
   }
+
+  // src/View/Components/chatMessage.tsx
+  function ChatMessage(chatMessageViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, chatMessageViewModel.sender), /* @__PURE__ */ createElement("b", { "subscribe:innerText": chatMessageViewModel.body }), /* @__PURE__ */ createElement("span", null, chatMessageViewModel.dateSent)));
+  }
+  var ChatMessageViewModelToView = (chatMessageViewModel) => {
+    console.log(chatMessageViewModel);
+    return ChatMessage(chatMessageViewModel);
+  };
 
   // src/View/translations.ts
   var englishTranslations = {
@@ -928,7 +997,28 @@
 
   // src/View/ChatPages/messagePage.tsx
   function MessagePage(chatViewModel) {
-    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { id: "message-container" }), /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement(
+    const messageContainer = /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "message-container",
+        "children:append": [
+          chatViewModel.chatMessageViewModels,
+          ChatMessageViewModelToView
+        ]
+      }
+    );
+    function scrollDown() {
+      console.log("down");
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+    function scrollDownIfApplicable() {
+      const scrollFromBottom = messageContainer.scrollHeight - (messageContainer.scrollTop + messageContainer.offsetHeight);
+      if (scrollFromBottom > 400) return;
+      scrollDown();
+    }
+    chatViewModel.chatMessageViewModels.subscribeSilent(scrollDownIfApplicable);
+    setTimeout(() => scrollDown(), 100);
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": chatViewModel.composingMessage,
@@ -1307,6 +1397,7 @@
     };
     messageHandler = () => {
     };
+    channelsToSubscribe = /* @__PURE__ */ new Set();
     // connection
     connect = (address) => {
       this.udn.connect(address);
@@ -1321,10 +1412,20 @@
       console.log("connection status:", this.isConnected, this.address);
       this.connectionChangeHandler();
       if (this.isConnected == false) return;
-      if (this.address) {
-        this.storeAddress(this.address);
-      }
+      if (!this.address) return;
+      this.storeAddress(this.address);
+      this.sendSubscriptionRequest();
       this.sendMessagesInOutbox();
+    };
+    // subscription
+    addChannel = (channel) => {
+      this.channelsToSubscribe.add(channel);
+      this.sendSubscriptionRequest();
+    };
+    sendSubscriptionRequest = () => {
+      for (const channel of this.channelsToSubscribe) {
+        this.udn.subscribe(channel);
+      }
     };
     // outbox
     getOutboxMessags = () => {
@@ -1408,7 +1509,7 @@
     }
   };
 
-  // src/ViewModel/connectionViewModel.tsx
+  // src/ViewModel/connectionViewModel.ts
   var ConnectionViewModel = class {
     connectionModel;
     // state
@@ -1438,8 +1539,6 @@
       if (!this.previousAddresses.value.has(this.connectionModel.address)) {
         this.previousAddresses.add(this.connectionModel.address);
       }
-    };
-    messageHandler = (data) => {
     };
     // methods
     connect = () => {
@@ -1471,7 +1570,6 @@
       this.connectionModel = connectionModel2;
       this.updatePreviousAddresses();
       connectionModel2.setConnectionChangeHandler(this.connectionChangeHandler);
-      connectionModel2.setMessageHandler(this.messageHandler);
     }
   };
 

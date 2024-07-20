@@ -1,29 +1,39 @@
 /* layout */
 #chat-page #main #message-page .content {
-    padding: 0px;
+  padding: 0px;
 
-    overflow: hidden;
+  overflow: hidden;
 
-    display: grid;
-    grid-template-rows: 1fr var(--control-height) var(--safe-area-bottom);
+  display: grid;
+  grid-template-rows: 1fr var(--control-height) var(--safe-area-bottom);
 }
 
 #message-page #message-container {
-    overflow: auto;
+  overflow: auto;
 }
 
 /* composer */
 #message-page #composer {
-    border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border);
 
-    display: flex;
+  display: flex;
 }
 
 #message-page #composer input {
-    margin: 0px;
+  margin: 0px;
 
-    width: 100%;
-    max-width: unset;
+  width: 100%;
+  max-width: unset;
 
-    flex: 1;
+  flex: 1;
+}
+
+#message-page #message-container {
+  display: flex;
+  flex-direction: column;
+
+  padding: var(--content-padding);
+  gap: var(--gap-between-tiles);
+
+  scroll-behavior: smooth;
 }

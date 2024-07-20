@@ -1,6 +1,7 @@
-// this file is responsible for managing chats and chat messages. objects are delegated to objectModel.ts.
+// this file is responsible for managing chats. objects are delegated to objectModel.ts.
 
 import StorageModel, { storageKeys } from "./storageModel";
+import { createTimestamp, parse } from "./Utility/utility";
 
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
@@ -8,7 +9,6 @@ import ConnectionModel from "./connectionModel";
 import { Message } from "udn-frontend";
 import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
-import { createTimestamp } from "./Utility/utility";
 import { v4 } from "uuid";
 
 export class ChatModel {
@@ -21,6 +21,8 @@ export class ChatModel {
   id: string;
   info: ChatInfo;
   color: Color;
+
+  chatMessageHandler: (chatMessage: ChatMessage) => void = () => {};
 
   // sorting
   get index(): number {
@@ -59,6 +61,7 @@ export class ChatModel {
     this.info.primaryChannel = primaryChannel;
     this.storeInfo();
     this.chatListModel.updateIndices();
+    this.subscribe();
   };
 
   setSecondaryChannels = (secondaryChannels: string[]): void => {
@@ -85,14 +88,15 @@ export class ChatModel {
     this.storageModel.store(this.colorPath, this.color);
   };
 
-  addMessage = (message: ChatMessage): void => {
-    const messagePath: string[] = this.getMessagePath(message.id);
-    this.storageModel.storeStringifiable(messagePath, message);
+  addMessage = (chatMessage: ChatMessage): void => {
+    const messagePath: string[] = this.getMessagePath(chatMessage.id);
+    this.storageModel.storeStringifiable(messagePath, chatMessage);
+    this.chatMessageHandler(chatMessage);
   };
 
-  addObject = (object: ChatObject): void => {
-    const objectPath: string[] = this.getObjectPath(object.id);
-    this.storageModel.storeStringifiable(objectPath, object);
+  addObject = (chatObject: ChatObject): void => {
+    const objectPath: string[] = this.getObjectPath(chatObject.id);
+    this.storageModel.storeStringifiable(objectPath, chatObject);
   };
 
   // delete
@@ -179,6 +183,21 @@ export class ChatModel {
     return true;
   };
 
+  handleMessage = (channel: string, body: string): void => {
+    const chatMessage: ChatMessage | null = ChatModel.parseMessage(body);
+    if (chatMessage == null) return;
+
+    this.addMessage(chatMessage);
+  };
+
+  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
+    this.chatMessageHandler = handler;
+  };
+
+  subscribe = (): void => {
+    this.connectionModel.addChannel(this.info.primaryChannel);
+  };
+
   // init
   constructor(
     storageModel: StorageModel,
@@ -195,6 +214,7 @@ export class ChatModel {
 
     this.restoreInfo();
     this.restoreColor();
+    this.subscribe();
   }
 
   // utility
@@ -222,6 +242,16 @@ export class ChatModel {
       body,
       dateSent: createTimestamp(),
     };
+  };
+
+  static parseMessage = (string: string): ChatMessage | null => {
+    try {
+      const parsed: any = parse(string);
+      if (checkIsValidObject(parsed) == false) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
   };
 }
 

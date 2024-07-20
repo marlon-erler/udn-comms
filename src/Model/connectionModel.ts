@@ -23,6 +23,8 @@ export default class ConnectionModel {
   connectionChangeHandler: () => void = () => {};
   messageHandler: (data: Message) => void = () => {};
 
+  channelsToSubscribe: Set<string> = new Set();
+
   // connection
   connect = (address: string): void => {
     this.udn.connect(address);
@@ -39,14 +41,24 @@ export default class ConnectionModel {
   handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
     this.connectionChangeHandler();
-    
     if (this.isConnected == false) return;
+    if (!this.address) return;
 
-    if (this.address) {
-      this.storeAddress(this.address);
-    }
-
+    this.storeAddress(this.address);
+    this.sendSubscriptionRequest();
     this.sendMessagesInOutbox();
+  };
+
+  // subscription
+  addChannel = (channel: string): void => {
+    this.channelsToSubscribe.add(channel);
+    this.sendSubscriptionRequest();
+  };
+
+  sendSubscriptionRequest = (): void => {
+    for (const channel of this.channelsToSubscribe) {
+      this.udn.subscribe(channel);
+    }
   };
 
   // outbox

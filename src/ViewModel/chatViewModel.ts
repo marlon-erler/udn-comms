@@ -1,9 +1,10 @@
 import * as React from "bloatless-react";
 
+import { ChatMessage, ChatModel } from "../Model/chatModel";
 import StorageModel, { storageKeys } from "../Model/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
-import { ChatModel } from "../Model/chatModel";
+import ChatMessageViewModel from "../Model/chatMessageViewModel";
 import { Color } from "./colors";
 import SettingsViewModel from "./settingsViewModel";
 import { localeCompare } from "../Model/Utility/utility";
@@ -36,6 +37,7 @@ export default class ChatViewModel {
     ChatPageType.Messages
   );
 
+  chatMessageViewModels: React.ListState<ChatMessageViewModel> = new React.ListState();
   composingMessage: React.State<string> = new React.State("");
 
   // guards
@@ -47,8 +49,7 @@ export default class ChatViewModel {
   );
   cannotAddSecondaryChannel: React.State<boolean> = React.createProxyState(
     [this.newSecondaryChannelInput],
-    () =>
-      this.newSecondaryChannelInput.value == ""
+    () => this.newSecondaryChannelInput.value == ""
   );
   cannotSetEncryptionKey: React.State<boolean>;
   cannotSendMessage: React.State<boolean>;
@@ -65,6 +66,12 @@ export default class ChatViewModel {
 
   close = (): void => {
     this.chatListViewModel.closeChat();
+  };
+
+  // add
+  addChatMessage = (chatMessage: ChatMessage): void => {
+    const chatMessageModel = new ChatMessageViewModel(this.chatModel, chatMessage);
+    this.chatMessageViewModels.add(chatMessageModel);
   };
 
   // settings
@@ -145,11 +152,18 @@ export default class ChatViewModel {
     settingsViewModel: SettingsViewModel,
     chatListViewModel: ChatListViewModel
   ) {
+    // models
     this.chatModel = chatModel;
     this.storageModel = storageModel;
     this.settingsViewModel = settingsViewModel;
     this.chatListViewModel = chatListViewModel;
 
+    // handlers
+    chatModel.setMessageHandler((chatMessage) => {
+      this.addChatMessage(chatMessage);
+    });
+
+    // restore
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
 
@@ -159,18 +173,23 @@ export default class ChatViewModel {
       () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
     );
 
+    this.color.value = chatModel.color;
+
+    this.restoreSecondaryChannels();
+    this.restorePageSelection();
+    this.updateIndex();
+
+    for (const chatMessage of chatModel.messages) {
+      this.addChatMessage(chatMessage);
+    }
+
+    // guards
     this.cannotSendMessage = React.createProxyState(
       [this.settingsViewModel.username, this.composingMessage],
       () =>
         this.settingsViewModel.username.value == "" ||
         this.composingMessage.value == ""
     );
-
-    this.color.value = chatModel.color;
-
-    this.restoreSecondaryChannels();
-    this.restorePageSelection();
-    this.updateIndex();
   }
 }
 

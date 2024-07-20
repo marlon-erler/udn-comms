@@ -369,6 +369,13 @@ body[showing-chat] #chat-page-wrapper {
   max-width: unset;
   flex: 1;
 }
+#message-page #message-container {
+  display: flex;
+  flex-direction: column;
+  padding: var(--content-padding);
+  gap: var(--gap-between-tiles);
+  scroll-behavior: smooth;
+}
 
 /* src/View/Components/chatEntry.css */
 .chat-entry {

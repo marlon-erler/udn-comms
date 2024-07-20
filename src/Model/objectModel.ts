@@ -1,1 +1,1 @@
-// this file is responsible for managing message objects.
+// this file is responsible for managing message objects.c
