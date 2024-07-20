@@ -483,19 +483,22 @@
     get messages() {
       const messageIds = this.storageModel.list(this.messageDirPath);
       if (!Array.isArray(messageIds)) return [];
-      let messages = [];
+      const messages = [];
       for (const messageId of messageIds) {
         const messagePath = this.getMessagePath(messageId);
         const message = this.storageModel.restoreStringifiable(messagePath);
         if (checkIsValidObject(message) == false) continue;
         messages.push(message);
       }
-      return messages;
+      const sorted = messages.sort(
+        (a, b) => a.dateSent.localeCompare(b.dateSent)
+      );
+      return sorted;
     }
     get objects() {
       const objectIds = this.storageModel.list(this.objectDirPath);
       if (!Array.isArray(objectIds)) return [];
-      let objects = [];
+      const objects = [];
       for (const objectId of objectIds) {
         const objectPathComponents = this.getObjectPath(objectId);
         const object = this.storageModel.restoreStringifiable(objectPathComponents);

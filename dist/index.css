@@ -368,11 +368,9 @@ body[showing-chat] #chat-page-wrapper {
   width: 100%;
   max-width: unset;
   flex: 1;
+  border-top: 1px solid var(--border);
 }
 @media (max-width: 700px) {
-  #message-page #composer {
-    border-top: 1px solid var(--border);
-  }
   #message-page #composer div {
     width: 100%;
     max-width: unset;

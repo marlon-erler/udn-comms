@@ -133,7 +133,7 @@ export class ChatModel {
     const messageIds: string[] = this.storageModel.list(this.messageDirPath);
     if (!Array.isArray(messageIds)) return [];
 
-    let messages: ChatMessage[] = [];
+    const messages: ChatMessage[] = [];
     for (const messageId of messageIds) {
       const messagePath: string[] = this.getMessagePath(messageId);
       const message: any = this.storageModel.restoreStringifiable(messagePath);
@@ -141,14 +141,18 @@ export class ChatModel {
 
       messages.push(message);
     }
-    return messages;
+
+    const sorted = messages.sort((a, b) =>
+      a.dateSent.localeCompare(b.dateSent)
+    );
+    return sorted;
   }
 
   get objects(): ChatObject[] {
     const objectIds: string[] = this.storageModel.list(this.objectDirPath);
     if (!Array.isArray(objectIds)) return [];
 
-    let objects: ChatObject[] = [];
+    const objects: ChatObject[] = [];
     for (const objectId of objectIds) {
       const objectPathComponents: string[] = this.getObjectPath(objectId);
       const object: any =
