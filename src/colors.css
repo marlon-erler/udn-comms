@@ -12,6 +12,24 @@
   }
 }
 
+#home-page,
+[color]:not([color="standard"]).subtle-background {
+  --background-transparent: hsla(0, 0%, 0%, 5%);
+  --surface: hsla(0, 0%, 0%, 5%);
+  --surface-hover: hsla(0, 0%, 5%, 10%);
+  --surface-active: hsla(0, 0%, 5%, 15%);
+}
+
+@media (prefers-color-scheme: dark) {
+  #home-page,
+  [color]:not([color="standard"]).subtle-background {
+    --background-transparent: hsla(0, 0%, 100%, 5%);
+    --surface: hsla(0, 0%, 100%, 5%);
+    --surface-hover: hsla(0, 0%, 100%, 10%);
+    --surface-active: hsla(0, 0%, 100%, 15%);
+  }
+}
+
 /* tile */
 [color]:not([color="standard"]).tile {
   --gradient-luma-1: 70%;
@@ -54,6 +72,25 @@
 [color]:not([color="standard"])[selected].fill-color {
   color: var(--primary);
   background-color: var(--surface);
+}
+
+/* subtle */
+[color]:not([color="standard"]).subtle-background {
+  --gradient-luma-1: 97%;
+  --gradient-luma-2: 92%;
+
+  background-image: linear-gradient(
+    120deg,
+    hsl(var(--hue), 100%, var(--gradient-luma-1)),
+    hsl(var(--hue), 100%, var(--gradient-luma-2))
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  [color]:not([color="standard"]).subtle-background {
+    --gradient-luma-1: 2%;
+    --gradient-luma-2: 6%;
+  }
 }
 
 /* definitions */

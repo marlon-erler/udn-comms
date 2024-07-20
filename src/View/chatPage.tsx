@@ -22,7 +22,7 @@ export function ChatPage(chatViewModel: ChatViewModel) {
   });
 
   return (
-    <article id="chat-page" set:color={chatViewModel.color}>
+    <article id="chat-page" set:color={chatViewModel.color} class="subtle-background">
       <div>
         <div id="ribbon">
           <button

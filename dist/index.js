@@ -1059,7 +1059,7 @@
           return mainContent.value = MessagePage(chatViewModel);
       }
     });
-    return /* @__PURE__ */ createElement("article", { id: "chat-page", "set:color": chatViewModel.color }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("article", { id: "chat-page", "set:color": chatViewModel.color, class: "subtle-background" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "ghost",
