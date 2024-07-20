@@ -146,6 +146,7 @@ export const storageKeys = {
   chats: [DATA_VERSION, "chat"],
   chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
   chatLastUsedPage: (id: string) => [DATA_VERSION, "chat", id, "last-used-page"],
+  chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
   chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],
   chatOutbox: (id: string) => [DATA_VERSION, "chat", id, "outbox"],

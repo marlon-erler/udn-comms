@@ -93,7 +93,11 @@ COLORS
 
 /* basic */
 html {
-  background-color: var(--background);
+  background: var(--background);
+  color: var(--text-normal);
+}
+
+.tile {
   color: var(--text-normal);
 }
 
@@ -102,12 +106,12 @@ html {
 }
 
 .modal > div {
-  background-color: var(--background);
+  background: var(--background);
 }
 
 menu,
 header {
-  background-color: var(--background-transparent);
+  background: var(--background-transparent);
 }
 
 * {
@@ -145,53 +149,53 @@ textarea:not(.tile *),
 select:not(.tile *),
 .surface,
 .tile {
-  background-color: var(--surface);
+  background: var(--surface);
 }
 @media (hover: hover) {
   button:hover,
   select:hover,
   button.tile.ghost:hover {
-    background-color: var(--surface-hover);
+    background: var(--surface-hover);
   }
   [selected]:hover {
-    background-color: var(--surface);
+    background: var(--surface);
   }
 }
 button:active,
 select:active,
 button.tile.ghost:active,
 [selected] {
-  background-color: var(--surface-active);
+  background: var(--surface-active);
 }
 [selected]:active {
-  background-color: var(--surface-hover);
+  background: var(--surface-hover);
 }
 .tile *,
 header button {
-  background-color: transparent;
+  background: transparent;
 }
 
 input:checked {
-  background-color: var(--primary);
+  background: var(--primary);
 }
 
 /* primary button */
 button.primary {
-  background-color: var(--primary);
+  background: var(--primary);
   color: var(--text-on-color);
 }
 @media (hover: hover) {
   button.primary:hover {
-    background-color: var(--primary-hover);
+    background: var(--primary-hover);
   }
 }
 button.primary:active {
-  background-color: var(--primary-active);
+  background: var(--primary-active);
 }
 
 /* ghost button */
 button.ghost:not(.tile) {
-  background-color: transparent;
+  background: transparent;
 }
 button.ghost {
   color: var(--link);
@@ -201,25 +205,25 @@ button.ghost {
 }
 @media (hover: hover) {
   button.ghost:hover {
-    background-color: var(--background-hover);
+    background: var(--background-hover);
   }
 }
 button.ghost:active {
-  background-color: var(--background-active);
+  background: var(--background-active);
 }
 
 /* danger button */
 button.danger {
-  background-color: var(--danger);
+  background: var(--danger);
   color: var(--text-on-color);
 }
 @media (hover: hover) {
   button.danger:hover {
-    background-color: var(--danger-hover);
+    background: var(--danger-hover);
   }
 }
 button.danger:active {
-  background-color: var(--danger-active);
+  background: var(--danger-active);
 }
 
 /*
@@ -909,7 +913,7 @@ input[type="checkbox"]:checked::before {
 input[type="radio"]:checked::before {
   content: "";
 
-  background-color: var(--text-on-color);
+  background: var(--text-on-color);
   border-radius: 100%;
 
   --inset: 4px;
@@ -929,7 +933,7 @@ input[type="radio"]:checked::before {
   right: 0px;
   bottom: 0px;
 
-  background-color: var(--background);
+  background: var(--background);
   opacity: 0.6;
 }
 

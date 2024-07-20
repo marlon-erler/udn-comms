@@ -1,0 +1,62 @@
+[color]:not([color="standard"]) {
+  --primary: hsl(var(--hue), 100%, 80%);
+
+  --gradient-luma-1: 70%;
+  --gradient-luma-2: 90%;
+
+  --hover-luma: 75%;
+  --active-luma: 80%;
+
+  --text-luma: 20%;
+
+  --surface: linear-gradient(
+    120deg,
+    hsl(var(--hue), 100%, var(--gradient-luma-1)),
+    hsl(var(--hue), 100%, var(--gradient-luma-2))
+  );
+  --surface-hover: hsl(var(--hue), 100%, var(--hover-luma));
+  --surface-active: hsl(var(--hue), 100%, var(--active-luma));
+
+  --text-normal: hsl(var(--hue), 100%, var(--text-luma));
+}
+
+@media (prefers-color-scheme: dark) {
+  [color]:not([color="standard"]) {
+    --gradient-luma-1: 20%;
+    --gradient-luma-2: 15%;
+
+    --hover-luma: 25%;
+    --active-luma: 30%;
+
+    --text-luma: 90%;
+  }
+}
+
+[color]:not([color="standard"]).fill-color {
+  color: white;
+  background-color: var(--primary);
+}
+
+[color="coral"] {
+  --hue: 20;
+}
+
+[color="yellow"] {
+  --hue: 50;
+}
+
+[color="mint"] {
+  --hue: 150;
+}
+
+[color="lightblue"] {
+  --hue: 180;
+}
+
+[color="blue"] {
+  --hue: 220;
+}
+
+[color="purple"] {
+  --hue: 280;
+}

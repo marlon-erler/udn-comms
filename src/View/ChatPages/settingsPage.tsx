@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import ChatViewModel from "../../ViewModel/chatViewModel";
+import { Color } from "../../ViewModel/colors";
 import { translations } from "../translations";
 
 export function SettingsPage(chatViewModel: ChatViewModel) {
@@ -31,6 +32,33 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             {translations.general.setButton}
             <span class="icon">check</span>
           </button>
+        </div>
+
+        <hr></hr>
+
+        <div
+          class="flex-row gap width-input"
+        >
+          {...Object.values(Color).map((color) => {
+            const isSelected = React.createProxyState(
+              [chatViewModel.color],
+              () => chatViewModel.color.value == color
+            );
+
+            function setColor() {
+              chatViewModel.setColor(color);
+            }
+
+            return (
+              <button
+                color={color}
+                class="fill-color width-100 flex"
+                style="height: 2rem"
+                toggle:selected={isSelected}
+                on:click={setColor}
+              ></button>
+            );
+          })}
         </div>
       </div>
     </div>

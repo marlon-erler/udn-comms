@@ -353,10 +353,23 @@
     chats: [DATA_VERSION, "chat"],
     chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
     chatLastUsedPage: (id) => [DATA_VERSION, "chat", id, "last-used-page"],
+    chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
     chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
     chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],
     chatOutbox: (id) => [DATA_VERSION, "chat", id, "outbox"]
   };
+
+  // src/ViewModel/colors.ts
+  var Color = /* @__PURE__ */ ((Color2) => {
+    Color2["Standard"] = "standard";
+    Color2["Coral"] = "coral";
+    Color2["Yellow"] = "yellow";
+    Color2["Mint"] = "mint";
+    Color2["LightBlue"] = "lightblue";
+    Color2["Blue"] = "blue";
+    Color2["purple"] = "purple";
+    return Color2;
+  })(Color || {});
 
   // src/Model/chatModel.ts
   var ChatModel = class {
@@ -365,12 +378,16 @@
     storageModel;
     chatListModel;
     info;
+    color;
     messages = /* @__PURE__ */ new Set();
     objects = /* @__PURE__ */ new Map();
     outbox = /* @__PURE__ */ new Set();
     // paths
     get infoPath() {
       return storageKeys.chatInfo(this.id);
+    }
+    get colorPath() {
+      return storageKeys.chatColor(this.id);
     }
     get messageDirPath() {
       return storageKeys.chatMessages(this.id);
@@ -397,9 +414,16 @@
       this.info.secondaryChannels = secondaryChannels;
       this.storeInfo();
     };
+    setColor = (color) => {
+      this.color = color;
+      this.storeColor();
+    };
     // store & add
     storeInfo = () => {
       this.storageModel.storeStringifiable(this.infoPath, this.info);
+    };
+    storeColor = () => {
+      this.storageModel.store(this.colorPath, this.color);
     };
     addMessage = (message) => {
       if (!this.messages.has(message)) {
@@ -427,6 +451,15 @@
         this.info = info;
       } else {
         this.info = generateChatInfo("0");
+      }
+    };
+    restoreColor = () => {
+      const path = this.colorPath;
+      const color = this.storageModel.restore(path);
+      if (!color) {
+        this.color = "standard" /* Standard */;
+      } else {
+        this.color = color;
       }
     };
     restoreMessages = () => {
@@ -465,6 +498,7 @@
       this.storageModel = storageModel2;
       this.chatListModel = chatListModel;
       this.restoreInfo();
+      this.restoreColor();
     }
   };
   function generateChatInfo(primaryChannel) {
@@ -532,6 +566,7 @@
     index = new State(0);
     primaryChannel = new State("");
     primaryChannelInput = new State("");
+    color = new State("standard" /* Standard */);
     selectedPage = new State(
       "messages" /* Messages */
     );
@@ -557,6 +592,10 @@
       this.primaryChannel.value = this.chatModel.info.primaryChannel;
       this.chatListViewModel.updateIndices();
     };
+    setColor = (newColor) => {
+      this.color.value = newColor;
+      this.chatModel.setColor(newColor);
+    };
     // restore
     restorePageSelection = () => {
       const path = storageKeys.chatLastUsedPage(this.chatModel.id);
@@ -575,6 +614,7 @@
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
+      this.color.value = chatModel.color;
       this.restorePageSelection();
       this.updateIndex();
     }
@@ -760,7 +800,31 @@
       },
       translations.general.setButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
-    ))));
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-row gap width-input"
+      },
+      ...Object.values(Color).map((color) => {
+        const isSelected = createProxyState(
+          [chatViewModel.color],
+          () => chatViewModel.color.value == color
+        );
+        function setColor() {
+          chatViewModel.setColor(color);
+        }
+        return /* @__PURE__ */ createElement(
+          "button",
+          {
+            color,
+            class: "fill-color width-100 flex",
+            style: "height: 2rem",
+            "toggle:selected": isSelected,
+            "on:click": setColor
+          }
+        );
+      })
+    )));
   }
 
   // src/View/chatPage.tsx
@@ -1156,7 +1220,7 @@
 
   // src/View/Components/chatEntry.tsx
   function ChatEntry(chatViewModel) {
-    const view = /* @__PURE__ */ createElement("button", { class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement("button", { "set:color": chatViewModel.color, class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
       "span",
       {
         class: "shadow",

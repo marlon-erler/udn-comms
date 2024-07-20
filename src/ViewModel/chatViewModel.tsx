@@ -4,6 +4,7 @@ import StorageModel, { storageKeys } from "../Model/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import { ChatModel } from "../Model/chatModel";
+import { Color } from "./colors";
 
 export default class ChatViewModel {
   chatModel: ChatModel;
@@ -15,6 +16,8 @@ export default class ChatViewModel {
 
   primaryChannel: React.State<string> = new React.State("");
   primaryChannelInput: React.State<string> = new React.State("");
+
+  color: React.State<Color> = new React.State<Color>(Color.Standard);
 
   selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
     ChatPageType.Messages
@@ -49,6 +52,11 @@ export default class ChatViewModel {
     this.chatListViewModel.updateIndices();
   }
 
+  setColor = (newColor: Color): void => {
+    this.color.value = newColor;
+    this.chatModel.setColor(newColor);
+  }
+
   // restore
   restorePageSelection = (): void => {
     const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);
@@ -70,6 +78,8 @@ export default class ChatViewModel {
 
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
+    
+    this.color.value = chatModel.color;
 
     this.restorePageSelection();
     this.updateIndex();

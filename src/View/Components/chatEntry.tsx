@@ -6,7 +6,7 @@ import ChatViewModel from "../../ViewModel/chatViewModel";
 
 export function ChatEntry(chatViewModel: ChatViewModel) {
   const view = (
-    <button class="chat-entry tile" on:click={chatViewModel.open}>
+    <button set:color={chatViewModel.color} class="chat-entry tile" on:click={chatViewModel.open}>
       <span
         class="shadow"
         subscribe:innerText={chatViewModel.primaryChannel}

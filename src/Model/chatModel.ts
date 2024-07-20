@@ -3,6 +3,7 @@
 import StorageModel, { storageKeys } from "./storageModel";
 
 import ChatListModel from "./chatListModel";
+import { Color } from "../ViewModel/colors";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { createTimestamp } from "./Utility/utility";
 import { v4 } from "uuid";
@@ -13,6 +14,7 @@ export class ChatModel {
   storageModel: StorageModel;
   chatListModel: ChatListModel;
   info: ChatInfo;
+  color: Color;
 
   messages = new Set<ChatMessage>();
   objects = new Map<string, ChatObject>();
@@ -21,6 +23,10 @@ export class ChatModel {
   // paths
   get infoPath(): string[] {
     return storageKeys.chatInfo(this.id);
+  }
+
+  get colorPath(): string[] {
+    return storageKeys.chatColor(this.id);
   }
 
   get messageDirPath(): string[] {
@@ -55,9 +61,18 @@ export class ChatModel {
     this.storeInfo();
   };
 
+  setColor = (color: Color): void => {
+    this.color = color;
+    this.storeColor();
+  };
+
   // store & add
   storeInfo = (): void => {
     this.storageModel.storeStringifiable(this.infoPath, this.info);
+  };
+
+  storeColor = (): void => {
+    this.storageModel.store(this.colorPath, this.color);
   };
 
   addMessage = (message: ChatMessage): void => {
@@ -81,7 +96,7 @@ export class ChatModel {
     this.chatListModel.untrackChat(this);
 
     // delete
-    const dirPath = [...storageKeys.chats, this.id];
+    const dirPath: string[] = [...storageKeys.chats, this.id];
     this.storageModel.removeRecursive(dirPath);
   };
 
@@ -89,9 +104,19 @@ export class ChatModel {
   restoreInfo = (): void => {
     const info: any = this.storageModel.restoreStringifiable(this.infoPath);
     if (info != null) {
-      this.info = info
+      this.info = info;
     } else {
-      this.info = generateChatInfo("0")
+      this.info = generateChatInfo("0");
+    }
+  };
+
+  restoreColor = (): void => {
+    const path: string[] = this.colorPath;
+    const color: string | null = this.storageModel.restore(path);
+    if (!color) {
+      this.color = Color.Standard;
+    } else {
+      this.color = color as any;
     }
   };
 
@@ -135,12 +160,17 @@ export class ChatModel {
   };
 
   // init
-  constructor(storageModel: StorageModel, chatListModel: ChatListModel, chatId: string) {
+  constructor(
+    storageModel: StorageModel,
+    chatListModel: ChatListModel,
+    chatId: string
+  ) {
     this.id = chatId;
     this.storageModel = storageModel;
     this.chatListModel = chatListModel;
 
     this.restoreInfo();
+    this.restoreColor();
   }
 }
 
