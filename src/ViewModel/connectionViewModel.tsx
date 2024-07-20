@@ -38,8 +38,8 @@ export default class ConnectionViewModel {
 
     if (this.connectionModel.address) {
       this.serverAddressInput.value = this.connectionModel.address;
+      this.previousAddresses.add(this.connectionModel.address);
     }
-    this.updatePreviousAddresses();
   };
 
   messageHandler = (data: Message): void => {};
@@ -80,5 +80,8 @@ export default class ConnectionViewModel {
   constructor(connectionModel: ConnectionModel) {
     this.connectionModel = connectionModel;
     this.updatePreviousAddresses();
+
+    connectionModel.setConnectionChangeHandler(this.connectionChangeHandler);
+    connectionModel.setMessageHandler(this.messageHandler);
   }
 }

@@ -20,6 +20,9 @@ export default class ConnectionModel {
     return this.udn.ws?.url;
   }
 
+  connectionChangeHandler: () => void = () => {};
+  messageHandler: (data: Message) => void = () => {};
+
   // connection
   connect = (address: string): void => {
     this.udn.connect(address);
@@ -29,15 +32,21 @@ export default class ConnectionModel {
     this.udn.disconnect();
   };
 
-  handleMessage = (data: Message): void => {}
+  handleMessage = (data: Message): void => {
+    this.messageHandler(data);
+  };
 
   handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
+    this.connectionChangeHandler();
+    
     if (this.isConnected == false) return;
 
     if (this.address) {
       this.storeAddress(this.address);
     }
+
+    this.sendMessagesInOutbox();
   };
 
   // outbox
@@ -54,7 +63,7 @@ export default class ConnectionModel {
       if (message == undefined) continue;
       if (checkIsValidObject(message) == false) continue;
 
-      message.push(message);
+      messages.push(message);
     }
 
     return messages;
@@ -114,6 +123,15 @@ export default class ConnectionModel {
     const dirPath = storageKeys.previousAddresses;
     return this.storageModel.list(dirPath);
   }
+
+  // handlers
+  setConnectionChangeHandler = (handler: () => void): void => {
+    this.connectionChangeHandler = handler;
+  };
+
+  setMessageHandler = (handler: (data: Message) => void): void => {
+    this.messageHandler = handler;
+  };
 
   // setup
   constructor(storageModel: StorageModel) {

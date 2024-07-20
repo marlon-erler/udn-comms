@@ -14,7 +14,9 @@ export function ConnectionModal(connectionViewModel: ConnectionViewModel) {
 
     const cannotConnect = React.createProxyState(
       [connectionViewModel.isConnected],
-      () => connectionViewModel.connectionModel.address == address
+      () =>
+        connectionViewModel.isConnected.value == true &&
+        connectionViewModel.connectionModel.address == address
     );
 
     return DeletableListItem(

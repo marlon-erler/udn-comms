@@ -1134,7 +1134,7 @@
       }
       const cannotConnect = createProxyState(
         [connectionViewModel2.isConnected],
-        () => connectionViewModel2.connectionModel.address == address
+        () => connectionViewModel2.isConnected.value == true && connectionViewModel2.connectionModel.address == address
       );
       return DeletableListItem(
         address,
@@ -1295,6 +1295,10 @@
     get address() {
       return this.udn.ws?.url;
     }
+    connectionChangeHandler = () => {
+    };
+    messageHandler = () => {
+    };
     // connection
     connect = (address) => {
       this.udn.connect(address);
@@ -1303,13 +1307,16 @@
       this.udn.disconnect();
     };
     handleMessage = (data) => {
+      this.messageHandler(data);
     };
     handleConnectionChange = () => {
       console.log("connection status:", this.isConnected, this.address);
+      this.connectionChangeHandler();
       if (this.isConnected == false) return;
       if (this.address) {
         this.storeAddress(this.address);
       }
+      this.sendMessagesInOutbox();
     };
     // outbox
     getOutboxMessags = () => {
@@ -1323,7 +1330,7 @@
         ]);
         if (message == void 0) continue;
         if (checkIsValidObject(message) == false) continue;
-        message.push(message);
+        messages.push(message);
       }
       return messages;
     };
@@ -1370,6 +1377,13 @@
       const dirPath = storageKeys.previousAddresses;
       return this.storageModel.list(dirPath);
     }
+    // handlers
+    setConnectionChangeHandler = (handler) => {
+      this.connectionChangeHandler = handler;
+    };
+    setMessageHandler = (handler) => {
+      this.messageHandler = handler;
+    };
     // setup
     constructor(storageModel2) {
       this.udn = new UDNFrontend();
@@ -1413,8 +1427,8 @@
       if (this.connectionModel.isConnected == false) return;
       if (this.connectionModel.address) {
         this.serverAddressInput.value = this.connectionModel.address;
+        this.previousAddresses.add(this.connectionModel.address);
       }
-      this.updatePreviousAddresses();
     };
     messageHandler = (data) => {
     };
@@ -1447,6 +1461,8 @@
     constructor(connectionModel2) {
       this.connectionModel = connectionModel2;
       this.updatePreviousAddresses();
+      connectionModel2.setConnectionChangeHandler(this.connectionChangeHandler);
+      connectionModel2.setMessageHandler(this.messageHandler);
     }
   };
 
