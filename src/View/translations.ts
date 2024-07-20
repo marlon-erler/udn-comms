@@ -98,6 +98,11 @@ const englishTranslations = {
 
       deleteChatButton: "Delete entire chat",
     },
+
+    message: {
+      composerInputPlaceholder: "Type a message...",
+      sendMessageButtonAudioLabel: "send message",
+    }
   },
 };
 

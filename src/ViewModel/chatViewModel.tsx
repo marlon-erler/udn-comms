@@ -155,8 +155,10 @@ export default class ChatViewModel {
     );
 
     this.cannotSendMessage = React.createProxyState(
-      [this.settingsViewModel.username],
-    () => this.settingsViewModel.username.value == ""
+      [this.settingsViewModel.username, this.composingMessage],
+      () =>
+        this.settingsViewModel.username.value == "" ||
+        this.composingMessage.value == ""
     );
 
     this.color.value = chatModel.color;

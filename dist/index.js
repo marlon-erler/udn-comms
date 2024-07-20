@@ -738,8 +738,8 @@
         () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
       );
       this.cannotSendMessage = createProxyState(
-        [this.settingsViewModel.username],
-        () => this.settingsViewModel.username.value == ""
+        [this.settingsViewModel.username, this.composingMessage],
+        () => this.settingsViewModel.username.value == "" || this.composingMessage.value == ""
       );
       this.color.value = chatModel.color;
       this.restoreSecondaryChannels();
@@ -835,11 +835,6 @@
     );
   }
 
-  // src/View/ChatPages/messagePage.tsx
-  function MessagePage(chatViewModel) {
-    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { id: "message-container" }), /* @__PURE__ */ createElement("div", { id: "composer" })));
-  }
-
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -914,6 +909,10 @@
         setEncryptionKeyButtonAudioLabel: "set encryption key",
         showEncryptionKey: "Show encryption key",
         deleteChatButton: "Delete entire chat"
+      },
+      message: {
+        composerInputPlaceholder: "Type a message...",
+        sendMessageButtonAudioLabel: "send message"
       }
     }
   };
@@ -922,6 +921,27 @@
   };
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/ChatPages/messagePage.tsx
+  function MessagePage(chatViewModel) {
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { id: "message-container" }), /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": chatViewModel.composingMessage,
+        "on:enter": chatViewModel.sendMessage,
+        placeholder: translations.chatPage.message.composerInputPlaceholder
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.message.sendMessageButtonAudioLabel,
+        "on:click": chatViewModel.sendMessage,
+        "toggle:disabled": chatViewModel.cannotSendMessage
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+    ))));
+  }
 
   // src/View/Components/deletableListItem.tsx
   function DeletableListItem(text, primaryButton, ondelete) {

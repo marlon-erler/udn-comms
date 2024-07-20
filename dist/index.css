@@ -344,6 +344,13 @@ main {
 }
 #message-page #composer {
   border-top: 1px solid var(--border);
+  display: flex;
+}
+#message-page #composer input {
+  margin: 0px;
+  width: 100%;
+  max-width: unset;
+  flex: 1;
 }
 
 /* src/View/Components/chatEntry.css */
