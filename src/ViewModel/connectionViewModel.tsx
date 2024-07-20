@@ -50,6 +50,11 @@ export default class ConnectionViewModel {
     this.connectionModel.disconnect();
   };
 
+  removePreviousAddress = (address: string): void => {
+    this.connectionModel.removeAddress(address);
+    this.updatePreviousAddresses();
+  }
+
   // view methods
   showConnectionModal = (): void => {
     this.isShowingConnectionModal.value = true;

@@ -1,6 +1,7 @@
 const englishTranslations = {
   general: {
-    closeButton: "close",
+    closeButtonAudioLabel: "close",
+    deleteItemButtonAudioLabel: "delete item",
   },
 
   regional: {

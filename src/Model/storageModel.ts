@@ -24,6 +24,7 @@ export default class StorageModel {
   remove = (pathComponents: string[]): void => {
     const key: string = StorageModel.pathComponentsToKey(...pathComponents);
     localStorage.removeItem(key);
+    this.initializeTree();
   };
 
   list = (pathComponents: string[]): string[] => {
@@ -52,14 +53,19 @@ export default class StorageModel {
 
   // init
   constructor() {
+    this.initializeTree();
+  }
+
+  // utility
+  initializeTree = (): void => {
+    this.storageEntryTree = {};
     for (const key of Object.keys(localStorage)) {
       const components: string[] = StorageModel.keyToPathComponents(key);
       this.updateTree(...components);
     }
-  }
+  };
 
-  // utility
-  updateTree = (...pathComponents: string[]) => {
+  updateTree = (...pathComponents: string[]): void => {
     let currentParent: StorageEntry = this.storageEntryTree;
     for (const pathPart of pathComponents) {
       if (!currentParent[pathPart]) {

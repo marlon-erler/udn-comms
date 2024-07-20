@@ -186,7 +186,8 @@
   // src/View/translations.ts
   var englishTranslations = {
     general: {
-      closeButton: "close"
+      closeButtonAudioLabel: "close",
+      deleteItemButtonAudioLabel: "delete item"
     },
     regional: {
       weekdays: {
@@ -247,15 +248,42 @@
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
 
+  // src/View/Components/deletableListItem.tsx
+  function DeletableListItem(text, ondelete) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "aria-label": translations.general.deleteItemButtonAudioLabel,
+        "on:click": ondelete
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+    ));
+  }
+
   // src/View/Modals/connectionModal.tsx
   function ConnectionModal(connectionViewModel2) {
+    const previousAddressConverter = (address) => {
+      return DeletableListItem(address, () => {
+        connectionViewModel2.removePreviousAddress(address);
+      });
+    };
     return /* @__PURE__ */ createElement(
       "div",
       {
         class: "modal",
         "toggle:open": connectionViewModel2.isShowingConnectionModal
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.connectionModal.connectionModalHeadline)), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.connectionModal.connectionModalHeadline), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [
+            connectionViewModel2.previousAddresses,
+            previousAddressConverter
+          ]
+        }
+      )), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButtonAudioLabel, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
     );
   }
 
@@ -287,6 +315,7 @@
     remove = (pathComponents) => {
       const key = _StorageModel.pathComponentsToKey(...pathComponents);
       localStorage.removeItem(key);
+      this.initializeTree();
     };
     list = (pathComponents) => {
       let currentParent = this.storageEntryTree;
@@ -309,12 +338,16 @@
     };
     // init
     constructor() {
+      this.initializeTree();
+    }
+    // utility
+    initializeTree = () => {
+      this.storageEntryTree = {};
       for (const key of Object.keys(localStorage)) {
         const components = _StorageModel.keyToPathComponents(key);
         this.updateTree(...components);
       }
-    }
-    // utility
+    };
     updateTree = (...pathComponents) => {
       let currentParent = this.storageEntryTree;
       for (const pathPart of pathComponents) {
@@ -569,6 +602,10 @@
     disconnect = () => {
       this.connectionModel.disconnect();
     };
+    removePreviousAddress = (address) => {
+      this.connectionModel.removeAddress(address);
+      this.updatePreviousAddresses();
+    };
     // view methods
     showConnectionModal = () => {
       this.isShowingConnectionModal.value = true;
@@ -636,7 +673,7 @@
         "aria-label": translations.homePage.manageConnectionsAudioLabel,
         "on:click": connectionViewModel2.showConnectionModal
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "build")
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
     ), /* @__PURE__ */ createElement(
       "button",
       {
@@ -754,7 +791,13 @@
   };
 
   // src/index.tsx
+  localStorage.clear();
   var storageModel = new StorageModel();
+  storageModel.store(["a", "b", "b1"], "");
+  storageModel.store(["a", "b", "b2"], "");
+  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
+  storageModel.remove(["a", "b", "b2"]);
+  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel(storageModel);
   document.querySelector("main").append(
