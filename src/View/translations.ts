@@ -69,6 +69,8 @@ const englishTranslations = {
     connectionModalHeadline: "Manage Connections",
 
     ///
+
+    connectButtonAudioLabel: "connect",
   },
 };
 

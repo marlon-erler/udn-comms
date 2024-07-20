@@ -8,9 +8,29 @@ export function ConnectionModal(connectionViewModel: ConnectionViewModel) {
   const previousAddressConverter: React.StateItemConverter<string> = (
     address: string
   ) => {
-    return DeletableListItem(address, () => {
-      connectionViewModel.removePreviousAddress(address);
-    });
+    function connnect() {
+      connectionViewModel.connectToAddress(address);
+    }
+
+    const cannotConnect = React.createProxyState(
+      [connectionViewModel.isConnected],
+      () => connectionViewModel.connectionModel.address == address
+    );
+
+    return DeletableListItem(
+      address,
+      <button
+        class="primary"
+        on:click={connnect}
+        toggle:disabled={cannotConnect}
+        aria-label={translations.connectionModal.connectButtonAudioLabel}
+      >
+        <span class="icon">link</span>
+      </button>,
+      () => {
+        connectionViewModel.removePreviousAddress(address);
+      }
+    );
   };
 
   return (

@@ -238,8 +238,9 @@
       addChatButton: "Add chat"
     },
     connectionModal: {
-      connectionModalHeadline: "Manage Connections"
+      connectionModalHeadline: "Manage Connections",
       ///
+      connectButtonAudioLabel: "connect"
     }
   };
   var allTranslations = {
@@ -249,8 +250,8 @@
   var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/Components/deletableListItem.tsx
-  function DeletableListItem(text, ondelete) {
-    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement(
+  function DeletableListItem(text, primaryButton, ondelete) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger",
@@ -258,15 +259,35 @@
         "on:click": ondelete
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-    ));
+    )));
   }
 
   // src/View/Modals/connectionModal.tsx
   function ConnectionModal(connectionViewModel2) {
     const previousAddressConverter = (address) => {
-      return DeletableListItem(address, () => {
-        connectionViewModel2.removePreviousAddress(address);
-      });
+      function connnect() {
+        connectionViewModel2.connectToAddress(address);
+      }
+      const cannotConnect = createProxyState(
+        [connectionViewModel2.isConnected],
+        () => connectionViewModel2.connectionModel.address == address
+      );
+      return DeletableListItem(
+        address,
+        /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": connnect,
+            "toggle:disabled": cannotConnect,
+            "aria-label": translations.connectionModal.connectButtonAudioLabel
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
+        ),
+        () => {
+          connectionViewModel2.removePreviousAddress(address);
+        }
+      );
     };
     return /* @__PURE__ */ createElement(
       "div",
@@ -597,7 +618,10 @@
     };
     // methods
     connect = () => {
-      this.connectionModel.connect(this.serverAddressInput.value);
+      this.connectToAddress(this.serverAddressInput.value);
+    };
+    connectToAddress = (address) => {
+      this.connectionModel.connect(address);
     };
     disconnect = () => {
       this.connectionModel.disconnect();
@@ -791,13 +815,7 @@
   };
 
   // src/index.tsx
-  localStorage.clear();
   var storageModel = new StorageModel();
-  storageModel.store(["a", "b", "b1"], "");
-  storageModel.store(["a", "b", "b2"], "");
-  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
-  storageModel.remove(["a", "b", "b2"]);
-  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel(storageModel);
   document.querySelector("main").append(

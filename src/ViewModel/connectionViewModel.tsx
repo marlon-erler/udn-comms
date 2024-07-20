@@ -43,9 +43,13 @@ export default class ConnectionViewModel {
 
   // methods
   connect = (): void => {
-    this.connectionModel.connect(this.serverAddressInput.value);
+    this.connectToAddress(this.serverAddressInput.value);
   };
-
+  
+  connectToAddress = (address: string): void => {
+    this.connectionModel.connect(address);
+  }
+  
   disconnect = (): void => {
     this.connectionModel.disconnect();
   };
