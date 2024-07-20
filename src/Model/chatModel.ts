@@ -33,58 +33,62 @@ export class ChatModel {
     return storageKeys.chatOutbox(this.id);
   }
 
-  getMessagePath(id: string): string[] {
+  getMessagePath = (id: string): string[] => {
     return [...this.messageDirPath, id];
-  }
+  };
 
-  getObjectPath(id: string): string[] {
+  getObjectPath = (id: string): string[] => {
     return [...this.objectDirPath, id];
-  }
+  };
 
   // set
-  setPrimaryChannel(primaryChannel: string): void {
+  setPrimaryChannel = (primaryChannel: string): void => {
     this.info.primaryChannel = primaryChannel;
     this.storeInfo();
-  }
+  };
 
-  setSecondaryChannels(secondaryChannels: string[]): void {
+  setSecondaryChannels = (secondaryChannels: string[]): void => {
     this.info.secondaryChannels = secondaryChannels;
     this.storeInfo();
-  }
+  };
 
   // store & add
-  storeInfo(): void {
+  storeInfo = (): void => {
     this.storageModel.storeStringifiable(this.infoPath, this.info);
-  }
+  };
 
-  addMessage(message: ChatMessage): void {
+  addMessage = (message: ChatMessage): void => {
     if (!this.messages.has(message)) {
       this.messages.add(message);
     }
     const messagePath: string[] = this.getMessagePath(message.id);
     this.storageModel.storeStringifiable(messagePath, message);
-  }
+  };
 
-  addObject(object: ChatObject): void {
+  addObject = (object: ChatObject): void => {
     this.objects.set(object.id, object);
     const objectPath: string[] = this.getObjectPath(object.id);
     this.storageModel.storeStringifiable(objectPath, object);
-  }
+  };
 
   // remove
   remove = () => {
     this.unloadData();
     const dirPath = [...storageKeys.chats, this.id];
     this.storageModel.removeRecursive(dirPath);
-  }
+  };
 
   // restore
-  restoreInfo(): void {
+  restoreInfo = (): void => {
     const info: any = this.storageModel.restoreStringifiable(this.infoPath);
-    this.info == info ?? generateChatInfo("0");
-  }
+    if (info != null) {
+      this.info = info
+    } else {
+      this.info = generateChatInfo("0")
+    }
+  };
 
-  restoreMessages(): void {
+  restoreMessages = (): void => {
     const messageIds: string[] = this.storageModel.list(this.messageDirPath);
     if (!Array.isArray(messageIds)) return;
 
@@ -95,32 +99,33 @@ export class ChatModel {
 
       this.messages.add(message);
     }
-  }
+  };
 
-  restoreObjects(): void {
+  restoreObjects = (): void => {
     const objectIds: string[] = this.storageModel.list(this.objectDirPath);
     if (!Array.isArray(objectIds)) return;
 
     for (const objectId of objectIds) {
       const objectPathComponents: string[] = this.getObjectPath(objectId);
-      const object: any = this.storageModel.restoreStringifiable(objectPathComponents);
+      const object: any =
+        this.storageModel.restoreStringifiable(objectPathComponents);
       if (checkIsValidObject(object) == false) return;
       if (object.id != objectId) return;
 
       this.objects.set(objectId, object);
     }
-  }
+  };
 
   // memory
-  loadData(): void {
+  loadData = (): void => {
     this.restoreMessages();
     this.restoreObjects();
-  }
+  };
 
-  unloadData(): void {
+  unloadData = (): void => {
     this.messages.clear();
     this.objects.clear();
-  }
+  };
 
   // init
   constructor(storageModel: StorageModel, chatId: string) {

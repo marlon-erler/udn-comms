@@ -1,4 +1,53 @@
 (() => {
+  // node_modules/uuid/dist/esm-browser/stringify.js
+  var byteToHex = [];
+  for (i = 0; i < 256; ++i) {
+    byteToHex.push((i + 256).toString(16).slice(1));
+  }
+  var i;
+  function unsafeStringify(arr, offset = 0) {
+    return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+  }
+
+  // node_modules/uuid/dist/esm-browser/rng.js
+  var getRandomValues;
+  var rnds8 = new Uint8Array(16);
+  function rng() {
+    if (!getRandomValues) {
+      getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+      if (!getRandomValues) {
+        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+      }
+    }
+    return getRandomValues(rnds8);
+  }
+
+  // node_modules/uuid/dist/esm-browser/native.js
+  var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+  var native_default = {
+    randomUUID
+  };
+
+  // node_modules/uuid/dist/esm-browser/v4.js
+  function v4(options, buf, offset) {
+    if (native_default.randomUUID && !buf && !options) {
+      return native_default.randomUUID();
+    }
+    options = options || {};
+    var rnds = options.random || (options.rng || rng)();
+    rnds[6] = rnds[6] & 15 | 64;
+    rnds[8] = rnds[8] & 63 | 128;
+    if (buf) {
+      offset = offset || 0;
+      for (var i = 0; i < 16; ++i) {
+        buf[offset + i] = rnds[i];
+      }
+      return buf;
+    }
+    return unsafeStringify(rnds);
+  }
+  var v4_default = v4;
+
   // node_modules/bloatless-react/index.ts
   var State = class {
     _value;
@@ -183,6 +232,321 @@
     return element;
   }
 
+  // src/Model/Utility/utility.ts
+  function stringify(data) {
+    return JSON.stringify(data);
+  }
+  function parse(string) {
+    return JSON.parse(string);
+  }
+
+  // src/Model/Utility/typeSafety.ts
+  var DATA_VERSION = "v2";
+  function checkIsValidObject(object) {
+    return object.dataVersion == DATA_VERSION;
+  }
+
+  // src/Model/storageModel.ts
+  var PATH_COMPONENT_SEPARATOR = "\\";
+  var StorageModel = class _StorageModel {
+    storageEntryTree = {};
+    // basic
+    store = (pathComponents, value) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      localStorage.setItem(key, value);
+      this.updateTree(...pathComponents);
+    };
+    restore = (pathComponents) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      return localStorage.getItem(key);
+    };
+    remove = (pathComponents, shouldInitialize = true) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      localStorage.removeItem(key);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+    };
+    removeRecursive = (pathComponentsOfEntityToDelete) => {
+      a: for (const key of Object.keys(localStorage)) {
+        const pathComponentsOfCurrentEntity = _StorageModel.keyToPathComponents(key);
+        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue a;
+          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
+            continue a;
+        }
+        this.remove(pathComponentsOfCurrentEntity, false);
+      }
+      this.initializeTree();
+    };
+    list = (pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const component of pathComponents) {
+        const nextParent = currentParent[component];
+        if (nextParent == void 0) return [];
+        currentParent = nextParent;
+      }
+      return [...Object.keys(currentParent)];
+    };
+    // stringifiable
+    storeStringifiable = (pathComponents, value) => {
+      const valueString = stringify(value);
+      this.store(pathComponents, valueString);
+    };
+    restoreStringifiable = (pathComponents) => {
+      const valueString = this.restore(pathComponents);
+      if (!valueString) return null;
+      return parse(valueString);
+    };
+    // init
+    constructor() {
+      this.initializeTree();
+    }
+    // utility
+    initializeTree = () => {
+      console.log("initializing tree");
+      this.storageEntryTree = {};
+      for (const key of Object.keys(localStorage)) {
+        const components = _StorageModel.keyToPathComponents(key);
+        this.updateTree(...components);
+      }
+    };
+    updateTree = (...pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const pathPart of pathComponents) {
+        if (!currentParent[pathPart]) {
+          currentParent[pathPart] = {};
+        }
+        currentParent = currentParent[pathPart];
+      }
+    };
+    print = () => {
+      console.log(JSON.stringify(this.storageEntryTree, null, 4));
+    };
+    static pathComponentsToKey = (...pathComponents) => {
+      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
+    };
+    static keyToPathComponents = (key) => {
+      return key.split(PATH_COMPONENT_SEPARATOR);
+    };
+    static join = (...items) => {
+      let allComponents = [];
+      for (const item of items) {
+        const parts = this.keyToPathComponents(item);
+        allComponents.push(...parts);
+      }
+      return _StorageModel.pathComponentsToKey(...allComponents);
+    };
+  };
+  var storageKeys = {
+    // connection
+    socketAddress: [DATA_VERSION, "connection", "socket-address"],
+    // settings
+    username: [DATA_VERSION, "settings", "user-name"],
+    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
+    // history
+    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
+    previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
+    previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
+    previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
+    // chat etc
+    chats: [DATA_VERSION, "chat"],
+    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
+    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
+    chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],
+    chatOutbox: (id) => [DATA_VERSION, "chat", id, "outbox"]
+  };
+
+  // src/Model/chatModel.ts
+  var ChatModel = class {
+    // data
+    id;
+    storageModel;
+    info;
+    messages = /* @__PURE__ */ new Set();
+    objects = /* @__PURE__ */ new Map();
+    outbox = /* @__PURE__ */ new Set();
+    // paths
+    get infoPath() {
+      return storageKeys.chatInfo(this.id);
+    }
+    get messageDirPath() {
+      return storageKeys.chatMessages(this.id);
+    }
+    get objectDirPath() {
+      return storageKeys.chatObjects(this.id);
+    }
+    get outboxDirPath() {
+      return storageKeys.chatOutbox(this.id);
+    }
+    getMessagePath = (id) => {
+      return [...this.messageDirPath, id];
+    };
+    getObjectPath = (id) => {
+      return [...this.objectDirPath, id];
+    };
+    // set
+    setPrimaryChannel = (primaryChannel) => {
+      this.info.primaryChannel = primaryChannel;
+      this.storeInfo();
+    };
+    setSecondaryChannels = (secondaryChannels) => {
+      this.info.secondaryChannels = secondaryChannels;
+      this.storeInfo();
+    };
+    // store & add
+    storeInfo = () => {
+      this.storageModel.storeStringifiable(this.infoPath, this.info);
+    };
+    addMessage = (message) => {
+      if (!this.messages.has(message)) {
+        this.messages.add(message);
+      }
+      const messagePath = this.getMessagePath(message.id);
+      this.storageModel.storeStringifiable(messagePath, message);
+    };
+    addObject = (object) => {
+      this.objects.set(object.id, object);
+      const objectPath = this.getObjectPath(object.id);
+      this.storageModel.storeStringifiable(objectPath, object);
+    };
+    // remove
+    remove = () => {
+      this.unloadData();
+      const dirPath = [...storageKeys.chats, this.id];
+      this.storageModel.removeRecursive(dirPath);
+    };
+    // restore
+    restoreInfo = () => {
+      const info = this.storageModel.restoreStringifiable(this.infoPath);
+      if (info != null) {
+        this.info = info;
+      } else {
+        this.info = generateChatInfo("0");
+      }
+    };
+    restoreMessages = () => {
+      const messageIds = this.storageModel.list(this.messageDirPath);
+      if (!Array.isArray(messageIds)) return;
+      for (const messageId of messageIds) {
+        const messagePath = this.getMessagePath(messageId);
+        const message = this.storageModel.restoreStringifiable(messagePath);
+        if (checkIsValidObject(message) == false) return;
+        this.messages.add(message);
+      }
+    };
+    restoreObjects = () => {
+      const objectIds = this.storageModel.list(this.objectDirPath);
+      if (!Array.isArray(objectIds)) return;
+      for (const objectId of objectIds) {
+        const objectPathComponents = this.getObjectPath(objectId);
+        const object = this.storageModel.restoreStringifiable(objectPathComponents);
+        if (checkIsValidObject(object) == false) return;
+        if (object.id != objectId) return;
+        this.objects.set(objectId, object);
+      }
+    };
+    // memory
+    loadData = () => {
+      this.restoreMessages();
+      this.restoreObjects();
+    };
+    unloadData = () => {
+      this.messages.clear();
+      this.objects.clear();
+    };
+    // init
+    constructor(storageModel2, chatId) {
+      this.id = chatId;
+      this.storageModel = storageModel2;
+      this.restoreInfo();
+    }
+  };
+  function generateChatInfo(primaryChannel) {
+    return {
+      primaryChannel,
+      secondaryChannels: [],
+      encryptionKey: "",
+      hasUnreadMessages: false
+    };
+  }
+
+  // src/Model/chatListModel.ts
+  var ChatListModel = class {
+    storageModel;
+    // data
+    chatModels = /* @__PURE__ */ new Map();
+    // store & add
+    addChatModel = (chatModel) => {
+      this.chatModels.set(chatModel.id, chatModel);
+    };
+    createChat = (primaryChannel) => {
+      const id = v4_default();
+      const chatModel = new ChatModel(this.storageModel, id);
+      chatModel.setPrimaryChannel(primaryChannel);
+      this.addChatModel(chatModel);
+      return chatModel;
+    };
+    deleteChat = (chat) => {
+      chat.remove();
+      this.untrackChat(chat);
+    };
+    untrackChat = (chat) => {
+      this.chatModels.delete(chat.id);
+    };
+    // restore
+    loadChats = () => {
+      const chatDir = storageKeys.chats;
+      const chatIds = this.storageModel.list(chatDir);
+      for (const chatId of chatIds) {
+        const chatModel = new ChatModel(this.storageModel, chatId);
+        this.addChatModel(chatModel);
+      }
+    };
+    // init
+    constructor(storageModel2) {
+      this.storageModel = storageModel2;
+      this.loadChats();
+    }
+  };
+
+  // src/ViewModel/chatListViewModel.tsx
+  var ChatListViewModel = class {
+    chatListModel;
+    // state
+    newChatPrimaryChannel = new State("");
+    chatModels = new ListState();
+    // guards
+    cannotCreateChat = createProxyState(
+      [this.newChatPrimaryChannel],
+      () => this.newChatPrimaryChannel.value == ""
+    );
+    // methods
+    createChat = () => {
+      const chatModel = this.chatListModel.createChat(
+        this.newChatPrimaryChannel.value
+      );
+      this.newChatPrimaryChannel.value = "";
+      this.chatModels.add(chatModel);
+    };
+    deleteChat = (chat) => {
+      this.chatListModel.deleteChat(chat);
+      this.chatModels.remove(chat);
+    };
+    // restore
+    restoreChats = () => {
+      for (const chat of this.chatListModel.chatModels.values()) {
+        this.chatModels.add(chat);
+      }
+    };
+    // init
+    constructor(storageModel2) {
+      const chatListModel = new ChatListModel(storageModel2);
+      this.chatListModel = chatListModel;
+      this.restoreChats();
+    }
+  };
+
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -307,125 +671,6 @@
       )), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButtonAudioLabel, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
     );
   }
-
-  // src/Model/Utility/utility.ts
-  function stringify(data) {
-    return JSON.stringify(data);
-  }
-  function parse(string) {
-    return JSON.parse(string);
-  }
-
-  // src/Model/Utility/typeSafety.ts
-  var DATA_VERSION = "v2";
-
-  // src/Model/storageModel.ts
-  var PATH_COMPONENT_SEPARATOR = "\\";
-  var StorageModel = class _StorageModel {
-    storageEntryTree = {};
-    // basic
-    store = (pathComponents, value) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      localStorage.setItem(key, value);
-      this.updateTree(...pathComponents);
-    };
-    restore = (pathComponents) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      return localStorage.getItem(key);
-    };
-    remove = (pathComponents, shouldInitialize = true) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      localStorage.removeItem(key);
-      if (shouldInitialize == true) {
-        this.initializeTree();
-      }
-    };
-    removeRecursive = (pathComponentsOfEntityToDelete) => {
-      a: for (const key of Object.keys(localStorage)) {
-        const pathComponentsOfCurrentEntity = _StorageModel.keyToPathComponents(key);
-        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
-          if (!pathComponentsOfCurrentEntity[i]) continue a;
-          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
-            continue a;
-        }
-        this.remove(pathComponentsOfCurrentEntity, false);
-      }
-      this.initializeTree();
-    };
-    list = (pathComponents) => {
-      let currentParent = this.storageEntryTree;
-      for (const component of pathComponents) {
-        const nextParent = currentParent[component];
-        if (nextParent == void 0) return [];
-        currentParent = nextParent;
-      }
-      return [...Object.keys(currentParent)];
-    };
-    // stringifiable
-    storeStringifiable = (pathComponents, value) => {
-      const valueString = stringify(value);
-      this.store(pathComponents, valueString);
-    };
-    restoreStringifiable = (pathComponents) => {
-      const valueString = this.restore(pathComponents);
-      if (!valueString) return null;
-      return parse(valueString);
-    };
-    // init
-    constructor() {
-      this.initializeTree();
-    }
-    // utility
-    initializeTree = () => {
-      console.log("initializing tree");
-      this.storageEntryTree = {};
-      for (const key of Object.keys(localStorage)) {
-        const components = _StorageModel.keyToPathComponents(key);
-        this.updateTree(...components);
-      }
-    };
-    updateTree = (...pathComponents) => {
-      let currentParent = this.storageEntryTree;
-      for (const pathPart of pathComponents) {
-        if (!currentParent[pathPart]) {
-          currentParent[pathPart] = {};
-        }
-        currentParent = currentParent[pathPart];
-      }
-    };
-    static pathComponentsToKey = (...pathComponents) => {
-      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
-    };
-    static keyToPathComponents = (key) => {
-      return key.split(PATH_COMPONENT_SEPARATOR);
-    };
-    static join = (...items) => {
-      let allComponents = [];
-      for (const item of items) {
-        const parts = this.keyToPathComponents(item);
-        allComponents.push(...parts);
-      }
-      return _StorageModel.pathComponentsToKey(...allComponents);
-    };
-  };
-  var storageKeys = {
-    // connection
-    socketAddress: [DATA_VERSION, "connection", "socket-address"],
-    // settings
-    username: [DATA_VERSION, "settings", "user-name"],
-    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
-    // history
-    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
-    previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
-    previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
-    previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
-    // chat etc
-    chats: [DATA_VERSION, "chat"],
-    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
-    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
-    chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],
-    chatOutbox: (id) => [DATA_VERSION, "chat", id, "outbox"]
-  };
 
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
@@ -681,8 +926,16 @@
     return Option(string, string, false);
   };
 
+  // src/View/Components/chatEntry.tsx
+  function ChatEntry(chatModel) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-column justify-end align-start" }, /* @__PURE__ */ createElement("h2", null, chatModel.info.primaryChannel));
+  }
+  var ChatModelToChatEntry = (chatModel) => {
+    return ChatEntry(chatModel);
+  };
+
   // src/View/homePage.tsx
-  function HomePage(settingsViewModel2, connectionViewModel2) {
+  function HomePage(settingsViewModel2, connectionViewModel2, chatListViewModel2) {
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
@@ -755,16 +1008,26 @@
       "input",
       {
         placeholder: translations.homePage.addChatPlaceholder,
-        "aria-label": translations.homePage.addChatAudioLabel
+        "aria-label": translations.homePage.addChatAudioLabel,
+        "bind:value": chatListViewModel2.newChatPrimaryChannel,
+        "on:enter": chatListViewModel2.createChat
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
-        "aria-label": translations.homePage.addChatButton
+        "aria-label": translations.homePage.addChatButton,
+        "on:click": chatListViewModel2.createChat,
+        "toggle:disabled": chatListViewModel2.cannotCreateChat
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )));
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        "children:append": [chatListViewModel2.chatModels, ChatModelToChatEntry]
+      }
+    ));
     function scrollToChat() {
       chatSection.scrollIntoView();
     }
@@ -837,10 +1100,12 @@
 
   // src/index.tsx
   var storageModel = new StorageModel();
+  storageModel.print();
   var settingsViewModel = new SettingsViewModel(storageModel);
   var connectionViewModel = new ConnectionViewModel(storageModel);
+  var chatListViewModel = new ChatListViewModel(storageModel);
   document.querySelector("main").append(
-    HomePage(settingsViewModel, connectionViewModel),
+    HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
     ConnectionModal(connectionViewModel)
   );
 })();

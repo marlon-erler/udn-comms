@@ -4,13 +4,16 @@ import * as React from "bloatless-react";
 
 import { Option, StringToOption } from "./Components/option";
 
+import ChatListViewModel from "../ViewModel/chatListViewModel";
+import { ChatModelToChatEntry } from "./Components/chatEntry";
 import ConnectionViewModel from "../ViewModel/connectionViewModel";
 import SettingsViewModel from "../ViewModel/settingsViewModel";
 import { translations } from "./translations";
 
 export function HomePage(
   settingsViewModel: SettingsViewModel,
-  connectionViewModel: ConnectionViewModel
+  connectionViewModel: ConnectionViewModel,
+  chatListViewModel: ChatListViewModel
 ) {
   // sections
   const overviewSection = (
@@ -149,14 +152,23 @@ export function HomePage(
         <input
           placeholder={translations.homePage.addChatPlaceholder}
           aria-label={translations.homePage.addChatAudioLabel}
+          bind:value={chatListViewModel.newChatPrimaryChannel}
+          on:enter={chatListViewModel.createChat}
         ></input>
         <button
           class="primary"
           aria-label={translations.homePage.addChatButton}
+          on:click={chatListViewModel.createChat}
+          toggle:disabled={chatListViewModel.cannotCreateChat}
         >
           <span class="icon">add</span>
         </button>
       </div>
+
+      <div
+        class="grid gap"
+        children:append={[chatListViewModel.chatModels, ChatModelToChatEntry]}
+      ></div>
     </div>
   );
 

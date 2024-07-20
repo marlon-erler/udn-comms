@@ -10,38 +10,34 @@ export default class ChatListModel {
   chatModels = new Map<string, ChatModel>();
 
   // store & add
-  addChatModel(chatModel: ChatModel) {
+  addChatModel = (chatModel: ChatModel) => {
     this.chatModels.set(chatModel.id, chatModel);
-  }
+  };
 
-  createChat = (primaryChannel: string): void => {
+  createChat = (primaryChannel: string): ChatModel => {
     const id: string = v4();
 
     const chatModel = new ChatModel(this.storageModel, id);
     chatModel.setPrimaryChannel(primaryChannel);
 
     this.addChatModel(chatModel);
+    return chatModel;
   };
 
-  deleteChat = (chatId: string): void => {
-    const chat = this.chatModels.get(chatId);
-    if (!chat) return;
-
+  deleteChat = (chat: ChatModel): void => {
     chat.remove();
-    this.untrackChat(chatId);
+    this.untrackChat(chat);
   };
 
-  untrackChat = (chatId: string): void => {
-    const chat = this.chatModels.get(chatId);
-    if (!chat) return;
-
-    this.chatModels.delete(chatId);
+  untrackChat = (chat: ChatModel): void => {
+    this.chatModels.delete(chat.id);
   };
 
   // restore
   loadChats = (): void => {
     const chatDir = storageKeys.chats;
-    for (const chatId of chatDir) {
+    const chatIds = this.storageModel.list(chatDir);
+    for (const chatId of chatIds) {
       const chatModel = new ChatModel(this.storageModel, chatId);
       this.addChatModel(chatModel);
     }
@@ -50,5 +46,6 @@ export default class ChatListModel {
   // init
   constructor(storageModel: StorageModel) {
     this.storageModel = storageModel;
+    this.loadChats();
   }
 }

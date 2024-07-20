@@ -82,7 +82,7 @@ export default class StorageModel {
 
   // utility
   initializeTree = (): void => {
-    console.log("initializing tree")
+    console.log("initializing tree");
 
     this.storageEntryTree = {};
     for (const key of Object.keys(localStorage)) {
@@ -100,6 +100,10 @@ export default class StorageModel {
 
       currentParent = currentParent[pathPart];
     }
+  };
+
+  print = () => {
+    console.log(JSON.stringify(this.storageEntryTree, null, 4));
   };
 
   static pathComponentsToKey = (...pathComponents: string[]): string => {
