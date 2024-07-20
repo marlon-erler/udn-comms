@@ -352,6 +352,7 @@
     // chat etc
     chats: [DATA_VERSION, "chat"],
     chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
+    chatLastUsedPage: (id) => [DATA_VERSION, "chat", id, "last-used-page"],
     chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
     chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],
     chatOutbox: (id) => [DATA_VERSION, "chat", id, "outbox"]
@@ -513,11 +514,12 @@
   var ChatViewModel = class {
     chatModel;
     chatListViewModel;
+    storageModel;
     // state
     primaryChannel = new State("");
     primaryChannelInput = new State("");
     selectedPage = new State(
-      1 /* Messages */
+      "messages" /* Messages */
     );
     // guards
     cannotSetPrimaryChannel = createProxyState(
@@ -531,12 +533,25 @@
     close = () => {
       this.chatListViewModel.closeChat();
     };
+    // restore
+    restorePageSelection = () => {
+      const path = storageKeys.chatLastUsedPage(this.chatModel.id);
+      const lastUsedPage = this.storageModel.restore(path);
+      if (lastUsedPage != null) {
+        this.selectedPage.value = lastUsedPage;
+      }
+      this.selectedPage.subscribeSilent((newPage) => {
+        this.storageModel.store(path, newPage);
+      });
+    };
     // init
     constructor(chatListViewModel2, chatModel) {
       this.chatModel = chatModel;
+      this.storageModel = chatModel.storageModel;
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
+      this.restorePageSelection();
     }
   };
 
@@ -692,32 +707,32 @@
     )), /* @__PURE__ */ createElement("span", null, ChatViewToggleButton(
       translations.chatPage.pages.calendar,
       "calendar_month",
-      4 /* Calendar */,
+      "calendar" /* Calendar */,
       chatViewModel
     ), ChatViewToggleButton(
       translations.chatPage.pages.progress,
       "window",
-      5 /* Progress */,
+      "progress" /* Progress */,
       chatViewModel
     ), ChatViewToggleButton(
       translations.chatPage.pages.kanban,
       "view_kanban",
-      3 /* Kanban */,
+      "kanban" /* Kanban */,
       chatViewModel
     ), ChatViewToggleButton(
       translations.chatPage.pages.allObjects,
       "deployed_code",
-      2 /* AllObjects */,
+      "all" /* AllObjects */,
       chatViewModel
     ), ChatViewToggleButton(
       translations.chatPage.pages.messages,
       "forum",
-      1 /* Messages */,
+      "messages" /* Messages */,
       chatViewModel
     ), ChatViewToggleButton(
       translations.chatPage.pages.settings,
       "settings",
-      0 /* Settings */,
+      "settings" /* Settings */,
       chatViewModel
     ))), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
   }
