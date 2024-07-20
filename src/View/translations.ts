@@ -74,7 +74,8 @@ const englishTranslations = {
   },
 
   chatPage: {
-    
+    closeChatAudioLabe: "close chat",
+    chatSettingsAudioLabel: "chat settings",
   }
 };
 

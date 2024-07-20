@@ -525,6 +525,9 @@
     open = () => {
       this.chatListViewModel.openChat(this);
     };
+    close = () => {
+      this.chatListViewModel.closeChat();
+    };
     // init
     constructor(chatListViewModel2, chatModel) {
       this.chatModel = chatModel;
@@ -581,37 +584,6 @@
       this.restoreChats();
     }
   };
-
-  // src/View/chatPage.tsx
-  function ChatPage(chatViewModel) {
-    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
-  }
-
-  // src/View/chatPageWrapper.tsx
-  function ChatPageWrapper(chatListViewModel2) {
-    const chatPageContent = createProxyState(
-      [chatListViewModel2.selectedChat],
-      () => {
-        if (chatListViewModel2.selectedChat.value == void 0) {
-          return /* @__PURE__ */ createElement("div", null);
-        } else {
-          return ChatPage(chatListViewModel2.selectedChat.value);
-        }
-      }
-    );
-    const isShowingChat = createProxyState(
-      [chatListViewModel2.selectedChat],
-      () => chatListViewModel2.selectedChat.value != void 0
-    );
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        id: "chat-page-wrapper",
-        "toggle:open": isShowingChat,
-        "children:set": chatPageContent
-      }
-    );
-  }
 
   // src/View/translations.ts
   var englishTranslations = {
@@ -672,13 +644,54 @@
       ///
       connectButtonAudioLabel: "connect"
     },
-    chatPage: {}
+    chatPage: {
+      closeChatAudioLabe: "close chat",
+      chatSettingsAudioLabel: "chat settings"
+    }
   };
   var allTranslations = {
     en: englishTranslations
   };
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/chatPage.tsx
+  function ChatPage(chatViewModel) {
+    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        "aria-label": translations.chatPage.closeChatAudioLabe,
+        "on:click": chatViewModel.close
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+    ), /* @__PURE__ */ createElement("span", null)), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
+  }
+
+  // src/View/chatPageWrapper.tsx
+  function ChatPageWrapper(chatListViewModel2) {
+    const chatPageContent = createProxyState(
+      [chatListViewModel2.selectedChat],
+      () => {
+        if (chatListViewModel2.selectedChat.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return ChatPage(chatListViewModel2.selectedChat.value);
+        }
+      }
+    );
+    const isShowingChat = createProxyState(
+      [chatListViewModel2.selectedChat],
+      () => chatListViewModel2.selectedChat.value != void 0
+    );
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "chat-page-wrapper",
+        "toggle:open": isShowingChat,
+        "children:set": chatPageContent
+      }
+    );
+  }
 
   // src/View/Components/deletableListItem.tsx
   function DeletableListItem(text, primaryButton, ondelete) {

@@ -25,6 +25,10 @@ export default class ChatViewModel {
     this.chatListViewModel.openChat(this);
   }
 
+  close = () => {
+    this.chatListViewModel.closeChat();
+  }
+
   // init
   constructor(chatListViewModel: ChatListViewModel, chatModel: ChatModel) {
     this.chatModel = chatModel;

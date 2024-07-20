@@ -125,6 +125,31 @@ main {
   grid-column: 2 / 3;
   grid-row: 2 / 3;
 }
+#chat-page #ribbon,
+#chat-page #toolbar,
+#chat-page #main {
+  display: flex;
+}
+#chat-page #ribbon,
+#chat-page #main {
+  flex-direction: column;
+}
+#chat-page #ribbon > span,
+#chat-page #toolbar > span {
+  display: flex;
+  flex-direction: column;
+  padding: var(--gap-between-tiles);
+}
+#chat-page #ribbon {
+  justify-content: space-between;
+}
+#chat-page #ribbon button {
+  padding: 0px;
+  width: 100%;
+  height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+}
 
 /* src/View/homePage.css */
 #home-page > div {
