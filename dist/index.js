@@ -516,6 +516,9 @@
     // state
     primaryChannel = new State("");
     primaryChannelInput = new State("");
+    selectedPage = new State(
+      1 /* Messages */
+    );
     // guards
     cannotSetPrimaryChannel = createProxyState(
       [this.primaryChannel, this.primaryChannelInput],
@@ -585,6 +588,27 @@
     }
   };
 
+  // src/View/Components/chatViewToggleButton.tsx
+  function ChatViewToggleButton(label, icon, page, chatViewModel) {
+    function select() {
+      chatViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [chatViewModel.selectedPage],
+      () => chatViewModel.selectedPage.value == page
+    );
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": label,
+        "toggle:selected": isSelected,
+        "on:click": select
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    );
+  }
+
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -602,15 +626,7 @@
           "Friday",
           "Saturday"
         ],
-        abbreviated: [
-          "Sun",
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri",
-          "Sat"
-        ]
+        abbreviated: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
       }
     },
     homePage: {
@@ -646,7 +662,15 @@
     },
     chatPage: {
       closeChatAudioLabe: "close chat",
-      chatSettingsAudioLabel: "chat settings"
+      chatSettingsAudioLabel: "chat settings",
+      pages: {
+        settings: "Settings",
+        messages: "Messages",
+        allObjects: "All objects",
+        kanban: "Kanban",
+        calendar: "Calendar",
+        progress: "Progress"
+      }
     }
   };
   var allTranslations = {
@@ -657,14 +681,45 @@
 
   // src/View/chatPage.tsx
   function ChatPage(chatViewModel) {
-    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
+        class: "ghost",
         "aria-label": translations.chatPage.closeChatAudioLabe,
         "on:click": chatViewModel.close
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    ), /* @__PURE__ */ createElement("span", null)), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
+    )), /* @__PURE__ */ createElement("span", null, ChatViewToggleButton(
+      translations.chatPage.pages.calendar,
+      "calendar_month",
+      4 /* Calendar */,
+      chatViewModel
+    ), ChatViewToggleButton(
+      translations.chatPage.pages.progress,
+      "window",
+      5 /* Progress */,
+      chatViewModel
+    ), ChatViewToggleButton(
+      translations.chatPage.pages.kanban,
+      "view_kanban",
+      3 /* Kanban */,
+      chatViewModel
+    ), ChatViewToggleButton(
+      translations.chatPage.pages.allObjects,
+      "deployed_code",
+      2 /* AllObjects */,
+      chatViewModel
+    ), ChatViewToggleButton(
+      translations.chatPage.pages.messages,
+      "forum",
+      1 /* Messages */,
+      chatViewModel
+    ), ChatViewToggleButton(
+      translations.chatPage.pages.settings,
+      "settings",
+      0 /* Settings */,
+      chatViewModel
+    ))), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
   }
 
   // src/View/chatPageWrapper.tsx

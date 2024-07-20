@@ -12,6 +12,10 @@ export default class ChatViewModel {
   primaryChannel: React.State<string> = new React.State("");
   primaryChannelInput: React.State<string> = new React.State("");
 
+  selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
+    ChatPageType.Messages
+  );
+
   // guards
   cannotSetPrimaryChannel: React.State<boolean> = React.createProxyState(
     [this.primaryChannel, this.primaryChannelInput],
@@ -23,11 +27,11 @@ export default class ChatViewModel {
   // methods
   open = () => {
     this.chatListViewModel.openChat(this);
-  }
+  };
 
   close = () => {
     this.chatListViewModel.closeChat();
-  }
+  };
 
   // init
   constructor(chatListViewModel: ChatListViewModel, chatModel: ChatModel) {
@@ -37,4 +41,14 @@ export default class ChatViewModel {
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
   }
+}
+
+// types
+export enum ChatPageType {
+  Settings,
+  Messages,
+  AllObjects,
+  Kanban,
+  Calendar,
+  Progress,
 }

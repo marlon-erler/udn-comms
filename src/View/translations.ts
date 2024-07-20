@@ -15,15 +15,7 @@ const englishTranslations = {
         "Friday",
         "Saturday",
       ],
-      abbreviated: [
-        "Sun",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat",
-      ],
+      abbreviated: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     },
   },
 
@@ -41,8 +33,10 @@ const englishTranslations = {
     manageConnectionsAudioLabel: "manage connections",
 
     mailboxHeadline: "Server Mailbox",
-    mailboxDisabled: "Mailbox disabled. You will miss out on messages sent while you're away",
-    mailboxEnabled: "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
+    mailboxDisabled:
+      "Mailbox disabled. You will miss out on messages sent while you're away",
+    mailboxEnabled:
+      "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
 
     outboxHeadline: "Outbox",
     outboxAllItemsSent: "All items sent",
@@ -76,7 +70,16 @@ const englishTranslations = {
   chatPage: {
     closeChatAudioLabe: "close chat",
     chatSettingsAudioLabel: "chat settings",
-  }
+
+    pages: {
+      settings: "Settings",
+      messages: "Messages",
+      allObjects: "All objects",
+      kanban: "Kanban",
+      calendar: "Calendar",
+      progress: "Progress",
+    },
+  },
 };
 
 const allTranslations: { [language: string]: typeof englishTranslations } = {
