@@ -7,11 +7,11 @@ export default class ChatListModel {
   storageModel: StorageModel;
 
   // data
-  chatModels = new Map<string, ChatModel>();
+  chatModels = new Set<ChatModel>();
 
   // store & add
   addChatModel = (chatModel: ChatModel) => {
-    this.chatModels.set(chatModel.id, chatModel);
+    this.chatModels.add(chatModel);
   };
 
   createChat = (primaryChannel: string): ChatModel => {
@@ -25,7 +25,7 @@ export default class ChatListModel {
   };
 
   untrackChat = (chat: ChatModel): void => {
-    this.chatModels.delete(chat.id);
+    this.chatModels.delete(chat);
   };
 
   // restore
