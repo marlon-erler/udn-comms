@@ -17,6 +17,9 @@ export default class ChatViewModel {
   primaryChannel: React.State<string> = new React.State("");
   primaryChannelInput: React.State<string> = new React.State("");
 
+  secondaryChannels: React.ListState<string> = new React.ListState();
+  newSecondaryChannelInput: React.State<string> = new React.State("");
+
   color: React.State<Color> = new React.State<Color>(Color.Standard);
 
   selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
@@ -50,12 +53,29 @@ export default class ChatViewModel {
     this.chatModel.setPrimaryChannel(this.primaryChannelInput.value);
     this.primaryChannel.value = this.chatModel.info.primaryChannel;
     this.chatListViewModel.updateIndices();
+  };
+
+  addSecondaryChannel = (): void => {
+    this.secondaryChannels.add(this.newSecondaryChannelInput.value);
+    this.newSecondaryChannelInput.value = "";
+    this.storeSecondaryChannels();
+  };
+
+  removeSecondaryChannel = (secondaryChannel: string): void => {
+    this.secondaryChannels.remove(secondaryChannel);
+    this.storeSecondaryChannels();
+  };
+
+  storeSecondaryChannels = (): void => {
+    this.chatModel.setSecondaryChannels([
+      ...this.secondaryChannels.value.values(),
+    ]);
   }
 
   setColor = (newColor: Color): void => {
     this.color.value = newColor;
     this.chatModel.setColor(newColor);
-  }
+  };
 
   // restore
   restorePageSelection = (): void => {
@@ -78,7 +98,11 @@ export default class ChatViewModel {
 
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
-    
+
+    for (const secondaryChannel of chatModel.info.secondaryChannels) {
+      this.secondaryChannels.add(secondaryChannel);
+    }
+
     this.color.value = chatModel.color;
 
     this.restorePageSelection();

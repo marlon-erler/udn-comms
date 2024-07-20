@@ -2,9 +2,18 @@ import * as React from "bloatless-react";
 
 import ChatViewModel from "../../ViewModel/chatViewModel";
 import { Color } from "../../ViewModel/colors";
+import { DeletableListItem } from "../Components/deletableListItem";
 import { translations } from "../translations";
 
 export function SettingsPage(chatViewModel: ChatViewModel) {
+  const secondaryChannelConverter: React.StateItemConverter<string> = (
+    secondaryChannel: string
+  ) => {
+    return DeletableListItem(secondaryChannel, <span></span>, () => {
+      chatViewModel.removeSecondaryChannel(secondaryChannel);
+    });
+  };
+
   return (
     <div>
       <div class="toolbar">
@@ -36,9 +45,39 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
 
         <hr></hr>
 
+        <div class="flex-row width-input margin-bottom">
+          <input
+            aria-label={
+              translations.chatPage.settings.newSecondaryChannelAudioLabel
+            }
+            placeholder={
+              translations.chatPage.settings.newSecondaryChannelPlaceholder
+            }
+            bind:value={chatViewModel.newSecondaryChannelInput}
+            on:enter={chatViewModel.addSecondaryChannel}
+          ></input>
+          <button
+            class="primary"
+            aria-label={
+              translations.chatPage.settings.addSecondaryChannelButtonAudioLabel
+            }
+            on:click={chatViewModel.addSecondaryChannel}
+          >
+            <span class="icon">add</span>
+          </button>
+        </div>
+
         <div
-          class="flex-row gap width-input"
-        >
+          class="flex-column gap width-input"
+          children:append={[
+            chatViewModel.secondaryChannels,
+            secondaryChannelConverter,
+          ]}
+        ></div>
+
+        <hr></hr>
+
+        <div class="flex-row gap width-input">
           {...Object.values(Color).map((color) => {
             const isSelected = React.createProxyState(
               [chatViewModel.color],

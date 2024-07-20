@@ -566,6 +566,8 @@
     index = new State(0);
     primaryChannel = new State("");
     primaryChannelInput = new State("");
+    secondaryChannels = new ListState();
+    newSecondaryChannelInput = new State("");
     color = new State("standard" /* Standard */);
     selectedPage = new State(
       "messages" /* Messages */
@@ -592,6 +594,20 @@
       this.primaryChannel.value = this.chatModel.info.primaryChannel;
       this.chatListViewModel.updateIndices();
     };
+    addSecondaryChannel = () => {
+      this.secondaryChannels.add(this.newSecondaryChannelInput.value);
+      this.newSecondaryChannelInput.value = "";
+      this.storeSecondaryChannels();
+    };
+    removeSecondaryChannel = (secondaryChannel) => {
+      this.secondaryChannels.remove(secondaryChannel);
+      this.storeSecondaryChannels();
+    };
+    storeSecondaryChannels = () => {
+      this.chatModel.setSecondaryChannels([
+        ...this.secondaryChannels.value.values()
+      ]);
+    };
     setColor = (newColor) => {
       this.color.value = newColor;
       this.chatModel.setColor(newColor);
@@ -614,6 +630,9 @@
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
+      for (const secondaryChannel of chatModel.info.secondaryChannels) {
+        this.secondaryChannels.add(secondaryChannel);
+      }
       this.color.value = chatModel.color;
       this.restorePageSelection();
       this.updateIndex();
@@ -772,7 +791,10 @@
       settings: {
         settingsHeadline: "Settings",
         primaryChannelLabel: "Primary channel",
-        setPrimaryChannelButtonAudioLabel: "set primary channel"
+        setPrimaryChannelButtonAudioLabel: "set primary channel",
+        newSecondaryChannelPlaceholder: "Add secondary channel",
+        newSecondaryChannelAudioLabel: "name of new secondary channel",
+        addSecondaryChannelButtonAudioLabel: "add secondary channel"
       }
     }
   };
@@ -782,8 +804,26 @@
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
 
+  // src/View/Components/deletableListItem.tsx
+  function DeletableListItem(text, primaryButton, ondelete) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "aria-label": translations.general.deleteItemButtonAudioLabel,
+        "on:click": ondelete
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+    )));
+  }
+
   // src/View/ChatPages/settingsPage.tsx
   function SettingsPage(chatViewModel) {
+    const secondaryChannelConverter = (secondaryChannel) => {
+      return DeletableListItem(secondaryChannel, /* @__PURE__ */ createElement("span", null), () => {
+        chatViewModel.removeSecondaryChannel(secondaryChannel);
+      });
+    };
     return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
       "input",
       {
@@ -800,31 +840,50 @@
       },
       translations.general.setButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input margin-bottom" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "aria-label": translations.chatPage.settings.newSecondaryChannelAudioLabel,
+        placeholder: translations.chatPage.settings.newSecondaryChannelPlaceholder,
+        "bind:value": chatViewModel.newSecondaryChannelInput,
+        "on:enter": chatViewModel.addSecondaryChannel
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.settings.addSecondaryChannelButtonAudioLabel,
+        "on:click": chatViewModel.addSecondaryChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "flex-row gap width-input"
-      },
-      ...Object.values(Color).map((color) => {
-        const isSelected = createProxyState(
-          [chatViewModel.color],
-          () => chatViewModel.color.value == color
-        );
-        function setColor() {
-          chatViewModel.setColor(color);
+        class: "flex-column gap width-input",
+        "children:append": [
+          chatViewModel.secondaryChannels,
+          secondaryChannelConverter
+        ]
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
+      const isSelected = createProxyState(
+        [chatViewModel.color],
+        () => chatViewModel.color.value == color
+      );
+      function setColor() {
+        chatViewModel.setColor(color);
+      }
+      return /* @__PURE__ */ createElement(
+        "button",
+        {
+          color,
+          class: "fill-color width-100 flex",
+          style: "height: 2rem",
+          "toggle:selected": isSelected,
+          "on:click": setColor
         }
-        return /* @__PURE__ */ createElement(
-          "button",
-          {
-            color,
-            class: "fill-color width-100 flex",
-            style: "height: 2rem",
-            "toggle:selected": isSelected,
-            "on:click": setColor
-          }
-        );
-      })
-    )));
+      );
+    }))));
   }
 
   // src/View/chatPage.tsx
@@ -903,19 +962,6 @@
         "children:set": chatPageContent
       }
     );
-  }
-
-  // src/View/Components/deletableListItem.tsx
-  function DeletableListItem(text, primaryButton, ondelete) {
-    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger",
-        "aria-label": translations.general.deleteItemButtonAudioLabel,
-        "on:click": ondelete
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-    )));
   }
 
   // src/View/Modals/connectionModal.tsx

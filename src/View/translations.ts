@@ -87,6 +87,10 @@ const englishTranslations = {
 
       primaryChannelLabel: "Primary channel",
       setPrimaryChannelButtonAudioLabel: "set primary channel",
+
+      newSecondaryChannelPlaceholder: "Add secondary channel",
+      newSecondaryChannelAudioLabel: "name of new secondary channel",
+      addSecondaryChannelButtonAudioLabel: "add secondary channel",
     }
   },
 };
