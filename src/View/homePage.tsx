@@ -2,8 +2,9 @@ import "./homePage.css";
 
 import * as React from "bloatless-react";
 
+import { Option, StringToOption } from "./Components/option";
+
 import ConnectionViewModel from "../ViewModel/connectionViewModel";
-import { Option } from "./Components/option";
 import SettingsViewModel from "../ViewModel/settingsViewModel";
 import { translations } from "./translations";
 
@@ -21,10 +22,19 @@ export function HomePage(
         <div>
           <span>{translations.homePage.serverAddress}</span>
           <input
+            list="previous-connection-list"
             placeholder={translations.homePage.serverAddressPlaceholder}
             bind:value={connectionViewModel.serverAddressInput}
             on:enter={connectionViewModel.connect}
           ></input>
+          <datalist
+            hidden
+            id="previous-connection-list"
+            children:append={[
+              connectionViewModel.previousAddresses,
+              StringToOption,
+            ]}
+          ></datalist>
         </div>
       </label>
 

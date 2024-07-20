@@ -32,6 +32,50 @@
       return JSON.stringify(this._value);
     }
   };
+  var ListState = class extends State {
+    additionHandlers = /* @__PURE__ */ new Set();
+    removalHandlers = /* @__PURE__ */ new Map();
+    // init
+    constructor(initialItems) {
+      super(new Set(initialItems));
+    }
+    // list
+    add(...items) {
+      items.forEach((item) => {
+        this.value.add(item);
+        this.additionHandlers.forEach((handler) => handler(item));
+      });
+      this.callSubscriptions();
+    }
+    remove(...items) {
+      items.forEach((item) => {
+        this.value.delete(item);
+        if (!this.removalHandlers.has(item)) return;
+        this.removalHandlers.get(item).forEach((handler) => handler(item));
+        this.removalHandlers.delete(item);
+      });
+      this.callSubscriptions();
+    }
+    clear() {
+      this.remove(...this.value.values());
+    }
+    // handlers
+    handleAddition(handler) {
+      this.additionHandlers.add(handler);
+      [...this.value.values()].forEach(handler);
+    }
+    handleRemoval(item, handler) {
+      if (!this.removalHandlers.has(item))
+        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
+      this.removalHandlers.get(item).add(handler);
+    }
+    // stringification
+    toString() {
+      const array = [...this.value.values()];
+      const json = JSON.stringify(array);
+      return json;
+    }
+  };
   function createProxyState(statesToSubscibe, fn) {
     const proxyState = new State(fn());
     statesToSubscibe.forEach(
@@ -192,8 +236,8 @@
       addChatPlaceholder: "Add chat",
       addChatButton: "Add chat"
     },
-    settings: {
-      settingsHeadline: "Settings"
+    connectionModal: {
+      connectionModalHeadline: "Manage Connections"
       ///
     }
   };
@@ -211,9 +255,107 @@
         class: "modal",
         "toggle:open": connectionViewModel2.isShowingConnectionModal
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.connectionModal.connectionModalHeadline)), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
     );
   }
+
+  // src/Model/Utility/utility.ts
+  function stringify(data) {
+    return JSON.stringify(data);
+  }
+  function parse(string) {
+    return JSON.parse(string);
+  }
+
+  // src/Model/Utility/typeSafety.ts
+  var DATA_VERSION = "v2";
+
+  // src/Model/storageModel.ts
+  var PATH_COMPONENT_SEPARATOR = "\\";
+  var StorageModel = class _StorageModel {
+    storageEntryTree = {};
+    // basic
+    store = (pathComponents, value) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      localStorage.setItem(key, value);
+      this.updateTree(...pathComponents);
+    };
+    restore = (pathComponents) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      return localStorage.getItem(key);
+    };
+    remove = (pathComponents) => {
+      const key = _StorageModel.pathComponentsToKey(...pathComponents);
+      localStorage.removeItem(key);
+    };
+    list = (pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const component of pathComponents) {
+        const nextParent = currentParent[component];
+        if (nextParent == void 0) return [];
+        currentParent = nextParent;
+      }
+      return [...Object.keys(currentParent)];
+    };
+    // stringifiable
+    storeStringifiable = (pathComponents, value) => {
+      const valueString = stringify(value);
+      this.store(pathComponents, valueString);
+    };
+    restoreStringifiable = (pathComponents) => {
+      const valueString = this.restore(pathComponents);
+      if (!valueString) return null;
+      return parse(valueString);
+    };
+    // init
+    constructor() {
+      for (const key of Object.keys(localStorage)) {
+        const components = _StorageModel.keyToPathComponents(key);
+        this.updateTree(...components);
+      }
+    }
+    // utility
+    updateTree = (...pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const pathPart of pathComponents) {
+        if (!currentParent[pathPart]) {
+          currentParent[pathPart] = {};
+        }
+        currentParent = currentParent[pathPart];
+      }
+    };
+    static pathComponentsToKey = (...pathComponents) => {
+      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
+    };
+    static keyToPathComponents = (key) => {
+      return key.split(PATH_COMPONENT_SEPARATOR);
+    };
+    static join = (...items) => {
+      let allComponents = [];
+      for (const item of items) {
+        const parts = this.keyToPathComponents(item);
+        allComponents.push(...parts);
+      }
+      return _StorageModel.pathComponentsToKey(...allComponents);
+    };
+  };
+  var storageKeys = {
+    // connection
+    socketAddress: [DATA_VERSION, "connection", "socket-address"],
+    // settings
+    username: [DATA_VERSION, "settings", "user-name"],
+    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
+    // history
+    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
+    previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
+    previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
+    previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
+    // chat etc
+    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
+    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
+    chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"],
+    chatOutbox: (id) => [DATA_VERSION, "chat", id, "outbox"]
+  };
 
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
@@ -327,18 +469,10 @@
     }
   };
 
-  // src/Model/Utility/utility.ts
-  function stringify(data) {
-    return JSON.stringify(data);
-  }
-  function parse(string) {
-    return JSON.parse(string);
-  }
-
   // src/Model/connectionModel.ts
   var ConnectionModel = class {
-    // basic
     udn;
+    storageModel;
     // data
     get isConnected() {
       return this.udn.ws != void 0 && this.udn.ws.readyState == 1;
@@ -355,15 +489,37 @@
     };
     handleConnectionChange = () => {
       console.log("connection status:", this.isConnected, this.address);
+      if (this.isConnected == false) return;
+      if (this.address) {
+        this.storeAddress(this.address);
+      }
     };
     // messaging
     sendChatMessage = (chatMessage) => {
       const stringifiedBody = stringify(chatMessage);
       return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
     };
+    // storage
+    getAddressPath = (address) => {
+      const dirPath = storageKeys.previousAddresses;
+      return [...dirPath, address];
+    };
+    storeAddress = (address) => {
+      const addressPath = this.getAddressPath(address);
+      this.storageModel.store(addressPath, "");
+    };
+    removeAddress = (address) => {
+      const addressPath = this.getAddressPath(address);
+      this.storageModel.remove(addressPath);
+    };
+    getAddresses = () => {
+      const dirPath = storageKeys.previousAddresses;
+      return this.storageModel.list(dirPath);
+    };
     // setup
     constructor(configuration) {
       this.udn = new UDNFrontend();
+      this.storageModel = configuration.storageModel;
       this.udn.onmessage = (data) => {
         configuration.messageHandler(data);
       };
@@ -385,6 +541,7 @@
     serverAddressInput = new State("");
     isConnected = new State(false);
     isShowingConnectionModal = new State(false);
+    previousAddresses = new ListState();
     // toggles
     cannotConnect = createProxyState(
       [this.serverAddressInput, this.isConnected],
@@ -397,9 +554,12 @@
     // handlers
     connectionChangeHandler = () => {
       this.isConnected.value = this.connectionModel.isConnected;
+      if (this.connectionModel.isConnected == false) return;
       if (this.connectionModel.address) {
         this.serverAddressInput.value = this.connectionModel.address;
       }
+      this.previousAddresses.clear();
+      this.previousAddresses.add(...this.connectionModel.getAddresses());
     };
     messageHandler = (data) => {
     };
@@ -418,8 +578,9 @@
       this.isShowingConnectionModal.value = false;
     };
     // init
-    constructor() {
+    constructor(storageModel2) {
       const connectionModel = new ConnectionModel({
+        storageModel: storageModel2,
         connectionChangeHandler: this.connectionChangeHandler,
         messageHandler: this.messageHandler
       });
@@ -431,15 +592,29 @@
   function Option(text, value, selectedOnCreate) {
     return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
   }
+  var StringToOption = (string) => {
+    return Option(string, string, false);
+  };
 
   // src/View/homePage.tsx
   function HomePage(settingsViewModel2, connectionViewModel2) {
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
+        list: "previous-connection-list",
         placeholder: translations.homePage.serverAddressPlaceholder,
         "bind:value": connectionViewModel2.serverAddressInput,
         "on:enter": connectionViewModel2.connect
+      }
+    ), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: "previous-connection-list",
+        "children:append": [
+          connectionViewModel2.previousAddresses,
+          StringToOption
+        ]
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
       "button",
@@ -510,94 +685,6 @@
     return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", null, translations.homePage.appName)), /* @__PURE__ */ createElement("div", null, overviewSection, chatSection));
   }
 
-  // src/Model/Utility/typeSafety.ts
-  var DATA_VERSION = "v2";
-
-  // src/Model/storageModel.ts
-  var StorageModel = class _StorageModel {
-    storageEntryTree = {};
-    // basic
-    store = (key, value) => {
-      localStorage.setItem(key, value);
-      const pathComponents = _StorageModel.keyToPathComponents(key);
-      this.updateTree(...pathComponents);
-    };
-    restore = (key) => {
-      return localStorage.getItem(key);
-    };
-    remove = (key) => {
-      localStorage.removeItem(key);
-    };
-    list = (key) => {
-      const pathComponents = _StorageModel.keyToPathComponents(key);
-      let currentParent = this.storageEntryTree;
-      for (const component of pathComponents) {
-        const nextParent = currentParent[component];
-        if (nextParent == void 0) return [];
-        currentParent = nextParent;
-      }
-      return [...Object.keys(currentParent)];
-    };
-    // stringifiable
-    storeStringifiable = (key, value) => {
-      const valueString = stringify(value);
-      this.store(key, valueString);
-    };
-    restoreStringifiable = (key) => {
-      const valueString = this.restore(key);
-      if (!valueString) return null;
-      return parse(valueString);
-    };
-    // init
-    constructor() {
-      for (const key of Object.keys(localStorage)) {
-        const components = _StorageModel.keyToPathComponents(key);
-        this.updateTree(...components);
-      }
-    }
-    // utility
-    updateTree = (...pathComponents) => {
-      let currentParent = this.storageEntryTree;
-      for (const pathPart of pathComponents) {
-        if (!currentParent[pathPart]) {
-          currentParent[pathPart] = {};
-        }
-        currentParent = currentParent[pathPart];
-      }
-    };
-    static pathComponentsToKey = (...pathComponents) => {
-      return pathComponents.join("/");
-    };
-    static keyToPathComponents = (key) => {
-      return key.split("/");
-    };
-    static join = (...items) => {
-      let allComponents = [];
-      for (const item of items) {
-        const parts = this.keyToPathComponents(item);
-        allComponents.push(...parts);
-      }
-      return _StorageModel.pathComponentsToKey(...allComponents);
-    };
-  };
-  var storageKeys = {
-    // connection
-    socketAddress: `${DATA_VERSION}/connection/socket-address`,
-    // settings
-    username: `${DATA_VERSION}/settings/user-name`,
-    firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
-    // history
-    previousAddresses: `${DATA_VERSION}/history/previous-addresses`,
-    previousObjectCategories: `${DATA_VERSION}/history/object-categories`,
-    previousObjectStatuses: `${DATA_VERSION}/history/object-statuses`,
-    previousObjectFilters: `${DATA_VERSION}/history/object-filters`,
-    // chat etc
-    chatInfo: (id) => `${DATA_VERSION}/chat/${id}/info`,
-    chatMessages: (id) => `${DATA_VERSION}/chat/${id}/messages`,
-    chatObjects: (id) => `${DATA_VERSION}/chat/${id}/objects`,
-    chatOutbox: (id) => `${DATA_VERSION}/chat/${id}/outbox`
-  };
-
   // src/Model/settingsModel.ts
   var SettingsModel = class {
     storageModel;
@@ -664,8 +751,9 @@
 
   // src/index.tsx
   var storageModel = new StorageModel();
+  console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
   var settingsViewModel = new SettingsViewModel(storageModel);
-  var connectionViewModel = new ConnectionViewModel();
+  var connectionViewModel = new ConnectionViewModel(storageModel);
   document.querySelector("main").append(
     HomePage(settingsViewModel, connectionViewModel),
     ConnectionModal(connectionViewModel)

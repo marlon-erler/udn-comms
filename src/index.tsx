@@ -6,10 +6,11 @@ import StorageModel from "./Model/storageModel";
 
 // models
 const storageModel = new StorageModel();
+console.log(JSON.stringify(storageModel.storageEntryTree, null, 4));
 
 // viewModels
 const settingsViewModel = new SettingsViewModel(storageModel);
-const connectionViewModel = new ConnectionViewModel();
+const connectionViewModel = new ConnectionViewModel(storageModel);
 
 // view
 document

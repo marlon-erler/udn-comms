@@ -10,7 +10,11 @@ export function ConnectionModal(connectionViewModel: ConnectionViewModel) {
       toggle:open={connectionViewModel.isShowingConnectionModal}
     >
       <div>
-        <main></main>
+        <main>
+          <h2>{translations.connectionModal.connectionModalHeadline}</h2>
+
+          
+        </main>
         <button on:click={connectionViewModel.hideConnectionModal}>
           {translations.general.closeButton}
           <span class="icon">close</span>

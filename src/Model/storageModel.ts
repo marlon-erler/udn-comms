@@ -4,27 +4,29 @@ import { parse, stringify } from "./Utility/utility";
 
 import { DATA_VERSION } from "./Utility/typeSafety";
 
+const PATH_COMPONENT_SEPARATOR = "\\";
+
 export default class StorageModel {
   storageEntryTree: StorageEntry = {};
 
   // basic
-  store = (key: string, value: string): void => {
+  store = (pathComponents: string[], value: string): void => {
+    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
     localStorage.setItem(key, value);
-    const pathComponents: string[] = StorageModel.keyToPathComponents(key);
     this.updateTree(...pathComponents);
   };
 
-  restore = (key: string): string | null => {
+  restore = (pathComponents: string[]): string | null => {
+    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
     return localStorage.getItem(key);
   };
 
-  remove = (key: string): void => {
+  remove = (pathComponents: string[]): void => {
+    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
     localStorage.removeItem(key);
   };
 
-  list = (key: string): string[] => {
-    const pathComponents: string[] = StorageModel.keyToPathComponents(key);
-
+  list = (pathComponents: string[]): string[] => {
     let currentParent: StorageEntry = this.storageEntryTree;
     for (const component of pathComponents) {
       const nextParent: StorageEntry | undefined = currentParent[component];
@@ -36,13 +38,13 @@ export default class StorageModel {
   };
 
   // stringifiable
-  storeStringifiable = (key: string, value: any): void => {
+  storeStringifiable = (pathComponents: string[], value: any): void => {
     const valueString: string = stringify(value);
-    this.store(key, valueString);
+    this.store(pathComponents, valueString);
   };
 
-  restoreStringifiable = (key: string): any | null => {
-    const valueString: string | null = this.restore(key);
+  restoreStringifiable = (pathComponents: string[]): any | null => {
+    const valueString: string | null = this.restore(pathComponents);
     if (!valueString) return null;
 
     return parse(valueString);
@@ -69,11 +71,11 @@ export default class StorageModel {
   };
 
   static pathComponentsToKey = (...pathComponents: string[]): string => {
-    return pathComponents.join("/");
+    return pathComponents.join(PATH_COMPONENT_SEPARATOR);
   };
 
   static keyToPathComponents = (key: string): string[] => {
-    return key.split("/");
+    return key.split(PATH_COMPONENT_SEPARATOR);
   };
 
   static join = (...items: string[]): string => {
@@ -92,21 +94,21 @@ export type StorageEntry = { [key: string]: StorageEntry };
 // keys
 export const storageKeys = {
   // connection
-  socketAddress: `${DATA_VERSION}/connection/socket-address`,
+  socketAddress: [DATA_VERSION, "connection", "socket-address"],
 
   // settings
-  username: `${DATA_VERSION}/settings/user-name`,
-  firstDayOfWeek: `${DATA_VERSION}/settings/first-day-of-week`,
+  username: [DATA_VERSION, "settings", "user-name"],
+  firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
 
   // history
-  previousAddresses: `${DATA_VERSION}/history/previous-addresses`,
-  previousObjectCategories: `${DATA_VERSION}/history/object-categories`,
-  previousObjectStatuses: `${DATA_VERSION}/history/object-statuses`,
-  previousObjectFilters: `${DATA_VERSION}/history/object-filters`,
+  previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
+  previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
+  previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
+  previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
 
   // chat etc
-  chatInfo: (id: string) => `${DATA_VERSION}/chat/${id}/info`,
-  chatMessages: (id: string) => `${DATA_VERSION}/chat/${id}/messages`,
-  chatObjects: (id: string) => `${DATA_VERSION}/chat/${id}/objects`,
-  chatOutbox: (id: string) => `${DATA_VERSION}/chat/${id}/outbox`,
+  chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
+  chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
+  chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],
+  chatOutbox: (id: string) => [DATA_VERSION, "chat", id, "outbox"],
 };

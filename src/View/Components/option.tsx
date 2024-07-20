@@ -7,3 +7,9 @@ export function Option(text: string, value: string, selectedOnCreate: boolean) {
     </option>
   );
 }
+
+export const StringToOption: React.StateItemConverter<string> = (
+  string: string
+) => {
+  return Option(string, string, false);
+};

@@ -17,28 +17,28 @@ export class ChatModel {
   outbox = new Set<ChatMessage>();
 
   // paths
-  get infoPath(): string {
+  get infoPath(): string[] {
     return storageKeys.chatInfo(this.id);
   }
 
-  get messageDirPath(): string {
+  get messageDirPath(): string[] {
     return storageKeys.chatMessages(this.id);
   }
 
-  get objectDirPath(): string {
+  get objectDirPath(): string[] {
     return storageKeys.chatObjects(this.id);
   }
 
-  get outboxDirPath(): string {
+  get outboxDirPath(): string[] {
     return storageKeys.chatOutbox(this.id);
   }
 
-  getMessagePath(id: string): string {
-    return StorageModel.join(this.messageDirPath, id);
+  getMessagePath(id: string): string[] {
+    return [...this.messageDirPath, id];
   }
 
-  getObjectPath(id: string): string {
-    return StorageModel.join(this.objectDirPath, id);
+  getObjectPath(id: string): string[] {
+    return [...this.objectDirPath, id];
   }
 
   // set
@@ -61,13 +61,13 @@ export class ChatModel {
     if (!this.messages.has(message)) {
       this.messages.add(message);
     }
-    const messagePath: string = this.getMessagePath(message.id);
+    const messagePath: string[] = this.getMessagePath(message.id);
     this.storageModel.storeStringifiable(messagePath, message);
   }
 
   addObject(object: ChatObject): void {
     this.objects.set(object.id, object);
-    const objectPath: string = this.getObjectPath(object.id);
+    const objectPath: string[] = this.getObjectPath(object.id);
     this.storageModel.storeStringifiable(objectPath, object);
   }
 
@@ -82,7 +82,7 @@ export class ChatModel {
     if (!Array.isArray(messageIds)) return;
 
     for (const messageId of messageIds) {
-      const messagePath: string = this.getMessagePath(messageId);
+      const messagePath: string[] = this.getMessagePath(messageId);
       const message: any = this.storageModel.restoreStringifiable(messagePath);
       if (checkIsValidObject(message) == false) return;
 
@@ -95,8 +95,8 @@ export class ChatModel {
     if (!Array.isArray(objectIds)) return;
 
     for (const objectId of objectIds) {
-      const objectPath: string = this.getObjectPath(objectId);
-      const object: any = this.storageModel.restoreStringifiable(objectPath);
+      const objectPathComponents: string[] = this.getObjectPath(objectId);
+      const object: any = this.storageModel.restoreStringifiable(objectPathComponents);
       if (checkIsValidObject(object) == false) return;
       if (object.id != objectId) return;
 
@@ -116,12 +116,15 @@ export class ChatModel {
 }
 
 // creation methods
-export function createChat(storageModel: StorageModel, primaryChannel: string): ChatModel {
+export function createChat(
+  storageModel: StorageModel,
+  primaryChannel: string
+): ChatModel {
   const id: string = v4();
 
   const chatModel = new ChatModel(storageModel, id);
   chatModel.setPrimaryChannel(primaryChannel);
-  
+
   return chatModel;
 }
 

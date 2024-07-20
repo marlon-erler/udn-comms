@@ -64,8 +64,8 @@ const englishTranslations = {
     addChatButton: "Add chat",
   },
 
-  settings: {
-    settingsHeadline: "Settings",
+  connectionModal: {
+    connectionModalHeadline: "Manage Connections",
 
     ///
   },

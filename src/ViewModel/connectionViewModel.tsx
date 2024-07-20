@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import ConnectionModel from "../Model/connectionModel";
 import { Message } from "udn-frontend";
+import StorageModel from "../Model/storageModel";
 
 export default class ConnectionViewModel {
   connectionModel: ConnectionModel;
@@ -11,6 +12,8 @@ export default class ConnectionViewModel {
   isConnected: React.State<boolean> = new React.State(false);
 
   isShowingConnectionModal: React.State<boolean> = new React.State(false);
+
+  previousAddresses: React.ListState<string> = new React.ListState();
 
   // toggles
   cannotConnect: React.State<boolean> = React.createProxyState(
@@ -28,9 +31,14 @@ export default class ConnectionViewModel {
   // handlers
   connectionChangeHandler = (): void => {
     this.isConnected.value = this.connectionModel.isConnected;
-if (this.connectionModel.address) {
+    if (this.connectionModel.isConnected == false) return;
+
+    if (this.connectionModel.address) {
       this.serverAddressInput.value = this.connectionModel.address;
     }
+    
+    this.previousAddresses.clear();
+    this.previousAddresses.add(...this.connectionModel.getAddresses());
   };
 
   messageHandler = (data: Message): void => {};
@@ -47,15 +55,16 @@ if (this.connectionModel.address) {
   // view methods
   showConnectionModal = (): void => {
     this.isShowingConnectionModal.value = true;
-  }
+  };
 
   hideConnectionModal = (): void => {
     this.isShowingConnectionModal.value = false;
-  }
+  };
 
   // init
-  constructor() {
+  constructor(storageModel: StorageModel) {
     const connectionModel = new ConnectionModel({
+      storageModel,
       connectionChangeHandler: this.connectionChangeHandler,
       messageHandler: this.messageHandler,
     });
