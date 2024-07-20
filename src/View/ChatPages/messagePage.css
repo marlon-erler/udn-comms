@@ -1,0 +1,18 @@
+/* layout */
+#chat-page #main #message-page .content {
+    padding: 0px;
+
+    overflow: hidden;
+
+    display: grid;
+    grid-template-rows: 1fr var(--control-height);
+}
+
+#message-page #message-container {
+    overflow: auto;
+}
+
+/* composer */
+#message-page #composer {
+    border-top: 1px solid var(--border);
+}

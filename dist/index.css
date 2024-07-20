@@ -332,6 +332,20 @@ main {
   }
 }
 
+/* src/View/ChatPages/messagePage.css */
+#chat-page #main #message-page .content {
+  padding: 0px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr var(--control-height);
+}
+#message-page #message-container {
+  overflow: auto;
+}
+#message-page #composer {
+  border-top: 1px solid var(--border);
+}
+
 /* src/View/Components/chatEntry.css */
 .chat-entry {
   position: relative;

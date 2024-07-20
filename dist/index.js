@@ -233,6 +233,9 @@
   }
 
   // src/Model/Utility/utility.ts
+  function createTimestamp() {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  }
   function stringify(data) {
     return JSON.stringify(data, null, 4);
   }
@@ -380,7 +383,7 @@
   })(Color || {});
 
   // src/Model/chatModel.ts
-  var ChatModel = class {
+  var ChatModel = class _ChatModel {
     connectionModel;
     storageModel;
     settingsModel;
@@ -466,7 +469,7 @@
       if (info != null) {
         this.info = info;
       } else {
-        this.info = generateChatInfo("0");
+        this.info = _ChatModel.generateChatInfo("0");
       }
     };
     restoreColor = () => {
@@ -501,6 +504,20 @@
     };
     // messaging
     sendMessage = (body) => {
+      const senderName = this.settingsModel.username;
+      if (senderName == "") return false;
+      const allChannels = [this.info.primaryChannel];
+      for (const secondaryChannel of this.info.secondaryChannels) {
+        allChannels.push(secondaryChannel);
+      }
+      const combinedChannel = allChannels.join("/");
+      const chatMessage = _ChatModel.createChatMessage(
+        combinedChannel,
+        senderName,
+        body
+      );
+      this.connectionModel.sendMessageOrStore(chatMessage);
+      return true;
     };
     // memory
     loadData = () => {
@@ -521,15 +538,26 @@
       this.restoreInfo();
       this.restoreColor();
     }
-  };
-  function generateChatInfo(primaryChannel) {
-    return {
-      primaryChannel,
-      secondaryChannels: [],
-      encryptionKey: "",
-      hasUnreadMessages: false
+    // utility
+    static generateChatInfo = (primaryChannel) => {
+      return {
+        primaryChannel,
+        secondaryChannels: [],
+        encryptionKey: "",
+        hasUnreadMessages: false
+      };
     };
-  }
+    static createChatMessage = (channel, sender, body) => {
+      return {
+        dataVersion: "v2",
+        id: v4_default(),
+        channel,
+        sender,
+        body,
+        dateSent: createTimestamp()
+      };
+    };
+  };
 
   // src/Model/chatListModel.ts
   var ChatListModel = class {
@@ -601,6 +629,7 @@
   var ChatViewModel = class {
     chatModel;
     storageModel;
+    settingsViewModel;
     chatListViewModel;
     // state
     index = new State(0);
@@ -625,6 +654,7 @@
       () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
     );
     cannotSetEncryptionKey;
+    cannotSendMessage;
     // sorting
     updateIndex = () => {
       this.index.value = this.chatModel.index;
@@ -670,6 +700,11 @@
       this.chatModel.delete();
       this.chatListViewModel.restoreChats();
     };
+    // messaging
+    sendMessage = () => {
+      this.chatModel.sendMessage(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
     // restore
     restorePageSelection = () => {
       const path = storageKeys.chatLastUsedPage(this.chatModel.id);
@@ -690,9 +725,10 @@
       }
     };
     // init
-    constructor(chatModel, storageModel2, chatListViewModel2) {
+    constructor(chatModel, storageModel2, settingsViewModel2, chatListViewModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
+      this.settingsViewModel = settingsViewModel2;
       this.chatListViewModel = chatListViewModel2;
       this.primaryChannel.value = chatModel.info.primaryChannel;
       this.primaryChannelInput.value = chatModel.info.primaryChannel;
@@ -700,6 +736,10 @@
       this.cannotSetEncryptionKey = createProxyState(
         [this.encryptionKeyInput],
         () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
+      );
+      this.cannotSendMessage = createProxyState(
+        [this.settingsViewModel.username],
+        () => this.settingsViewModel.username.value == ""
       );
       this.color.value = chatModel.color;
       this.restoreSecondaryChannels();
@@ -712,6 +752,7 @@
   var ChatListViewModel = class {
     chatListModel;
     storageModel;
+    settingsViewModel;
     // state
     newChatPrimaryChannel = new State("");
     chatViewModels = new ListState();
@@ -736,7 +777,12 @@
       this.chatViewModels.remove(chatViewModel);
     };
     createChatViewModel = (chatModel) => {
-      return new ChatViewModel(chatModel, this.storageModel, this);
+      return new ChatViewModel(
+        chatModel,
+        this.storageModel,
+        this.settingsViewModel,
+        this
+      );
     };
     // view
     openChat = (chatViewModel) => {
@@ -760,9 +806,10 @@
       }
     };
     // init
-    constructor(chatListModel2, storageModel2) {
+    constructor(chatListModel2, storageModel2, settingsViewModel2) {
       this.chatListModel = chatListModel2;
       this.storageModel = storageModel2;
+      this.settingsViewModel = settingsViewModel2;
       this.restoreChats();
     }
   };
@@ -790,7 +837,7 @@
 
   // src/View/ChatPages/messagePage.tsx
   function MessagePage(chatViewModel) {
-    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })));
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { id: "message-container" }), /* @__PURE__ */ createElement("div", { id: "composer" })));
   }
 
   // src/View/translations.ts
@@ -1460,7 +1507,7 @@
       "input",
       {
         placeholder: translations.homePage.yourNamePlaceholder,
-        "bind:value": settingsViewModel2.nameInput,
+        "bind:value": settingsViewModel2.usernameInput,
         "on:enter": settingsViewModel2.setName
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
@@ -1549,17 +1596,19 @@
   var SettingsViewModel = class {
     settingsModel;
     // state
-    nameInput = new State("");
+    username = new State("");
+    usernameInput = new State("");
     firstDayOfWeekInput = new State(0);
     // guards
     cannotSetName = createProxyState(
-      [this.nameInput],
-      () => this.nameInput.value == "" || this.nameInput.value == this.settingsModel.username
+      [this.usernameInput],
+      () => this.usernameInput.value == "" || this.usernameInput.value == this.settingsModel.username
     );
     // set
     setName = () => {
-      this.settingsModel.setName(this.nameInput.value);
-      this.nameInput.callSubscriptions();
+      this.settingsModel.setName(this.usernameInput.value);
+      this.username.value = this.settingsModel.username;
+      this.usernameInput.callSubscriptions();
     };
     setFirstDayofWeek = () => {
       this.settingsModel.setFirstDayOfWeek(this.firstDayOfWeekInput.value);
@@ -1567,7 +1616,8 @@
     // init
     constructor(settingsModel2) {
       this.settingsModel = settingsModel2;
-      this.nameInput.value = settingsModel2.username;
+      this.username.value = settingsModel2.username;
+      this.usernameInput.value = settingsModel2.username;
       this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
       this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
     }
@@ -1585,7 +1635,11 @@
   storageModel.print();
   var settingsViewModel = new SettingsViewModel(settingsModel);
   var connectionViewModel = new ConnectionViewModel(connectionModel);
-  var chatListViewModel = new ChatListViewModel(chatListModel, storageModel);
+  var chatListViewModel = new ChatListViewModel(
+    chatListModel,
+    storageModel,
+    settingsViewModel
+  );
   document.body.append(/* @__PURE__ */ createElement("div", { id: "background" }));
   document.querySelector("main").append(
     HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
