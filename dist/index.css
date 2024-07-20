@@ -1,16 +1,18 @@
 /* src/base.css */
-#home-page {
-  --background-transparent: hsla(0, 0%, 100%, 40%);
-  --surface: hsla(0, 0%, 100%, 40%);
-  --surface-hover: hsla(0, 0%, 91%, 40%);
-  --surface-active: hsla(0, 0%, 78%, 40%);
-}
-@media (prefers-color-scheme: dark) {
+@media (display-mode: browser) {
   #home-page {
-    --background-transparent: hsla(0, 0%, 5%, 30%);
-    --surface: hsla(0, 0%, 5%, 30%);
-    --surface-hover: hsla(0, 0%, 20%, 30%);
-    --surface-active: hsla(0, 0%, 44%, 30%);
+    --background-transparent: hsla(0, 0%, 100%, 40%);
+    --surface: hsla(0, 0%, 100%, 40%);
+    --surface-hover: hsla(0, 0%, 91%, 40%);
+    --surface-active: hsla(0, 0%, 78%, 40%);
+  }
+  @media (prefers-color-scheme: dark) {
+    #home-page {
+      --background-transparent: hsla(0, 0%, 5%, 30%);
+      --surface: hsla(0, 0%, 5%, 30%);
+      --surface-hover: hsla(0, 0%, 20%, 30%);
+      --surface-active: hsla(0, 0%, 44%, 30%);
+    }
   }
 }
 #background {
@@ -19,10 +21,13 @@
   left: -120px;
   right: -120px;
   bottom: -120px;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   filter: blur(60px);
   opacity: 0.2;
+}
+main {
+  z-index: 2;
 }
 #background::after,
 #background::before {
@@ -36,9 +41,21 @@
     background-image:
       linear-gradient(
         120deg,
-        hsla(210, 100%, 50%, 50%),
-        hsla(210, 100%, 50%, 35%),
-        transparent 40%);
+        hsla(210, 100%, 50%, 60%),
+        hsla(210, 100%, 50%, 55%),
+        transparent 60%);
+  }
+}
+@media (display-mode: standalone) {
+  @media (prefers-color-scheme: dark) {
+    #background {
+      background-image:
+        linear-gradient(
+          120deg,
+          hsla(210, 100%, 50%, 80%),
+          hsla(210, 100%, 50%, 75%),
+          transparent 60%);
+    }
   }
 }
 @media (prefers-color-scheme: light) {
@@ -98,9 +115,7 @@
   scroll-behavior: smooth;
   overflow: hidden;
   overflow-x: scroll;
-  padding-left: 0px;
-  padding-right: 0px;
-  padding-bottom: 0px;
+  padding: 0px;
 }
 #home-page > div > div {
   display: flex;
@@ -108,6 +123,7 @@
   justify-content: start;
   gap: var(--gap-between-tiles);
   padding: var(--content-padding);
+  padding-top: calc(var(--header-height) + var(--content-margin));
   width: 100%;
   min-width: 100%;
   height: 100%;

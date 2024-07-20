@@ -9,9 +9,7 @@
   overflow: hidden;
   overflow-x: scroll;
 
-  padding-left: 0px;
-  padding-right: 0px;
-  padding-bottom: 0px;
+  padding: 0px;
 }
 
 #home-page > div > div {
@@ -21,6 +19,7 @@
 
   gap: var(--gap-between-tiles);
   padding: var(--content-padding);
+  padding-top: calc(var(--header-height) + var(--content-margin));
 
   width: 100%;
   min-width: 100%;

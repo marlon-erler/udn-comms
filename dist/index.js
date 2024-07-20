@@ -584,7 +584,7 @@
 
   // src/View/chatPage.tsx
   function ChatPage(chatViewModel) {
-    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", null));
+    return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("header", null, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "ribbon" }), /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "main" })));
   }
 
   // src/View/chatPageWrapper.tsx

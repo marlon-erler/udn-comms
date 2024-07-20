@@ -11,7 +11,11 @@ export function ChatPage(chatViewModel: ChatViewModel) {
       <header>
         <span subscribe:innerText={chatViewModel.primaryChannel}></span>
       </header>
-      <div></div>
+      <div>
+        <div class="ribbon"></div>
+        <div class="toolbar"></div>
+        <div class="main"></div>
+      </div>
     </article>
   );
 }
