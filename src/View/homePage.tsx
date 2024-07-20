@@ -2,11 +2,15 @@ import "./homePage.css";
 
 import * as React from "bloatless-react";
 
+import ConnectionViewModel from "../ViewModel/connectionViewModel";
 import { Option } from "./Components/option";
 import SettingsViewModel from "../ViewModel/settingsViewModel";
 import { translations } from "./translations";
 
-export function HomePage(settingsViewModel: SettingsViewModel) {
+export function HomePage(
+  settingsViewModel: SettingsViewModel,
+  connectionViewModel: ConnectionViewModel
+) {
   // sections
   const overviewSection = (
     <div id="overview-section">
@@ -16,7 +20,10 @@ export function HomePage(settingsViewModel: SettingsViewModel) {
         <span class="icon">cell_tower</span>
         <div>
           <span>{translations.homePage.serverAddress}</span>
-          <input></input>
+          <input
+            bind:value={connectionViewModel.serverAddressInput}
+            on:enter={connectionViewModel.connect}
+          ></input>
         </div>
       </label>
 
@@ -24,6 +31,8 @@ export function HomePage(settingsViewModel: SettingsViewModel) {
         <button
           class="danger flex justify-center"
           aria-label={translations.homePage.disconnectAudioLabel}
+          on:click={connectionViewModel.disconnect}
+          toggle:disabled={connectionViewModel.cannotDisonnect}
         >
           <span class="icon">link_off</span>
         </button>
@@ -36,6 +45,8 @@ export function HomePage(settingsViewModel: SettingsViewModel) {
         <button
           class="primary flex justify-center"
           aria-label={translations.homePage.connectAudioLabel}
+          on:click={connectionViewModel.connect}
+          toggle:disabled={connectionViewModel.cannotConnect}
         >
           <span class="icon">link</span>
         </button>

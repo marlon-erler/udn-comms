@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import SettingsModel from "../Model/settingsModel";
+import StorageModel from "../Model/storageModel";
 
 export default class SettingsViewModel {
   settingsModel: SettingsModel;
@@ -10,7 +11,7 @@ export default class SettingsViewModel {
   firstDayOfWeekInput: React.State<number> = new React.State(0);
 
   // toggles
-  cannotSetName = React.createProxyState(
+  cannotSetName: React.State<boolean> = React.createProxyState(
     [this.nameInput],
     () =>
       this.nameInput.value == "" ||
@@ -28,7 +29,8 @@ export default class SettingsViewModel {
   };
 
   // init
-  constructor(settingsModel: SettingsModel) {
+  constructor(storageModel: StorageModel) {
+    const settingsModel = new SettingsModel(storageModel);
     this.settingsModel = settingsModel;
 
     this.nameInput.value = settingsModel.username;

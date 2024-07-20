@@ -27,7 +27,7 @@ export default class ConnectionModel {
     this.udn.disconnect();
   };
 
-  handleConnectionChange = () => {
+  handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
   };
 

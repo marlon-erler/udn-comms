@@ -1,4 +1,144 @@
 (() => {
+  // node_modules/bloatless-react/index.ts
+  var State = class {
+    _value;
+    _bindings = /* @__PURE__ */ new Set();
+    // init
+    constructor(initialValue) {
+      this._value = initialValue;
+    }
+    // value
+    get value() {
+      return this._value;
+    }
+    set value(newValue) {
+      if (this._value == newValue) return;
+      this._value = newValue;
+      this.callSubscriptions();
+    }
+    // subscriptions
+    callSubscriptions() {
+      this._bindings.forEach((fn) => fn(this._value));
+    }
+    subscribe(fn) {
+      this._bindings.add(fn);
+      fn(this._value);
+    }
+    subscribeSilent(fn) {
+      this._bindings.add(fn);
+    }
+    // stringify
+    toString() {
+      return JSON.stringify(this._value);
+    }
+  };
+  function createProxyState(statesToSubscibe, fn) {
+    const proxyState = new State(fn());
+    statesToSubscibe.forEach(
+      (state) => state.subscribe(() => proxyState.value = fn())
+    );
+    return proxyState;
+  }
+  function createElement(tagName, attributes = {}, ...children) {
+    const element = document.createElement(tagName);
+    if (attributes != null)
+      Object.entries(attributes).forEach((entry) => {
+        const [attributename, value] = entry;
+        const [directiveKey, directiveValue] = attributename.split(":");
+        switch (directiveKey) {
+          case "on": {
+            switch (directiveValue) {
+              case "enter": {
+                element.addEventListener("keydown", (e) => {
+                  if (e.key != "Enter") return;
+                  value();
+                });
+                break;
+              }
+              default: {
+                element.addEventListener(directiveValue, value);
+              }
+            }
+            break;
+          }
+          case "subscribe": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            break;
+          }
+          case "bind": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            element.addEventListener(
+              "input",
+              () => state.value = element[directiveValue]
+            );
+            break;
+          }
+          case "toggle": {
+            if (value.subscribe) {
+              const state = value;
+              state.subscribe(
+                (newValue) => element.toggleAttribute(directiveValue, newValue)
+              );
+            } else {
+              element.toggleAttribute(directiveValue, value);
+            }
+            break;
+          }
+          case "set": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element.setAttribute(directiveValue, newValue)
+            );
+            break;
+          }
+          case "children": {
+            switch (directiveValue) {
+              case "set": {
+                const state = value;
+                state.subscribe((newValue) => {
+                  element.innerHTML = "";
+                  element.append(...[newValue].flat());
+                });
+                break;
+              }
+              case "append":
+              case "appendandscroll":
+              case "prepend": {
+                element.style.scrollBehavior = "smooth";
+                try {
+                  const [listState, toElement] = value;
+                  listState.handleAddition((newItem) => {
+                    const child = toElement(newItem);
+                    listState.handleRemoval(
+                      newItem,
+                      () => child.remove()
+                    );
+                    if (directiveValue == "append") {
+                      element.append(child);
+                    } else if (directiveValue == "prepend") {
+                      element.prepend(child);
+                    }
+                  });
+                } catch {
+                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                }
+              }
+            }
+          }
+          default:
+            element.setAttribute(attributename, value);
+        }
+      });
+    children.filter((x) => x).forEach((child) => element.append(child));
+    return element;
+  }
+
   // node_modules/udn-frontend/index.ts
   var UDNFrontend = class {
     ws;
@@ -162,145 +302,46 @@
     }
   };
 
-  // node_modules/bloatless-react/index.ts
-  var State = class {
-    _value;
-    _bindings = /* @__PURE__ */ new Set();
+  // src/ViewModel/connectionViewModel.tsx
+  var ConnectionViewModel = class {
+    connectionModel;
+    // state
+    serverAddressInput = new State("");
+    isConnected = new State(false);
+    // toggles
+    cannotConnect = createProxyState(
+      [this.serverAddressInput, this.isConnected],
+      () => this.isConnected.value == true && this.serverAddressInput.value == this.connectionModel.address || this.serverAddressInput.value == ""
+    );
+    cannotDisonnect = createProxyState(
+      [this.isConnected],
+      () => this.isConnected.value == false
+    );
+    // handlers
+    connectionChangeHandler = () => {
+      this.isConnected.value = this.connectionModel.isConnected;
+      if (this.connectionModel.address) {
+        this.serverAddressInput.value = this.connectionModel.address;
+      }
+    };
+    messageHandler = (data) => {
+    };
+    // methods
+    connect = () => {
+      this.connectionModel.connect(this.serverAddressInput.value);
+    };
+    disconnect = () => {
+      this.connectionModel.disconnect();
+    };
     // init
-    constructor(initialValue) {
-      this._value = initialValue;
-    }
-    // value
-    get value() {
-      return this._value;
-    }
-    set value(newValue) {
-      if (this._value == newValue) return;
-      this._value = newValue;
-      this.callSubscriptions();
-    }
-    // subscriptions
-    callSubscriptions() {
-      this._bindings.forEach((fn) => fn(this._value));
-    }
-    subscribe(fn) {
-      this._bindings.add(fn);
-      fn(this._value);
-    }
-    subscribeSilent(fn) {
-      this._bindings.add(fn);
-    }
-    // stringify
-    toString() {
-      return JSON.stringify(this._value);
+    constructor() {
+      const connectionModel = new ConnectionModel({
+        connectionChangeHandler: this.connectionChangeHandler,
+        messageHandler: this.messageHandler
+      });
+      this.connectionModel = connectionModel;
     }
   };
-  function createProxyState(statesToSubscibe, fn) {
-    const proxyState = new State(fn());
-    statesToSubscibe.forEach(
-      (state) => state.subscribe(() => proxyState.value = fn())
-    );
-    return proxyState;
-  }
-  function createElement(tagName, attributes = {}, ...children) {
-    const element = document.createElement(tagName);
-    if (attributes != null)
-      Object.entries(attributes).forEach((entry) => {
-        const [attributename, value] = entry;
-        const [directiveKey, directiveValue] = attributename.split(":");
-        switch (directiveKey) {
-          case "on": {
-            switch (directiveValue) {
-              case "enter": {
-                element.addEventListener("keydown", (e) => {
-                  if (e.key != "Enter") return;
-                  value();
-                });
-                break;
-              }
-              default: {
-                element.addEventListener(directiveValue, value);
-              }
-            }
-            break;
-          }
-          case "subscribe": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            break;
-          }
-          case "bind": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            element.addEventListener(
-              "input",
-              () => state.value = element[directiveValue]
-            );
-            break;
-          }
-          case "toggle": {
-            if (value.subscribe) {
-              const state = value;
-              state.subscribe(
-                (newValue) => element.toggleAttribute(directiveValue, newValue)
-              );
-            } else {
-              element.toggleAttribute(directiveValue, value);
-            }
-            break;
-          }
-          case "set": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element.setAttribute(directiveValue, newValue)
-            );
-            break;
-          }
-          case "children": {
-            switch (directiveValue) {
-              case "set": {
-                const state = value;
-                state.subscribe((newValue) => {
-                  element.innerHTML = "";
-                  element.append(...[newValue].flat());
-                });
-                break;
-              }
-              case "append":
-              case "appendandscroll":
-              case "prepend": {
-                element.style.scrollBehavior = "smooth";
-                try {
-                  const [listState, toElement] = value;
-                  listState.handleAddition((newItem) => {
-                    const child = toElement(newItem);
-                    listState.handleRemoval(
-                      newItem,
-                      () => child.remove()
-                    );
-                    if (directiveValue == "append") {
-                      element.append(child);
-                    } else if (directiveValue == "prepend") {
-                      element.prepend(child);
-                    }
-                  });
-                } catch {
-                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
-                }
-              }
-            }
-          }
-          default:
-            element.setAttribute(attributename, value);
-        }
-      });
-    children.filter((x) => x).forEach((child) => element.append(child));
-    return element;
-  }
 
   // src/View/Components/option.tsx
   function Option(text, value, selectedOnCreate) {
@@ -370,12 +411,20 @@
   var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/homePage.tsx
-  function HomePage(settingsViewModel2) {
-    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement("input", null))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
+  function HomePage(settingsViewModel2, connectionViewModel2) {
+    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": connectionViewModel2.serverAddressInput,
+        "on:enter": connectionViewModel2.connect
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "danger flex justify-center",
-        "aria-label": translations.homePage.disconnectAudioLabel
+        "aria-label": translations.homePage.disconnectAudioLabel,
+        "on:click": connectionViewModel2.disconnect,
+        "toggle:disabled": connectionViewModel2.cannotDisonnect
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "link_off")
     ), /* @__PURE__ */ createElement(
@@ -389,7 +438,9 @@
       "button",
       {
         class: "primary flex justify-center",
-        "aria-label": translations.homePage.connectAudioLabel
+        "aria-label": translations.homePage.connectAudioLabel,
+        "on:click": connectionViewModel2.connect,
+        "toggle:disabled": connectionViewModel2.cannotConnect
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
     )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
@@ -577,23 +628,18 @@
       this.settingsModel.setFirstDayOfWeek(this.firstDayOfWeekInput.value);
     };
     // init
-    constructor(settingsModel2) {
-      this.settingsModel = settingsModel2;
-      this.nameInput.value = settingsModel2.username;
-      this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
+    constructor(storageModel2) {
+      const settingsModel = new SettingsModel(storageModel2);
+      this.settingsModel = settingsModel;
+      this.nameInput.value = settingsModel.username;
+      this.firstDayOfWeekInput.value = settingsModel.firstDayOfWeek;
       this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
     }
   };
 
   // src/index.tsx
   var storageModel = new StorageModel();
-  var settingsModel = new SettingsModel(storageModel);
-  var connectionModel = new ConnectionModel({
-    connectionChangeHandler() {
-    },
-    messageHandler(data) {
-    }
-  });
-  var settingsViewModel = new SettingsViewModel(settingsModel);
-  document.querySelector("main").append(HomePage(settingsViewModel));
+  var settingsViewModel = new SettingsViewModel(storageModel);
+  var connectionViewModel = new ConnectionViewModel();
+  document.querySelector("main").append(HomePage(settingsViewModel, connectionViewModel));
 })();
