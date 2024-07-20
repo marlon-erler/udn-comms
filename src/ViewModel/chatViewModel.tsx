@@ -102,6 +102,12 @@ export default class ChatViewModel {
     this.chatListViewModel.restoreChats();
   }
 
+  // messaging
+  sendMessage = (): void => {
+    this.chatModel.sendMessage(this.composingMessage.value);
+    this.composingMessage.value = "";
+  }
+
   // restore
   restorePageSelection = (): void => {
     const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);

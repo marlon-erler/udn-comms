@@ -118,7 +118,7 @@ export class ChatModel {
     if (info != null) {
       this.info = info;
     } else {
-      this.info = generateChatInfo("0");
+      this.info = ChatModel.generateChatInfo("0");
     }
   };
 
@@ -162,7 +162,20 @@ export class ChatModel {
 
   // messaging
   sendMessage = (body: string): void => {
-    //TODO
+    const allChannels = [this.info.primaryChannel];
+    for (const secondaryChannel of this.info.secondaryChannels) {
+      allChannels.push(secondaryChannel);
+    }
+
+    const combinedChannel = allChannels.join("/");
+
+    const chatMessage: ChatMessage = ChatModel.createChatMessage(
+      combinedChannel,
+      this.settingsModel.username,
+      body
+    );
+    
+    this.connectionModel.sendMessageOrStore(chatMessage);
   };
 
   // memory
@@ -193,32 +206,32 @@ export class ChatModel {
     this.restoreInfo();
     this.restoreColor();
   }
-}
 
-// creation methods
-export function generateChatInfo(primaryChannel: string): ChatInfo {
-  return {
-    primaryChannel,
-    secondaryChannels: [],
-    encryptionKey: "",
-    hasUnreadMessages: false,
+  // utility
+  static generateChatInfo = (primaryChannel: string): ChatInfo => {
+    return {
+      primaryChannel,
+      secondaryChannels: [],
+      encryptionKey: "",
+      hasUnreadMessages: false,
+    };
   };
-}
 
-export function createChatMessage(
-  channel: string,
-  sender: string,
-  body: string
-): ChatMessage {
-  return {
-    dataVersion: "v2",
+  static createChatMessage = (
+    channel: string,
+    sender: string,
+    body: string
+  ): ChatMessage => {
+    return {
+      dataVersion: "v2",
 
-    id: v4(),
+      id: v4(),
 
-    channel,
-    sender,
-    body,
-    dateSent: createTimestamp(),
+      channel,
+      sender,
+      body,
+      dateSent: createTimestamp(),
+    };
   };
 }
 
