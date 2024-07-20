@@ -664,12 +664,14 @@
     sender;
     dateSent;
     body = new State("");
-    constructor(chatModel, chatMessage) {
+    sentByUser;
+    constructor(chatModel, chatMessage, sentByUser) {
       this.chatModel = chatModel;
       this.channel = chatMessage.channel;
       this.sender = chatMessage.sender;
       this.dateSent = new Date(chatMessage.dateSent).toLocaleString();
       this.body.value = chatMessage.body;
+      this.sentByUser = sentByUser;
     }
   };
 
@@ -721,7 +723,11 @@
     };
     // add
     addChatMessage = (chatMessage) => {
-      const chatMessageModel = new ChatMessageViewModel(this.chatModel, chatMessage);
+      const chatMessageModel = new ChatMessageViewModel(
+        this.chatModel,
+        chatMessage,
+        chatMessage.sender == this.settingsViewModel.username.value
+      );
       this.chatMessageViewModels.add(chatMessageModel);
     };
     // settings
@@ -901,7 +907,20 @@
 
   // src/View/Components/chatMessage.tsx
   function ChatMessage(chatMessageViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, chatMessageViewModel.sender), /* @__PURE__ */ createElement("b", { "subscribe:innerText": chatMessageViewModel.body }), /* @__PURE__ */ createElement("span", null, chatMessageViewModel.dateSent)));
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "message-bubble",
+        "toggle:sentbyuser": chatMessageViewModel.sentByUser
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "sender-name" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
+        "span",
+        {
+          class: "body",
+          "subscribe:innerText": chatMessageViewModel.body
+        }
+      ), /* @__PURE__ */ createElement("span", { class: "timestamp" }, chatMessageViewModel.dateSent))
+    );
   }
   var ChatMessageViewModelToView = (chatMessageViewModel) => {
     console.log(chatMessageViewModel);
@@ -1018,7 +1037,7 @@
     }
     chatViewModel.chatMessageViewModels.subscribeSilent(scrollDownIfApplicable);
     setTimeout(() => scrollDown(), 100);
-    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": chatViewModel.composingMessage,
@@ -1034,7 +1053,7 @@
         "toggle:disabled": chatViewModel.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    ))));
+    ))))));
   }
 
   // src/View/Components/deletableListItem.tsx

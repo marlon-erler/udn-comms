@@ -6,6 +6,7 @@ import StorageModel, { storageKeys } from "../Model/storageModel";
 import ChatListViewModel from "./chatListViewModel";
 import ChatMessageViewModel from "../Model/chatMessageViewModel";
 import { Color } from "./colors";
+import SettingsModel from "../Model/settingsModel";
 import SettingsViewModel from "./settingsViewModel";
 import { localeCompare } from "../Model/Utility/utility";
 
@@ -37,7 +38,8 @@ export default class ChatViewModel {
     ChatPageType.Messages
   );
 
-  chatMessageViewModels: React.ListState<ChatMessageViewModel> = new React.ListState();
+  chatMessageViewModels: React.ListState<ChatMessageViewModel> =
+    new React.ListState();
   composingMessage: React.State<string> = new React.State("");
 
   // guards
@@ -70,7 +72,11 @@ export default class ChatViewModel {
 
   // add
   addChatMessage = (chatMessage: ChatMessage): void => {
-    const chatMessageModel = new ChatMessageViewModel(this.chatModel, chatMessage);
+    const chatMessageModel = new ChatMessageViewModel(
+      this.chatModel,
+      chatMessage,
+      chatMessage.sender == this.settingsViewModel.username.value
+    );
     this.chatMessageViewModels.add(chatMessageModel);
   };
 

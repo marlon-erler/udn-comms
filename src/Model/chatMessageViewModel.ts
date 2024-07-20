@@ -12,13 +12,19 @@ export default class ChatMessageViewModel {
   sender: string;
   dateSent: string;
   body: React.State<string> = new React.State("");
+  sentByUser: boolean;
 
-  constructor(chatModel: ChatModel, chatMessage: ChatMessage) {
+  constructor(
+    chatModel: ChatModel,
+    chatMessage: ChatMessage,
+    sentByUser: boolean
+  ) {
     this.chatModel = chatModel;
 
     this.channel = chatMessage.channel;
     this.sender = chatMessage.sender;
     this.dateSent = new Date(chatMessage.dateSent).toLocaleString();
     this.body.value = chatMessage.body;
+    this.sentByUser = sentByUser;
   }
 }

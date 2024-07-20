@@ -4,11 +4,17 @@ import ChatMessageViewModel from "../../Model/chatMessageViewModel";
 
 export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
   return (
-    <div class="tile flex-no">
+    <div
+      class="message-bubble"
+      toggle:sentbyuser={chatMessageViewModel.sentByUser}
+    >
       <div>
-        <span>{chatMessageViewModel.sender}</span>
-        <b subscribe:innerText={chatMessageViewModel.body}></b>
-        <span>{chatMessageViewModel.dateSent}</span>
+        <span class="sender-name">{chatMessageViewModel.sender}</span>
+        <span
+          class="body"
+          subscribe:innerText={chatMessageViewModel.body}
+        ></span>
+        <span class="timestamp">{chatMessageViewModel.dateSent}</span>
       </div>
     </div>
   );
