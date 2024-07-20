@@ -1,33 +1,32 @@
-@media (display-mode: browser) {
-  #home-page {
-    --background-transparent: hsla(0, 0%, 100%, 40%);
-    --surface: hsla(0, 0%, 100%, 40%);
-    --surface-hover: hsla(0, 0%, 91%, 40%);
-    --surface-active: hsla(0, 0%, 78%, 40%);
-  }
+#home-page {
+  --background-transparent: hsla(0, 0%, 100%, 40%);
+  --surface: hsla(0, 0%, 100%, 40%);
+  --surface-hover: hsla(0, 0%, 91%, 40%);
+  --surface-active: hsla(0, 0%, 78%, 40%);
+}
 
-  @media (prefers-color-scheme: dark) {
-    #home-page {
-      --background-transparent: hsla(0, 0%, 5%, 30%);
-      --surface: hsla(0, 0%, 5%, 30%);
-      --surface-hover: hsla(0, 0%, 20%, 30%);
-      --surface-active: hsla(0, 0%, 44%, 30%);
-    }
+@media (display-mode: browser) and (prefers-color-scheme: dark) {
+  #home-page {
+    --background-transparent: hsla(0, 0%, 5%, 30%);
+    --surface: hsla(0, 0%, 5%, 30%);
+    --surface-hover: hsla(0, 0%, 20%, 30%);
+    --surface-active: hsla(0, 0%, 44%, 30%);
   }
 }
 
 #background {
   position: fixed;
 
-  top: -120px;
-  left: -120px;
-  right: -120px;
-  bottom: -120px;
+  top: 0px;
+  left: var(--safe-area-left);
+  right: var(--safe-area-right);
+  bottom: 0px;
 
   z-index: 1;
   pointer-events: none;
 
-  filter: blur(60px);
+  overflow: hidden;
+
   opacity: 0.2;
 }
 
@@ -39,10 +38,12 @@ main {
 #background::before {
   content: "";
 
-  position: fixed;
+  position: absolute;
 
   z-index: -1;
   pointer-events: none;
+
+  filter: blur(60px);
 }
 
 @media (prefers-color-scheme: dark) {
