@@ -45,8 +45,6 @@ export default class ConnectionViewModel {
     }
   };
 
-  messageHandler = (data: Message): void => {};
-
   // methods
   connect = (): void => {
     this.connectToAddress(this.serverAddressInput.value);
@@ -85,6 +83,5 @@ export default class ConnectionViewModel {
     this.updatePreviousAddresses();
 
     connectionModel.setConnectionChangeHandler(this.connectionChangeHandler);
-    connectionModel.setMessageHandler(this.messageHandler);
   }
 }

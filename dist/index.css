@@ -126,7 +126,6 @@ main {
 }
 [color]:not([color=standard])[selected].fill-color {
   color: var(--primary);
-  background-color: var(--surface);
 }
 [color]:not([color=standard]).subtle-background {
   --luma: var(--subtle-luma);

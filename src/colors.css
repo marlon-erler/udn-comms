@@ -56,7 +56,6 @@
 
 [color]:not([color="standard"])[selected].fill-color {
   color: var(--primary);
-  background-color: var(--surface);
 }
 
 /* subtle */

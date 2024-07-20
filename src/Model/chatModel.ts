@@ -5,6 +5,7 @@ import StorageModel, { storageKeys } from "./storageModel";
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
 import ConnectionModel from "./connectionModel";
+import { Message } from "udn-frontend";
 import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { createTimestamp } from "./Utility/utility";
