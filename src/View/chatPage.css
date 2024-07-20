@@ -18,70 +18,88 @@
 }
 
 /* layout */
+#chat-page {
+  --ribbon-size: calc(var(--control-height) + 2 * var(--gap-between-tiles));
+}
+
+#chat-page #ribbon,
+#chat-page .toolbar,
+#chat-page #main,
+#chat-page #main .content {
+  display: flex;
+}
+
 #chat-page > div {
   padding: 0px;
 
   overflow: hidden;
-
-  display: grid;
-  --ribbon-size: calc(var(--control-height) + 2 * var(--gap-between-tiles));
-  grid-template-columns: var(--ribbon-size) 1fr;
-  grid-template-rows: var(--ribbon-size) 1fr;
-
-  border-top: 1px solid var(--border);
-}
-
-#chat-page #ribbon {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-
-  border-right: 1px solid var(--border);
-}
-
-#chat-page #toolbar {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-
-  border-bottom: 1px solid var(--border);
-}
-
-#chat-page #main {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-}
-
-#chat-page #ribbon,
-#chat-page #toolbar,
-#chat-page #main {
   display: flex;
 }
 
-#chat-page #ribbon,
 #chat-page #main {
-  flex-direction: column;
-}
-
-#chat-page #ribbon > span,
-#chat-page #toolbar > span {
   display: flex;
   flex-direction: column;
-  padding: var(--gap-between-tiles);
+
+  width: 100%;
+  height: 100%;
+  flex: 1;
+}
+
+#chat-page #main > div,
+#chat-page #main .content {
+  width: 100%;
+  height: 100%;
+}
+
+#chat-page #main .content {
+  overflow: auto;
+}
+
+#chat-page #ribbon,
+#chat-page #main,
+#chat-page #main .content {
+  flex-direction: column;
 }
 
 /* ribbon, toolbar */
+#chat-page #ribbon {
+  width: var(--ribbon-size);
+  border-right: 1px solid var(--border);
+
+  overflow: auto;
+
+  justify-content: space-between;
+}
+
+#chat-page #main .toolbar {
+  height: var(--ribbon-size);
+  border-bottom: 1px solid var(--border);
+
+  overflow-x: auto;
+
+  padding-left: var(--content-padding);
+}
+
+#chat-page #ribbon,
+#chat-page .toolbar {
+  align-items: center;
+}
+
 #chat-page #ribbon > span,
-#chat-page #toolbar {
+#chat-page .toolbar > span {
+  display: flex;
+  flex-direction: column;
+
   padding: var(--gap-between-tiles);
   gap: var(--gap-between-tiles);
 }
 
-#chat-page #ribbon {
-  justify-content: space-between;
-  justify-content: space-between;
+#chat-page #ribbon > span {
+    width: 100%;
 }
 
 #chat-page #ribbon button,
-#chat-page #toolbar button {
+#chat-page .toolbar button {
   padding: 0px;
 
   width: 100%;

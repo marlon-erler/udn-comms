@@ -79,6 +79,10 @@ const englishTranslations = {
       calendar: "Calendar",
       progress: "Progress",
     },
+
+    settings: {
+      settingsHeadline: "Settings",
+    }
   },
 };
 

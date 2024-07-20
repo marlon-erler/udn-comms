@@ -650,6 +650,11 @@
     );
   }
 
+  // src/View/ChatPages/messagePage.tsx
+  function MessagePage(chatViewModel) {
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })));
+  }
+
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -711,6 +716,9 @@
         kanban: "Kanban",
         calendar: "Calendar",
         progress: "Progress"
+      },
+      settings: {
+        settingsHeadline: "Settings"
       }
     }
   };
@@ -720,8 +728,22 @@
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
 
+  // src/View/ChatPages/settingsPage.tsx
+  function SettingsPage(chatViewModel) {
+    return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)));
+  }
+
   // src/View/chatPage.tsx
   function ChatPage(chatViewModel) {
+    const mainContent = new State(/* @__PURE__ */ createElement("div", null));
+    chatViewModel.selectedPage.subscribe((selectedPage) => {
+      switch (selectedPage) {
+        case "settings" /* Settings */:
+          return mainContent.value = SettingsPage(chatViewModel);
+        default:
+          return mainContent.value = MessagePage(chatViewModel);
+      }
+    });
     return /* @__PURE__ */ createElement("article", { id: "chat-page" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
@@ -760,7 +782,7 @@
       "settings",
       "settings" /* Settings */,
       chatViewModel
-    ))), /* @__PURE__ */ createElement("div", { id: "toolbar" }), /* @__PURE__ */ createElement("div", { id: "main" })));
+    ))), /* @__PURE__ */ createElement("div", { id: "main", "children:set": mainContent })));
   }
 
   // src/View/chatPageWrapper.tsx

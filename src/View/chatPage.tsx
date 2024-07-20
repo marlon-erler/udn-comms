@@ -5,9 +5,22 @@ import * as React from "bloatless-react";
 import ChatViewModel, { ChatPageType } from "../ViewModel/chatViewModel";
 
 import { ChatViewToggleButton } from "./Components/chatViewToggleButton";
+import { MessagePage } from "./ChatPages/messagePage";
+import { SettingsPage } from "./ChatPages/settingsPage";
 import { translations } from "./translations";
 
 export function ChatPage(chatViewModel: ChatViewModel) {
+  const mainContent = new React.State(<div></div>);
+
+  chatViewModel.selectedPage.subscribe((selectedPage) => {
+    switch (selectedPage) {
+      case ChatPageType.Settings:
+        return (mainContent.value = SettingsPage(chatViewModel));
+      default:
+        return (mainContent.value = MessagePage(chatViewModel));
+    }
+  });
+
   return (
     <article id="chat-page">
       <div>
@@ -61,8 +74,7 @@ export function ChatPage(chatViewModel: ChatViewModel) {
             )}
           </span>
         </div>
-        <div id="toolbar"></div>
-        <div id="main"></div>
+        <div id="main" children:set={mainContent}></div>
       </div>
     </article>
   );
