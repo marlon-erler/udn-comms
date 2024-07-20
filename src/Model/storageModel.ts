@@ -103,7 +103,7 @@ export default class StorageModel {
   };
 
   print = () => {
-    console.log(JSON.stringify(this.storageEntryTree, null, 4));
+    console.log(stringify(this.storageEntryTree));
   };
 
   static pathComponentsToKey = (...pathComponents: string[]): string => {
@@ -146,7 +146,12 @@ export const storageKeys = {
   // chat etc
   chats: [DATA_VERSION, "chat"],
   chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
-  chatLastUsedPage: (id: string) => [DATA_VERSION, "chat", id, "last-used-page"],
+  chatLastUsedPage: (id: string) => [
+    DATA_VERSION,
+    "chat",
+    id,
+    "last-used-page",
+  ],
   chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
   chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],

@@ -9,8 +9,8 @@ import { localeCompare } from "../Model/Utility/utility";
 
 export default class ChatViewModel {
   chatModel: ChatModel;
-  chatListViewModel: ChatListViewModel;
   storageModel: StorageModel;
+  chatListViewModel: ChatListViewModel;
 
   // state
   index: React.State<number> = new React.State(0);
@@ -34,6 +34,8 @@ export default class ChatViewModel {
     ChatPageType.Messages
   );
 
+  composingMessage: React.State<string> = new React.State("");
+
   // guards
   cannotSetPrimaryChannel: React.State<boolean> = React.createProxyState(
     [this.primaryChannel, this.primaryChannelInput],
@@ -45,11 +47,10 @@ export default class ChatViewModel {
 
   // sorting
   updateIndex = (): void => {
-    const index = this.chatListViewModel.getIndexOfChat(this);
-    this.index.value = index;
+    this.index.value = this.chatModel.index;
   };
 
-  // methods
+  // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
   };
@@ -58,6 +59,7 @@ export default class ChatViewModel {
     this.chatListViewModel.closeChat();
   };
 
+  // settings
   setPrimaryChannel = (): void => {
     this.chatModel.setPrimaryChannel(this.primaryChannelInput.value);
     this.primaryChannel.value = this.chatModel.info.primaryChannel;
@@ -117,9 +119,13 @@ export default class ChatViewModel {
   };
 
   // init
-  constructor(chatListViewModel: ChatListViewModel, chatModel: ChatModel) {
+  constructor(
+    chatModel: ChatModel,
+    storageModel: StorageModel,
+    chatListViewModel: ChatListViewModel
+  ) {
     this.chatModel = chatModel;
-    this.storageModel = chatModel.storageModel;
+    this.storageModel = storageModel;
     this.chatListViewModel = chatListViewModel;
 
     this.primaryChannel.value = chatModel.info.primaryChannel;

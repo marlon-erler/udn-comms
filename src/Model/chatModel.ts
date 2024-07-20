@@ -4,20 +4,32 @@ import StorageModel, { storageKeys } from "./storageModel";
 
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
+import ConnectionModel from "./connectionModel";
+import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { createTimestamp } from "./Utility/utility";
 import { v4 } from "uuid";
 
 export class ChatModel {
+  connectionModel: ConnectionModel;
+  storageModel: StorageModel;
+  settingsModel: SettingsModel;
+  chatListModel: ChatListModel;
+
   // data
   id: string;
-  storageModel: StorageModel;
-  chatListModel: ChatListModel;
   info: ChatInfo;
   color: Color;
 
   messages = new Set<ChatMessage>();
   objects = new Map<string, ChatObject>();
+
+  // sorting
+  get index(): number {
+    return this.chatListModel.getIndexOfPrimaryChannel(
+      this.info.primaryChannel
+    );
+  }
 
   // paths
   get infoPath(): string[] {
@@ -148,6 +160,11 @@ export class ChatModel {
     }
   };
 
+  // messaging
+  sendMessage = (body: string): void => {
+    //TODO
+  };
+
   // memory
   loadData = (): void => {
     this.restoreMessages();
@@ -162,10 +179,14 @@ export class ChatModel {
   // init
   constructor(
     storageModel: StorageModel,
+    connectionModel: ConnectionModel,
+    settingsModel: SettingsModel,
     chatListModel: ChatListModel,
     chatId: string
   ) {
     this.id = chatId;
+    this.connectionModel = connectionModel;
+    this.settingsModel = settingsModel;
     this.storageModel = storageModel;
     this.chatListModel = chatListModel;
 

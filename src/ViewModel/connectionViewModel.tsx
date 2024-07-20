@@ -2,7 +2,6 @@ import * as React from "bloatless-react";
 
 import ConnectionModel from "../Model/connectionModel";
 import { Message } from "udn-frontend";
-import StorageModel from "../Model/storageModel";
 
 export default class ConnectionViewModel {
   connectionModel: ConnectionModel;
@@ -78,14 +77,8 @@ export default class ConnectionViewModel {
   };
 
   // init
-  constructor(storageModel: StorageModel) {
-    const connectionModel = new ConnectionModel({
-      storageModel,
-      connectionChangeHandler: this.connectionChangeHandler,
-      messageHandler: this.messageHandler,
-    });
+  constructor(connectionModel: ConnectionModel) {
     this.connectionModel = connectionModel;
-
     this.updatePreviousAddresses();
   }
 }

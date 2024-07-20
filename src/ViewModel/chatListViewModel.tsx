@@ -6,8 +6,8 @@ import ChatViewModel from "./chatViewModel";
 import StorageModel from "../Model/storageModel";
 
 export default class ChatListViewModel {
-  storageModel: StorageModel;
   chatListModel: ChatListModel;
+  storageModel: StorageModel;
 
   // state
   newChatPrimaryChannel: React.State<string> = new React.State("");
@@ -23,21 +23,6 @@ export default class ChatListViewModel {
     () => this.newChatPrimaryChannel.value == ""
   );
 
-  // sorting
-  get sortedPrimaryChannels(): string[] {
-    return this.chatListModel.sortedPrimaryChannels;
-  }
-
-  getIndexOfChat(chat: ChatViewModel): number {
-    return this.sortedPrimaryChannels.indexOf(chat.primaryChannel.value);
-  }
-
-  updateIndices = (): void => {
-    for (const chatViewModel of this.chatViewModels.value) {
-      chatViewModel.updateIndex();
-    }
-  }
-
   // methods
   createChat = (): void => {
     const chatModel: ChatModel = this.chatListModel.createChat(
@@ -45,8 +30,10 @@ export default class ChatListViewModel {
     );
     this.newChatPrimaryChannel.value = "";
 
-    const chatViewModel: ChatViewModel = new ChatViewModel(this, chatModel);
+    const chatViewModel: ChatViewModel = this.createChatViewModel(chatModel);
     this.chatViewModels.add(chatViewModel);
+
+    this.updateIndices();
   };
 
   untrackChat = (chatViewModel: ChatViewModel): void => {
@@ -54,6 +41,11 @@ export default class ChatListViewModel {
     this.chatViewModels.remove(chatViewModel);
   };
 
+  createChatViewModel = (chatModel: ChatModel): ChatViewModel => {
+    return new ChatViewModel(chatModel, this.storageModel, this);
+  }
+
+  // view
   openChat = (chatViewModel: ChatViewModel): void => {
     this.selectedChat.value = chatViewModel;
   };
@@ -62,20 +54,25 @@ export default class ChatListViewModel {
     this.selectedChat.value = undefined;
   };
 
+  // sorting
+  updateIndices = (): void => {
+    for (const chatViewModel of this.chatViewModels.value) {
+      chatViewModel.updateIndex();
+    }
+  }
+
   // restore
   restoreChats = (): void => {
     for (const chatModel of this.chatListModel.chatModels.values()) {
-      const chatViewModel = new ChatViewModel(this, chatModel);
+      const chatViewModel = this.createChatViewModel(chatModel);
       this.chatViewModels.add(chatViewModel);
     }
   };
 
   // init
-  constructor(storageModel: StorageModel) {
-    this.storageModel = storageModel;
-
-    const chatListModel = new ChatListModel(storageModel);
+  constructor(chatListModel: ChatListModel, storageModel: StorageModel) {
     this.chatListModel = chatListModel;
+    this.storageModel = storageModel;
 
     this.restoreChats();
   }

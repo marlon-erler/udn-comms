@@ -5,7 +5,7 @@ export function createTimestamp(): string {
 
 // string
 export function stringify(data: any): string {
-  return JSON.stringify(data);
+  return JSON.stringify(data, null, 4);
 }
 
 export function parse(string: string): any {

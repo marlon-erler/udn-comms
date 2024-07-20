@@ -29,6 +29,8 @@ export default class ConnectionModel {
     this.udn.disconnect();
   };
 
+  handleMessage = (data: Message): void => {}
+
   handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
     if (this.isConnected == false) return;
@@ -114,30 +116,20 @@ export default class ConnectionModel {
   }
 
   // setup
-  constructor(configuration: ConnectionModelConfiguration) {
+  constructor(storageModel: StorageModel) {
     // create frontend
     this.udn = new UDNFrontend();
-    this.storageModel = configuration.storageModel;
+    this.storageModel = storageModel;
 
     // setup handlers
     this.udn.onmessage = (data: Message) => {
-      configuration.messageHandler(data);
+      this.handleMessage(data);
     };
     this.udn.onconnect = () => {
       this.handleConnectionChange();
-      configuration.connectionChangeHandler();
     };
     this.udn.ondisconnect = () => {
       this.handleConnectionChange();
-      configuration.connectionChangeHandler();
     };
   }
-}
-
-// types
-export interface ConnectionModelConfiguration {
-  storageModel: StorageModel;
-
-  connectionChangeHandler: () => void;
-  messageHandler: (data: Message) => void;
 }
