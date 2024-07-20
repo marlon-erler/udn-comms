@@ -102,8 +102,29 @@ main {
   right: 0px;
   bottom: 0px;
   background-color: var(--background);
+  z-index: 2;
 }
-#chat-page {
+#chat-page > div {
+  padding: 0px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: var(--control-height) 1fr;
+  grid-template-rows: var(--control-height) 1fr;
+  border-top: 1px solid var(--border);
+}
+#chat-page #ribbon {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  border-right: 1px solid var(--border);
+}
+#chat-page #toolbar {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  border-bottom: 1px solid var(--border);
+}
+#chat-page #main {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
 }
 
 /* src/View/homePage.css */

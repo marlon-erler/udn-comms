@@ -8,13 +8,10 @@ import { translations } from "./translations";
 export function ChatPage(chatViewModel: ChatViewModel) {
   return (
     <article id="chat-page">
-      <header>
-        <span subscribe:innerText={chatViewModel.primaryChannel}></span>
-      </header>
       <div>
-        <div class="ribbon"></div>
-        <div class="toolbar"></div>
-        <div class="main"></div>
+        <div id="ribbon"></div>
+        <div id="toolbar"></div>
+        <div id="main"></div>
       </div>
     </article>
   );
