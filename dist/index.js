@@ -596,7 +596,7 @@
     isConnected = new State(false);
     isShowingConnectionModal = new State(false);
     previousAddresses = new ListState();
-    // toggles
+    // guards
     cannotConnect = createProxyState(
       [this.serverAddressInput, this.isConnected],
       () => this.isConnected.value == true && this.serverAddressInput.value == this.connectionModel.address || this.serverAddressInput.value == ""
@@ -604,6 +604,10 @@
     cannotDisonnect = createProxyState(
       [this.isConnected],
       () => this.isConnected.value == false
+    );
+    hasNoPreviousConnections = createProxyState(
+      [this.previousAddresses],
+      () => this.previousAddresses.value.size == 0
     );
     // handlers
     connectionChangeHandler = () => {
@@ -695,7 +699,8 @@
       {
         class: "flex justify-center",
         "aria-label": translations.homePage.manageConnectionsAudioLabel,
-        "on:click": connectionViewModel2.showConnectionModal
+        "on:click": connectionViewModel2.showConnectionModal,
+        "toggle:disabled": connectionViewModel2.hasNoPreviousConnections
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "history")
     ), /* @__PURE__ */ createElement(
@@ -791,7 +796,7 @@
     // state
     nameInput = new State("");
     firstDayOfWeekInput = new State(0);
-    // toggles
+    // guards
     cannotSetName = createProxyState(
       [this.nameInput],
       () => this.nameInput.value == "" || this.nameInput.value == this.settingsModel.username

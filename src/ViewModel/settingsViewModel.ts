@@ -10,7 +10,7 @@ export default class SettingsViewModel {
   nameInput: React.State<string> = new React.State("");
   firstDayOfWeekInput: React.State<number> = new React.State(0);
 
-  // toggles
+  // guards
   cannotSetName: React.State<boolean> = React.createProxyState(
     [this.nameInput],
     () =>

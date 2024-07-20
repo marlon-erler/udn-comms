@@ -15,7 +15,7 @@ export default class ConnectionViewModel {
 
   previousAddresses: React.ListState<string> = new React.ListState();
 
-  // toggles
+  // guards
   cannotConnect: React.State<boolean> = React.createProxyState(
     [this.serverAddressInput, this.isConnected],
     () =>
@@ -26,6 +26,10 @@ export default class ConnectionViewModel {
   cannotDisonnect: React.State<boolean> = React.createProxyState(
     [this.isConnected],
     () => this.isConnected.value == false
+  );
+  hasNoPreviousConnections: React.State<boolean> = React.createProxyState(
+    [this.previousAddresses],
+    () => this.previousAddresses.value.size == 0
   );
 
   // handlers
@@ -45,11 +49,11 @@ export default class ConnectionViewModel {
   connect = (): void => {
     this.connectToAddress(this.serverAddressInput.value);
   };
-  
+
   connectToAddress = (address: string): void => {
     this.connectionModel.connect(address);
-  }
-  
+  };
+
   disconnect = (): void => {
     this.connectionModel.disconnect();
   };
@@ -57,7 +61,7 @@ export default class ConnectionViewModel {
   removePreviousAddress = (address: string): void => {
     this.connectionModel.removeAddress(address);
     this.updatePreviousAddresses();
-  }
+  };
 
   // view methods
   showConnectionModal = (): void => {
@@ -71,7 +75,7 @@ export default class ConnectionViewModel {
   updatePreviousAddresses = (): void => {
     this.previousAddresses.clear();
     this.previousAddresses.add(...this.connectionModel.addresses);
-  }
+  };
 
   // init
   constructor(storageModel: StorageModel) {

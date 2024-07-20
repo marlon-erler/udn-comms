@@ -51,6 +51,7 @@ export function HomePage(
           class="flex justify-center"
           aria-label={translations.homePage.manageConnectionsAudioLabel}
           on:click={connectionViewModel.showConnectionModal}
+          toggle:disabled={connectionViewModel.hasNoPreviousConnections}
         >
           <span class="icon">history</span>
         </button>
