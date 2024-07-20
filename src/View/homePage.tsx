@@ -52,7 +52,7 @@ export function HomePage(
           aria-label={translations.homePage.manageConnectionsAudioLabel}
           on:click={connectionViewModel.showConnectionModal}
         >
-          <span class="icon">edit</span>
+          <span class="icon">history</span>
         </button>
         <button
           class="primary flex justify-center"

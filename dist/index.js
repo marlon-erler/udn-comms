@@ -697,7 +697,7 @@
         "aria-label": translations.homePage.manageConnectionsAudioLabel,
         "on:click": connectionViewModel2.showConnectionModal
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "history")
     ), /* @__PURE__ */ createElement(
       "button",
       {
