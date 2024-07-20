@@ -3,7 +3,11 @@
   display: none;
 }
 
-#chat-page-wrapper[open] {
+body[showing-chat] #home-page {
+  display: none;
+}
+
+body[showing-chat] #chat-page-wrapper {
   display: flex;
 
   position: absolute;

@@ -1112,15 +1112,10 @@
         }
       }
     );
-    const isShowingChat = createProxyState(
-      [chatListViewModel2.selectedChat],
-      () => chatListViewModel2.selectedChat.value != void 0
-    );
     return /* @__PURE__ */ createElement(
       "div",
       {
         id: "chat-page-wrapper",
-        "toggle:open": isShowingChat,
         "children:set": chatPageContent
       }
     );
@@ -1677,6 +1672,12 @@
     storageModel,
     settingsViewModel
   );
+  chatListViewModel.selectedChat.subscribe(() => {
+    document.body.toggleAttribute(
+      "showing-chat",
+      chatListViewModel.selectedChat.value != void 0
+    );
+  });
   document.body.append(/* @__PURE__ */ createElement("div", { id: "background" }));
   document.querySelector("main").append(
     HomePage(settingsViewModel, connectionViewModel, chatListViewModel),

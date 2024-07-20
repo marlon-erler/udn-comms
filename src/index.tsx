@@ -36,6 +36,13 @@ const chatListViewModel = new ChatListViewModel(
 );
 
 // view
+chatListViewModel.selectedChat.subscribe(() => {
+  document.body.toggleAttribute(
+    "showing-chat",
+    chatListViewModel.selectedChat.value != undefined
+  );
+});
+
 document.body.append(<div id="background"></div>);
 document
   .querySelector("main")!

@@ -1,3 +1,13 @@
+/* Animation */
+#home-page,
+#home-page #chat-section,
+#chat-page,
+#chat-page #main > div {
+  animation: slide-up var(--animation-duration) ease;
+}
+
+/* Gradient */
+
 #background {
   position: fixed;
 

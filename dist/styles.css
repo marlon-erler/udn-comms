@@ -14,6 +14,20 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 
+ANIMATION
+*/
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+:root {
+  --animation-duration: 0.4s;
+}
+
 /*
 COLORS
  */

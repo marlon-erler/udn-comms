@@ -1,6 +1,9 @@
 /* basic */
 [color]:not([color="standard"]) {
   --primary: hsl(var(--hue), 100%, var(--accent-luma));
+  --primary-hover: hsl(var(--hue), 95%, var(--accent-luma));
+  --primary-active: hsl(var(--hue), 80%, var(--accent-luma));
+
   --text-on-color: hsl(0, 0%, var(--accent-text-luma));
   --link: hsl(var(--hue), 100%, var(--accent-luma));
 }
@@ -58,20 +61,13 @@
 
 /* subtle */
 [color]:not([color="standard"]).subtle-background {
-  --gradient-luma-1: 97%;
-  --gradient-luma-2: 92%;
-
-  background-image: linear-gradient(
-    120deg,
-    hsl(var(--hue), 100%, var(--gradient-luma-1)),
-    hsl(var(--hue), 100%, var(--gradient-luma-2))
-  );
+  --luma: var(--subtle-luma);
+  background: hsl(var(--hue), 30%, var(--luma));
 }
 
 @media (prefers-color-scheme: dark) {
   [color]:not([color="standard"]).subtle-background {
-    --gradient-luma-1: 2%;
-    --gradient-luma-2: 6%;
+    --luma: var(--subtle-luma-dark);
   }
 }
 
@@ -84,6 +80,9 @@
 
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }
 
 [color="yellow"] {
@@ -92,8 +91,11 @@
   --accent-luma: 50%;
   --accent-luma-dark: 60%;
 
-  --accent-text-luma: 100%;
+  --accent-text-luma: 0%;
   --accent-text-luma-dark: 0%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }
 
 [color="mint"] {
@@ -104,6 +106,9 @@
 
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 0%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }
 
 [color="lightblue"] {
@@ -114,6 +119,9 @@
 
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 0%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }
 
 [color="blue"] {
@@ -124,6 +132,9 @@
 
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }
 
 [color="purple"] {
@@ -134,4 +145,7 @@
 
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+
+  --subtle-luma: 95%;
+  --subtle-luma-dark: 5%;
 }

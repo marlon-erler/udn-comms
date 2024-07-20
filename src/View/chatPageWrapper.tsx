@@ -16,15 +16,10 @@ export function ChatPageWrapper(chatListViewModel: ChatListViewModel) {
       }
     }
   );
-  const isShowingChat = React.createProxyState(
-    [chatListViewModel.selectedChat],
-    () => chatListViewModel.selectedChat.value != undefined
-  );
 
   return (
     <div
       id="chat-page-wrapper"
-      toggle:open={isShowingChat}
       children:set={chatPageContent}
     ></div>
   );
