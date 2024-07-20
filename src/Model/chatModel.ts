@@ -18,7 +18,6 @@ export class ChatModel {
 
   messages = new Set<ChatMessage>();
   objects = new Map<string, ChatObject>();
-  outbox = new Set<ChatMessage>();
 
   // paths
   get infoPath(): string[] {
@@ -35,10 +34,6 @@ export class ChatModel {
 
   get objectDirPath(): string[] {
     return storageKeys.chatObjects(this.id);
-  }
-
-  get outboxDirPath(): string[] {
-    return storageKeys.chatOutbox(this.id);
   }
 
   getMessagePath = (id: string): string[] => {

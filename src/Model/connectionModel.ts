@@ -4,6 +4,7 @@ import StorageModel, { storageKeys } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 
 import { ChatMessage } from "./chatModel";
+import { checkIsValidObject } from "./Utility/typeSafety";
 import { stringify } from "./Utility/utility";
 
 export default class ConnectionModel {
@@ -37,8 +38,56 @@ export default class ConnectionModel {
     }
   };
 
+  // outbox
+  getOutboxMessags = (): ChatMessage[] => {
+    const outboxPath: string[] = storageKeys.outbox;
+    const messageIds: string[] = this.storageModel.list(outboxPath);
+
+    let messages: ChatMessage[] = [];
+    for (const messageId of messageIds) {
+      const message: any = this.storageModel.restoreStringifiable([
+        ...outboxPath,
+        messageId,
+      ]);
+      if (message == undefined) continue;
+      if (checkIsValidObject(message) == false) continue;
+
+      message.push(message);
+    }
+
+    return messages;
+  };
+
+  addToOutbox = (chatMessage: ChatMessage): void => {
+    const messagePath: string[] = [...storageKeys.outbox, chatMessage.id];
+    this.storageModel.storeStringifiable(messagePath, chatMessage);
+  };
+
+  removeFromOutbox = (chatMessage: ChatMessage): void => {
+    const messagePath: string[] = [...storageKeys.outbox, chatMessage.id];
+    this.storageModel.remove(messagePath);
+  };
+
+  sendMessagesInOutbox = (): void => {
+    const messages: ChatMessage[] = this.getOutboxMessags();
+
+    for (const message of messages) {
+      const isSent = this.tryToSendMessage(message);
+      if (isSent == false) return;
+
+      this.removeFromOutbox(message);
+    }
+  };
+
   // messaging
-  sendChatMessage = (chatMessage: ChatMessage): boolean => {
+  sendMessageOrStore = (chatMessage: ChatMessage): void => {
+    const isSent = this.tryToSendMessage(chatMessage);
+    if (isSent == true) return;
+
+    this.addToOutbox(chatMessage);
+  };
+
+  tryToSendMessage = (chatMessage: ChatMessage): boolean => {
     const stringifiedBody: string = stringify(chatMessage);
     return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
   };
@@ -62,7 +111,7 @@ export default class ConnectionModel {
   get addresses(): string[] {
     const dirPath = storageKeys.previousAddresses;
     return this.storageModel.list(dirPath);
-  };
+  }
 
   // setup
   constructor(configuration: ConnectionModelConfiguration) {

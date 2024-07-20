@@ -131,6 +131,7 @@ export type StorageEntry = { [key: string]: StorageEntry };
 export const storageKeys = {
   // connection
   socketAddress: [DATA_VERSION, "connection", "socket-address"],
+  outbox: [DATA_VERSION, "connection", "outbox"],
 
   // settings
   username: [DATA_VERSION, "settings", "user-name"],
@@ -149,5 +150,4 @@ export const storageKeys = {
   chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
   chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],
-  chatOutbox: (id: string) => [DATA_VERSION, "chat", id, "outbox"],
 };
