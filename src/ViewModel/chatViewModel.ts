@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import { ChatMessage, ChatModel } from "../Model/chatModel";
+import ChatModel, { ChatMessage } from "../Model/chatModel";
 import StorageModel, { storageKeys } from "../Model/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
@@ -63,7 +63,7 @@ export default class ChatViewModel {
   // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
-    this.restoreMessages();
+    this.loadMessages();
   };
 
   close = (): void => {
@@ -99,7 +99,7 @@ export default class ChatViewModel {
     this.secondaryChannels.add(this.newSecondaryChannelInput.value);
     this.newSecondaryChannelInput.value = "";
     this.storeSecondaryChannels();
-    this.restoreSecondaryChannels();
+    this.loadSecondaryChannels();
   };
 
   removeSecondaryChannel = (secondaryChannel: string): void => {
@@ -128,7 +128,7 @@ export default class ChatViewModel {
   remove = (): void => {
     this.close();
     this.chatModel.delete();
-    this.chatListViewModel.restoreChats();
+    this.chatListViewModel.loadChats();
   };
 
   // messaging
@@ -152,20 +152,20 @@ export default class ChatViewModel {
     messageViewModel.loadData();
   };
 
-  // restore
-  restorePageSelection = (): void => {
+  // load
+  loadPageSelection = (): void => {
     const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);
-    const lastUsedPage: string | null = this.storageModel.restore(path);
+    const lastUsedPage: string | null = this.storageModel.read(path);
     if (lastUsedPage != null) {
       this.selectedPage.value = lastUsedPage as any;
     }
 
     this.selectedPage.subscribeSilent((newPage) => {
-      this.storageModel.store(path, newPage);
+      this.storageModel.write(path, newPage);
     });
   };
 
-  restoreSecondaryChannels = (): void => {
+  loadSecondaryChannels = (): void => {
     this.secondaryChannels.clear();
     for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(
       localeCompare
@@ -174,7 +174,7 @@ export default class ChatViewModel {
     }
   };
 
-  restoreMessages = (): void => {
+  loadMessages = (): void => {
     for (const chatMessage of this.chatModel.messages) {
       this.addChatMessage(chatMessage);
     }
@@ -198,7 +198,7 @@ export default class ChatViewModel {
       this.addChatMessage(chatMessage);
     });
 
-    // restore
+    // load
     this.primaryChannel.value = chatModel.info.primaryChannel;
     this.primaryChannelInput.value = chatModel.info.primaryChannel;
 
@@ -210,8 +210,8 @@ export default class ChatViewModel {
 
     this.color.value = chatModel.color;
 
-    this.restoreSecondaryChannels();
-    this.restorePageSelection();
+    this.loadSecondaryChannels();
+    this.loadPageSelection();
     this.updateIndex();
 
     // guards

@@ -1,6 +1,6 @@
 import StorageModel, { storageKeys } from "./storageModel";
 
-import { ChatModel } from "./chatModel";
+import ChatModel from "./chatModel";
 import ConnectionModel from "./connectionModel";
 import { Message } from "udn-frontend";
 import SettingsModel from "./settingsModel";
@@ -76,7 +76,7 @@ export default class ChatListModel {
     return this.sortedPrimaryChannels.indexOf(primaryChannel);
   }
 
-  // restore
+  // load
   loadChats = (): void => {
     const chatDir = storageKeys.chats;
     const chatIds = this.storageModel.list(chatDir);

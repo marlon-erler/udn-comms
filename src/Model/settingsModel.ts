@@ -12,25 +12,25 @@ export default class SettingsModel {
   setName(newValue: string): void {
     this.username = newValue;
     const path = storageKeys.username;
-    this.storageModel.store(path, newValue);
+    this.storageModel.write(path, newValue);
   }
 
   setFirstDayOfWeek(newValue: number): void {
     this.firstDayOfWeek = newValue;
     const path = storageKeys.firstDayOfWeek;
-    this.storageModel.storeStringifiable(path, newValue);
+    this.storageModel.writeStringifiable(path, newValue);
   }
 
-  // restore
-  restoreUsername(): void {
+  // load
+  loadUsernam(): void {
     const path = storageKeys.username;
-    const content = this.storageModel.restore(path);
+    const content = this.storageModel.read(path);
     this.username = content ?? "";
   }
 
-  restoreFirstDayofWeek(): void {
+  loadFirstDayofWeek(): void {
     const path = storageKeys.firstDayOfWeek;
-    const content = this.storageModel.restoreStringifiable(path);
+    const content = this.storageModel.readStringifiable(path);
     this.firstDayOfWeek = content ?? 0;
   }
 
@@ -38,7 +38,7 @@ export default class SettingsModel {
   constructor(storageModel: StorageModel) {
     this.storageModel = storageModel;
 
-    this.restoreUsername();
-    this.restoreFirstDayofWeek();
+    this.loadUsernam();
+    this.loadFirstDayofWeek();
   }
 }

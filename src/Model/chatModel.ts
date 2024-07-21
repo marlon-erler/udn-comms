@@ -73,17 +73,17 @@ export default class ChatModel {
 
   // store & add
   storeInfo = (): void => {
-    this.storageModel.storeStringifiable(this.infoPath, this.info);
+    this.storageModel.writeStringifiable(this.infoPath, this.info);
   };
 
   storeColor = (): void => {
-    this.storageModel.store(this.colorPath, this.color);
+    this.storageModel.write(this.colorPath, this.color);
   };
 
   addMessage = async (chatMessage: ChatMessage): Promise<void> => {
     await this.decryptMessage(chatMessage);
     const messagePath: string[] = this.getMessagePath(chatMessage.id);
-    this.storageModel.storeStringifiable(messagePath, chatMessage);
+    this.storageModel.writeStringifiable(messagePath, chatMessage);
     this.chatMessageHandler(chatMessage);
   };
 
@@ -97,9 +97,9 @@ export default class ChatModel {
     this.storageModel.removeRecursive(dirPath);
   };
 
-  // restore
-  restoreInfo = (): void => {
-    const info: any = this.storageModel.restoreStringifiable(this.infoPath);
+  // load
+  loadInfo = (): void => {
+    const info: any = this.storageModel.readStringifiable(this.infoPath);
     if (info != null) {
       this.info = info;
     } else {
@@ -107,9 +107,9 @@ export default class ChatModel {
     }
   };
 
-  restoreColor = (): void => {
+  loadColor = (): void => {
     const path: string[] = this.colorPath;
-    const color: string | null = this.storageModel.restore(path);
+    const color: string | null = this.storageModel.read(path);
     if (!color) {
       this.color = Color.Standard;
     } else {
@@ -124,7 +124,7 @@ export default class ChatModel {
     const messages: ChatMessage[] = [];
     for (const messageId of messageIds) {
       const messagePath: string[] = this.getMessagePath(messageId);
-      const message: any = this.storageModel.restoreStringifiable(messagePath);
+      const message: any = this.storageModel.readStringifiable(messagePath);
       if (checkIsValidObject(message) == false) continue;
 
       messages.push(message);
@@ -205,8 +205,8 @@ export default class ChatModel {
     this.storageModel = storageModel;
     this.chatListModel = chatListModel;
 
-    this.restoreInfo();
-    this.restoreColor();
+    this.loadInfo();
+    this.loadColor();
     this.subscribe();
 
     connectionModel.setMessageSentHandler(this.handleMessageSent);

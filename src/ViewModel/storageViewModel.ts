@@ -20,7 +20,7 @@ export default class StorageViewModel {
   // methods
   getSelectedItemContent = (): string => {
     const path = StorageModel.stringToPathComponents(this.selectedPath.value);
-    const content = this.storageModel.restore(path);
+    const content = this.storageModel.read(path);
     return (
       (content ?? translations.storage.notAFile) ||
       translations.storage.contentEmpty

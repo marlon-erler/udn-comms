@@ -68,8 +68,8 @@ export default class ChatListViewModel {
     }
   };
 
-  // restore
-  restoreChats = (): void => {
+  // load
+  loadChats = (): void => {
     this.chatViewModels.clear();
     for (const chatModel of this.chatListModel.chatModels.values()) {
       const chatViewModel = this.createChatViewModel(chatModel);
@@ -87,6 +87,6 @@ export default class ChatListViewModel {
     this.storageModel = storageModel;
     this.settingsViewModel = settingsViewModel;
 
-    this.restoreChats();
+    this.loadChats();
   }
 }

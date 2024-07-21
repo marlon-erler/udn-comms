@@ -65,7 +65,7 @@ export default class ConnectionModel {
   connectMailbox = (): void => {
     if (this.address == undefined) return;
     const path = [...storageKeys.mailboxes, this.address];
-    const mailboxId = this.storageModel.restore(path);
+    const mailboxId = this.storageModel.read(path);
     console.log("connecting mailbox", mailboxId)
     if (mailboxId == null) return this.requestNewMailbox();
 
@@ -75,7 +75,7 @@ export default class ConnectionModel {
   storeMailbox = (mailboxId: string): void => {
     if (this.address == undefined) return;
     const path = [...storageKeys.mailboxes, this.address];
-    this.storageModel.store(path, mailboxId);
+    this.storageModel.write(path, mailboxId);
   };
 
   // subscription
@@ -101,7 +101,7 @@ export default class ConnectionModel {
 
     let messages: ChatMessage[] = [];
     for (const messageId of messageIds) {
-      const message: any = this.storageModel.restoreStringifiable([
+      const message: any = this.storageModel.readStringifiable([
         ...outboxPath,
         messageId,
       ]);
@@ -116,7 +116,7 @@ export default class ConnectionModel {
 
   addToOutbox = (chatMessage: ChatMessage): void => {
     const messagePath: string[] = [...storageKeys.outbox, chatMessage.id];
-    this.storageModel.storeStringifiable(messagePath, chatMessage);
+    this.storageModel.writeStringifiable(messagePath, chatMessage);
   };
 
   removeFromOutbox = (chatMessage: ChatMessage): void => {
@@ -162,11 +162,11 @@ export default class ConnectionModel {
   storeAddress = (address: string): void => {
     // history
     const addressPath = this.getAddressPath(address);
-    this.storageModel.store(addressPath, "");
+    this.storageModel.write(addressPath, "");
 
     // reconnect
     const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
-    this.storageModel.store(reconnectAddressPath, address);
+    this.storageModel.write(reconnectAddressPath, address);
   };
 
   removeAddress = (address: string): void => {
@@ -227,7 +227,7 @@ export default class ConnectionModel {
     // reconnect
     const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
     const reconnectAddress: string | null =
-      storageModel.restore(reconnectAddressPath);
+      storageModel.read(reconnectAddressPath);
     if (reconnectAddress != null) {
       this.connect(reconnectAddress);
     }

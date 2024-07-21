@@ -10,7 +10,7 @@ export default class StorageModel {
   storageEntryTree: StorageEntry = {};
 
   // basic
-  store = (pathComponents: string[], value: string): void => {
+  write = (pathComponents: string[], value: string): void => {
     const pathString: string = StorageModel.pathComponentsToString(
       ...pathComponents
     );
@@ -18,7 +18,7 @@ export default class StorageModel {
     this.updateTree(...pathComponents);
   };
 
-  restore = (pathComponents: string[]): string | null => {
+  read = (pathComponents: string[]): string | null => {
     const pathString: string = StorageModel.pathComponentsToString(
       ...pathComponents
     );
@@ -69,13 +69,13 @@ export default class StorageModel {
   };
 
   // stringifiable
-  storeStringifiable = (pathComponents: string[], value: any): void => {
+  writeStringifiable = (pathComponents: string[], value: any): void => {
     const valueString: string = stringify(value);
-    this.store(pathComponents, valueString);
+    this.write(pathComponents, valueString);
   };
 
-  restoreStringifiable = (pathComponents: string[]): any | null => {
-    const valueString: string | null = this.restore(pathComponents);
+  readStringifiable = (pathComponents: string[]): any | null => {
+    const valueString: string | null = this.read(pathComponents);
     if (!valueString) return null;
 
     return parse(valueString);

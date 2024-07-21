@@ -1,3 +1,8 @@
+// this file is responsible for managing files within chats.
+
+export default class FileModel {}
+
+// types
 export interface File {
   dataVersion: "v2";
 
