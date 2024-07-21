@@ -379,6 +379,13 @@
     printTree = () => {
       return stringify(this.storageEntryTree);
     };
+    static getFileName = (pathComponents) => {
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
+    static getFileNameFromString = (pathString) => {
+      const pathComponents = this.stringToPathComponents(pathString);
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
     static pathComponentsToString = (...pathComponents) => {
       return pathComponents.join(PATH_COMPONENT_SEPARATOR);
     };
@@ -2081,7 +2088,7 @@
   function DirectoryItemList(storageModel2, pathString, selectedPath) {
     const StringToDirectoryItemList = (pathString2) => DirectoryItemList(storageModel2, pathString2, selectedPath);
     const path = StorageModel.stringToPathComponents(pathString);
-    const fileName = path[path.length - 1] || "\\";
+    const fileName = StorageModel.getFileName(path);
     const items = new ListState();
     const style = `text-indent: ${path.length * 2}rem`;
     function loadItems() {
@@ -2128,7 +2135,25 @@
       const content = storageModel2.restore(path);
       return content || "";
     });
-    return /* @__PURE__ */ createElement("div", { class: "file-browser" }, DirectoryItemList(storageModel2, "\\", selectedPath), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContent })));
+    const selectedFileName = createProxyState(
+      [selectedPath],
+      () => StorageModel.getFileNameFromString(selectedPath.value) ?? PATH_COMPONENT_SEPARATOR
+    );
+    const view = /* @__PURE__ */ createElement("div", { class: "file-browser" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "scroll-area" }, DirectoryItemList(
+      storageModel2,
+      PATH_COMPONENT_SEPARATOR,
+      selectedPath
+    )), /* @__PURE__ */ createElement("div", { class: "detail-button-wrapper" }, /* @__PURE__ */ createElement("button", { class: "ghost", "on:click": scrollToDetails }, /* @__PURE__ */ createElement(
+      "span",
+      {
+        class: "ellipsis",
+        "subscribe:innerText": selectedFileName
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("div", { class: "scroll-area" }, /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContent })));
+    function scrollToDetails() {
+      view.scrollLeft = view.scrollWidth;
+    }
+    return view;
   }
 
   // src/View/Modals/storageModal.tsx

@@ -4,7 +4,7 @@ import { localeCompare, parse, stringify } from "./Utility/utility";
 
 import { DATA_VERSION } from "./Utility/typeSafety";
 
-const PATH_COMPONENT_SEPARATOR = "\\";
+export const PATH_COMPONENT_SEPARATOR = "\\";
 
 export default class StorageModel {
   storageEntryTree: StorageEntry = {};
@@ -111,6 +111,15 @@ export default class StorageModel {
   printTree = (): string => {
     return stringify(this.storageEntryTree);
   };
+
+  static getFileName = (pathComponents: string[]): string => {
+    return pathComponents[pathComponents.length - 1] || "\\"
+  }
+
+  static getFileNameFromString = (pathString: string): string => {
+    const pathComponents: string[] = this.stringToPathComponents(pathString);
+    return pathComponents[pathComponents.length - 1] || "\\"
+  }
 
   static pathComponentsToString = (...pathComponents: string[]): string => {
     return pathComponents.join(PATH_COMPONENT_SEPARATOR);

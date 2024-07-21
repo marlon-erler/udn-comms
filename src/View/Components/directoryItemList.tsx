@@ -15,7 +15,7 @@ export function DirectoryItemList(
 
   // data
   const path = StorageModel.stringToPathComponents(pathString);
-  const fileName = path[path.length - 1] || "\\";
+  const fileName = StorageModel.getFileName(path);
   const items = new React.ListState<string>();
 
   const style = `text-indent: ${path.length * 2}rem`;
