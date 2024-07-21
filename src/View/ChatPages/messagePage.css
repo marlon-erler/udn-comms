@@ -100,6 +100,10 @@
   font-weight: bold;
 }
 
+.message-bubble .body {
+  word-break: break-all;
+}
+
 .message-bubble[sentbyuser] {
   justify-content: flex-end;
 }

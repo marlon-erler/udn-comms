@@ -205,9 +205,7 @@
                 try {
                   const [listState, toElement] = value;
                   listState.handleAddition((newItem) => {
-                    console.log(newItem, toElement);
                     const child = toElement(newItem);
-                    console.log(child);
                     listState.handleRemoval(
                       newItem,
                       () => child.remove()
@@ -372,6 +370,79 @@
     chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"]
   };
 
+  // src/Model/Utility/crypto.ts
+  var IV_SIZE = 12;
+  var ENCRYPTION_ALG = "AES-GCM";
+  async function encryptString(plaintext, passphrase) {
+    if (!window.crypto.subtle) return plaintext;
+    const iv = generateIV();
+    const key = await importKey(passphrase, "encrypt");
+    const encryptedArray = await encrypt(iv, key, plaintext);
+    const encryptionData = {
+      iv: uInt8ToArray(iv),
+      encryptedArray: uInt8ToArray(encryptedArray)
+    };
+    return btoa(JSON.stringify(encryptionData));
+  }
+  async function decryptString(cyphertext, passphrase) {
+    try {
+      const encrypionData = JSON.parse(atob(cyphertext));
+      const iv = arrayToUint8(encrypionData.iv);
+      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+      const key = await importKey(passphrase, "decrypt");
+      return await decrypt(iv, key, encryptedArray);
+    } catch {
+      return cyphertext;
+    }
+  }
+  function encode(string) {
+    return new TextEncoder().encode(string);
+  }
+  function decode(array) {
+    return new TextDecoder("utf-8").decode(array);
+  }
+  async function encrypt(iv, key, message) {
+    const arrayBuffer = await window.crypto.subtle.encrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      encode(message)
+    );
+    return new Uint8Array(arrayBuffer);
+  }
+  async function decrypt(iv, key, cyphertext) {
+    const arrayBuffer = await crypto.subtle.decrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      cyphertext
+    );
+    return arrayBufferToString(arrayBuffer);
+  }
+  async function hash(encoded) {
+    return await crypto.subtle.digest("SHA-256", encoded);
+  }
+  function generateIV() {
+    return crypto.getRandomValues(new Uint8Array(IV_SIZE));
+  }
+  async function importKey(passphrase, purpose) {
+    return await crypto.subtle.importKey(
+      "raw",
+      await hash(encode(passphrase)),
+      { name: ENCRYPTION_ALG },
+      false,
+      [purpose]
+    );
+  }
+  function arrayBufferToString(arrayBuffer) {
+    const uInt8Array = new Uint8Array(arrayBuffer);
+    return decode(uInt8Array);
+  }
+  function uInt8ToArray(uInt8Array) {
+    return Array.from(uInt8Array);
+  }
+  function arrayToUint8(array) {
+    return new Uint8Array(array);
+  }
+
   // src/ViewModel/colors.ts
   var Color = /* @__PURE__ */ ((Color2) => {
     Color2["Standard"] = "standard";
@@ -509,7 +580,7 @@
       return objects;
     }
     // messaging
-    sendMessage = (body) => {
+    sendMessage = async (body) => {
       const senderName = this.settingsModel.username;
       if (senderName == "") return false;
       const allChannels = [this.info.primaryChannel];
@@ -517,6 +588,9 @@
         allChannels.push(secondaryChannel);
       }
       const combinedChannel = allChannels.join("/");
+      if (this.info.encryptionKey != "") {
+        body = await encryptString(body, this.info.encryptionKey);
+      }
       const chatMessage = _ChatModel.createChatMessage(
         combinedChannel,
         senderName,
@@ -525,10 +599,18 @@
       this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
     };
-    handleMessage = (channel, body) => {
+    handleMessage = async (body) => {
       const chatMessage = _ChatModel.parseMessage(body);
       if (chatMessage == null) return;
+      await this.decryptMessage(chatMessage);
       this.addMessage(chatMessage);
+    };
+    decryptMessage = async (chatMessage) => {
+      const decryptedBody = await decryptString(
+        chatMessage.body,
+        this.info.encryptionKey
+      );
+      chatMessage.body = decryptedBody;
     };
     setMessageHandler = (handler) => {
       this.chatMessageHandler = handler;
@@ -595,7 +677,7 @@
         const allChannels = channel.split("/");
         for (const channel2 of allChannels) {
           if (channel2 != chatModel.info.primaryChannel) continue;
-          chatModel.handleMessage(channel2, body);
+          chatModel.handleMessage(body);
           break;
         }
       }
@@ -916,17 +998,16 @@
         class: "message-bubble",
         "toggle:sentbyuser": chatMessageViewModel.sentByUser
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "sender-name" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "sender-name ellipsis" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
         "span",
         {
           class: "body",
           "subscribe:innerText": chatMessageViewModel.body
         }
-      ), /* @__PURE__ */ createElement("span", { class: "timestamp" }, chatMessageViewModel.dateSent))
+      ), /* @__PURE__ */ createElement("span", { class: "timestamp ellipsis" }, chatMessageViewModel.dateSent))
     );
   }
   var ChatMessageViewModelToView = (chatMessageViewModel) => {
-    console.log(chatMessageViewModel);
     return ChatMessage(chatMessageViewModel);
   };
 
@@ -1030,7 +1111,6 @@
       }
     );
     function scrollDown() {
-      console.log("down");
       messageContainer.scrollTop = messageContainer.scrollHeight;
     }
     function scrollDownIfApplicable() {

@@ -27,7 +27,7 @@ export default class ChatListModel {
       const allChannels = channel.split("/");
       for (const channel of allChannels) {
         if (channel != chatModel.info.primaryChannel) continue;
-        chatModel.handleMessage(channel, body);
+        chatModel.handleMessage(body);
         break;
       }
     }

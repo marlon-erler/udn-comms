@@ -18,7 +18,6 @@ export function MessagePage(chatViewModel: ChatViewModel) {
   );
 
   function scrollDown() {
-    console.log("down");
     messageContainer.scrollTop = messageContainer.scrollHeight;
   }
   function scrollDownIfApplicable() {

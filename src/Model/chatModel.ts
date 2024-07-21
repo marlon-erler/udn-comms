@@ -2,6 +2,7 @@
 
 import StorageModel, { storageKeys } from "./storageModel";
 import { createTimestamp, parse } from "./Utility/utility";
+import { decryptString, encryptString } from "./Utility/crypto";
 
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
@@ -166,7 +167,7 @@ export class ChatModel {
   }
 
   // messaging
-  sendMessage = (body: string): boolean => {
+  sendMessage = async (body: string): Promise<boolean> => {
     const senderName = this.settingsModel.username;
     if (senderName == "") return false;
 
@@ -175,7 +176,10 @@ export class ChatModel {
       allChannels.push(secondaryChannel);
     }
 
-    const combinedChannel = allChannels.join("/");
+    const combinedChannel: string = allChannels.join("/");
+    if (this.info.encryptionKey != "") {
+      body = await encryptString(body, this.info.encryptionKey);
+    }
 
     const chatMessage: ChatMessage = ChatModel.createChatMessage(
       combinedChannel,
@@ -187,11 +191,20 @@ export class ChatModel {
     return true;
   };
 
-  handleMessage = (channel: string, body: string): void => {
+  handleMessage = async (body: string): Promise<void> => {
     const chatMessage: ChatMessage | null = ChatModel.parseMessage(body);
     if (chatMessage == null) return;
 
+    await this.decryptMessage(chatMessage);
     this.addMessage(chatMessage);
+  };
+
+  decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    const decryptedBody: string = await decryptString(
+      chatMessage.body,
+      this.info.encryptionKey
+    );
+    chatMessage.body = decryptedBody;
   };
 
   setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
