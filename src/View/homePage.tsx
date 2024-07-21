@@ -70,26 +70,6 @@ export function HomePage(
 
       <hr></hr>
 
-      <div class="tile flex-no">
-        <span class="icon">inbox</span>
-        <div>
-          <b>{translations.homePage.mailboxHeadline}</b>
-          <span class="error">{translations.homePage.mailboxDisabled}</span>
-        </div>
-      </div>
-
-      <div class="tile flex-no">
-        <span class="icon">outbox</span>
-        <div>
-          <b>{translations.homePage.outboxHeadline}</b>
-          <span class="success">
-            {translations.homePage.outboxAllItemsSent}
-          </span>
-        </div>
-      </div>
-
-      <hr></hr>
-
       <label class="tile flex-no">
         <span class="icon">account_circle</span>
         <div>

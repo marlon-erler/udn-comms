@@ -1112,11 +1112,6 @@
       connectAudioLabel: "connect to server",
       disconnectAudioLabel: "disconnect from server",
       manageConnectionsAudioLabel: "manage connections",
-      mailboxHeadline: "Server Mailbox",
-      mailboxDisabled: "Mailbox disabled. You will miss out on messages sent while you're away",
-      mailboxEnabled: "Mailbox enabled. If you disconnect, the server will keep your messages temporarily",
-      outboxHeadline: "Outbox",
-      outboxAllItemsSent: "All items sent",
       yourNameLabel: "Your name",
       yourNamePlaceholder: "Jane Doe",
       setNameButtonAudioLabel: "set name",
@@ -1796,15 +1791,16 @@
         this.handleConnectionChange();
       };
       this.udn.onmailboxcreate = (mailboxId) => {
-        console.log("Created mailbox", mailboxId);
+        console.log("created mailbox", mailboxId);
         this.storeMailbox(mailboxId);
         this.connectMailbox();
       };
-      this.udn.onmailboxdelete = () => {
+      this.udn.onmailboxdelete = (mailboxId) => {
+        console.log(`mailbox ${mailboxId} deleted`);
         this.requestNewMailbox();
       };
       this.udn.onmailboxconnect = (mailboxId) => {
-        console.log(`Using mailbox ${mailboxId}`);
+        console.log(`using mailbox ${mailboxId}`);
       };
       const reconnectAddressPath = storageKeys.reconnectAddress;
       const reconnectAddress = storageModel2.restore(reconnectAddressPath);
@@ -1951,7 +1947,7 @@
         "toggle:disabled": connectionViewModel2.cannotConnect
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.mailboxHeadline), /* @__PURE__ */ createElement("span", { class: "error" }, translations.homePage.mailboxDisabled))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.homePage.outboxHeadline), /* @__PURE__ */ createElement("span", { class: "success" }, translations.homePage.outboxAllItemsSent))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translations.homePage.yourNamePlaceholder,
