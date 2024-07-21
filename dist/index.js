@@ -393,6 +393,7 @@
     socketAddress: [DATA_VERSION, "connection", "socket-address"],
     reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
     outbox: [DATA_VERSION, "connection", "outbox"],
+    mailboxes: [DATA_VERSION, "connection", "mailboxes"],
     // settings
     username: [DATA_VERSION, "settings", "user-name"],
     firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
@@ -1657,7 +1658,6 @@
     connect = (address) => {
       this.udn.connect(address);
     };
-    a;
     disconnect = () => {
       this.udn.disconnect();
       const reconnectAddressPath = storageKeys.reconnectAddress;
@@ -1671,9 +1671,28 @@
       this.connectionChangeHandler();
       if (this.isConnected == false) return;
       if (!this.address) return;
+      this.connectMailbox();
       this.storeAddress(this.address);
       this.sendSubscriptionRequest();
       this.sendMessagesInOutbox();
+    };
+    // mailbox
+    requestNewMailbox = () => {
+      console.trace("requesting mailbox");
+      this.udn.requestMailbox();
+    };
+    connectMailbox = () => {
+      if (this.address == void 0) return;
+      const path = [...storageKeys.mailboxes, this.address];
+      const mailboxId = this.storageModel.restore(path);
+      console.log("connecting mailbox", mailboxId);
+      if (mailboxId == null) return this.requestNewMailbox();
+      this.udn.connectMailbox(mailboxId);
+    };
+    storeMailbox = (mailboxId) => {
+      if (this.address == void 0) return;
+      const path = [...storageKeys.mailboxes, this.address];
+      this.storageModel.store(path, mailboxId);
     };
     // subscription
     addChannel = (channel) => {
@@ -1685,6 +1704,7 @@
       for (const channel of this.channelsToSubscribe) {
         this.udn.subscribe(channel);
       }
+      this.connectMailbox();
     };
     // outbox
     getOutboxMessags = () => {
@@ -1743,7 +1763,6 @@
       this.storageModel.store(addressPath, "");
       const reconnectAddressPath = storageKeys.reconnectAddress;
       this.storageModel.store(reconnectAddressPath, address);
-      this.storageModel.print();
     };
     removeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
@@ -1775,6 +1794,17 @@
       };
       this.udn.ondisconnect = () => {
         this.handleConnectionChange();
+      };
+      this.udn.onmailboxcreate = (mailboxId) => {
+        console.log("Created mailbox", mailboxId);
+        this.storeMailbox(mailboxId);
+        this.connectMailbox();
+      };
+      this.udn.onmailboxdelete = () => {
+        this.requestNewMailbox();
+      };
+      this.udn.onmailboxconnect = (mailboxId) => {
+        console.log(`Using mailbox ${mailboxId}`);
       };
       const reconnectAddressPath = storageKeys.reconnectAddress;
       const reconnectAddress = storageModel2.restore(reconnectAddressPath);

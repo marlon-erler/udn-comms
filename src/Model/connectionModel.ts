@@ -50,9 +50,32 @@ export default class ConnectionModel {
     if (this.isConnected == false) return;
     if (!this.address) return;
 
+    this.connectMailbox();
     this.storeAddress(this.address);
     this.sendSubscriptionRequest();
     this.sendMessagesInOutbox();
+  };
+
+  // mailbox
+  requestNewMailbox = (): void => {
+    console.trace("requesting mailbox");
+    this.udn.requestMailbox();
+  };
+
+  connectMailbox = (): void => {
+    if (this.address == undefined) return;
+    const path = [...storageKeys.mailboxes, this.address];
+    const mailboxId = this.storageModel.restore(path);
+    console.log("connecting mailbox", mailboxId)
+    if (mailboxId == null) return this.requestNewMailbox();
+
+    this.udn.connectMailbox(mailboxId);
+  };
+
+  storeMailbox = (mailboxId: string): void => {
+    if (this.address == undefined) return;
+    const path = [...storageKeys.mailboxes, this.address];
+    this.storageModel.store(path, mailboxId);
   };
 
   // subscription
@@ -67,6 +90,8 @@ export default class ConnectionModel {
     for (const channel of this.channelsToSubscribe) {
       this.udn.subscribe(channel);
     }
+    // update mailbox
+    this.connectMailbox();
   };
 
   // outbox
@@ -142,7 +167,6 @@ export default class ConnectionModel {
     // reconnect
     const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
     this.storageModel.store(reconnectAddressPath, address);
-    this.storageModel.print();
   };
 
   removeAddress = (address: string): void => {
@@ -185,6 +209,19 @@ export default class ConnectionModel {
     };
     this.udn.ondisconnect = () => {
       this.handleConnectionChange();
+    };
+
+    this.udn.onmailboxcreate = (mailboxId: string) => {
+      console.log("created mailbox", mailboxId);
+      this.storeMailbox(mailboxId);
+      this.connectMailbox();
+    };
+    this.udn.onmailboxdelete = (mailboxId: string) => {
+      console.log(`mailbox ${mailboxId} deleted`);
+      this.requestNewMailbox();
+    };
+    this.udn.onmailboxconnect = (mailboxId: string) => {
+      console.log(`using mailbox ${mailboxId}`);
     };
 
     // reconnect
