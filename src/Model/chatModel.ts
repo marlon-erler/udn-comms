@@ -295,16 +295,6 @@ export interface ChatInfo extends ValidObject {
   hasUnreadMessages: boolean;
 }
 
-export const ChatInfoReference: ChatInfo = {
-  dataVersion: DATA_VERSION,
-
-  primaryChannel: "",
-  secondaryChannels: [""],
-  encryptionKey: "",
-
-  hasUnreadMessages: true,
-};
-
 export enum ChatMessageStatus {
   Outbox = "outbox",
   Sent = "sent",
@@ -323,6 +313,17 @@ export interface ChatMessage extends ValidObject {
 
   stringifiedFile: string;
 }
+
+// references
+export const ChatInfoReference: ChatInfo = {
+  dataVersion: DATA_VERSION,
+
+  primaryChannel: "",
+  secondaryChannels: [""],
+  encryptionKey: "",
+
+  hasUnreadMessages: true,
+};
 
 export const ChatMessageReference: ChatMessage = {
   dataVersion: DATA_VERSION,
