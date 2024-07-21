@@ -7,6 +7,7 @@ import { decryptString, encryptString } from "./Utility/crypto";
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
 import ConnectionModel from "./connectionModel";
+import FileModel from "./fileModel";
 import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { v4 } from "uuid";
@@ -16,6 +17,8 @@ export default class ChatModel {
   storageModel: StorageModel;
   settingsModel: SettingsModel;
   chatListModel: ChatListModel;
+
+  fileModel: FileModel;
 
   // data
   id: string;
@@ -210,6 +213,8 @@ export default class ChatModel {
     this.subscribe();
 
     connectionModel.setMessageSentHandler(this.handleMessageSent);
+
+    this.fileModel = new FileModel(this);
   }
 
   // utility

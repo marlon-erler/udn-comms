@@ -301,14 +301,14 @@
   var StorageModel = class _StorageModel {
     storageEntryTree = {};
     // basic
-    store = (pathComponents, value) => {
+    write = (pathComponents, value) => {
       const pathString = _StorageModel.pathComponentsToString(
         ...pathComponents
       );
       localStorage.setItem(pathString, value);
       this.updateTree(...pathComponents);
     };
-    restore = (pathComponents) => {
+    read = (pathComponents) => {
       const pathString = _StorageModel.pathComponentsToString(
         ...pathComponents
       );
@@ -345,12 +345,12 @@
       return [...Object.keys(currentParent).sort(localeCompare)];
     };
     // stringifiable
-    storeStringifiable = (pathComponents, value) => {
+    writeStringifiable = (pathComponents, value) => {
       const valueString = stringify(value);
-      this.store(pathComponents, valueString);
+      this.write(pathComponents, valueString);
     };
-    restoreStringifiable = (pathComponents) => {
-      const valueString = this.restore(pathComponents);
+    readStringifiable = (pathComponents) => {
+      const valueString = this.read(pathComponents);
       if (!valueString) return null;
       return parse(valueString);
     };
@@ -412,10 +412,7 @@
     firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
     // history
     previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
-    previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
-    previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
-    previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
-    // chat etc
+    // chat
     chats: [DATA_VERSION, "chat"],
     chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
     chatLastUsedPage: (id) => [
@@ -425,8 +422,7 @@
       "last-used-page"
     ],
     chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
-    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
-    chatObjects: (id) => [DATA_VERSION, "chat", id, "objects"]
+    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"]
   };
 
   // src/Model/Utility/crypto.ts
@@ -542,14 +538,8 @@
     get messageDirPath() {
       return storageKeys.chatMessages(this.id);
     }
-    get objectDirPath() {
-      return storageKeys.chatObjects(this.id);
-    }
     getMessagePath = (id) => {
       return [...this.messageDirPath, id];
-    };
-    getObjectPath = (id) => {
-      return [...this.objectDirPath, id];
     };
     // set
     setPrimaryChannel = (primaryChannel) => {
@@ -572,20 +562,16 @@
     };
     // store & add
     storeInfo = () => {
-      this.storageModel.storeStringifiable(this.infoPath, this.info);
+      this.storageModel.writeStringifiable(this.infoPath, this.info);
     };
     storeColor = () => {
-      this.storageModel.store(this.colorPath, this.color);
+      this.storageModel.write(this.colorPath, this.color);
     };
     addMessage = async (chatMessage) => {
       await this.decryptMessage(chatMessage);
       const messagePath = this.getMessagePath(chatMessage.id);
-      this.storageModel.storeStringifiable(messagePath, chatMessage);
+      this.storageModel.writeStringifiable(messagePath, chatMessage);
       this.chatMessageHandler(chatMessage);
-    };
-    addObject = (chatObject) => {
-      const objectPath = this.getObjectPath(chatObject.id);
-      this.storageModel.storeStringifiable(objectPath, chatObject);
     };
     // delete
     delete = () => {
@@ -593,18 +579,18 @@
       const dirPath = [...storageKeys.chats, this.id];
       this.storageModel.removeRecursive(dirPath);
     };
-    // restore
-    restoreInfo = () => {
-      const info = this.storageModel.restoreStringifiable(this.infoPath);
+    // load
+    loadInfo = () => {
+      const info = this.storageModel.readStringifiable(this.infoPath);
       if (info != null) {
         this.info = info;
       } else {
         this.info = _ChatModel.generateChatInfo("0");
       }
     };
-    restoreColor = () => {
+    loadColor = () => {
       const path = this.colorPath;
-      const color = this.storageModel.restore(path);
+      const color = this.storageModel.read(path);
       if (!color) {
         this.color = "standard" /* Standard */;
       } else {
@@ -617,7 +603,7 @@
       const messages = [];
       for (const messageId of messageIds) {
         const messagePath = this.getMessagePath(messageId);
-        const message = this.storageModel.restoreStringifiable(messagePath);
+        const message = this.storageModel.readStringifiable(messagePath);
         if (checkIsValidObject(message) == false) continue;
         messages.push(message);
       }
@@ -625,19 +611,6 @@
         (a, b) => a.dateSent.localeCompare(b.dateSent)
       );
       return sorted;
-    }
-    get objects() {
-      const objectIds = this.storageModel.list(this.objectDirPath);
-      if (!Array.isArray(objectIds)) return [];
-      const objects = [];
-      for (const objectId of objectIds) {
-        const objectPathComponents = this.getObjectPath(objectId);
-        const object = this.storageModel.restoreStringifiable(objectPathComponents);
-        if (checkIsValidObject(object) == false) continue;
-        if (object.id != objectId) continue;
-        objects.push(object);
-      }
-      return objects;
     }
     // messaging
     sendMessage = async (body) => {
@@ -690,8 +663,8 @@
       this.settingsModel = settingsModel2;
       this.storageModel = storageModel2;
       this.chatListModel = chatListModel2;
-      this.restoreInfo();
-      this.restoreColor();
+      this.loadInfo();
+      this.loadColor();
       this.subscribe();
       connectionModel2.setMessageSentHandler(this.handleMessageSent);
     }
@@ -783,7 +756,7 @@
     getIndexOfPrimaryChannel(primaryChannel) {
       return this.sortedPrimaryChannels.indexOf(primaryChannel);
     }
-    // restore
+    // load
     loadChats = () => {
       const chatDir = storageKeys.chats;
       const chatIds = this.storageModel.list(chatDir);
@@ -888,7 +861,7 @@
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
-      this.restoreMessages();
+      this.loadMessages();
     };
     close = () => {
       this.chatListViewModel.closeChat();
@@ -918,7 +891,7 @@
       this.secondaryChannels.add(this.newSecondaryChannelInput.value);
       this.newSecondaryChannelInput.value = "";
       this.storeSecondaryChannels();
-      this.restoreSecondaryChannels();
+      this.loadSecondaryChannels();
     };
     removeSecondaryChannel = (secondaryChannel) => {
       this.secondaryChannels.remove(secondaryChannel);
@@ -940,7 +913,7 @@
     remove = () => {
       this.close();
       this.chatModel.delete();
-      this.chatListViewModel.restoreChats();
+      this.chatListViewModel.loadChats();
     };
     // messaging
     sendMessage = () => {
@@ -957,18 +930,18 @@
       this.chatModel.addMessage(chatMessage);
       messageViewModel.loadData();
     };
-    // restore
-    restorePageSelection = () => {
+    // load
+    loadPageSelection = () => {
       const path = storageKeys.chatLastUsedPage(this.chatModel.id);
-      const lastUsedPage = this.storageModel.restore(path);
+      const lastUsedPage = this.storageModel.read(path);
       if (lastUsedPage != null) {
         this.selectedPage.value = lastUsedPage;
       }
       this.selectedPage.subscribeSilent((newPage) => {
-        this.storageModel.store(path, newPage);
+        this.storageModel.write(path, newPage);
       });
     };
-    restoreSecondaryChannels = () => {
+    loadSecondaryChannels = () => {
       this.secondaryChannels.clear();
       for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(
         localeCompare
@@ -976,7 +949,7 @@
         this.secondaryChannels.add(secondaryChannel);
       }
     };
-    restoreMessages = () => {
+    loadMessages = () => {
       for (const chatMessage of this.chatModel.messages) {
         this.addChatMessage(chatMessage);
       }
@@ -998,8 +971,8 @@
         () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
       );
       this.color.value = chatModel.color;
-      this.restoreSecondaryChannels();
-      this.restorePageSelection();
+      this.loadSecondaryChannels();
+      this.loadPageSelection();
       this.updateIndex();
       this.cannotSendMessage = createProxyState(
         [this.settingsViewModel.username, this.composingMessage],
@@ -1057,8 +1030,8 @@
         chatViewModel.updateIndex();
       }
     };
-    // restore
-    restoreChats = () => {
+    // load
+    loadChats = () => {
       this.chatViewModels.clear();
       for (const chatModel of this.chatListModel.chatModels.values()) {
         const chatViewModel = this.createChatViewModel(chatModel);
@@ -1070,7 +1043,7 @@
       this.chatListModel = chatListModel2;
       this.storageModel = storageModel2;
       this.settingsViewModel = settingsViewModel2;
-      this.restoreChats();
+      this.loadChats();
     }
   };
 
@@ -1733,7 +1706,7 @@
     connectMailbox = () => {
       if (this.address == void 0) return;
       const path = [...storageKeys.mailboxes, this.address];
-      const mailboxId = this.storageModel.restore(path);
+      const mailboxId = this.storageModel.read(path);
       console.log("connecting mailbox", mailboxId);
       if (mailboxId == null) return this.requestNewMailbox();
       this.udn.connectMailbox(mailboxId);
@@ -1741,7 +1714,7 @@
     storeMailbox = (mailboxId) => {
       if (this.address == void 0) return;
       const path = [...storageKeys.mailboxes, this.address];
-      this.storageModel.store(path, mailboxId);
+      this.storageModel.write(path, mailboxId);
     };
     // subscription
     addChannel = (channel) => {
@@ -1761,7 +1734,7 @@
       const messageIds = this.storageModel.list(outboxPath);
       let messages = [];
       for (const messageId of messageIds) {
-        const message = this.storageModel.restoreStringifiable([
+        const message = this.storageModel.readStringifiable([
           ...outboxPath,
           messageId
         ]);
@@ -1773,7 +1746,7 @@
     };
     addToOutbox = (chatMessage) => {
       const messagePath = [...storageKeys.outbox, chatMessage.id];
-      this.storageModel.storeStringifiable(messagePath, chatMessage);
+      this.storageModel.writeStringifiable(messagePath, chatMessage);
     };
     removeFromOutbox = (chatMessage) => {
       const messagePath = [...storageKeys.outbox, chatMessage.id];
@@ -1809,9 +1782,9 @@
     };
     storeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
-      this.storageModel.store(addressPath, "");
+      this.storageModel.write(addressPath, "");
       const reconnectAddressPath = storageKeys.reconnectAddress;
-      this.storageModel.store(reconnectAddressPath, address);
+      this.storageModel.write(reconnectAddressPath, address);
     };
     removeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
@@ -1857,7 +1830,7 @@
         console.log(`using mailbox ${mailboxId}`);
       };
       const reconnectAddressPath = storageKeys.reconnectAddress;
-      const reconnectAddress = storageModel2.restore(reconnectAddressPath);
+      const reconnectAddress = storageModel2.read(reconnectAddressPath);
       if (reconnectAddress != null) {
         this.connect(reconnectAddress);
       }
@@ -2067,29 +2040,29 @@
     setName(newValue) {
       this.username = newValue;
       const path = storageKeys.username;
-      this.storageModel.store(path, newValue);
+      this.storageModel.write(path, newValue);
     }
     setFirstDayOfWeek(newValue) {
       this.firstDayOfWeek = newValue;
       const path = storageKeys.firstDayOfWeek;
-      this.storageModel.storeStringifiable(path, newValue);
+      this.storageModel.writeStringifiable(path, newValue);
     }
-    // restore
-    restoreUsername() {
+    // load
+    loadUsernam() {
       const path = storageKeys.username;
-      const content = this.storageModel.restore(path);
+      const content = this.storageModel.read(path);
       this.username = content ?? "";
     }
-    restoreFirstDayofWeek() {
+    loadFirstDayofWeek() {
       const path = storageKeys.firstDayOfWeek;
-      const content = this.storageModel.restoreStringifiable(path);
+      const content = this.storageModel.readStringifiable(path);
       this.firstDayOfWeek = content ?? 0;
     }
     // init
     constructor(storageModel2) {
       this.storageModel = storageModel2;
-      this.restoreUsername();
-      this.restoreFirstDayofWeek();
+      this.loadUsernam();
+      this.loadFirstDayofWeek();
     }
   };
 
@@ -2229,7 +2202,7 @@
     // methods
     getSelectedItemContent = () => {
       const path = StorageModel.stringToPathComponents(this.selectedPath.value);
-      const content = this.storageModel.restore(path);
+      const content = this.storageModel.read(path);
       return (content ?? translations.storage.notAFile) || translations.storage.contentEmpty;
     };
     deleteSelectedItem = () => {
