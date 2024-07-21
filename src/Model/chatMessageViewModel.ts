@@ -2,7 +2,7 @@
 
 import * as React from "bloatless-react";
 
-import { ChatMessage, ChatModel } from "./chatModel";
+import { ChatMessage, ChatMessageStatus, ChatModel } from "./chatModel";
 
 import ChatViewModel from "../ViewModel/chatViewModel";
 
@@ -15,6 +15,9 @@ export default class ChatMessageViewModel {
   sender: string;
   dateSent: string;
   body: React.State<string> = new React.State("");
+  status: React.State<ChatMessageStatus | any> = new React.State<
+    ChatMessageStatus | undefined
+  >(undefined);
   sentByUser: boolean;
 
   // methods
@@ -34,6 +37,7 @@ export default class ChatMessageViewModel {
     this.sender = this.chatMessage.sender;
     this.dateSent = new Date(this.chatMessage.dateSent).toLocaleString();
     this.body.value = this.chatMessage.body;
+    this.status.value = this.chatMessage.status;
   };
 
   // init

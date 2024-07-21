@@ -451,9 +451,18 @@ body[showing-chat] #chat-page-wrapper {
   padding: var(--control-padding);
 }
 .message-bubble .main .timestamp,
+.message-bubble .main .timestamp .icon,
 .message-bubble .main .sender-name {
   font-size: 0.8rem;
   opacity: 0.6;
+}
+.message-bubble .main .timestamp {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-between-tiles);
+}
+.message-bubble .main .timestamp .icon {
+  display: none;
 }
 .message-bubble .main .sender-name {
   font-weight: bold;
@@ -467,8 +476,12 @@ body[showing-chat] #chat-page-wrapper {
 .message-bubble[sentbyuser] {
   align-items: flex-end;
 }
-.message-bubble[sentbyuser] .main {
+.message-bubble[sentbyuser] .main,
+.message-bubble[sentbyuser] .main .timestamp {
   flex-direction: row-reverse;
+}
+.message-bubble[sentbyuser] .main .timestamp .icon {
+  display: flex;
 }
 .message-bubble[sentbyuser] .main span {
   text-align: right;

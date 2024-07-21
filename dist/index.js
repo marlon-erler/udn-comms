@@ -563,7 +563,8 @@
     storeColor = () => {
       this.storageModel.store(this.colorPath, this.color);
     };
-    addMessage = (chatMessage) => {
+    addMessage = async (chatMessage) => {
+      await this.decryptMessage(chatMessage);
       const messagePath = this.getMessagePath(chatMessage.id);
       this.storageModel.storeStringifiable(messagePath, chatMessage);
       this.chatMessageHandler(chatMessage);
@@ -641,13 +642,19 @@
         senderName,
         body
       );
+      this.addMessage(chatMessage);
       this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
     };
-    handleMessage = async (body) => {
+    handleMessage = (body) => {
       const chatMessage = _ChatModel.parseMessage(body);
       if (chatMessage == null) return;
-      await this.decryptMessage(chatMessage);
+      chatMessage.status = "received" /* Received */;
+      this.addMessage(chatMessage);
+    };
+    handleMessageSent = (chatMessage) => {
+      chatMessage.status = "sent" /* Sent */;
+      this.addMessage(chatMessage);
     };
     decryptMessage = async (chatMessage) => {
       const decryptedBody = await decryptString(
@@ -655,7 +662,6 @@
         this.info.encryptionKey
       );
       chatMessage.body = decryptedBody;
-      this.addMessage(chatMessage);
     };
     setMessageHandler = (handler) => {
       this.chatMessageHandler = handler;
@@ -673,6 +679,7 @@
       this.restoreInfo();
       this.restoreColor();
       this.subscribe();
+      connectionModel2.setMessageSentHandler(this.handleMessageSent);
     }
     // utility
     static generateChatInfo = (primaryChannel) => {
@@ -690,7 +697,8 @@
         channel,
         sender,
         body,
-        dateSent: createTimestamp()
+        dateSent: createTimestamp(),
+        status: "outbox" /* Outbox */
       };
     };
     static parseMessage = (string) => {
@@ -795,6 +803,7 @@
     sender;
     dateSent;
     body = new State("");
+    status = new State(void 0);
     sentByUser;
     // methods
     copyMessage = () => {
@@ -812,6 +821,7 @@
       this.sender = this.chatMessage.sender;
       this.dateSent = new Date(this.chatMessage.dateSent).toLocaleString();
       this.body.value = this.chatMessage.body;
+      this.status.value = this.chatMessage.status;
     };
     // init
     constructor(chatViewModel, chatMessage, sentByUser) {
@@ -864,6 +874,7 @@
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
+      this.restoreMessages();
     };
     close = () => {
       this.chatListViewModel.closeChat();
@@ -878,6 +889,7 @@
       const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
       if (existingChatMessageViewModel != void 0) {
         existingChatMessageViewModel.body.value = chatMessage.body;
+        existingChatMessageViewModel.status.value = chatMessage.status;
       } else {
         this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
       }
@@ -918,6 +930,7 @@
     };
     // messaging
     sendMessage = () => {
+      if (this.cannotSendMessage.value == true) return;
       this.sendMessageFromBody(this.composingMessage.value);
       this.composingMessage.value = "";
     };
@@ -925,7 +938,9 @@
       this.chatModel.sendMessage(body);
     };
     decryptMessage = async (messageViewModel) => {
-      await this.chatModel.decryptMessage(messageViewModel.chatMessage);
+      const chatMessage = messageViewModel.chatMessage;
+      await this.chatModel.decryptMessage(chatMessage);
+      this.chatModel.addMessage(chatMessage);
       messageViewModel.loadData();
     };
     // restore
@@ -945,6 +960,11 @@
         localeCompare
       )) {
         this.secondaryChannels.add(secondaryChannel);
+      }
+    };
+    restoreMessages = () => {
+      for (const chatMessage of this.chatModel.messages) {
+        this.addChatMessage(chatMessage);
       }
     };
     // init
@@ -967,9 +987,6 @@
       this.restoreSecondaryChannels();
       this.restorePageSelection();
       this.updateIndex();
-      for (const chatMessage of chatModel.messages) {
-        this.addChatMessage(chatMessage);
-      }
       this.cannotSendMessage = createProxyState(
         [this.settingsViewModel.username, this.composingMessage],
         () => this.settingsViewModel.username.value == "" || this.composingMessage.value == ""
@@ -1189,6 +1206,21 @@
     function openModal() {
       isInfoModalOpen.value = true;
     }
+    const statusIcon = createProxyState(
+      [chatMessageViewModel.status],
+      () => {
+        switch (chatMessageViewModel.status.value) {
+          case "outbox" /* Outbox */:
+            return "hourglass_top";
+          case "sent" /* Sent */:
+            return "check";
+          case "received" /* Received */:
+            return "done_all";
+          default:
+            return "warning";
+        }
+      }
+    );
     return /* @__PURE__ */ createElement(
       "div",
       {
@@ -1201,7 +1233,7 @@
           class: "body",
           "subscribe:innerText": chatMessageViewModel.body
         }
-      ), /* @__PURE__ */ createElement("span", { class: "timestamp ellipsis" }, chatMessageViewModel.dateSent)), /* @__PURE__ */ createElement("div", { class: "button-container" }, /* @__PURE__ */ createElement(
+      ), /* @__PURE__ */ createElement("span", { class: "timestamp ellipsis" }, /* @__PURE__ */ createElement("span", { class: "icon", "subscribe:innerText": statusIcon }), chatMessageViewModel.dateSent)), /* @__PURE__ */ createElement("div", { class: "button-container" }, /* @__PURE__ */ createElement(
         "button",
         {
           "on:click": openModal,
@@ -1528,6 +1560,7 @@
     // UTILITY METHODS
     send(messageObject) {
       if (this.ws == void 0) return false;
+      if (this.ws.readyState != 1) return false;
       const messageString = JSON.stringify(messageObject);
       this.ws.send(messageString);
       return true;
@@ -1617,6 +1650,8 @@
     };
     messageHandler = () => {
     };
+    messageSentHandler = () => {
+    };
     channelsToSubscribe = /* @__PURE__ */ new Set();
     // connection
     connect = (address) => {
@@ -1691,7 +1726,12 @@
     };
     tryToSendMessage = (chatMessage) => {
       const stringifiedBody = stringify(chatMessage);
-      return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
+      const isSent = this.udn.sendMessage(
+        chatMessage.channel,
+        stringifiedBody
+      );
+      if (isSent) this.messageSentHandler(chatMessage);
+      return isSent;
     };
     // storage
     getAddressPath = (address) => {
@@ -1719,6 +1759,9 @@
     };
     setMessageHandler = (handler) => {
       this.messageHandler = handler;
+    };
+    setMessageSentHandler = (handler) => {
+      this.messageSentHandler = handler;
     };
     // setup
     constructor(storageModel2) {

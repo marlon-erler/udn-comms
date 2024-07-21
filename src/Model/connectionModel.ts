@@ -22,6 +22,7 @@ export default class ConnectionModel {
 
   connectionChangeHandler: () => void = () => {};
   messageHandler: (data: Message) => void = () => {};
+  messageSentHandler: (chatMessage: ChatMessage) => void = () => {};
 
   channelsToSubscribe: Set<string> = new Set();
 
@@ -62,7 +63,7 @@ export default class ConnectionModel {
 
   sendSubscriptionRequest = (): void => {
     if (this.isConnected == false) return;
-    
+
     for (const channel of this.channelsToSubscribe) {
       this.udn.subscribe(channel);
     }
@@ -102,7 +103,7 @@ export default class ConnectionModel {
     const messages: ChatMessage[] = this.getOutboxMessags();
 
     for (const message of messages) {
-      const isSent = this.tryToSendMessage(message);
+      const isSent: boolean = this.tryToSendMessage(message);
       if (isSent == false) return;
 
       this.removeFromOutbox(message);
@@ -119,7 +120,12 @@ export default class ConnectionModel {
 
   tryToSendMessage = (chatMessage: ChatMessage): boolean => {
     const stringifiedBody: string = stringify(chatMessage);
-    return this.udn.sendMessage(chatMessage.channel, stringifiedBody);
+    const isSent: boolean = this.udn.sendMessage(
+      chatMessage.channel,
+      stringifiedBody
+    );
+    if (isSent) this.messageSentHandler(chatMessage);
+    return isSent;
   };
 
   // storage
@@ -156,6 +162,12 @@ export default class ConnectionModel {
 
   setMessageHandler = (handler: (data: Message) => void): void => {
     this.messageHandler = handler;
+  };
+
+  setMessageSentHandler = (
+    handler: (chatMessage: ChatMessage) => void
+  ): void => {
+    this.messageSentHandler = handler;
   };
 
   // setup

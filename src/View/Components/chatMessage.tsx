@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import { ChatMessageInfoModal } from "./chatMessageInfoModal";
+import { ChatMessageStatus } from "../../Model/chatModel";
 import ChatMessageViewModel from "../../Model/chatMessageViewModel";
 import { translations } from "../translations";
 
@@ -9,6 +10,22 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
   function openModal() {
     isInfoModalOpen.value = true;
   }
+
+  const statusIcon = React.createProxyState(
+    [chatMessageViewModel.status],
+    () => {
+      switch (chatMessageViewModel.status.value) {
+        case ChatMessageStatus.Outbox:
+          return "hourglass_top";
+        case ChatMessageStatus.Sent:
+          return "check";
+        case ChatMessageStatus.Received:
+          return "done_all";
+        default:
+          return "warning";
+      }
+    }
+  );
 
   return (
     <div
@@ -25,6 +42,7 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
             subscribe:innerText={chatMessageViewModel.body}
           ></span>
           <span class="timestamp ellipsis">
+            <span class="icon" subscribe:innerText={statusIcon}></span>
             {chatMessageViewModel.dateSent}
           </span>
         </div>

@@ -63,6 +63,7 @@ export default class ChatViewModel {
   // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
+    this.restoreMessages();
   };
 
   close = (): void => {
@@ -81,6 +82,7 @@ export default class ChatViewModel {
       this.chatMessageViewModels.value.get(chatMessage.id);
     if (existingChatMessageViewModel != undefined) {
       existingChatMessageViewModel.body.value = chatMessage.body;
+      existingChatMessageViewModel.status.value = chatMessage.status;
     } else {
       this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
     }
@@ -131,6 +133,8 @@ export default class ChatViewModel {
 
   // messaging
   sendMessage = (): void => {
+    if (this.cannotSendMessage.value == true) return;
+    
     this.sendMessageFromBody(this.composingMessage.value);
     this.composingMessage.value = "";
   };
@@ -142,7 +146,9 @@ export default class ChatViewModel {
   decryptMessage = async (
     messageViewModel: ChatMessageViewModel
   ): Promise<void> => {
-    await this.chatModel.decryptMessage(messageViewModel.chatMessage);
+    const chatMessage: ChatMessage = messageViewModel.chatMessage;
+    await this.chatModel.decryptMessage(chatMessage);
+    this.chatModel.addMessage(chatMessage);
     messageViewModel.loadData();
   };
 
@@ -167,6 +173,12 @@ export default class ChatViewModel {
       this.secondaryChannels.add(secondaryChannel);
     }
   };
+
+  restoreMessages = (): void => {
+    for (const chatMessage of this.chatModel.messages) {
+      this.addChatMessage(chatMessage);
+    }
+  }
 
   // init
   constructor(
@@ -201,10 +213,6 @@ export default class ChatViewModel {
     this.restoreSecondaryChannels();
     this.restorePageSelection();
     this.updateIndex();
-
-    for (const chatMessage of chatModel.messages) {
-      this.addChatMessage(chatMessage);
-    }
 
     // guards
     this.cannotSendMessage = React.createProxyState(

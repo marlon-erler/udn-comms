@@ -7,7 +7,6 @@ import { decryptString, encryptString } from "./Utility/crypto";
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
 import ConnectionModel from "./connectionModel";
-import { Message } from "udn-frontend";
 import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { v4 } from "uuid";
@@ -89,7 +88,8 @@ export class ChatModel {
     this.storageModel.store(this.colorPath, this.color);
   };
 
-  addMessage = (chatMessage: ChatMessage): void => {
+  addMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    await this.decryptMessage(chatMessage);
     const messagePath: string[] = this.getMessagePath(chatMessage.id);
     this.storageModel.storeStringifiable(messagePath, chatMessage);
     this.chatMessageHandler(chatMessage);
@@ -187,15 +187,22 @@ export class ChatModel {
       body
     );
 
+    this.addMessage(chatMessage);
     this.connectionModel.sendMessageOrStore(chatMessage);
     return true;
   };
 
-  handleMessage = async (body: string): Promise<void> => {
+  handleMessage = (body: string): void => {
     const chatMessage: ChatMessage | null = ChatModel.parseMessage(body);
     if (chatMessage == null) return;
 
-    await this.decryptMessage(chatMessage);
+    chatMessage.status = ChatMessageStatus.Received;
+    this.addMessage(chatMessage);
+  };
+
+  handleMessageSent = (chatMessage: ChatMessage): void => {
+    chatMessage.status = ChatMessageStatus.Sent;
+    this.addMessage(chatMessage);
   };
 
   decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
@@ -204,7 +211,6 @@ export class ChatModel {
       this.info.encryptionKey
     );
     chatMessage.body = decryptedBody;
-    this.addMessage(chatMessage);
   };
 
   setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
@@ -232,6 +238,8 @@ export class ChatModel {
     this.restoreInfo();
     this.restoreColor();
     this.subscribe();
+
+    connectionModel.setMessageSentHandler(this.handleMessageSent);
   }
 
   // utility
@@ -258,6 +266,8 @@ export class ChatModel {
       sender,
       body,
       dateSent: createTimestamp(),
+
+      status: ChatMessageStatus.Outbox,
     };
   };
 
@@ -281,6 +291,12 @@ export interface ChatInfo {
   hasUnreadMessages: boolean;
 }
 
+export enum ChatMessageStatus {
+  Outbox = "outbox",
+  Sent = "sent",
+  Received = "received",
+}
+
 export interface ChatMessage {
   dataVersion: "v2";
 
@@ -290,6 +306,8 @@ export interface ChatMessage {
   sender: string;
   body: string;
   dateSent: string;
+
+  status?: ChatMessageStatus;
 
   stringifiedObject?: string;
 }
