@@ -8,9 +8,11 @@ import ChatListViewModel from "../ViewModel/chatListViewModel";
 import { ChatViewModelToChatEntry } from "./Components/chatEntry";
 import ConnectionViewModel from "../ViewModel/connectionViewModel";
 import SettingsViewModel from "../ViewModel/settingsViewModel";
+import StorageViewModel from "../ViewModel/storageViewModel";
 import { translations } from "./translations";
 
 export function HomePage(
+  storageViewModel: StorageViewModel,
   settingsViewModel: SettingsViewModel,
   connectionViewModel: ConnectionViewModel,
   chatListViewModel: ChatListViewModel
@@ -112,6 +114,15 @@ export function HomePage(
         </div>
       </label>
 
+      <hr></hr>
+
+      <button class="tile flex-no" on:click={storageViewModel.showStorageModal}>
+        <span class="icon">hard_drive_2</span>
+        <div>
+          <span>{translations.homePage.manageStorageButton}</span>
+        </div>
+      </button>
+
       <div class="mobile-only">
         <hr></hr>
 
@@ -148,7 +159,10 @@ export function HomePage(
 
       <div
         id="chat-grid"
-        children:append={[chatListViewModel.chatViewModels, ChatViewModelToChatEntry]}
+        children:append={[
+          chatListViewModel.chatViewModels,
+          ChatViewModelToChatEntry,
+        ]}
       ></div>
     </div>
   );

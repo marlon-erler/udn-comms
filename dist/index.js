@@ -302,24 +302,30 @@
     storageEntryTree = {};
     // basic
     store = (pathComponents, value) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      localStorage.setItem(key, value);
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.setItem(pathString, value);
       this.updateTree(...pathComponents);
     };
     restore = (pathComponents) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      return localStorage.getItem(key);
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      return localStorage.getItem(pathString);
     };
     remove = (pathComponents, shouldInitialize = true) => {
-      const key = _StorageModel.pathComponentsToKey(...pathComponents);
-      localStorage.removeItem(key);
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.removeItem(pathString);
       if (shouldInitialize == true) {
         this.initializeTree();
       }
     };
     removeRecursive = (pathComponentsOfEntityToDelete) => {
       a: for (const key of Object.keys(localStorage)) {
-        const pathComponentsOfCurrentEntity = _StorageModel.keyToPathComponents(key);
+        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
         for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
           if (!pathComponentsOfCurrentEntity[i]) continue a;
           if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
@@ -336,7 +342,7 @@
         if (nextParent == void 0) return [];
         currentParent = nextParent;
       }
-      return [...Object.keys(currentParent)];
+      return [...Object.keys(currentParent).sort(localeCompare)];
     };
     // stringifiable
     storeStringifiable = (pathComponents, value) => {
@@ -357,7 +363,7 @@
       console.log("initializing tree");
       this.storageEntryTree = {};
       for (const key of Object.keys(localStorage)) {
-        const components = _StorageModel.keyToPathComponents(key);
+        const components = _StorageModel.stringToPathComponents(key);
         this.updateTree(...components);
       }
     };
@@ -370,22 +376,22 @@
         currentParent = currentParent[pathPart];
       }
     };
-    print = () => {
-      console.log(stringify(this.storageEntryTree));
+    printTree = () => {
+      return stringify(this.storageEntryTree);
     };
-    static pathComponentsToKey = (...pathComponents) => {
+    static pathComponentsToString = (...pathComponents) => {
       return pathComponents.join(PATH_COMPONENT_SEPARATOR);
     };
-    static keyToPathComponents = (key) => {
-      return key.split(PATH_COMPONENT_SEPARATOR);
+    static stringToPathComponents = (string) => {
+      return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
     };
     static join = (...items) => {
       let allComponents = [];
       for (const item of items) {
-        const parts = this.keyToPathComponents(item);
+        const parts = this.stringToPathComponents(item);
         allComponents.push(...parts);
       }
-      return _StorageModel.pathComponentsToKey(...allComponents);
+      return _StorageModel.pathComponentsToString(...allComponents);
     };
   };
   var storageKeys = {
@@ -1116,6 +1122,7 @@
       yourNamePlaceholder: "Jane Doe",
       setNameButtonAudioLabel: "set name",
       firstDayOfWeekLabel: "First day of week",
+      manageStorageButton: "Manage storage",
       scrollToChatButton: "Chats",
       ///
       backToOverviewAudioLabel: "go back to overview",
@@ -1901,7 +1908,7 @@
   };
 
   // src/View/homePage.tsx
-  function HomePage(settingsViewModel2, connectionViewModel2, chatListViewModel2) {
+  function HomePage(storageViewModel2, settingsViewModel2, connectionViewModel2, chatListViewModel2) {
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
@@ -1970,7 +1977,7 @@
         i.toString(),
         i == settingsViewModel2.firstDayOfWeekInput.value
       )
-    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -1992,7 +1999,10 @@
       "div",
       {
         id: "chat-grid",
-        "children:append": [chatListViewModel2.chatViewModels, ChatViewModelToChatEntry]
+        "children:append": [
+          chatListViewModel2.chatViewModels,
+          ChatViewModelToChatEntry
+        ]
       }
     ));
     function scrollToChat() {
@@ -2067,6 +2077,87 @@
     }
   };
 
+  // src/View/Components/directoryItemList.tsx
+  function DirectoryItemList(storageModel2, pathString, selectedPath) {
+    const StringToDirectoryItemList = (pathString2) => DirectoryItemList(storageModel2, pathString2, selectedPath);
+    const path = StorageModel.stringToPathComponents(pathString);
+    const fileName = path[path.length - 1] || "\\";
+    const items = new ListState();
+    const style = `text-indent: ${path.length * 2}rem`;
+    function loadItems() {
+      items.clear();
+      const directoryItems = storageModel2.list(path);
+      for (const directoryItem of directoryItems) {
+        const itemPath = [...path, directoryItem];
+        const pathString2 = StorageModel.pathComponentsToString(...itemPath);
+        items.add(pathString2);
+      }
+    }
+    function select() {
+      selectedPath.value = pathString;
+    }
+    const isSelected = createProxyState(
+      [selectedPath],
+      () => selectedPath.value == pathString
+    );
+    isSelected.subscribe(() => {
+      if (isSelected.value == false) return;
+      loadItems();
+    });
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-100 flex-1 clip",
+        "toggle:selected": isSelected,
+        "on:click": select
+      },
+      /* @__PURE__ */ createElement("span", { class: "ellipsis width-100 flex-1", style }, fileName)
+    ), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column",
+        "children:append": [items, StringToDirectoryItemList]
+      }
+    ));
+  }
+
+  // src/View/Components/fileBrowser.tsx
+  function FileBrowser(storageModel2, selectedPath) {
+    const fileContent = createProxyState([selectedPath], () => {
+      const path = StorageModel.stringToPathComponents(selectedPath.value);
+      const content = storageModel2.restore(path);
+      return content || "";
+    });
+    return /* @__PURE__ */ createElement("div", { class: "file-browser" }, DirectoryItemList(storageModel2, "\\", selectedPath), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContent })));
+  }
+
+  // src/View/Modals/storageModal.tsx
+  function StorageModal(storageViewModel2) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(
+      storageViewModel2.storageModel,
+      storageViewModel2.selectedPath
+    )), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/ViewModel/storageViewModel.ts
+  var StorageViewModel = class {
+    storageModel;
+    // state
+    isShowingStorageModal = new State(false);
+    selectedPath = new State("\\");
+    // view methods
+    showStorageModal = () => {
+      this.isShowingStorageModal.value = true;
+    };
+    hideStorageModal = () => {
+      this.isShowingStorageModal.value = false;
+    };
+    // init
+    constructor(storageModel2) {
+      this.storageModel = storageModel2;
+    }
+  };
+
   // src/index.tsx
   var storageModel = new StorageModel();
   var settingsModel = new SettingsModel(storageModel);
@@ -2076,7 +2167,7 @@
     settingsModel,
     connectionModel
   );
-  storageModel.print();
+  var storageViewModel = new StorageViewModel(storageModel);
   var settingsViewModel = new SettingsViewModel(settingsModel);
   var connectionViewModel = new ConnectionViewModel(connectionModel);
   var chatListViewModel = new ChatListViewModel(
@@ -2094,8 +2185,14 @@
     /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
   );
   document.querySelector("main").append(
-    HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
+    HomePage(
+      storageViewModel,
+      settingsViewModel,
+      connectionViewModel,
+      chatListViewModel
+    ),
     ChatPageWrapper(chatListViewModel),
-    ConnectionModal(connectionViewModel)
+    ConnectionModal(connectionViewModel),
+    StorageModal(storageViewModel)
   );
 })();

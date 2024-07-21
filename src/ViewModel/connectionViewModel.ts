@@ -1,7 +1,6 @@
 import * as React from "bloatless-react";
 
 import ConnectionModel from "../Model/connectionModel";
-import { Message } from "udn-frontend";
 
 export default class ConnectionViewModel {
   connectionModel: ConnectionModel;

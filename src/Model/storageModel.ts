@@ -1,6 +1,6 @@
 // this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
 
-import { parse, stringify } from "./Utility/utility";
+import { localeCompare, parse, stringify } from "./Utility/utility";
 
 import { DATA_VERSION } from "./Utility/typeSafety";
 
@@ -11,22 +11,28 @@ export default class StorageModel {
 
   // basic
   store = (pathComponents: string[], value: string): void => {
-    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
-    localStorage.setItem(key, value);
+    const pathString: string = StorageModel.pathComponentsToString(
+      ...pathComponents
+    );
+    localStorage.setItem(pathString, value);
     this.updateTree(...pathComponents);
   };
 
   restore = (pathComponents: string[]): string | null => {
-    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
-    return localStorage.getItem(key);
+    const pathString: string = StorageModel.pathComponentsToString(
+      ...pathComponents
+    );
+    return localStorage.getItem(pathString);
   };
 
   remove = (
     pathComponents: string[],
     shouldInitialize: boolean = true
   ): void => {
-    const key: string = StorageModel.pathComponentsToKey(...pathComponents);
-    localStorage.removeItem(key);
+    const pathString: string = StorageModel.pathComponentsToString(
+      ...pathComponents
+    );
+    localStorage.removeItem(pathString);
 
     if (shouldInitialize == true) {
       this.initializeTree();
@@ -36,7 +42,7 @@ export default class StorageModel {
   removeRecursive = (pathComponentsOfEntityToDelete: string[]): void => {
     a: for (const key of Object.keys(localStorage)) {
       const pathComponentsOfCurrentEntity: string[] =
-        StorageModel.keyToPathComponents(key);
+        StorageModel.stringToPathComponents(key);
 
       for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
         if (!pathComponentsOfCurrentEntity[i]) continue a;
@@ -59,7 +65,7 @@ export default class StorageModel {
       currentParent = nextParent;
     }
 
-    return [...Object.keys(currentParent)];
+    return [...Object.keys(currentParent).sort(localeCompare)];
   };
 
   // stringifiable
@@ -86,7 +92,7 @@ export default class StorageModel {
 
     this.storageEntryTree = {};
     for (const key of Object.keys(localStorage)) {
-      const components: string[] = StorageModel.keyToPathComponents(key);
+      const components: string[] = StorageModel.stringToPathComponents(key);
       this.updateTree(...components);
     }
   };
@@ -102,25 +108,25 @@ export default class StorageModel {
     }
   };
 
-  print = () => {
-    console.log(stringify(this.storageEntryTree));
+  printTree = (): string => {
+    return stringify(this.storageEntryTree);
   };
 
-  static pathComponentsToKey = (...pathComponents: string[]): string => {
+  static pathComponentsToString = (...pathComponents: string[]): string => {
     return pathComponents.join(PATH_COMPONENT_SEPARATOR);
   };
 
-  static keyToPathComponents = (key: string): string[] => {
-    return key.split(PATH_COMPONENT_SEPARATOR);
+  static stringToPathComponents = (string: string): string[] => {
+    return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
   };
 
   static join = (...items: string[]): string => {
     let allComponents: string[] = [];
     for (const item of items) {
-      const parts = this.keyToPathComponents(item);
+      const parts = this.stringToPathComponents(item);
       allComponents.push(...parts);
     }
-    return StorageModel.pathComponentsToKey(...allComponents);
+    return StorageModel.pathComponentsToString(...allComponents);
   };
 }
 

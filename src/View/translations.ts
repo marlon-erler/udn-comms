@@ -40,6 +40,8 @@ const englishTranslations = {
 
     firstDayOfWeekLabel: "First day of week",
 
+    manageStorageButton: "Manage storage",
+
     scrollToChatButton: "Chats",
 
     ///
@@ -106,7 +108,7 @@ const englishTranslations = {
       resendMessageButton: "Resend message",
       decryptMessageButton: "Decrypt message",
       deleteMessageButton: "Delete message",
-    }
+    },
   },
 };
 

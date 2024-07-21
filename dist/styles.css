@@ -1035,6 +1035,7 @@ menu {
 article,
 body,
 main,
+.clip,
 .ellipsis {
   overflow: hidden;
 }
@@ -1078,6 +1079,11 @@ main {
 
 .ellipsis {
   white-space: nowrap;
+}
+
+code {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* scrolling */

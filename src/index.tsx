@@ -12,7 +12,9 @@ import ConnectionViewModel from "./ViewModel/connectionViewModel";
 import { HomePage } from "./View/homePage";
 import SettingsModel from "./Model/settingsModel";
 import SettingsViewModel from "./ViewModel/settingsViewModel";
+import { StorageModal } from "./View/Modals/storageModal";
 import StorageModel from "./Model/storageModel";
+import StorageViewModel from "./ViewModel/storageViewModel";
 
 // models
 const storageModel = new StorageModel();
@@ -24,9 +26,8 @@ const chatListModel = new ChatListModel(
   connectionModel
 );
 
-storageModel.print();
-
 // viewModels
+const storageViewModel = new StorageViewModel(storageModel);
 const settingsViewModel = new SettingsViewModel(settingsModel);
 const connectionViewModel = new ConnectionViewModel(connectionModel);
 const chatListViewModel = new ChatListViewModel(
@@ -53,7 +54,13 @@ document.body.append(
 document
   .querySelector("main")!
   .append(
-    HomePage(settingsViewModel, connectionViewModel, chatListViewModel),
+    HomePage(
+      storageViewModel,
+      settingsViewModel,
+      connectionViewModel,
+      chatListViewModel
+    ),
     ChatPageWrapper(chatListViewModel),
-    ConnectionModal(connectionViewModel)
+    ConnectionModal(connectionViewModel),
+    StorageModal(storageViewModel)
   );
