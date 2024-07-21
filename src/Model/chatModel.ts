@@ -1,4 +1,4 @@
-// this file is responsible for managing chats. objects are delegated to objectModel.ts.
+// this file is responsible for managing chats.
 
 import StorageModel, { storageKeys } from "./storageModel";
 import { createTimestamp, parse } from "./Utility/utility";
