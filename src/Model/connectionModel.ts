@@ -29,9 +29,13 @@ export default class ConnectionModel {
   connect = (address: string): void => {
     this.udn.connect(address);
   };
-
+  a;
   disconnect = (): void => {
     this.udn.disconnect();
+
+    // do not reconnect
+    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    this.storageModel.remove(reconnectAddressPath);
   };
 
   handleMessage = (data: Message): void => {
@@ -41,6 +45,7 @@ export default class ConnectionModel {
   handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
     this.connectionChangeHandler();
+
     if (this.isConnected == false) return;
     if (!this.address) return;
 
@@ -56,6 +61,8 @@ export default class ConnectionModel {
   };
 
   sendSubscriptionRequest = (): void => {
+    if (this.isConnected == false) return;
+    
     for (const channel of this.channelsToSubscribe) {
       this.udn.subscribe(channel);
     }
@@ -122,8 +129,14 @@ export default class ConnectionModel {
   };
 
   storeAddress = (address: string): void => {
+    // history
     const addressPath = this.getAddressPath(address);
     this.storageModel.store(addressPath, "");
+
+    // reconnect
+    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    this.storageModel.store(reconnectAddressPath, address);
+    this.storageModel.print();
   };
 
   removeAddress = (address: string): void => {
@@ -161,5 +174,13 @@ export default class ConnectionModel {
     this.udn.ondisconnect = () => {
       this.handleConnectionChange();
     };
+
+    // reconnect
+    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    const reconnectAddress: string | null =
+      storageModel.restore(reconnectAddressPath);
+    if (reconnectAddress != null) {
+      this.connect(reconnectAddress);
+    }
   }
 }

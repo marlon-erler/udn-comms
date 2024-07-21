@@ -131,6 +131,7 @@ export type StorageEntry = { [key: string]: StorageEntry };
 export const storageKeys = {
   // connection
   socketAddress: [DATA_VERSION, "connection", "socket-address"],
+  reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
   outbox: [DATA_VERSION, "connection", "outbox"],
 
   // settings

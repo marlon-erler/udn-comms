@@ -347,6 +347,7 @@
   var storageKeys = {
     // connection
     socketAddress: [DATA_VERSION, "connection", "socket-address"],
+    reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
     outbox: [DATA_VERSION, "connection", "outbox"],
     // settings
     username: [DATA_VERSION, "settings", "user-name"],
@@ -1504,8 +1505,11 @@
     connect = (address) => {
       this.udn.connect(address);
     };
+    a;
     disconnect = () => {
       this.udn.disconnect();
+      const reconnectAddressPath = storageKeys.reconnectAddress;
+      this.storageModel.remove(reconnectAddressPath);
     };
     handleMessage = (data) => {
       this.messageHandler(data);
@@ -1525,6 +1529,7 @@
       this.sendSubscriptionRequest();
     };
     sendSubscriptionRequest = () => {
+      if (this.isConnected == false) return;
       for (const channel of this.channelsToSubscribe) {
         this.udn.subscribe(channel);
       }
@@ -1579,6 +1584,9 @@
     storeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
       this.storageModel.store(addressPath, "");
+      const reconnectAddressPath = storageKeys.reconnectAddress;
+      this.storageModel.store(reconnectAddressPath, address);
+      this.storageModel.print();
     };
     removeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
@@ -1608,6 +1616,11 @@
       this.udn.ondisconnect = () => {
         this.handleConnectionChange();
       };
+      const reconnectAddressPath = storageKeys.reconnectAddress;
+      const reconnectAddress = storageModel2.restore(reconnectAddressPath);
+      if (reconnectAddress != null) {
+        this.connect(reconnectAddress);
+      }
     }
   };
 
