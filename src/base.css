@@ -8,7 +8,7 @@
 
 /* Gradient */
 
-#background {
+#background-wrapper {
   position: fixed;
 
   top: 0px;
@@ -21,81 +21,102 @@
 
   overflow: hidden;
 
-  opacity: 0.2;
+  opacity: 0.3;
 }
 
 main {
   z-index: 2;
 }
 
-#background::after,
-#background::before {
+#background-wrapper div {
   content: "";
 
   position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
 
   z-index: -1;
   pointer-events: none;
 
-  filter: blur(60px);
+  filter: blur(40px);
+}
+
+#background-wrapper #sky {
+  left: -100%;
+  bottom: -50%;
+
+  --color-1: hsl(188, 100%, 83%);
+  --color-2: hsl(194, 72%, 56%);
+  background-image: radial-gradient(var(--color-1), var(--color-2));
+}
+
+#background-wrapper #grass-1 {
+  --color-1: hsl(120, 50%, 50%);
+  --color-2: hsl(120, 50%, 40%);
+
+  background-image: linear-gradient(
+    350deg,
+    var(--color-1),
+    var(--color-2) 30%,
+    transparent 40%
+  );
+}
+
+#background-wrapper #grass-2 {
+  --color-1: hsl(110, 100%, 40%);
+  --color-2: hsl(110, 100%, 35%);
+
+  background-image: linear-gradient(
+    4deg,
+    var(--color-1),
+    var(--color-2) 25%,
+    transparent 30%
+  );
+}
+
+#background-wrapper #sun {
+  top: -20%;
+  left: -200%;
+  right: -100%;
+  bottom: -50%;
+
+  --color-1: hsl(23, 100%, 50%);
+  --color-2: hsl(36.5, 100%, 50%);
+  --color-3: hsl(44.9, 100%, 50%);
+
+  background-image: radial-gradient(
+    var(--color-1),
+    var(--color-2) 10%,
+    var(--color-3) 20%,
+    transparent 40%
+  );
 }
 
 @media (prefers-color-scheme: dark) {
-  #background {
-    background-image: linear-gradient(
-      120deg,
-      hsla(210, 100%, 50%, 60%),
-      hsla(210, 100%, 50%, 55%),
-      transparent 60%
-    );
-  }
-}
-
-@media (display-mode: standalone) {
-  @media (prefers-color-scheme: dark) {
-    #background {
-      background-image: linear-gradient(
-        120deg,
-        hsla(210, 100%, 50%, 80%),
-        hsla(210, 100%, 50%, 75%),
-        transparent 60%
-      );
-    }
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  #background {
-    background-image: linear-gradient(
-      120deg,
-      hsla(210, 100%, 50%, 60%),
-      hsla(210, 100%, 50%, 30%)
-    );
+  #background-wrapper {
+    opacity: 0.2;
   }
 
-  #background::before {
-    top: -130%;
-    left: -150%;
-    right: -800%;
-    bottom: -20%;
-
-    background-image: radial-gradient(
-      transparent 60%,
-      hsla(110, 100%, 40%, 50%) 60%,
-      hsla(110, 100%, 20%, 40%)
-    );
+  #background-wrapper #sky {
+    --color-1: hsl(188, 100%, 30%);
+    --color-2: hsl(194, 72%, 24%);
   }
 
-  #background::after {
-    top: -100%;
-    left: 0%;
-    right: -500%;
-    bottom: -50%;
+  #background-wrapper #grass-1 {
+    --color-1: hsl(120, 30%, 30%);
+    --color-2: hsl(120, 30%, 24%);
+  }
 
-    background-image: radial-gradient(
-      transparent 70%,
-      hsla(110, 100%, 30%, 90%) 70%,
-      hsla(110, 100%, 10%, 70%)
-    );
+  #background-wrapper #grass-2 {
+    --color-1: hsl(110, 60%, 30%);
+    --color-2: hsl(110, 50%, 24%);
+  }
+
+  #background-wrapper #sun {
+    --color-1: hsl(9, 100%, 50%);
+    --color-2: hsl(36.5, 100%, 40%);
+    --color-3: hsl(44.9, 100%, 30%);
   }
 }

@@ -43,7 +43,14 @@ chatListViewModel.selectedChat.subscribe(() => {
   );
 });
 
-document.body.append(<div id="background"></div>);
+document.body.append(
+  <div id="background-wrapper">
+    <div id="sky"></div>
+    <div id="sun"></div>
+    <div id="grass-1"></div>
+    <div id="grass-2"></div>
+  </div>
+);
 document
   .querySelector("main")!
   .append(
