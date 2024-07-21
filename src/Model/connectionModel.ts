@@ -30,7 +30,7 @@ export default class ConnectionModel {
   connect = (address: string): void => {
     this.udn.connect(address);
   };
-  a;
+
   disconnect = (): void => {
     this.udn.disconnect();
 
