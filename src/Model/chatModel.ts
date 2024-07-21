@@ -1,6 +1,10 @@
 // this file is responsible for managing chats.
 
-import { DATA_VERSION, ValidObject, checkIsValidObject } from "./Utility/typeSafety";
+import {
+  DATA_VERSION,
+  ValidObject,
+  checkIsValidObject,
+} from "./Utility/typeSafety";
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import {
@@ -35,7 +39,7 @@ export default class ChatModel {
   // sorting
   get index(): number {
     return this.chatListModel.getIndexOfPrimaryChannel(
-      this.info.primaryChannel
+      this.info.primaryChannel ?? ""
     );
   }
 
@@ -90,6 +94,7 @@ export default class ChatModel {
 
   addMessage = async (chatMessage: ChatMessage): Promise<void> => {
     await this.decryptMessage(chatMessage);
+    if (chatMessage.id == undefined) return;
 
     // message
     if (chatMessage.body != "") {
@@ -99,7 +104,7 @@ export default class ChatModel {
     }
 
     // file
-    this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
+    this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile ?? "");
   };
 
   // delete
@@ -146,7 +151,7 @@ export default class ChatModel {
     }
 
     const sorted = messages.sort((a, b) =>
-      a.dateSent.localeCompare(b.dateSent)
+      (a.dateSent ?? "").localeCompare(b.dateSent ?? "")
     );
     return sorted;
   }
@@ -157,7 +162,7 @@ export default class ChatModel {
     if (senderName == "") return false;
 
     const allChannels = [this.info.primaryChannel];
-    for (const secondaryChannel of this.info.secondaryChannels) {
+    for (const secondaryChannel of this.info.secondaryChannels ?? []) {
       allChannels.push(secondaryChannel);
     }
 
@@ -166,7 +171,7 @@ export default class ChatModel {
     const chatMessage: ChatMessage = await ChatModel.createChatMessage(
       combinedChannel,
       senderName,
-      this.info.encryptionKey,
+      this.info.encryptionKey ?? "",
       body,
       file
     );
@@ -191,12 +196,12 @@ export default class ChatModel {
 
   decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
     const decryptedBody: string = await decryptString(
-      chatMessage.body,
-      this.info.encryptionKey
+      chatMessage.body ?? "",
+      this.info.encryptionKey ?? ""
     );
     const decryptedFile: string = await decryptString(
       chatMessage.stringifiedFile ?? "",
-      this.info.encryptionKey
+      this.info.encryptionKey ?? ""
     );
     chatMessage.body = decryptedBody;
     chatMessage.stringifiedFile = decryptedFile;
@@ -207,6 +212,8 @@ export default class ChatModel {
   };
 
   subscribe = (): void => {
+    if (this.info.primaryChannel == undefined || this.info.primaryChannel == "")
+      return;
     this.connectionModel.addChannel(this.info.primaryChannel);
   };
 
@@ -271,9 +278,12 @@ export default class ChatModel {
     }
 
     if (encryptionKey != "") {
-      chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
+      chatMessage.body = await encryptString(
+        chatMessage.body ?? "",
+        encryptionKey
+      );
       chatMessage.stringifiedFile = await encryptString(
-        chatMessage.stringifiedFile,
+        chatMessage.stringifiedFile ?? "",
         encryptionKey
       );
     }
@@ -284,11 +294,11 @@ export default class ChatModel {
 
 // types
 export interface ChatInfo extends ValidObject {
-  primaryChannel: string;
-  secondaryChannels: string[];
-  encryptionKey: string;
+  primaryChannel?: string;
+  secondaryChannels?: string[];
+  encryptionKey?: string;
 
-  hasUnreadMessages: boolean;
+  hasUnreadMessages?: boolean;
 }
 
 export enum ChatMessageStatus {
@@ -298,14 +308,14 @@ export enum ChatMessageStatus {
 }
 
 export interface ChatMessage extends ValidObject {
-  id: string;
+  id?: string;
 
-  channel: string;
-  sender: string;
-  body: string;
-  dateSent: string;
+  channel?: string;
+  sender?: string;
+  body?: string;
+  dateSent?: string;
 
   status?: ChatMessageStatus;
 
-  stringifiedFile: string;
+  stringifiedFile?: string;
 }
