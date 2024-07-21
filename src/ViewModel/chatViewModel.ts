@@ -4,7 +4,7 @@ import ChatModel, { ChatMessage } from "../Model/chatModel";
 import StorageModel, { storageKeys } from "../Model/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
-import ChatMessageViewModel from "../Model/chatMessageViewModel";
+import ChatMessageViewModel from "./chatMessageViewModel";
 import { Color } from "./colors";
 import SettingsViewModel from "./settingsViewModel";
 import { localeCompare } from "../Model/Utility/utility";
