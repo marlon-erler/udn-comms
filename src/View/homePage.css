@@ -29,8 +29,9 @@
   scroll-snap-align: center;
 }
 
-#home-page #overview-section {
-  padding-bottom: calc(var(--content-padding) + var(--safe-area-bottom));
+#home-page #overview-section,
+#home-page #chat-section {
+  padding-bottom: calc(var(--content-padding) + var(--header-height) + var(--safe-area-bottom));
 }
 
 #home-page #chat-grid {

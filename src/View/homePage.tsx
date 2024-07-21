@@ -181,9 +181,6 @@ export function HomePage(
   // final
   return (
     <article id="home-page">
-      <header>
-        <span>{translations.homePage.appName}</span>
-      </header>
       <div>
         {overviewSection}
         {chatSection}
