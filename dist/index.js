@@ -1311,7 +1311,7 @@
         class: "message-bubble",
         "toggle:sentbyuser": chatMessageViewModel.sentByUser
       },
-      /* @__PURE__ */ createElement("div", { class: "main" }, /* @__PURE__ */ createElement("div", { class: "text-container" }, /* @__PURE__ */ createElement("span", { class: "sender-name ellipsis" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("div", { class: "main tile" }, /* @__PURE__ */ createElement("div", { class: "text-container" }, /* @__PURE__ */ createElement("span", { class: "sender-name ellipsis" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
         "span",
         {
           class: "body",

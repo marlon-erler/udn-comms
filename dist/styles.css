@@ -252,6 +252,9 @@ SIZES
   --gap-in-controls: 1.2rem;
   --large-gap: 2rem;
 
+  /* outline */
+  --outline-width: var(--gap-between-tiles);
+
   /* margin */
   --label-top-padding: 0.25rem;
   --label-tile-top-padding: 0.5rem;
@@ -379,7 +382,7 @@ label.tile:has(input:focus),
 label.tile:has(textarea:focus),
 textarea:focus:not(label.tile *),
 [selected] {
-  outline: var(--gap-between-tiles) solid var(--primary);
+  outline: var(--outline-width) solid var(--primary);
 }
 
 /* border-radius */
@@ -457,7 +460,7 @@ textarea {
   display: inline-flex;
 }
 
-.modal{
+.modal {
   display: none;
 }
 

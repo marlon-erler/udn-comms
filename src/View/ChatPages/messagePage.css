@@ -78,18 +78,19 @@
   max-width: var(--max-content-width);
 }
 
-.message-bubble .main {
+.message-bubble .tile.main {
   display: flex;
   flex-direction: row;
+  align-items: start;
 
-  background-color: var(--surface);
+  padding: 0px;
 
   width: 100%;
   max-width: var(--max-input-width);
   overflow: hidden;
 }
 
-.message-bubble .main .text-container {
+.message-bubble .tile.main .text-container {
   display: flex;
   flex-direction: column;
 
@@ -99,46 +100,48 @@
   flex: 1;
 }
 
-.message-bubble .main .button-container {
+.message-bubble .tile.main .button-container {
   display: flex;
-  align-items: start;
+
+  width: var(--control-height);
+  max-width: var(--control-height);
 }
 
-.message-bubble .main button {
+.message-bubble .tile.main button {
   justify-content: center;
 
   padding: 0px;
-  width: var(--control-height);
+  width: 100%;
 
   --surface: transparent;
 }
 
-.message-bubble .main .text-container {
+.message-bubble .tile.main .text-container {
   padding: var(--control-padding);
 }
 
-.message-bubble .main .timestamp,
-.message-bubble .main .timestamp .icon,
-.message-bubble .main .sender-name {
+.message-bubble .tile.main .timestamp,
+.message-bubble .tile.main .timestamp .icon,
+.message-bubble .tile.main .sender-name {
   font-size: 0.8rem;
   opacity: 0.6;
 }
 
-.message-bubble .main .timestamp {
+.message-bubble .tile.main .timestamp {
   display: flex;
   align-items: center;
   gap: var(--gap-between-tiles);
 }
 
-.message-bubble .main .timestamp .icon {
+.message-bubble .tile.main .timestamp .icon {
   display: none;
 }
 
-.message-bubble .main .sender-name {
+.message-bubble .tile.main .sender-name {
   font-weight: bold;
 }
 
-.message-bubble .main .body {
+.message-bubble .tile.main .body {
   word-break: break-word;
 }
 
@@ -150,15 +153,15 @@
   align-items: flex-end;
 }
 
-.message-bubble[sentbyuser] .main,
-.message-bubble[sentbyuser] .main .timestamp {
+.message-bubble[sentbyuser] .tile.main,
+.message-bubble[sentbyuser] .tile.main .timestamp {
   flex-direction: row-reverse;
 }
 
-.message-bubble[sentbyuser] .main .timestamp .icon {
+.message-bubble[sentbyuser] .tile.main .timestamp .icon {
   display: flex;
 }
 
-.message-bubble[sentbyuser] .main span {
+.message-bubble[sentbyuser] .tile.main span {
   text-align: right;
 }

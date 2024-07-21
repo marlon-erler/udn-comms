@@ -32,7 +32,7 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
       class="message-bubble"
       toggle:sentbyuser={chatMessageViewModel.sentByUser}
     >
-      <div class="main">
+      <div class="main tile">
         <div class="text-container">
           <span class="sender-name ellipsis">
             {chatMessageViewModel.sender}
@@ -46,6 +46,7 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
             {chatMessageViewModel.dateSent}
           </span>
         </div>
+        
         <div class="button-container">
           <button
             on:click={openModal}
