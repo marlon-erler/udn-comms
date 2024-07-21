@@ -1,6 +1,10 @@
 // this file is responsible for managing chats.
 
-import { DATA_VERSION, ValidObject, checkIsValidObject } from "./Utility/typeSafety";
+import {
+  DATA_VERSION,
+  ValidObject,
+  checkIsValidObject,
+} from "./Utility/typeSafety";
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import {
@@ -291,6 +295,16 @@ export interface ChatInfo extends ValidObject {
   hasUnreadMessages: boolean;
 }
 
+export const ChatInfoReference: ChatInfo = {
+  dataVersion: DATA_VERSION,
+
+  primaryChannel: "",
+  secondaryChannels: [""],
+  encryptionKey: "",
+
+  hasUnreadMessages: true,
+};
+
 export enum ChatMessageStatus {
   Outbox = "outbox",
   Sent = "sent",
@@ -305,7 +319,22 @@ export interface ChatMessage extends ValidObject {
   body: string;
   dateSent: string;
 
-  status?: ChatMessageStatus;
+  status: ChatMessageStatus;
 
   stringifiedFile: string;
 }
+
+export const ChatMessageReference: ChatMessage = {
+  dataVersion: DATA_VERSION,
+
+  id: "",
+
+  channel: "",
+  sender: "",
+  body: "",
+  dateSent: "",
+
+  status: "" as ChatMessageStatus,
+
+  stringifiedFile: "",
+};
