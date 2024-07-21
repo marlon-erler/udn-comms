@@ -1,281 +1,4 @@
 (() => {
-  // node_modules/uuid/dist/esm-browser/stringify.js
-  var byteToHex = [];
-  for (i = 0; i < 256; ++i) {
-    byteToHex.push((i + 256).toString(16).slice(1));
-  }
-  var i;
-  function unsafeStringify(arr, offset = 0) {
-    return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-  }
-
-  // node_modules/uuid/dist/esm-browser/rng.js
-  var getRandomValues;
-  var rnds8 = new Uint8Array(16);
-  function rng() {
-    if (!getRandomValues) {
-      getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
-      if (!getRandomValues) {
-        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
-      }
-    }
-    return getRandomValues(rnds8);
-  }
-
-  // node_modules/uuid/dist/esm-browser/native.js
-  var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
-  var native_default = {
-    randomUUID
-  };
-
-  // node_modules/uuid/dist/esm-browser/v4.js
-  function v4(options, buf, offset) {
-    if (native_default.randomUUID && !buf && !options) {
-      return native_default.randomUUID();
-    }
-    options = options || {};
-    var rnds = options.random || (options.rng || rng)();
-    rnds[6] = rnds[6] & 15 | 64;
-    rnds[8] = rnds[8] & 63 | 128;
-    if (buf) {
-      offset = offset || 0;
-      for (var i = 0; i < 16; ++i) {
-        buf[offset + i] = rnds[i];
-      }
-      return buf;
-    }
-    return unsafeStringify(rnds);
-  }
-  var v4_default = v4;
-
-  // node_modules/bloatless-react/index.ts
-  var State = class {
-    _value;
-    _bindings = /* @__PURE__ */ new Set();
-    // init
-    constructor(initialValue) {
-      this._value = initialValue;
-    }
-    // value
-    get value() {
-      return this._value;
-    }
-    set value(newValue) {
-      if (this._value == newValue) return;
-      this._value = newValue;
-      this.callSubscriptions();
-    }
-    // subscriptions
-    callSubscriptions() {
-      this._bindings.forEach((fn) => fn(this._value));
-    }
-    subscribe(fn) {
-      this._bindings.add(fn);
-      fn(this._value);
-    }
-    subscribeSilent(fn) {
-      this._bindings.add(fn);
-    }
-    // stringify
-    toString() {
-      return JSON.stringify(this._value);
-    }
-  };
-  var ListState = class extends State {
-    additionHandlers = /* @__PURE__ */ new Set();
-    removalHandlers = /* @__PURE__ */ new Map();
-    // init
-    constructor(initialItems) {
-      super(new Set(initialItems));
-    }
-    // list
-    add(...items) {
-      items.forEach((item) => {
-        this.value.add(item);
-        this.additionHandlers.forEach((handler) => handler(item));
-      });
-      this.callSubscriptions();
-    }
-    remove(...items) {
-      items.forEach((item) => {
-        this.value.delete(item);
-        if (!this.removalHandlers.has(item)) return;
-        this.removalHandlers.get(item).forEach((handler) => handler(item));
-        this.removalHandlers.delete(item);
-      });
-      this.callSubscriptions();
-    }
-    clear() {
-      this.remove(...this.value.values());
-    }
-    // handlers
-    handleAddition(handler) {
-      this.additionHandlers.add(handler);
-      [...this.value.values()].forEach(handler);
-    }
-    handleRemoval(item, handler) {
-      if (!this.removalHandlers.has(item))
-        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
-      this.removalHandlers.get(item).add(handler);
-    }
-    // stringification
-    toString() {
-      const array = [...this.value.values()];
-      const json = JSON.stringify(array);
-      return json;
-    }
-  };
-  var MapState = class extends State {
-    additionHandlers = /* @__PURE__ */ new Set();
-    removalHandlers = /* @__PURE__ */ new Map();
-    // init
-    constructor(initialItems) {
-      super(new Map(initialItems));
-    }
-    // list
-    set(key, item) {
-      this.remove(key);
-      this.value.set(key, item);
-      this.additionHandlers.forEach((handler) => handler(item));
-      this.callSubscriptions();
-    }
-    remove(key) {
-      const item = this.value.get(key);
-      if (!item) return;
-      this.value.delete(key);
-      this.callSubscriptions();
-      if (!this.removalHandlers.has(item)) return;
-      this.removalHandlers.get(item).forEach((handler) => handler(item));
-      this.removalHandlers.delete(item);
-    }
-    clear() {
-      [...this.value.keys()].forEach((key) => this.remove(key));
-    }
-    // handlers
-    handleAddition(handler) {
-      this.additionHandlers.add(handler);
-      [...this.value.values()].forEach(handler);
-    }
-    handleRemoval(item, handler) {
-      if (!this.removalHandlers.has(item))
-        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
-      this.removalHandlers.get(item).add(handler);
-    }
-    // stringification
-    toString() {
-      const array = [...this.value.entries()];
-      const json = JSON.stringify(array);
-      return json;
-    }
-  };
-  function createProxyState(statesToSubscibe, fn) {
-    const proxyState = new State(fn());
-    statesToSubscibe.forEach(
-      (state) => state.subscribe(() => proxyState.value = fn())
-    );
-    return proxyState;
-  }
-  function createElement(tagName, attributes = {}, ...children) {
-    const element = document.createElement(tagName);
-    if (attributes != null)
-      Object.entries(attributes).forEach((entry) => {
-        const [attributename, value] = entry;
-        const [directiveKey, directiveValue] = attributename.split(":");
-        switch (directiveKey) {
-          case "on": {
-            switch (directiveValue) {
-              case "enter": {
-                element.addEventListener("keydown", (e) => {
-                  if (e.key != "Enter") return;
-                  value();
-                });
-                break;
-              }
-              default: {
-                element.addEventListener(directiveValue, value);
-              }
-            }
-            break;
-          }
-          case "subscribe": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            break;
-          }
-          case "bind": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element[directiveValue] = newValue
-            );
-            element.addEventListener(
-              "input",
-              () => state.value = element[directiveValue]
-            );
-            break;
-          }
-          case "toggle": {
-            if (value.subscribe) {
-              const state = value;
-              state.subscribe(
-                (newValue) => element.toggleAttribute(directiveValue, newValue)
-              );
-            } else {
-              element.toggleAttribute(directiveValue, value);
-            }
-            break;
-          }
-          case "set": {
-            const state = value;
-            state.subscribe(
-              (newValue) => element.setAttribute(directiveValue, newValue)
-            );
-            break;
-          }
-          case "children": {
-            switch (directiveValue) {
-              case "set": {
-                const state = value;
-                state.subscribe((newValue) => {
-                  element.innerHTML = "";
-                  element.append(...[newValue].flat());
-                });
-                break;
-              }
-              case "append":
-              case "prepend": {
-                try {
-                  const [listState, toElement] = value;
-                  listState.handleAddition((newItem) => {
-                    const child = toElement(newItem);
-                    listState.handleRemoval(
-                      newItem,
-                      () => child.remove()
-                    );
-                    if (directiveValue == "append") {
-                      element.append(child);
-                    } else if (directiveValue == "prepend") {
-                      element.prepend(child);
-                    }
-                  });
-                } catch (error) {
-                  throw `error: cannot process subscribe:children directive. 
- Error: ${error} 
- Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation.`;
-                }
-              }
-            }
-            break;
-          }
-          default:
-            element.setAttribute(attributename, value);
-        }
-      });
-    children.filter((x) => x).forEach((child) => element.append(child));
-    return element;
-  }
-
   // src/Model/Utility/typeSafety.ts
   var DATA_VERSION = "v2";
   function checkIsValidObject(object) {
@@ -435,6 +158,55 @@
     chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
     chatFiles: [DATA_VERSION, "chat", "files"]
   };
+
+  // node_modules/uuid/dist/esm-browser/stringify.js
+  var byteToHex = [];
+  for (i = 0; i < 256; ++i) {
+    byteToHex.push((i + 256).toString(16).slice(1));
+  }
+  var i;
+  function unsafeStringify(arr, offset = 0) {
+    return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+  }
+
+  // node_modules/uuid/dist/esm-browser/rng.js
+  var getRandomValues;
+  var rnds8 = new Uint8Array(16);
+  function rng() {
+    if (!getRandomValues) {
+      getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+      if (!getRandomValues) {
+        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+      }
+    }
+    return getRandomValues(rnds8);
+  }
+
+  // node_modules/uuid/dist/esm-browser/native.js
+  var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+  var native_default = {
+    randomUUID
+  };
+
+  // node_modules/uuid/dist/esm-browser/v4.js
+  function v4(options, buf, offset) {
+    if (native_default.randomUUID && !buf && !options) {
+      return native_default.randomUUID();
+    }
+    options = options || {};
+    var rnds = options.random || (options.rng || rng)();
+    rnds[6] = rnds[6] & 15 | 64;
+    rnds[8] = rnds[8] & 63 | 128;
+    if (buf) {
+      offset = offset || 0;
+      for (var i = 0; i < 16; ++i) {
+        buf[offset + i] = rnds[i];
+      }
+      return buf;
+    }
+    return unsafeStringify(rnds);
+  }
+  var v4_default = v4;
 
   // src/Model/fileModel.ts
   var FileModel = class _FileModel {
@@ -882,7 +654,235 @@
     }
   };
 
-  // src/Model/chatMessageViewModel.ts
+  // node_modules/bloatless-react/index.ts
+  var State = class {
+    _value;
+    _bindings = /* @__PURE__ */ new Set();
+    // init
+    constructor(initialValue) {
+      this._value = initialValue;
+    }
+    // value
+    get value() {
+      return this._value;
+    }
+    set value(newValue) {
+      if (this._value == newValue) return;
+      this._value = newValue;
+      this.callSubscriptions();
+    }
+    // subscriptions
+    callSubscriptions() {
+      this._bindings.forEach((fn) => fn(this._value));
+    }
+    subscribe(fn) {
+      this._bindings.add(fn);
+      fn(this._value);
+    }
+    subscribeSilent(fn) {
+      this._bindings.add(fn);
+    }
+    // stringify
+    toString() {
+      return JSON.stringify(this._value);
+    }
+  };
+  var ListState = class extends State {
+    additionHandlers = /* @__PURE__ */ new Set();
+    removalHandlers = /* @__PURE__ */ new Map();
+    // init
+    constructor(initialItems) {
+      super(new Set(initialItems));
+    }
+    // list
+    add(...items) {
+      items.forEach((item) => {
+        this.value.add(item);
+        this.additionHandlers.forEach((handler) => handler(item));
+      });
+      this.callSubscriptions();
+    }
+    remove(...items) {
+      items.forEach((item) => {
+        this.value.delete(item);
+        if (!this.removalHandlers.has(item)) return;
+        this.removalHandlers.get(item).forEach((handler) => handler(item));
+        this.removalHandlers.delete(item);
+      });
+      this.callSubscriptions();
+    }
+    clear() {
+      this.remove(...this.value.values());
+    }
+    // handlers
+    handleAddition(handler) {
+      this.additionHandlers.add(handler);
+      [...this.value.values()].forEach(handler);
+    }
+    handleRemoval(item, handler) {
+      if (!this.removalHandlers.has(item))
+        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
+      this.removalHandlers.get(item).add(handler);
+    }
+    // stringification
+    toString() {
+      const array = [...this.value.values()];
+      const json = JSON.stringify(array);
+      return json;
+    }
+  };
+  var MapState = class extends State {
+    additionHandlers = /* @__PURE__ */ new Set();
+    removalHandlers = /* @__PURE__ */ new Map();
+    // init
+    constructor(initialItems) {
+      super(new Map(initialItems));
+    }
+    // list
+    set(key, item) {
+      this.remove(key);
+      this.value.set(key, item);
+      this.additionHandlers.forEach((handler) => handler(item));
+      this.callSubscriptions();
+    }
+    remove(key) {
+      const item = this.value.get(key);
+      if (!item) return;
+      this.value.delete(key);
+      this.callSubscriptions();
+      if (!this.removalHandlers.has(item)) return;
+      this.removalHandlers.get(item).forEach((handler) => handler(item));
+      this.removalHandlers.delete(item);
+    }
+    clear() {
+      [...this.value.keys()].forEach((key) => this.remove(key));
+    }
+    // handlers
+    handleAddition(handler) {
+      this.additionHandlers.add(handler);
+      [...this.value.values()].forEach(handler);
+    }
+    handleRemoval(item, handler) {
+      if (!this.removalHandlers.has(item))
+        this.removalHandlers.set(item, /* @__PURE__ */ new Set());
+      this.removalHandlers.get(item).add(handler);
+    }
+    // stringification
+    toString() {
+      const array = [...this.value.entries()];
+      const json = JSON.stringify(array);
+      return json;
+    }
+  };
+  function createProxyState(statesToSubscibe, fn) {
+    const proxyState = new State(fn());
+    statesToSubscibe.forEach(
+      (state) => state.subscribe(() => proxyState.value = fn())
+    );
+    return proxyState;
+  }
+  function createElement(tagName, attributes = {}, ...children) {
+    const element = document.createElement(tagName);
+    if (attributes != null)
+      Object.entries(attributes).forEach((entry) => {
+        const [attributename, value] = entry;
+        const [directiveKey, directiveValue] = attributename.split(":");
+        switch (directiveKey) {
+          case "on": {
+            switch (directiveValue) {
+              case "enter": {
+                element.addEventListener("keydown", (e) => {
+                  if (e.key != "Enter") return;
+                  value();
+                });
+                break;
+              }
+              default: {
+                element.addEventListener(directiveValue, value);
+              }
+            }
+            break;
+          }
+          case "subscribe": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            break;
+          }
+          case "bind": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element[directiveValue] = newValue
+            );
+            element.addEventListener(
+              "input",
+              () => state.value = element[directiveValue]
+            );
+            break;
+          }
+          case "toggle": {
+            if (value.subscribe) {
+              const state = value;
+              state.subscribe(
+                (newValue) => element.toggleAttribute(directiveValue, newValue)
+              );
+            } else {
+              element.toggleAttribute(directiveValue, value);
+            }
+            break;
+          }
+          case "set": {
+            const state = value;
+            state.subscribe(
+              (newValue) => element.setAttribute(directiveValue, newValue)
+            );
+            break;
+          }
+          case "children": {
+            switch (directiveValue) {
+              case "set": {
+                const state = value;
+                state.subscribe((newValue) => {
+                  element.innerHTML = "";
+                  element.append(...[newValue].flat());
+                });
+                break;
+              }
+              case "append":
+              case "prepend": {
+                try {
+                  const [listState, toElement] = value;
+                  listState.handleAddition((newItem) => {
+                    const child = toElement(newItem);
+                    listState.handleRemoval(
+                      newItem,
+                      () => child.remove()
+                    );
+                    if (directiveValue == "append") {
+                      element.append(child);
+                    } else if (directiveValue == "prepend") {
+                      element.prepend(child);
+                    }
+                  });
+                } catch (error) {
+                  throw `error: cannot process subscribe:children directive. 
+ Error: ${error} 
+ Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation.`;
+                }
+              }
+            }
+            break;
+          }
+          default:
+            element.setAttribute(attributename, value);
+        }
+      });
+    children.filter((x) => x).forEach((child) => element.append(child));
+    return element;
+  }
+
+  // src/ViewModel/chatMessageViewModel.ts
   var ChatMessageViewModel = class {
     chatViewModel;
     // data
@@ -2361,7 +2361,7 @@
     );
   });
   document.body.append(
-    /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
+    /* @__PURE__ */ React.createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ React.createElement("div", { id: "sky" }), /* @__PURE__ */ React.createElement("div", { id: "grass-1" }), /* @__PURE__ */ React.createElement("div", { id: "grass-2" }))
   );
   document.querySelector("main").append(
     HomePage(

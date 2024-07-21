@@ -1,8 +1,6 @@
 import "./base.css";
 import "./colors.css";
 
-import * as React from "bloatless-react";
-
 import ChatListModel from "./Model/chatListModel";
 import ChatListViewModel from "./ViewModel/chatListViewModel";
 import { ChatPageWrapper } from "./View/chatPageWrapper";

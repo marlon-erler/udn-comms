@@ -8,6 +8,10 @@ export function checkMatchesObjectStructure(
   objectToCheck: any,
   reference: any
 ): boolean {
+  if (typeof reference != "object") {
+    return typeof objectToCheck == typeof reference;
+  }
+
   for (const key of Object.keys(reference)) {
     const requiredType = typeof reference[key];
     const actualType = typeof objectToCheck[key];
@@ -18,15 +22,17 @@ export function checkMatchesObjectStructure(
       if (objectToCheck[key].length == 0) continue;
 
       // check first item of array
-      const requiredType = typeof reference[key][0];
-      const actualType = typeof objectToCheck[key][0];
-
-      if (requiredType != actualType) return false;
+      // recurse into objects
+      const doesFirstItemMatch = checkMatchesObjectStructure(
+        objectToCheck[key][0],
+        reference[key][0]
+      );
+      if (doesFirstItemMatch == false) return false;
     } else if (requiredType == "object") {
       // recurse into objects
       const doesNestedObjectMatch = checkMatchesObjectStructure(
-        reference[key],
-        objectToCheck[key]
+        objectToCheck[key],
+        reference[key]
       );
       if (doesNestedObjectMatch == false) return false;
     }
