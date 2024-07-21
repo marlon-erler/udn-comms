@@ -39,7 +39,8 @@ export default class FileModel {
     );
 
     // check if fileContent already exists
-    const existingFileContent: string | null = this.storageModel.read(fileContentPath);
+    const existingFileContent: string | null =
+      this.storageModel.read(fileContentPath);
     if (existingFileContent != null) return;
 
     const stringifiedContent: string = stringify(fileContent);
@@ -104,9 +105,9 @@ export default class FileModel {
       dataVersion: DATA_VERSION,
 
       id: v4(),
-      contentVersions: []
-    }
-  }
+      contentVersions: [],
+    };
+  };
 }
 
 // types
@@ -121,3 +122,20 @@ export interface FileContent extends ValidObject {
 
   type: string;
 }
+
+// references
+export const FileContentReference: FileContent = {
+  dataVersion: DATA_VERSION,
+
+  id: "",
+  creationDate: "",
+
+  type: "",
+};
+
+export const FileReference: File = {
+  dataVersion: DATA_VERSION,
+
+  id: "",
+  contentVersions: [FileContentReference],
+};
