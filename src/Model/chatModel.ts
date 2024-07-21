@@ -11,7 +11,7 @@ import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { v4 } from "uuid";
 
-export class ChatModel {
+export default class ChatModel {
   connectionModel: ConnectionModel;
   storageModel: StorageModel;
   settingsModel: SettingsModel;
