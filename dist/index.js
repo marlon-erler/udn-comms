@@ -281,6 +281,20 @@
   function checkIsValidObject(object) {
     return object.dataVersion == DATA_VERSION;
   }
+  function checkMatchesObjectStructure(objectToCheck, reference) {
+    for (const key of Object.keys(reference)) {
+      const requiredType = typeof reference[key];
+      const actualType = typeof objectToCheck[key];
+      if (requiredType != actualType) return false;
+      if (requiredType != "object") continue;
+      const doesNestedObjectMatch = checkMatchesObjectStructure(
+        reference[key],
+        objectToCheck[key]
+      );
+      if (doesNestedObjectMatch == false) return false;
+    }
+    return true;
+  }
 
   // src/Model/Utility/utility.ts
   function createTimestamp() {
@@ -444,6 +458,7 @@
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile);
       if (file == null) return;
+      this.storeFile(file);
     };
     // methods
     addFile = (file) => {
@@ -461,6 +476,8 @@
         file,
         fileContentName
       );
+      const existingFileContent = this.storageModel.read(fileContentPath);
+      if (existingFileContent != null) return;
       const stringifiedContent = stringify(fileContent);
       this.storageModel.write(fileContentPath, stringifiedContent);
     };
@@ -499,6 +516,13 @@
     static getFileContentPath = (file, fileContentName) => {
       const filePath = _FileModel.getFilePath(file.id);
       return [...filePath, fileContentName];
+    };
+    static createFile = () => {
+      return {
+        dataVersion: DATA_VERSION,
+        id: v4_default(),
+        contentVersions: []
+      };
     };
   };
 
@@ -757,7 +781,7 @@
     // utility
     static generateChatInfo = (primaryChannel) => {
       return {
-        dataVersion: "v2",
+        dataVersion: DATA_VERSION,
         primaryChannel,
         secondaryChannels: [],
         encryptionKey: "",
@@ -766,7 +790,7 @@
     };
     static createChatMessage = async (channel, sender, encryptionKey, body, file) => {
       const chatMessage = {
-        dataVersion: "v2",
+        dataVersion: DATA_VERSION,
         id: v4_default(),
         channel,
         sender,
@@ -2363,5 +2387,11 @@
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
     StorageModal(storageViewModel)
+  );
+  console.log(
+    checkMatchesObjectStructure(
+      { a: 4263, b: "bla", d: true, c: [1, 2] },
+      { a: 123, b: "hello", d: false, c: [1, 3] }
+    )
   );
 })();
