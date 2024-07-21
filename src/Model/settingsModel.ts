@@ -6,7 +6,7 @@ export default class SettingsModel {
   storageModel: StorageModel;
 
   username: string;
-  firstDayOfWeek: number;
+  firstDayOfWeek: string;
 
   // set
   setName(newValue: string): void {
@@ -15,10 +15,10 @@ export default class SettingsModel {
     this.storageModel.write(path, newValue);
   }
 
-  setFirstDayOfWeek(newValue: number): void {
+  setFirstDayOfWeek(newValue: string): void {
     this.firstDayOfWeek = newValue;
     const path = storageKeys.firstDayOfWeek;
-    this.storageModel.writeStringifiable(path, newValue);
+    this.storageModel.write(path, newValue);
   }
 
   // load
@@ -30,8 +30,8 @@ export default class SettingsModel {
 
   loadFirstDayofWeek(): void {
     const path = storageKeys.firstDayOfWeek;
-    const content = this.storageModel.readStringifiable(path);
-    this.firstDayOfWeek = content ?? 0;
+    const content = this.storageModel.read(path);
+    this.firstDayOfWeek = content ?? "0";
   }
 
   // init

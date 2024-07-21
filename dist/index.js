@@ -281,20 +281,6 @@
   function checkIsValidObject(object) {
     return object.dataVersion == DATA_VERSION;
   }
-  function checkMatchesObjectStructure(objectToCheck, reference) {
-    for (const key of Object.keys(reference)) {
-      const requiredType = typeof reference[key];
-      const actualType = typeof objectToCheck[key];
-      if (requiredType != actualType) return false;
-      if (requiredType != "object") continue;
-      const doesNestedObjectMatch = checkMatchesObjectStructure(
-        reference[key],
-        objectToCheck[key]
-      );
-      if (doesNestedObjectMatch == false) return false;
-    }
-    return true;
-  }
 
   // src/Model/Utility/utility.ts
   function createTimestamp() {
@@ -2160,7 +2146,7 @@
     setFirstDayOfWeek(newValue) {
       this.firstDayOfWeek = newValue;
       const path = storageKeys.firstDayOfWeek;
-      this.storageModel.writeStringifiable(path, newValue);
+      this.storageModel.write(path, newValue);
     }
     // load
     loadUsernam() {
@@ -2170,8 +2156,8 @@
     }
     loadFirstDayofWeek() {
       const path = storageKeys.firstDayOfWeek;
-      const content = this.storageModel.readStringifiable(path);
-      this.firstDayOfWeek = content ?? 0;
+      const content = this.storageModel.read(path);
+      this.firstDayOfWeek = content ?? "0";
     }
     // init
     constructor(storageModel2) {
@@ -2187,7 +2173,7 @@
     // state
     username = new State("");
     usernameInput = new State("");
-    firstDayOfWeekInput = new State(0);
+    firstDayOfWeekInput = new State("0");
     // guards
     cannotSetName = createProxyState(
       [this.usernameInput],
@@ -2387,11 +2373,5 @@
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
     StorageModal(storageViewModel)
-  );
-  console.log(
-    checkMatchesObjectStructure(
-      { a: 4263, b: "bla", d: true, c: [1, 2] },
-      { a: 123, b: "hello", d: false, c: [1, 3] }
-    )
   );
 })();

@@ -8,7 +8,7 @@ export default class SettingsViewModel {
   // state
   username: React.State<string> = new React.State("");
   usernameInput: React.State<string> = new React.State("");
-  firstDayOfWeekInput: React.State<number> = new React.State(0);
+  firstDayOfWeekInput: React.State<string> = new React.State("0");
 
   // guards
   cannotSetName: React.State<boolean> = React.createProxyState(
