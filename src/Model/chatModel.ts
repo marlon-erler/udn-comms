@@ -1,9 +1,6 @@
 // this file is responsible for managing chats.
 
-import {
-  DATA_VERSION,
-  ValidObject,
-} from "./Utility/typeSafety";
+import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import {
@@ -182,7 +179,10 @@ export default class ChatModel {
   };
 
   handleMessage = (body: string): void => {
-    const chatMessage: ChatMessage | null = parseValidObject<ChatMessage>(body);
+    const chatMessage: ChatMessage | null = parseValidObject(
+      body,
+      ChatMessageReference
+    );
     if (chatMessage == null) return;
 
     chatMessage.status = ChatMessageStatus.Received;

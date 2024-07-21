@@ -1,11 +1,11 @@
 // this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
 
-import { DATA_VERSION, ValidObject, checkMatchesObjectStructure } from "./Utility/typeSafety";
 import {
-  localeCompare,
-  parseValidObject,
-  stringify,
-} from "./Utility/utility";
+  DATA_VERSION,
+  ValidObject,
+  checkMatchesObjectStructure,
+} from "./Utility/typeSafety";
+import { localeCompare, parseValidObject, stringify } from "./Utility/utility";
 
 export const PATH_COMPONENT_SEPARATOR = "\\";
 
@@ -77,16 +77,16 @@ export default class StorageModel {
     this.write(pathComponents, valueString);
   };
 
-  readStringifiable = <T extends ValidObject>(pathComponents: string[], reference: T): T | null => {
+  readStringifiable = <T extends ValidObject>(
+    pathComponents: string[],
+    reference: T
+  ): T | null => {
     const valueString: string | null = this.read(pathComponents);
     if (!valueString) return null;
 
-    const object: any | null = parseValidObject(valueString);
+    const object: any | null = parseValidObject(valueString, reference);
     if (object == null) return null;
 
-    const doesMatchReference: boolean = checkMatchesObjectStructure(object, reference);
-    if (doesMatchReference == false) return null;
-        
     return object;
   };
 

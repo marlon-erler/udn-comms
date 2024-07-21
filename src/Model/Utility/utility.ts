@@ -1,4 +1,4 @@
-import { checkIsValidObject } from "./typeSafety";
+import { checkIsValidObject, checkMatchesObjectStructure } from "./typeSafety";
 
 // date
 export function createTimestamp(): string {
@@ -18,9 +18,16 @@ export function parse(string: string): any {
   }
 }
 
-export function parseValidObject<T>(string: string): T|null {
+export function parseValidObject<T>(string: string, reference: T): T | null {
   const parsed: any = parse(string);
   if (checkIsValidObject(parsed) == false) return null;
+
+  const doesMatchReference: boolean = checkMatchesObjectStructure(
+    parsed,
+    reference
+  );
+  if (doesMatchReference == false) return null;
+
   return parsed;
 }
 

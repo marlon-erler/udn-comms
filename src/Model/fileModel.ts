@@ -13,7 +13,7 @@ export default class FileModel {
 
   // handler
   handleStringifiedFile = (stringifiedFile: string): void => {
-    const file: File | null = parseValidObject<File>(stringifiedFile);
+    const file: File | null = parseValidObject(stringifiedFile, FileReference);
     if (file == null) return;
 
     this.storeFile(file);
