@@ -1,6 +1,6 @@
 const englishTranslations = {
   general: {
-    closeButtonAudioLabel: "Close",
+    closeButton: "Close",
     deleteItemButtonAudioLabel: "delete item",
 
     setButton: "Set",
@@ -102,6 +102,19 @@ const englishTranslations = {
     message: {
       composerInputPlaceholder: "Type a message...",
       sendMessageButtonAudioLabel: "send message",
+
+      showMessageInfoButtonAudioLabel: "show message info",
+      messageInfoHeadline: "Message Info",
+
+      sentBy: "Sent by",
+      timeSent: "Time sent",
+      channel: "Channel",
+      messageContent: "Message content",
+
+      copyMessageButton: "Copy message",
+      resendMessageButton: "Resend message",
+      decryptMessageButton: "Decrypt message",
+      deleteMessageButton: "Delete message",
     }
   },
 };

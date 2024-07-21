@@ -53,7 +53,7 @@ export function ConnectionModal(connectionViewModel: ConnectionViewModel) {
           ></div>
         </main>
         <button on:click={connectionViewModel.hideConnectionModal}>
-          {translations.general.closeButtonAudioLabel}
+          {translations.general.closeButton}
           <span class="icon">close</span>
         </button>
       </div>

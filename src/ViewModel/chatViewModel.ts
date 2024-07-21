@@ -6,7 +6,6 @@ import StorageModel, { storageKeys } from "../Model/storageModel";
 import ChatListViewModel from "./chatListViewModel";
 import ChatMessageViewModel from "../Model/chatMessageViewModel";
 import { Color } from "./colors";
-import SettingsModel from "../Model/settingsModel";
 import SettingsViewModel from "./settingsViewModel";
 import { localeCompare } from "../Model/Utility/utility";
 
@@ -38,8 +37,8 @@ export default class ChatViewModel {
     ChatPageType.Messages
   );
 
-  chatMessageViewModels: React.ListState<ChatMessageViewModel> =
-    new React.ListState();
+  chatMessageViewModels: React.MapState<ChatMessageViewModel> =
+    new React.MapState();
   composingMessage: React.State<string> = new React.State("");
 
   // guards
@@ -73,11 +72,18 @@ export default class ChatViewModel {
   // add
   addChatMessage = (chatMessage: ChatMessage): void => {
     const chatMessageModel = new ChatMessageViewModel(
-      this.chatModel,
+      this,
       chatMessage,
       chatMessage.sender == this.settingsViewModel.username.value
     );
-    this.chatMessageViewModels.add(chatMessageModel);
+
+    const existingChatMessageViewModel: ChatMessageViewModel | undefined =
+      this.chatMessageViewModels.value.get(chatMessage.id);
+    if (existingChatMessageViewModel != undefined) {
+      existingChatMessageViewModel.body.value = chatMessage.body;
+    } else {
+      this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
+    }
   };
 
   // settings
@@ -125,8 +131,19 @@ export default class ChatViewModel {
 
   // messaging
   sendMessage = (): void => {
-    this.chatModel.sendMessage(this.composingMessage.value);
+    this.sendMessageFromBody(this.composingMessage.value);
     this.composingMessage.value = "";
+  };
+
+  sendMessageFromBody = (body: string): void => {
+    this.chatModel.sendMessage(body);
+  };
+
+  decryptMessage = async (
+    messageViewModel: ChatMessageViewModel
+  ): Promise<void> => {
+    await this.chatModel.decryptMessage(messageViewModel.chatMessage);
+    messageViewModel.loadData();
   };
 
   // restore

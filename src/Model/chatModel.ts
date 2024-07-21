@@ -196,7 +196,6 @@ export class ChatModel {
     if (chatMessage == null) return;
 
     await this.decryptMessage(chatMessage);
-    this.addMessage(chatMessage);
   };
 
   decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
@@ -205,6 +204,7 @@ export class ChatModel {
       this.info.encryptionKey
     );
     chatMessage.body = decryptedBody;
+    this.addMessage(chatMessage);
   };
 
   setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {

@@ -30,7 +30,6 @@
 }
 
 @media (max-width: 700px) {
-
   #message-page #composer div {
     width: 100%;
     max-width: unset;
@@ -79,29 +78,57 @@
   max-width: var(--max-content-width);
 }
 
-.message-bubble > div {
+.message-bubble .main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 
   background-color: var(--surface);
-  padding: var(--control-padding);
 
   width: 100%;
   max-width: var(--max-input-width);
+  overflow: hidden;
 }
 
-.message-bubble .timestamp,
-.message-bubble .sender-name {
+.message-bubble .main .text-container {
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  width: 100%;
+  flex: 1;
+}
+
+.message-bubble .main .button-container {
+  display: flex;
+  align-items: start;
+}
+
+.message-bubble .main button {
+  justify-content: center;
+
+  padding: 0px;
+  width: var(--control-height);
+
+  --surface: transparent;
+}
+
+.message-bubble .main .text-container {
+  padding: var(--control-padding);
+}
+
+.message-bubble .main .timestamp,
+.message-bubble .main .sender-name {
   font-size: 0.8rem;
   opacity: 0.6;
 }
 
-.message-bubble .sender-name {
+.message-bubble .main .sender-name {
   font-weight: bold;
 }
 
-.message-bubble .body {
-  word-break: break-all;
+.message-bubble .main .body {
+  word-break: break-word;
 }
 
 .message-bubble[sentbyuser] {
@@ -112,6 +139,10 @@
   align-items: flex-end;
 }
 
-.message-bubble[sentbyuser] span {
+.message-bubble[sentbyuser] .main {
+  flex-direction: row-reverse;
+}
+
+.message-bubble[sentbyuser] .main span {
   text-align: right;
 }
