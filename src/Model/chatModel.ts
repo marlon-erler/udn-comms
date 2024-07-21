@@ -1,13 +1,18 @@
 // this file is responsible for managing chats.
 
+import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
-import { createTimestamp, parse } from "./Utility/utility";
+import {
+  createTimestamp,
+  parse,
+  parseValidObject,
+  stringify,
+} from "./Utility/utility";
 import { decryptString, encryptString } from "./Utility/crypto";
 
 import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
 import ConnectionModel from "./connectionModel";
-import FileModel from "./fileModel";
 import SettingsModel from "./settingsModel";
 import { checkIsValidObject } from "./Utility/typeSafety";
 import { v4 } from "uuid";
@@ -85,9 +90,16 @@ export default class ChatModel {
 
   addMessage = async (chatMessage: ChatMessage): Promise<void> => {
     await this.decryptMessage(chatMessage);
-    const messagePath: string[] = this.getMessagePath(chatMessage.id);
-    this.storageModel.writeStringifiable(messagePath, chatMessage);
-    this.chatMessageHandler(chatMessage);
+
+    // message
+    if (chatMessage.body != "") {
+      const messagePath: string[] = this.getMessagePath(chatMessage.id);
+      this.storageModel.writeStringifiable(messagePath, chatMessage);
+      this.chatMessageHandler(chatMessage);
+    }
+
+    // file
+    this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
   };
 
   // delete
@@ -140,7 +152,7 @@ export default class ChatModel {
   }
 
   // messaging
-  sendMessage = async (body: string): Promise<boolean> => {
+  sendMessage = async (body: string, file?: File): Promise<boolean> => {
     const senderName = this.settingsModel.username;
     if (senderName == "") return false;
 
@@ -150,14 +162,13 @@ export default class ChatModel {
     }
 
     const combinedChannel: string = allChannels.join("/");
-    if (this.info.encryptionKey != "") {
-      body = await encryptString(body, this.info.encryptionKey);
-    }
 
-    const chatMessage: ChatMessage = ChatModel.createChatMessage(
+    const chatMessage: ChatMessage = await ChatModel.createChatMessage(
       combinedChannel,
       senderName,
-      body
+      this.info.encryptionKey,
+      body,
+      file
     );
 
     this.addMessage(chatMessage);
@@ -166,7 +177,7 @@ export default class ChatModel {
   };
 
   handleMessage = (body: string): void => {
-    const chatMessage: ChatMessage | null = ChatModel.parseMessage(body);
+    const chatMessage: ChatMessage | null = parseValidObject<ChatMessage>(body);
     if (chatMessage == null) return;
 
     chatMessage.status = ChatMessageStatus.Received;
@@ -183,7 +194,12 @@ export default class ChatModel {
       chatMessage.body,
       this.info.encryptionKey
     );
+    const decryptedFile: string = await decryptString(
+      chatMessage.stringifiedFile ?? "",
+      this.info.encryptionKey
+    );
     chatMessage.body = decryptedBody;
+    chatMessage.stringifiedFile = decryptedFile;
   };
 
   setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
@@ -227,12 +243,14 @@ export default class ChatModel {
     };
   };
 
-  static createChatMessage = (
+  static createChatMessage = async (
     channel: string,
     sender: string,
-    body: string
-  ): ChatMessage => {
-    return {
+    encryptionKey: string,
+    body: string,
+    file?: File
+  ): Promise<ChatMessage> => {
+    const chatMessage: ChatMessage = {
       dataVersion: "v2",
 
       id: v4(),
@@ -243,17 +261,22 @@ export default class ChatModel {
       dateSent: createTimestamp(),
 
       status: ChatMessageStatus.Outbox,
+      stringifiedFile: "",
     };
-  };
-
-  static parseMessage = (string: string): ChatMessage | null => {
-    try {
-      const parsed: any = parse(string);
-      if (checkIsValidObject(parsed) == false) return null;
-      return parsed;
-    } catch {
-      return null;
+    if (file != undefined) {
+      const stringifiedFile = stringify(file);
+      chatMessage.stringifiedFile = stringifiedFile;
     }
+
+    if (encryptionKey != "") {
+      chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
+      chatMessage.stringifiedFile = await encryptString(
+        chatMessage.stringifiedFile,
+        encryptionKey
+      );
+    }
+
+    return chatMessage;
   };
 }
 
@@ -284,5 +307,5 @@ export interface ChatMessage {
 
   status?: ChatMessageStatus;
 
-  stringifiedFile?: string;
+  stringifiedFile: string;
 }

@@ -276,6 +276,12 @@
     return element;
   }
 
+  // src/Model/Utility/typeSafety.ts
+  var DATA_VERSION = "v2";
+  function checkIsValidObject(object) {
+    return object.dataVersion == DATA_VERSION;
+  }
+
   // src/Model/Utility/utility.ts
   function createTimestamp() {
     return (/* @__PURE__ */ new Date()).toISOString();
@@ -284,16 +290,19 @@
     return JSON.stringify(data, null, 4);
   }
   function parse(string) {
-    return JSON.parse(string);
+    try {
+      return JSON.parse(string);
+    } catch {
+      return {};
+    }
+  }
+  function parseValidObject(string) {
+    const parsed = parse(string);
+    if (checkIsValidObject(parsed) == false) return null;
+    return parsed;
   }
   function localeCompare(a, b) {
     return a.localeCompare(b);
-  }
-
-  // src/Model/Utility/typeSafety.ts
-  var DATA_VERSION = "v2";
-  function checkIsValidObject(object) {
-    return object.dataVersion == DATA_VERSION;
   }
 
   // src/Model/storageModel.ts
@@ -425,6 +434,24 @@
     chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"]
   };
 
+  // src/Model/fileModel.ts
+  var FileModel = class {
+    chatModel;
+    // handler
+    handleStringifiedFile = (stringifiedFile) => {
+      const file = parseValidObject(stringifiedFile);
+      if (file == null) return;
+    };
+    // methods
+    addFile = (file) => {
+      this.chatModel.sendMessage("", file);
+    };
+    // init
+    constructor(chatModel) {
+      this.chatModel = chatModel;
+    }
+  };
+
   // src/Model/Utility/crypto.ts
   var IV_SIZE = 12;
   var ENCRYPTION_ALG = "AES-GCM";
@@ -516,6 +543,7 @@
     storageModel;
     settingsModel;
     chatListModel;
+    fileModel;
     // data
     id;
     info;
@@ -569,9 +597,12 @@
     };
     addMessage = async (chatMessage) => {
       await this.decryptMessage(chatMessage);
-      const messagePath = this.getMessagePath(chatMessage.id);
-      this.storageModel.writeStringifiable(messagePath, chatMessage);
-      this.chatMessageHandler(chatMessage);
+      if (chatMessage.body != "") {
+        const messagePath = this.getMessagePath(chatMessage.id);
+        this.storageModel.writeStringifiable(messagePath, chatMessage);
+        this.chatMessageHandler(chatMessage);
+      }
+      this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
     };
     // delete
     delete = () => {
@@ -613,7 +644,7 @@
       return sorted;
     }
     // messaging
-    sendMessage = async (body) => {
+    sendMessage = async (body, file) => {
       const senderName = this.settingsModel.username;
       if (senderName == "") return false;
       const allChannels = [this.info.primaryChannel];
@@ -621,20 +652,19 @@
         allChannels.push(secondaryChannel);
       }
       const combinedChannel = allChannels.join("/");
-      if (this.info.encryptionKey != "") {
-        body = await encryptString(body, this.info.encryptionKey);
-      }
-      const chatMessage = _ChatModel.createChatMessage(
+      const chatMessage = await _ChatModel.createChatMessage(
         combinedChannel,
         senderName,
-        body
+        this.info.encryptionKey,
+        body,
+        file
       );
       this.addMessage(chatMessage);
       this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
     };
     handleMessage = (body) => {
-      const chatMessage = _ChatModel.parseMessage(body);
+      const chatMessage = parseValidObject(body);
       if (chatMessage == null) return;
       chatMessage.status = "received" /* Received */;
       this.addMessage(chatMessage);
@@ -648,7 +678,12 @@
         chatMessage.body,
         this.info.encryptionKey
       );
+      const decryptedFile = await decryptString(
+        chatMessage.stringifiedFile ?? "",
+        this.info.encryptionKey
+      );
       chatMessage.body = decryptedBody;
+      chatMessage.stringifiedFile = decryptedFile;
     };
     setMessageHandler = (handler) => {
       this.chatMessageHandler = handler;
@@ -667,6 +702,7 @@
       this.loadColor();
       this.subscribe();
       connectionModel2.setMessageSentHandler(this.handleMessageSent);
+      this.fileModel = new FileModel(this);
     }
     // utility
     static generateChatInfo = (primaryChannel) => {
@@ -677,25 +713,29 @@
         hasUnreadMessages: false
       };
     };
-    static createChatMessage = (channel, sender, body) => {
-      return {
+    static createChatMessage = async (channel, sender, encryptionKey, body, file) => {
+      const chatMessage = {
         dataVersion: "v2",
         id: v4_default(),
         channel,
         sender,
         body,
         dateSent: createTimestamp(),
-        status: "outbox" /* Outbox */
+        status: "outbox" /* Outbox */,
+        stringifiedFile: ""
       };
-    };
-    static parseMessage = (string) => {
-      try {
-        const parsed = parse(string);
-        if (checkIsValidObject(parsed) == false) return null;
-        return parsed;
-      } catch {
-        return null;
+      if (file != void 0) {
+        const stringifiedFile = stringify(file);
+        chatMessage.stringifiedFile = stringifiedFile;
       }
+      if (encryptionKey != "") {
+        chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
+        chatMessage.stringifiedFile = await encryptString(
+          chatMessage.stringifiedFile,
+          encryptionKey
+        );
+      }
+      return chatMessage;
     };
   };
 

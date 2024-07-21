@@ -1,3 +1,5 @@
+import { checkIsValidObject } from "./typeSafety";
+
 // date
 export function createTimestamp(): string {
   return new Date().toISOString();
@@ -9,7 +11,17 @@ export function stringify(data: any): string {
 }
 
 export function parse(string: string): any {
-  return JSON.parse(string);
+  try {
+    return JSON.parse(string);
+  } catch {
+    return {};
+  }
+}
+
+export function parseValidObject<T>(string: string): T|null {
+  const parsed: any = parse(string);
+  if (checkIsValidObject(parsed) == false) return null;
+  return parsed;
 }
 
 // sort
