@@ -2245,6 +2245,7 @@
     hideStorageModal = () => {
       if (this.didMakeChanges.value == true) {
         window.location.reload();
+        return;
       }
       this.isShowingStorageModal.value = false;
     };

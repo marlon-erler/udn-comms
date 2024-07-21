@@ -43,6 +43,7 @@ export default class StorageViewModel {
   hideStorageModal = (): void => {
     if (this.didMakeChanges.value == true) {
       window.location.reload();
+      return;
     }
     this.isShowingStorageModal.value = false;
   };
