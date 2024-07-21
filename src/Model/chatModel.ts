@@ -44,16 +44,8 @@ export class ChatModel {
     return storageKeys.chatMessages(this.id);
   }
 
-  get objectDirPath(): string[] {
-    return storageKeys.chatObjects(this.id);
-  }
-
   getMessagePath = (id: string): string[] => {
     return [...this.messageDirPath, id];
-  };
-
-  getObjectPath = (id: string): string[] => {
-    return [...this.objectDirPath, id];
   };
 
   // set
@@ -93,11 +85,6 @@ export class ChatModel {
     const messagePath: string[] = this.getMessagePath(chatMessage.id);
     this.storageModel.storeStringifiable(messagePath, chatMessage);
     this.chatMessageHandler(chatMessage);
-  };
-
-  addObject = (chatObject: ChatObject): void => {
-    const objectPath: string[] = this.getObjectPath(chatObject.id);
-    this.storageModel.storeStringifiable(objectPath, chatObject);
   };
 
   // delete
@@ -147,23 +134,6 @@ export class ChatModel {
       a.dateSent.localeCompare(b.dateSent)
     );
     return sorted;
-  }
-
-  get objects(): ChatObject[] {
-    const objectIds: string[] = this.storageModel.list(this.objectDirPath);
-    if (!Array.isArray(objectIds)) return [];
-
-    const objects: ChatObject[] = [];
-    for (const objectId of objectIds) {
-      const objectPathComponents: string[] = this.getObjectPath(objectId);
-      const object: any =
-        this.storageModel.restoreStringifiable(objectPathComponents);
-      if (checkIsValidObject(object) == false) continue;
-      if (object.id != objectId) continue;
-
-      objects.push(object);
-    }
-    return objects;
   }
 
   // messaging
@@ -309,28 +279,5 @@ export interface ChatMessage {
 
   status?: ChatMessageStatus;
 
-  stringifiedObject?: string;
-}
-
-export interface ChatObject {
-  dataVersion: "v2";
-
-  id: string;
-  title: string;
-
-  contentVersions: { [key: string]: ChatObjectContent };
-}
-
-export interface ChatObjectContent {
-  dataVersion: "v2";
-
-  id: string;
-  creationDate: string;
-
-  noteText?: string;
-  priority?: number;
-  category?: string;
-  status?: string;
-  date?: string;
-  time?: string;
+  stringifiedFile?: string;
 }

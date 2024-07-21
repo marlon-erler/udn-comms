@@ -113,13 +113,13 @@ export default class StorageModel {
   };
 
   static getFileName = (pathComponents: string[]): string => {
-    return pathComponents[pathComponents.length - 1] || "\\"
-  }
+    return pathComponents[pathComponents.length - 1] || "\\";
+  };
 
   static getFileNameFromString = (pathString: string): string => {
     const pathComponents: string[] = this.stringToPathComponents(pathString);
-    return pathComponents[pathComponents.length - 1] || "\\"
-  }
+    return pathComponents[pathComponents.length - 1] || "\\";
+  };
 
   static pathComponentsToString = (...pathComponents: string[]): string => {
     return pathComponents.join(PATH_COMPONENT_SEPARATOR);
@@ -156,11 +156,8 @@ export const storageKeys = {
 
   // history
   previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
-  previousObjectCategories: [DATA_VERSION, "history", "object-categories"],
-  previousObjectStatuses: [DATA_VERSION, "history", "object-statuses"],
-  previousObjectFilters: [DATA_VERSION, "history", "object-filters"],
 
-  // chat etc
+  // chat
   chats: [DATA_VERSION, "chat"],
   chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
   chatLastUsedPage: (id: string) => [
@@ -171,5 +168,4 @@ export const storageKeys = {
   ],
   chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
-  chatObjects: (id: string) => [DATA_VERSION, "chat", id, "objects"],
 };
