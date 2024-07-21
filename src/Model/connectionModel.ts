@@ -1,10 +1,9 @@
 // this file is responsible for managing UDN connections.
 
+import { ChatMessage, ChatMessageReference } from "./chatModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 
-import { ChatMessage } from "./chatModel";
-import { checkIsValidObject } from "./Utility/typeSafety";
 import { stringify } from "./Utility/utility";
 
 export default class ConnectionModel {
@@ -66,7 +65,7 @@ export default class ConnectionModel {
     if (this.address == undefined) return;
     const path = [...storageKeys.mailboxes, this.address];
     const mailboxId = this.storageModel.read(path);
-    console.log("connecting mailbox", mailboxId)
+    console.log("connecting mailbox", mailboxId);
     if (mailboxId == null) return this.requestNewMailbox();
 
     this.udn.connectMailbox(mailboxId);
@@ -99,19 +98,19 @@ export default class ConnectionModel {
     const outboxPath: string[] = storageKeys.outbox;
     const messageIds: string[] = this.storageModel.list(outboxPath);
 
-    let messages: ChatMessage[] = [];
+    let chatMessages: ChatMessage[] = [];
     for (const messageId of messageIds) {
-      const message: any = this.storageModel.readStringifiable([
-        ...outboxPath,
-        messageId,
-      ]);
-      if (message == undefined) continue;
-      if (checkIsValidObject(message) == false) continue;
+      const chatMessage: ChatMessage | null =
+        this.storageModel.readStringifiable(
+          [...outboxPath, messageId],
+          ChatMessageReference
+        );
 
-      messages.push(message);
+      if (chatMessage == null) continue;
+      chatMessages.push(chatMessage);
     }
 
-    return messages;
+    return chatMessages;
   };
 
   addToOutbox = (chatMessage: ChatMessage): void => {

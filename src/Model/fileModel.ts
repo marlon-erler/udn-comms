@@ -1,10 +1,10 @@
 // this file is responsible for managing files within chats.
 
-import ChatModel, { ChatMessage } from "./chatModel";
 import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
 import StorageModel, { storageKeys } from "./storageModel";
 import { parseValidObject, stringify } from "./Utility/utility";
 
+import ChatModel from "./chatModel";
 import { v4 } from "uuid";
 
 export default class FileModel {
@@ -58,8 +58,10 @@ export default class FileModel {
 
   getFile = (fileId: string): File | null => {
     const filePath = FileModel.getFilePath(fileId);
-    const fileOrNull: File | null =
-      this.storageModel.readStringifiable<File>(filePath);
+    const fileOrNull: File | null = this.storageModel.readStringifiable(
+      filePath,
+      FileReference
+    );
     return fileOrNull;
   };
 
@@ -73,7 +75,7 @@ export default class FileModel {
   ): FileContent | null => {
     const filePath = FileModel.getFileContentPath(file, fileContentName);
     const fileContentOrNull: FileContent | null =
-      this.storageModel.readStringifiable<FileContent>(filePath);
+      this.storageModel.readStringifiable(filePath, FileContentReference);
     return fileContentOrNull;
   };
 

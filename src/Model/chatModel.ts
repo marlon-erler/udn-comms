@@ -3,13 +3,11 @@
 import {
   DATA_VERSION,
   ValidObject,
-  checkIsValidObject,
 } from "./Utility/typeSafety";
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import {
   createTimestamp,
-  parse,
   parseValidObject,
   stringify,
 } from "./Utility/utility";
@@ -113,12 +111,15 @@ export default class ChatModel {
 
     // delete
     const dirPath: string[] = [...storageKeys.chats, this.id];
-    this.storageModel.removeRecursive(dirPath);
+    this.storageModel.removeRecursively(dirPath);
   };
 
   // load
   loadInfo = (): void => {
-    const info: any = this.storageModel.readStringifiable(this.infoPath);
+    const info: ChatInfo | null = this.storageModel.readStringifiable(
+      this.infoPath,
+      ChatInfoReference
+    );
     if (info != null) {
       this.info = info;
     } else {
@@ -140,16 +141,16 @@ export default class ChatModel {
     const messageIds: string[] = this.storageModel.list(this.messageDirPath);
     if (!Array.isArray(messageIds)) return [];
 
-    const messages: ChatMessage[] = [];
+    const chatMessages: ChatMessage[] = [];
     for (const messageId of messageIds) {
       const messagePath: string[] = this.getMessagePath(messageId);
-      const message: any = this.storageModel.readStringifiable(messagePath);
-      if (checkIsValidObject(message) == false) continue;
+      const chatMessage: ChatMessage | any =
+        this.storageModel.readStringifiable(messagePath, ChatMessageReference);
 
-      messages.push(message);
+      chatMessages.push(chatMessage);
     }
 
-    const sorted = messages.sort((a, b) =>
+    const sorted = chatMessages.sort((a, b) =>
       a.dateSent.localeCompare(b.dateSent)
     );
     return sorted;

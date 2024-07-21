@@ -31,7 +31,7 @@ export default class StorageViewModel {
     const path = StorageModel.stringToPathComponents(this.selectedPath.value);
     this.lastDeletedItemPath.value = this.selectedPath.value;
     
-    this.storageModel.removeRecursive(path);
+    this.storageModel.removeRecursively(path);
     this.didMakeChanges.value = true;
   };
 

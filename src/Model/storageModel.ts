@@ -1,9 +1,8 @@
 // this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
 
-import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
+import { DATA_VERSION, ValidObject, checkMatchesObjectStructure } from "./Utility/typeSafety";
 import {
   localeCompare,
-  parse,
   parseValidObject,
   stringify,
 } from "./Utility/utility";
@@ -43,7 +42,7 @@ export default class StorageModel {
     }
   };
 
-  removeRecursive = (pathComponentsOfEntityToDelete: string[]): void => {
+  removeRecursively = (pathComponentsOfEntityToDelete: string[]): void => {
     a: for (const key of Object.keys(localStorage)) {
       const pathComponentsOfCurrentEntity: string[] =
         StorageModel.stringToPathComponents(key);
@@ -78,11 +77,16 @@ export default class StorageModel {
     this.write(pathComponents, valueString);
   };
 
-  readStringifiable = <T extends ValidObject>(pathComponents: string[]): T | null => {
+  readStringifiable = <T extends ValidObject>(pathComponents: string[], reference: T): T | null => {
     const valueString: string | null = this.read(pathComponents);
     if (!valueString) return null;
 
-    const object: T | null = parseValidObject(valueString);
+    const object: any | null = parseValidObject(valueString);
+    if (object == null) return null;
+
+    const doesMatchReference: boolean = checkMatchesObjectStructure(object, reference);
+    if (doesMatchReference == false) return null;
+        
     return object;
   };
 
