@@ -444,7 +444,6 @@
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile);
       if (file == null) return;
-      this.storeFile(file);
     };
     // methods
     addFile = (file) => {
@@ -462,8 +461,6 @@
         file,
         fileContentName
       );
-      const existingFileContent = this.storageModel.read(fileContentPath);
-      if (existingFileContent != null) return;
       const stringifiedContent = stringify(fileContent);
       this.storageModel.write(fileContentPath, stringifiedContent);
     };
@@ -502,13 +499,6 @@
     static getFileContentPath = (file, fileContentName) => {
       const filePath = _FileModel.getFilePath(file.id);
       return [...filePath, fileContentName];
-    };
-    static createFile = () => {
-      return {
-        dataVersion: DATA_VERSION,
-        id: v4_default(),
-        contentVersions: []
-      };
     };
   };
 
@@ -767,7 +757,7 @@
     // utility
     static generateChatInfo = (primaryChannel) => {
       return {
-        dataVersion: DATA_VERSION,
+        dataVersion: "v2",
         primaryChannel,
         secondaryChannels: [],
         encryptionKey: "",
@@ -776,7 +766,7 @@
     };
     static createChatMessage = async (channel, sender, encryptionKey, body, file) => {
       const chatMessage = {
-        dataVersion: DATA_VERSION,
+        dataVersion: "v2",
         id: v4_default(),
         channel,
         sender,

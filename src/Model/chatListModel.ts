@@ -66,7 +66,6 @@ export default class ChatListModel {
 
     let allChannels: string[] = [];
     for (const chatModel of this.chatModels) {
-      if (chatModel.info.primaryChannel == undefined) continue;
       allChannels.push(chatModel.info.primaryChannel);
     }
 

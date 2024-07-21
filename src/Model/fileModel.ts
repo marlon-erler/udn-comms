@@ -26,7 +26,6 @@ export default class FileModel {
 
   // storage
   storeFile = (file: File): void => {
-    if (file.contentVersions == undefined) return;
     for (const fileContent of file.contentVersions) {
       this.storeFileContent(file, fileContent);
     }
@@ -40,8 +39,7 @@ export default class FileModel {
     );
 
     // check if fileContent already exists
-    const existingFileContent: string | null =
-      this.storageModel.read(fileContentPath);
+    const existingFileContent: string | null = this.storageModel.read(fileContentPath);
     if (existingFileContent != null) return;
 
     const stringifiedContent: string = stringify(fileContent);
@@ -53,7 +51,6 @@ export default class FileModel {
   };
 
   listFileContents = (file: File): string[] => {
-    if (file.id == undefined) return [];
     const filePath: string[] = FileModel.getFilePath(file.id);
     return this.storageModel.list(filePath);
   };
@@ -91,14 +88,14 @@ export default class FileModel {
   };
 
   static getFileContentName = (fileContent: FileContent): string => {
-    return fileContent.creationDate ?? "" + fileContent.id ?? "";
+    return fileContent.creationDate + fileContent.id;
   };
 
   static getFileContentPath = (
     file: File,
     fileContentName: string
   ): string[] => {
-    const filePath: string[] = FileModel.getFilePath(file.id ?? "");
+    const filePath: string[] = FileModel.getFilePath(file.id);
     return [...filePath, fileContentName];
   };
 
@@ -107,20 +104,20 @@ export default class FileModel {
       dataVersion: DATA_VERSION,
 
       id: v4(),
-      contentVersions: [],
-    };
-  };
+      contentVersions: []
+    }
+  }
 }
 
 // types
 export interface File extends ValidObject {
-  id?: string;
-  contentVersions?: FileContent[];
+  id: string;
+  contentVersions: FileContent[];
 }
 
 export interface FileContent extends ValidObject {
-  id?: string;
-  creationDate?: string;
+  id: string;
+  creationDate: string;
 
-  type?: string;
+  type: string;
 }
