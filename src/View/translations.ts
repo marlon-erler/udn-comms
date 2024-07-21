@@ -62,6 +62,15 @@ const englishTranslations = {
     connectButtonAudioLabel: "connect",
   },
 
+  fileBrowser: {
+    noItemSelected: "No item selected",
+    notAFile: "(not a file)",
+    contentEmpty: "(empty)",
+
+    path: "Path",
+    content: "Content",
+  },
+
   chatPage: {
     closeChatAudioLabe: "close chat",
     chatSettingsAudioLabel: "chat settings",

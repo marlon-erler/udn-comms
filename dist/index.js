@@ -1143,6 +1143,13 @@
       ///
       connectButtonAudioLabel: "connect"
     },
+    fileBrowser: {
+      noItemSelected: "No item selected",
+      notAFile: "(not a file)",
+      contentEmpty: "(empty)",
+      path: "Path",
+      content: "Content"
+    },
     chatPage: {
       closeChatAudioLabe: "close chat",
       chatSettingsAudioLabel: "chat settings",
@@ -2129,16 +2136,21 @@
   }
 
   // src/View/Components/fileBrowser.tsx
-  function FileBrowser(storageModel2, selectedPath) {
-    const fileContent = createProxyState([selectedPath], () => {
+  function FileBrowser(storageModel2, selectedPath, didMakeChanges) {
+    const fileContentToShow = createProxyState([selectedPath], () => {
       const path = StorageModel.stringToPathComponents(selectedPath.value);
       const content = storageModel2.restore(path);
-      return content || "";
+      return (content ?? translations.fileBrowser.notAFile) || translations.fileBrowser.contentEmpty;
     });
     const selectedFileName = createProxyState(
       [selectedPath],
       () => StorageModel.getFileNameFromString(selectedPath.value) ?? PATH_COMPONENT_SEPARATOR
     );
+    const detailView = createProxyState([selectedPath], () => {
+      if (selectedPath.value == PATH_COMPONENT_SEPARATOR)
+        return /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.fileBrowser.noItemSelected);
+      return /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.fileBrowser.path), /* @__PURE__ */ createElement("span", { class: "break-all", "subscribe:innerText": selectedPath }))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.fileBrowser.content), /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContentToShow }))));
+    });
     const view = /* @__PURE__ */ createElement("div", { class: "file-browser" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "scroll-area" }, DirectoryItemList(
       storageModel2,
       PATH_COMPONENT_SEPARATOR,
@@ -2149,7 +2161,7 @@
         class: "ellipsis",
         "subscribe:innerText": selectedFileName
       }
-    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("div", { class: "scroll-area" }, /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContent })));
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("div", { class: "scroll-area", "children:set": detailView }));
     function scrollToDetails() {
       view.scrollLeft = view.scrollWidth;
     }
@@ -2160,7 +2172,8 @@
   function StorageModal(storageViewModel2) {
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(
       storageViewModel2.storageModel,
-      storageViewModel2.selectedPath
+      storageViewModel2.selectedPath,
+      storageViewModel2.didMakeChanges
     )), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
@@ -2169,12 +2182,16 @@
     storageModel;
     // state
     isShowingStorageModal = new State(false);
-    selectedPath = new State("\\");
+    selectedPath = new State(PATH_COMPONENT_SEPARATOR);
+    didMakeChanges = new State(false);
     // view methods
     showStorageModal = () => {
       this.isShowingStorageModal.value = true;
     };
     hideStorageModal = () => {
+      if (this.didMakeChanges.value == true) {
+        window.location.reload();
+      }
       this.isShowingStorageModal.value = false;
     };
     // init

@@ -7,16 +7,21 @@ import StorageModel, {
 } from "../../Model/storageModel";
 
 import { DirectoryItemList } from "./directoryItemList";
+import { translations } from "../translations";
 
 export function FileBrowser(
   storageModel: StorageModel,
-  selectedPath: React.State<string>
+  selectedPath: React.State<string>,
+  didMakeChanges: React.State<boolean>
 ) {
   // state
-  const fileContent = React.createProxyState([selectedPath], () => {
+  const fileContentToShow = React.createProxyState([selectedPath], () => {
     const path = StorageModel.stringToPathComponents(selectedPath.value);
     const content = storageModel.restore(path);
-    return content || "";
+    return (
+      (content ?? translations.fileBrowser.notAFile) ||
+      translations.fileBrowser.contentEmpty
+    );
   });
 
   const selectedFileName = React.createProxyState(
@@ -27,6 +32,30 @@ export function FileBrowser(
   );
 
   // view
+  const detailView = React.createProxyState([selectedPath], () => {
+    if (selectedPath.value == PATH_COMPONENT_SEPARATOR)
+      return (
+        <span class="secondary">{translations.fileBrowser.noItemSelected}</span>
+      );
+
+    return (
+      <div class="flex-column gap">
+        <div class="tile flex-no">
+          <div>
+            <b>{translations.fileBrowser.path}</b>
+            <span class="break-all" subscribe:innerText={selectedPath}></span>
+          </div>
+        </div>
+        <div class="tile flex-no">
+          <div>
+            <b>{translations.fileBrowser.content}</b>
+            <code subscribe:innerText={fileContentToShow}></code>
+          </div>
+        </div>
+      </div>
+    );
+  });
+
   const view = (
     <div class="file-browser">
       <div>
@@ -47,9 +76,7 @@ export function FileBrowser(
           </button>
         </div>
       </div>
-      <div class="scroll-area">
-        <code subscribe:innerText={fileContent}></code>
-      </div>
+      <div class="scroll-area" children:set={detailView}></div>
     </div>
   );
 
