@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import ChatViewModel from "../../ViewModel/chatViewModel";
 import { Color } from "../../ViewModel/colors";
+import { DangerousActionButton } from "../Components/dangerousActionButton";
 import { DeletableListItem } from "../Components/deletableListItem";
 import { translations } from "../translations";
 
@@ -139,13 +140,13 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
 
         <hr></hr>
 
-        <button
-          class="danger width-input flex-no"
-          on:click={chatViewModel.remove}
-        >
-          {translations.chatPage.settings.deleteChatButton}
-          <span class="icon">delete_forever</span>
-        </button>
+        <div class="width-input">
+          {DangerousActionButton(
+            translations.chatPage.settings.deleteChatButton,
+            "chat_error",
+            chatViewModel.remove
+          )}
+        </div>
       </div>
     </div>
   );

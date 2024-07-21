@@ -1,17 +1,19 @@
 import * as React from "bloatless-react";
 
-import StorageModel from "../../Model/storageModel";
-import { translations } from "../translations";
+import StorageModel, {
+  PATH_COMPONENT_SEPARATOR,
+} from "../../Model/storageModel";
+
+import StorageViewModel from "../../ViewModel/storageViewModel";
 
 export function DirectoryItemList(
-  storageModel: StorageModel,
-  pathString: string,
-  selectedPath: React.State<string>
+  storageViewModel: StorageViewModel,
+  pathString: string = PATH_COMPONENT_SEPARATOR
 ) {
   // converter
   const StringToDirectoryItemList: React.StateItemConverter<string> = (
     pathString: string
-  ) => DirectoryItemList(storageModel, pathString, selectedPath);
+  ) => DirectoryItemList(storageViewModel, pathString);
 
   // data
   const path = StorageModel.stringToPathComponents(pathString);
@@ -24,7 +26,7 @@ export function DirectoryItemList(
   function loadItems() {
     items.clear();
 
-    const directoryItems = storageModel.list(path);
+    const directoryItems = storageViewModel.storageModel.list(path);
 
     for (const directoryItem of directoryItems) {
       const itemPath = [...path, directoryItem];
@@ -34,13 +36,21 @@ export function DirectoryItemList(
   }
 
   function select() {
-    selectedPath.value = pathString;
+    storageViewModel.selectedPath.value = pathString;
   }
+
+  // handlers
+  storageViewModel.lastDeletedItemPath.subscribe((lastDeletedItemPath) => {
+    if (!items.value.has(lastDeletedItemPath)) return;
+
+    select();
+    setTimeout(() => loadItems(), 50)
+  });
 
   // state
   const isSelected = React.createProxyState(
-    [selectedPath],
-    () => selectedPath.value == pathString
+    [storageViewModel.selectedPath],
+    () => storageViewModel.selectedPath.value == pathString
   );
 
   isSelected.subscribe(() => {

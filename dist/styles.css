@@ -457,9 +457,12 @@ textarea {
   display: inline-flex;
 }
 
-.modal,
-[hidden] {
+.modal{
   display: none;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 main,

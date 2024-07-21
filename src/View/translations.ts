@@ -2,6 +2,8 @@ const englishTranslations = {
   general: {
     closeButton: "Close",
     deleteItemButtonAudioLabel: "delete item",
+    abortButton: "Abort",
+    confirmButton: "Confirm",
 
     setButton: "Set",
   },
@@ -62,13 +64,15 @@ const englishTranslations = {
     connectButtonAudioLabel: "connect",
   },
 
-  fileBrowser: {
+  storage: {
     noItemSelected: "No item selected",
     notAFile: "(not a file)",
     contentEmpty: "(empty)",
 
     path: "Path",
     content: "Content",
+
+    deleteItem: "Delete item"
   },
 
   chatPage: {

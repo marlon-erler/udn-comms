@@ -1100,6 +1100,8 @@
     general: {
       closeButton: "Close",
       deleteItemButtonAudioLabel: "delete item",
+      abortButton: "Abort",
+      confirmButton: "Confirm",
       setButton: "Set"
     },
     regional: {
@@ -1143,12 +1145,13 @@
       ///
       connectButtonAudioLabel: "connect"
     },
-    fileBrowser: {
+    storage: {
       noItemSelected: "No item selected",
       notAFile: "(not a file)",
       contentEmpty: "(empty)",
       path: "Path",
-      content: "Content"
+      content: "Content",
+      deleteItem: "Delete item"
     },
     chatPage: {
       closeChatAudioLabe: "close chat",
@@ -1306,6 +1309,40 @@
     ))))));
   }
 
+  // src/View/Components/dangerousActionButton.tsx
+  function DangerousActionButton(label, icon, action) {
+    const isActionRequested = new State(false);
+    const cannotConfirm = createProxyState(
+      [isActionRequested],
+      () => isActionRequested.value == false
+    );
+    function requestAction() {
+      isActionRequested.value = true;
+    }
+    function abort() {
+      isActionRequested.value = false;
+    }
+    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": abort, "toggle:hidden": cannotConfirm }, translations.general.abortButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": requestAction,
+        "toggle:hidden": isActionRequested
+      },
+      label,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": action,
+        "toggle:hidden": cannotConfirm
+      },
+      translations.general.confirmButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning")
+    ));
+  }
+
   // src/View/Components/deletableListItem.tsx
   function DeletableListItem(text, primaryButton, ondelete) {
     return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
@@ -1409,15 +1446,11 @@
           "on:click": setColor
         }
       );
-    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-input flex-no",
-        "on:click": chatViewModel.remove
-      },
+    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
       translations.chatPage.settings.deleteChatButton,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")
-    )));
+      "chat_error",
+      chatViewModel.remove
+    ))));
   }
 
   // src/View/chatPage.tsx
@@ -2092,15 +2125,15 @@
   };
 
   // src/View/Components/directoryItemList.tsx
-  function DirectoryItemList(storageModel2, pathString, selectedPath) {
-    const StringToDirectoryItemList = (pathString2) => DirectoryItemList(storageModel2, pathString2, selectedPath);
+  function DirectoryItemList(storageViewModel2, pathString = PATH_COMPONENT_SEPARATOR) {
+    const StringToDirectoryItemList = (pathString2) => DirectoryItemList(storageViewModel2, pathString2);
     const path = StorageModel.stringToPathComponents(pathString);
     const fileName = StorageModel.getFileName(path);
     const items = new ListState();
     const style = `text-indent: ${path.length * 2}rem`;
     function loadItems() {
       items.clear();
-      const directoryItems = storageModel2.list(path);
+      const directoryItems = storageViewModel2.storageModel.list(path);
       for (const directoryItem of directoryItems) {
         const itemPath = [...path, directoryItem];
         const pathString2 = StorageModel.pathComponentsToString(...itemPath);
@@ -2108,11 +2141,16 @@
       }
     }
     function select() {
-      selectedPath.value = pathString;
+      storageViewModel2.selectedPath.value = pathString;
     }
+    storageViewModel2.lastDeletedItemPath.subscribe((lastDeletedItemPath) => {
+      if (!items.value.has(lastDeletedItemPath)) return;
+      select();
+      setTimeout(() => loadItems(), 50);
+    });
     const isSelected = createProxyState(
-      [selectedPath],
-      () => selectedPath.value == pathString
+      [storageViewModel2.selectedPath],
+      () => storageViewModel2.selectedPath.value == pathString
     );
     isSelected.subscribe(() => {
       if (isSelected.value == false) return;
@@ -2136,30 +2174,35 @@
   }
 
   // src/View/Components/fileBrowser.tsx
-  function FileBrowser(storageModel2, selectedPath, didMakeChanges) {
-    const fileContentToShow = createProxyState([selectedPath], () => {
-      const path = StorageModel.stringToPathComponents(selectedPath.value);
-      const content = storageModel2.restore(path);
-      return (content ?? translations.fileBrowser.notAFile) || translations.fileBrowser.contentEmpty;
-    });
-    const selectedFileName = createProxyState(
-      [selectedPath],
-      () => StorageModel.getFileNameFromString(selectedPath.value) ?? PATH_COMPONENT_SEPARATOR
+  function FileBrowser(storageViewModel2) {
+    const detailView = createProxyState(
+      [storageViewModel2.selectedPath],
+      () => {
+        if (storageViewModel2.selectedPath.value == PATH_COMPONENT_SEPARATOR)
+          return /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.storage.noItemSelected);
+        return /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.storage.path), /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "break-all",
+            "subscribe:innerText": storageViewModel2.selectedPath
+          }
+        ))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.storage.content), /* @__PURE__ */ createElement(
+          "code",
+          {
+            "subscribe:innerText": storageViewModel2.selectedFileContent
+          }
+        ))), DangerousActionButton(
+          translations.storage.deleteItem,
+          "delete_forever",
+          storageViewModel2.deleteSelectedItem
+        ));
+      }
     );
-    const detailView = createProxyState([selectedPath], () => {
-      if (selectedPath.value == PATH_COMPONENT_SEPARATOR)
-        return /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.fileBrowser.noItemSelected);
-      return /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.fileBrowser.path), /* @__PURE__ */ createElement("span", { class: "break-all", "subscribe:innerText": selectedPath }))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.fileBrowser.content), /* @__PURE__ */ createElement("code", { "subscribe:innerText": fileContentToShow }))));
-    });
-    const view = /* @__PURE__ */ createElement("div", { class: "file-browser" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "scroll-area" }, DirectoryItemList(
-      storageModel2,
-      PATH_COMPONENT_SEPARATOR,
-      selectedPath
-    )), /* @__PURE__ */ createElement("div", { class: "detail-button-wrapper" }, /* @__PURE__ */ createElement("button", { class: "ghost", "on:click": scrollToDetails }, /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement("div", { class: "file-browser" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "scroll-area" }, DirectoryItemList(storageViewModel2)), /* @__PURE__ */ createElement("div", { class: "detail-button-wrapper" }, /* @__PURE__ */ createElement("button", { class: "ghost", "on:click": scrollToDetails }, /* @__PURE__ */ createElement(
       "span",
       {
         class: "ellipsis",
-        "subscribe:innerText": selectedFileName
+        "subscribe:innerText": storageViewModel2.selectedFileName
       }
     ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("div", { class: "scroll-area", "children:set": detailView }));
     function scrollToDetails() {
@@ -2170,11 +2213,7 @@
 
   // src/View/Modals/storageModal.tsx
   function StorageModal(storageViewModel2) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(
-      storageViewModel2.storageModel,
-      storageViewModel2.selectedPath,
-      storageViewModel2.didMakeChanges
-    )), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(storageViewModel2)), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/ViewModel/storageViewModel.ts
@@ -2184,6 +2223,21 @@
     isShowingStorageModal = new State(false);
     selectedPath = new State(PATH_COMPONENT_SEPARATOR);
     didMakeChanges = new State(false);
+    selectedFileName;
+    selectedFileContent;
+    lastDeletedItemPath = new State("");
+    // methods
+    getSelectedItemContent = () => {
+      const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+      const content = this.storageModel.restore(path);
+      return (content ?? translations.storage.notAFile) || translations.storage.contentEmpty;
+    };
+    deleteSelectedItem = () => {
+      const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+      this.lastDeletedItemPath.value = this.selectedPath.value;
+      this.storageModel.removeRecursive(path);
+      this.didMakeChanges.value = true;
+    };
     // view methods
     showStorageModal = () => {
       this.isShowingStorageModal.value = true;
@@ -2197,6 +2251,14 @@
     // init
     constructor(storageModel2) {
       this.storageModel = storageModel2;
+      this.selectedFileName = createProxyState(
+        [this.selectedPath],
+        () => StorageModel.getFileNameFromString(this.selectedPath.value)
+      );
+      this.selectedFileContent = createProxyState(
+        [this.selectedPath],
+        () => this.getSelectedItemContent()
+      );
     }
   };
 

@@ -2,6 +2,8 @@ import * as React from "bloatless-react";
 
 import StorageModel, { PATH_COMPONENT_SEPARATOR } from "../Model/storageModel";
 
+import { translations } from "../View/translations";
+
 export default class StorageViewModel {
   storageModel: StorageModel;
 
@@ -9,6 +11,29 @@ export default class StorageViewModel {
   isShowingStorageModal: React.State<boolean> = new React.State(false);
   selectedPath: React.State<string> = new React.State(PATH_COMPONENT_SEPARATOR);
   didMakeChanges: React.State<boolean> = new React.State(false);
+
+  selectedFileName: React.State<string>;
+  selectedFileContent: React.State<string>;
+
+  lastDeletedItemPath: React.State<string> = new React.State("");
+
+  // methods
+  getSelectedItemContent = (): string => {
+    const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+    const content = this.storageModel.restore(path);
+    return (
+      (content ?? translations.storage.notAFile) ||
+      translations.storage.contentEmpty
+    );
+  };
+
+  deleteSelectedItem = (): void => {
+    const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+    this.lastDeletedItemPath.value = this.selectedPath.value;
+    
+    this.storageModel.removeRecursive(path);
+    this.didMakeChanges.value = true;
+  };
 
   // view methods
   showStorageModal = (): void => {
@@ -25,5 +50,12 @@ export default class StorageViewModel {
   // init
   constructor(storageModel: StorageModel) {
     this.storageModel = storageModel;
+
+    this.selectedFileName = React.createProxyState([this.selectedPath], () =>
+      StorageModel.getFileNameFromString(this.selectedPath.value)
+    );
+    this.selectedFileContent = React.createProxyState([this.selectedPath], () =>
+      this.getSelectedItemContent()
+    );
   }
 }
