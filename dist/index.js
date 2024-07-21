@@ -361,7 +361,8 @@
     readStringifiable = (pathComponents) => {
       const valueString = this.read(pathComponents);
       if (!valueString) return null;
-      return parse(valueString);
+      const object = parseValidObject(valueString);
+      return object;
     };
     // init
     constructor() {
@@ -431,12 +432,14 @@
       "last-used-page"
     ],
     chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
-    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"]
+    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
+    chatFiles: [DATA_VERSION, "chat", "files"]
   };
 
   // src/Model/fileModel.ts
-  var FileModel = class {
+  var FileModel = class _FileModel {
     chatModel;
+    storageModel;
     // handler
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile);
@@ -446,10 +449,57 @@
     addFile = (file) => {
       this.chatModel.sendMessage("", file);
     };
+    // storage
+    storeFile = (file) => {
+      for (const fileContent of file.contentVersions) {
+        this.storeFileContent(file, fileContent);
+      }
+    };
+    storeFileContent = (file, fileContent) => {
+      const fileContentName = _FileModel.getFileContentName(fileContent);
+      const fileContentPath = _FileModel.getFileContentPath(
+        file,
+        fileContentName
+      );
+      const stringifiedContent = stringify(fileContent);
+      this.storageModel.write(fileContentPath, stringifiedContent);
+    };
+    listFileIds = () => {
+      return this.storageModel.list(storageKeys.chatFiles);
+    };
+    listFileContents = (file) => {
+      const filePath = _FileModel.getFilePath(file.id);
+      return this.storageModel.list(filePath);
+    };
+    getFile = (fileId) => {
+      const filePath = _FileModel.getFilePath(fileId);
+      const fileOrNull = this.storageModel.readStringifiable(filePath);
+      return fileOrNull;
+    };
+    getLatestFileContentName = (fileContentNames) => {
+      return fileContentNames[fileContentNames.length - 1];
+    };
+    getFileContent = (file, fileContentName) => {
+      const filePath = _FileModel.getFileContentPath(file, fileContentName);
+      const fileContentOrNull = this.storageModel.readStringifiable(filePath);
+      return fileContentOrNull;
+    };
     // init
-    constructor(chatModel) {
+    constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
+      this.storageModel = storageModel2;
     }
+    // utility
+    static getFilePath = (fileId) => {
+      return [...storageKeys.chatFiles, fileId];
+    };
+    static getFileContentName = (fileContent) => {
+      return fileContent.creationDate + fileContent.id;
+    };
+    static getFileContentPath = (file, fileContentName) => {
+      const filePath = _FileModel.getFilePath(file.id);
+      return [...filePath, fileContentName];
+    };
   };
 
   // src/Model/Utility/crypto.ts
@@ -702,11 +752,12 @@
       this.loadColor();
       this.subscribe();
       connectionModel2.setMessageSentHandler(this.handleMessageSent);
-      this.fileModel = new FileModel(this);
+      this.fileModel = new FileModel(this, this.storageModel);
     }
     // utility
     static generateChatInfo = (primaryChannel) => {
       return {
+        dataVersion: "v2",
         primaryChannel,
         secondaryChannels: [],
         encryptionKey: "",
