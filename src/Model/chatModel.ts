@@ -1,8 +1,8 @@
 // this file is responsible for managing chats.
 
+import { DATA_VERSION, ValidObject, checkIsValidObject } from "./Utility/typeSafety";
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
-import { ValidObject, checkIsValidObject } from "./Utility/typeSafety";
 import {
   createTimestamp,
   parse,
@@ -236,7 +236,7 @@ export default class ChatModel {
   // utility
   static generateChatInfo = (primaryChannel: string): ChatInfo => {
     return {
-      dataVersion: "v2",
+      dataVersion: DATA_VERSION,
 
       primaryChannel,
       secondaryChannels: [],
@@ -253,7 +253,7 @@ export default class ChatModel {
     file?: File
   ): Promise<ChatMessage> => {
     const chatMessage: ChatMessage = {
-      dataVersion: "v2",
+      dataVersion: DATA_VERSION,
 
       id: v4(),
 
