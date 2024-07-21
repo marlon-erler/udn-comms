@@ -1,10 +1,11 @@
 // this file is responsible for managing files within chats.
 
 import ChatModel, { ChatMessage } from "./chatModel";
+import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
 import StorageModel, { storageKeys } from "./storageModel";
 import { parseValidObject, stringify } from "./Utility/utility";
 
-import { ValidObject } from "./Utility/typeSafety";
+import { v4 } from "uuid";
 
 export default class FileModel {
   chatModel: ChatModel;
@@ -14,6 +15,8 @@ export default class FileModel {
   handleStringifiedFile = (stringifiedFile: string): void => {
     const file: File | null = parseValidObject<File>(stringifiedFile);
     if (file == null) return;
+
+    this.storeFile(file);
   };
 
   // methods
@@ -34,6 +37,11 @@ export default class FileModel {
       file,
       fileContentName
     );
+
+    // check if fileContent already exists
+    const existingFileContent: string | null = this.storageModel.read(fileContentPath);
+    if (existingFileContent != null) return;
+
     const stringifiedContent: string = stringify(fileContent);
     this.storageModel.write(fileContentPath, stringifiedContent);
   };
@@ -90,6 +98,15 @@ export default class FileModel {
     const filePath: string[] = FileModel.getFilePath(file.id);
     return [...filePath, fileContentName];
   };
+
+  static createFile = (): File => {
+    return {
+      dataVersion: DATA_VERSION,
+
+      id: v4(),
+      contentVersions: []
+    }
+  }
 }
 
 // types
