@@ -13,13 +13,23 @@ export function checkMatchesObjectStructure(
     const actualType = typeof objectToCheck[key];
     if (requiredType != actualType) return false;
 
-    // recurse into objects
-    if (requiredType != "object") continue;
-    const doesNestedObjectMatch = checkMatchesObjectStructure(
-      reference[key],
-      objectToCheck[key]
-    );
-    if (doesNestedObjectMatch == false) return false;
+    if (Array.isArray(reference[key])) {
+      // only check if array is not empty
+      if (objectToCheck[key].length == 0) continue;
+
+      // check first item of array
+      const requiredType = typeof reference[key][0];
+      const actualType = typeof objectToCheck[key][0];
+
+      if (requiredType != actualType) return false;
+    } else if (requiredType == "object") {
+      // recurse into objects
+      const doesNestedObjectMatch = checkMatchesObjectStructure(
+        reference[key],
+        objectToCheck[key]
+      );
+      if (doesNestedObjectMatch == false) return false;
+    }
   }
 
   return true;
