@@ -1,8 +1,12 @@
 // this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
 
-import { localeCompare, parse, stringify } from "./Utility/utility";
-
-import { DATA_VERSION } from "./Utility/typeSafety";
+import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
+import {
+  localeCompare,
+  parse,
+  parseValidObject,
+  stringify,
+} from "./Utility/utility";
 
 export const PATH_COMPONENT_SEPARATOR = "\\";
 
@@ -69,16 +73,17 @@ export default class StorageModel {
   };
 
   // stringifiable
-  writeStringifiable = (pathComponents: string[], value: any): void => {
+  writeStringifiable = (pathComponents: string[], value: ValidObject): void => {
     const valueString: string = stringify(value);
     this.write(pathComponents, valueString);
   };
 
-  readStringifiable = (pathComponents: string[]): any | null => {
+  readStringifiable = <T extends ValidObject>(pathComponents: string[]): T | null => {
     const valueString: string | null = this.read(pathComponents);
     if (!valueString) return null;
 
-    return parse(valueString);
+    const object: T | null = parseValidObject(valueString);
+    return object;
   };
 
   // init
@@ -168,4 +173,5 @@ export const storageKeys = {
   ],
   chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
   chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
+  chatFiles: [DATA_VERSION, "chat", "files"],
 };

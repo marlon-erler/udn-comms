@@ -1,11 +1,14 @@
 // this file is responsible for managing files within chats.
 
 import ChatModel, { ChatMessage } from "./chatModel";
+import StorageModel, { storageKeys } from "./storageModel";
+import { parseValidObject, stringify } from "./Utility/utility";
 
-import { parseValidObject } from "./Utility/utility";
+import { ValidObject } from "./Utility/typeSafety";
 
 export default class FileModel {
   chatModel: ChatModel;
+  storageModel: StorageModel;
 
   // handler
   handleStringifiedFile = (stringifiedFile: string): void => {
@@ -18,25 +21,86 @@ export default class FileModel {
     this.chatModel.sendMessage("", file);
   };
 
+  // storage
+  storeFile = (file: File): void => {
+    for (const fileContent of file.contentVersions) {
+      this.storeFileContent(file, fileContent);
+    }
+  };
+
+  storeFileContent = (file: File, fileContent: FileContent): void => {
+    const fileContentName: string = FileModel.getFileContentName(fileContent);
+    const fileContentPath: string[] = FileModel.getFileContentPath(
+      file,
+      fileContentName
+    );
+    const stringifiedContent: string = stringify(fileContent);
+    this.storageModel.write(fileContentPath, stringifiedContent);
+  };
+
+  listFileIds = (): string[] => {
+    return this.storageModel.list(storageKeys.chatFiles);
+  };
+
+  listFileContents = (file: File): string[] => {
+    const filePath: string[] = FileModel.getFilePath(file.id);
+    return this.storageModel.list(filePath);
+  };
+
+  getFile = (fileId: string): File | null => {
+    const filePath = FileModel.getFilePath(fileId);
+    const fileOrNull: File | null =
+      this.storageModel.readStringifiable<File>(filePath);
+    return fileOrNull;
+  };
+
+  getLatestFileContentName = (fileContentNames: string[]): string | null => {
+    return fileContentNames[fileContentNames.length - 1];
+  };
+
+  getFileContent = (
+    file: File,
+    fileContentName: string
+  ): FileContent | null => {
+    const filePath = FileModel.getFileContentPath(file, fileContentName);
+    const fileContentOrNull: FileContent | null =
+      this.storageModel.readStringifiable<FileContent>(filePath);
+    return fileContentOrNull;
+  };
+
   // init
-  constructor(chatModel: ChatModel) {
+  constructor(chatModel: ChatModel, storageModel: StorageModel) {
     this.chatModel = chatModel;
+    this.storageModel = storageModel;
   }
+
+  // utility
+  static getFilePath = (fileId: string): string[] => {
+    return [...storageKeys.chatFiles, fileId];
+  };
+
+  static getFileContentName = (fileContent: FileContent): string => {
+    return fileContent.creationDate + fileContent.id;
+  };
+
+  static getFileContentPath = (
+    file: File,
+    fileContentName: string
+  ): string[] => {
+    const filePath: string[] = FileModel.getFilePath(file.id);
+    return [...filePath, fileContentName];
+  };
 }
 
 // types
-export interface File {
-  dataVersion: "v2";
-
+export interface File extends ValidObject {
   id: string;
-  title: string;
-
-  contentVersions: { [id: string]: FileContent };
+  contentVersions: FileContent[];
 }
 
-export interface FileContent {
-  dataVersion: "v2";
-
+export interface FileContent extends ValidObject {
   id: string;
   creationDate: string;
+
+  type: string;
 }

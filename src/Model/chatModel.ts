@@ -2,6 +2,7 @@
 
 import FileModel, { File } from "./fileModel";
 import StorageModel, { storageKeys } from "./storageModel";
+import { ValidObject, checkIsValidObject } from "./Utility/typeSafety";
 import {
   createTimestamp,
   parse,
@@ -14,7 +15,6 @@ import ChatListModel from "./chatListModel";
 import { Color } from "../ViewModel/colors";
 import ConnectionModel from "./connectionModel";
 import SettingsModel from "./settingsModel";
-import { checkIsValidObject } from "./Utility/typeSafety";
 import { v4 } from "uuid";
 
 export default class ChatModel {
@@ -230,12 +230,14 @@ export default class ChatModel {
 
     connectionModel.setMessageSentHandler(this.handleMessageSent);
 
-    this.fileModel = new FileModel(this);
+    this.fileModel = new FileModel(this, this.storageModel);
   }
 
   // utility
   static generateChatInfo = (primaryChannel: string): ChatInfo => {
     return {
+      dataVersion: "v2",
+
       primaryChannel,
       secondaryChannels: [],
       encryptionKey: "",
@@ -281,7 +283,7 @@ export default class ChatModel {
 }
 
 // types
-export interface ChatInfo {
+export interface ChatInfo extends ValidObject {
   primaryChannel: string;
   secondaryChannels: string[];
   encryptionKey: string;
@@ -295,9 +297,7 @@ export enum ChatMessageStatus {
   Received = "received",
 }
 
-export interface ChatMessage {
-  dataVersion: "v2";
-
+export interface ChatMessage extends ValidObject {
   id: string;
 
   channel: string;
