@@ -1,164 +1,4 @@
 (() => {
-  // src/Model/Utility/typeSafety.ts
-  var DATA_VERSION = "v2";
-  function checkIsValidObject(object) {
-    return object.dataVersion == DATA_VERSION;
-  }
-
-  // src/Model/Utility/utility.ts
-  function createTimestamp() {
-    return (/* @__PURE__ */ new Date()).toISOString();
-  }
-  function stringify(data) {
-    return JSON.stringify(data, null, 4);
-  }
-  function parse(string) {
-    try {
-      return JSON.parse(string);
-    } catch {
-      return {};
-    }
-  }
-  function parseValidObject(string) {
-    const parsed = parse(string);
-    if (checkIsValidObject(parsed) == false) return null;
-    return parsed;
-  }
-  function localeCompare(a, b) {
-    return a.localeCompare(b);
-  }
-
-  // src/Model/storageModel.ts
-  var PATH_COMPONENT_SEPARATOR = "\\";
-  var StorageModel = class _StorageModel {
-    storageEntryTree = {};
-    // basic
-    write = (pathComponents, value) => {
-      const pathString = _StorageModel.pathComponentsToString(
-        ...pathComponents
-      );
-      localStorage.setItem(pathString, value);
-      this.updateTree(...pathComponents);
-    };
-    read = (pathComponents) => {
-      const pathString = _StorageModel.pathComponentsToString(
-        ...pathComponents
-      );
-      return localStorage.getItem(pathString);
-    };
-    remove = (pathComponents, shouldInitialize = true) => {
-      const pathString = _StorageModel.pathComponentsToString(
-        ...pathComponents
-      );
-      localStorage.removeItem(pathString);
-      if (shouldInitialize == true) {
-        this.initializeTree();
-      }
-    };
-    removeRecursive = (pathComponentsOfEntityToDelete) => {
-      a: for (const key of Object.keys(localStorage)) {
-        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
-        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
-          if (!pathComponentsOfCurrentEntity[i]) continue a;
-          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
-            continue a;
-        }
-        this.remove(pathComponentsOfCurrentEntity, false);
-      }
-      this.initializeTree();
-    };
-    list = (pathComponents) => {
-      let currentParent = this.storageEntryTree;
-      for (const component of pathComponents) {
-        const nextParent = currentParent[component];
-        if (nextParent == void 0) return [];
-        currentParent = nextParent;
-      }
-      return [...Object.keys(currentParent).sort(localeCompare)];
-    };
-    // stringifiable
-    writeStringifiable = (pathComponents, value) => {
-      const valueString = stringify(value);
-      this.write(pathComponents, valueString);
-    };
-    readStringifiable = (pathComponents) => {
-      const valueString = this.read(pathComponents);
-      if (!valueString) return null;
-      const object = parseValidObject(valueString);
-      return object;
-    };
-    // init
-    constructor() {
-      this.initializeTree();
-    }
-    // utility
-    initializeTree = () => {
-      console.log("initializing tree");
-      this.storageEntryTree = {};
-      for (const key of Object.keys(localStorage)) {
-        const components = _StorageModel.stringToPathComponents(key);
-        this.updateTree(...components);
-      }
-    };
-    updateTree = (...pathComponents) => {
-      let currentParent = this.storageEntryTree;
-      for (const pathPart of pathComponents) {
-        if (!currentParent[pathPart]) {
-          currentParent[pathPart] = {};
-        }
-        currentParent = currentParent[pathPart];
-      }
-    };
-    printTree = () => {
-      return stringify(this.storageEntryTree);
-    };
-    static getFileName = (pathComponents) => {
-      return pathComponents[pathComponents.length - 1] || "\\";
-    };
-    static getFileNameFromString = (pathString) => {
-      const pathComponents = this.stringToPathComponents(pathString);
-      return pathComponents[pathComponents.length - 1] || "\\";
-    };
-    static pathComponentsToString = (...pathComponents) => {
-      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
-    };
-    static stringToPathComponents = (string) => {
-      return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
-    };
-    static join = (...items) => {
-      let allComponents = [];
-      for (const item of items) {
-        const parts = this.stringToPathComponents(item);
-        allComponents.push(...parts);
-      }
-      return _StorageModel.pathComponentsToString(...allComponents);
-    };
-  };
-  var storageKeys = {
-    // connection
-    socketAddress: [DATA_VERSION, "connection", "socket-address"],
-    reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
-    outbox: [DATA_VERSION, "connection", "outbox"],
-    mailboxes: [DATA_VERSION, "connection", "mailboxes"],
-    // settings
-    username: [DATA_VERSION, "settings", "user-name"],
-    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
-    // history
-    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
-    // chat
-    chats: [DATA_VERSION, "chat"],
-    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
-    chatLastUsedPage: (id) => [
-      DATA_VERSION,
-      "chat",
-      id,
-      "last-used-page"
-    ],
-    chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
-    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
-    chatFiles: [DATA_VERSION, "chat", "files"]
-  };
-
   // node_modules/uuid/dist/esm-browser/stringify.js
   var byteToHex = [];
   for (i = 0; i < 256; ++i) {
@@ -207,452 +47,6 @@
     return unsafeStringify(rnds);
   }
   var v4_default = v4;
-
-  // src/Model/fileModel.ts
-  var FileModel = class _FileModel {
-    chatModel;
-    storageModel;
-    // handler
-    handleStringifiedFile = (stringifiedFile) => {
-      const file = parseValidObject(stringifiedFile);
-      if (file == null) return;
-      this.storeFile(file);
-    };
-    // methods
-    addFile = (file) => {
-      this.chatModel.sendMessage("", file);
-    };
-    // storage
-    storeFile = (file) => {
-      for (const fileContent of file.contentVersions) {
-        this.storeFileContent(file, fileContent);
-      }
-    };
-    storeFileContent = (file, fileContent) => {
-      const fileContentName = _FileModel.getFileContentName(fileContent);
-      const fileContentPath = _FileModel.getFileContentPath(
-        file,
-        fileContentName
-      );
-      const existingFileContent = this.storageModel.read(fileContentPath);
-      if (existingFileContent != null) return;
-      const stringifiedContent = stringify(fileContent);
-      this.storageModel.write(fileContentPath, stringifiedContent);
-    };
-    listFileIds = () => {
-      return this.storageModel.list(storageKeys.chatFiles);
-    };
-    listFileContents = (file) => {
-      const filePath = _FileModel.getFilePath(file.id);
-      return this.storageModel.list(filePath);
-    };
-    getFile = (fileId) => {
-      const filePath = _FileModel.getFilePath(fileId);
-      const fileOrNull = this.storageModel.readStringifiable(filePath);
-      return fileOrNull;
-    };
-    getLatestFileContentName = (fileContentNames) => {
-      return fileContentNames[fileContentNames.length - 1];
-    };
-    getFileContent = (file, fileContentName) => {
-      const filePath = _FileModel.getFileContentPath(file, fileContentName);
-      const fileContentOrNull = this.storageModel.readStringifiable(filePath);
-      return fileContentOrNull;
-    };
-    // init
-    constructor(chatModel, storageModel2) {
-      this.chatModel = chatModel;
-      this.storageModel = storageModel2;
-    }
-    // utility
-    static getFilePath = (fileId) => {
-      return [...storageKeys.chatFiles, fileId];
-    };
-    static getFileContentName = (fileContent) => {
-      return fileContent.creationDate + fileContent.id;
-    };
-    static getFileContentPath = (file, fileContentName) => {
-      const filePath = _FileModel.getFilePath(file.id);
-      return [...filePath, fileContentName];
-    };
-    static createFile = () => {
-      return {
-        dataVersion: DATA_VERSION,
-        id: v4_default(),
-        contentVersions: []
-      };
-    };
-  };
-
-  // src/Model/Utility/crypto.ts
-  var IV_SIZE = 12;
-  var ENCRYPTION_ALG = "AES-GCM";
-  async function encryptString(plaintext, passphrase) {
-    if (!window.crypto.subtle) return plaintext;
-    const iv = generateIV();
-    const key = await importKey(passphrase, "encrypt");
-    const encryptedArray = await encrypt(iv, key, plaintext);
-    const encryptionData = {
-      iv: uInt8ToArray(iv),
-      encryptedArray: uInt8ToArray(encryptedArray)
-    };
-    return btoa(JSON.stringify(encryptionData));
-  }
-  async function decryptString(cyphertext, passphrase) {
-    try {
-      const encrypionData = JSON.parse(atob(cyphertext));
-      const iv = arrayToUint8(encrypionData.iv);
-      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
-      const key = await importKey(passphrase, "decrypt");
-      return await decrypt(iv, key, encryptedArray);
-    } catch {
-      return cyphertext;
-    }
-  }
-  function encode(string) {
-    return new TextEncoder().encode(string);
-  }
-  function decode(array) {
-    return new TextDecoder("utf-8").decode(array);
-  }
-  async function encrypt(iv, key, message) {
-    const arrayBuffer = await window.crypto.subtle.encrypt(
-      { name: ENCRYPTION_ALG, iv },
-      key,
-      encode(message)
-    );
-    return new Uint8Array(arrayBuffer);
-  }
-  async function decrypt(iv, key, cyphertext) {
-    const arrayBuffer = await crypto.subtle.decrypt(
-      { name: ENCRYPTION_ALG, iv },
-      key,
-      cyphertext
-    );
-    return arrayBufferToString(arrayBuffer);
-  }
-  async function hash(encoded) {
-    return await crypto.subtle.digest("SHA-256", encoded);
-  }
-  function generateIV() {
-    return crypto.getRandomValues(new Uint8Array(IV_SIZE));
-  }
-  async function importKey(passphrase, purpose) {
-    return await crypto.subtle.importKey(
-      "raw",
-      await hash(encode(passphrase)),
-      { name: ENCRYPTION_ALG },
-      false,
-      [purpose]
-    );
-  }
-  function arrayBufferToString(arrayBuffer) {
-    const uInt8Array = new Uint8Array(arrayBuffer);
-    return decode(uInt8Array);
-  }
-  function uInt8ToArray(uInt8Array) {
-    return Array.from(uInt8Array);
-  }
-  function arrayToUint8(array) {
-    return new Uint8Array(array);
-  }
-
-  // src/ViewModel/colors.ts
-  var Color = /* @__PURE__ */ ((Color2) => {
-    Color2["Standard"] = "standard";
-    Color2["Coral"] = "coral";
-    Color2["Yellow"] = "yellow";
-    Color2["Mint"] = "mint";
-    Color2["LightBlue"] = "lightblue";
-    Color2["Blue"] = "blue";
-    Color2["purple"] = "purple";
-    return Color2;
-  })(Color || {});
-
-  // src/Model/chatModel.ts
-  var ChatModel = class _ChatModel {
-    connectionModel;
-    storageModel;
-    settingsModel;
-    chatListModel;
-    fileModel;
-    // data
-    id;
-    info;
-    color;
-    chatMessageHandler = () => {
-    };
-    // sorting
-    get index() {
-      return this.chatListModel.getIndexOfPrimaryChannel(
-        this.info.primaryChannel
-      );
-    }
-    // paths
-    get infoPath() {
-      return storageKeys.chatInfo(this.id);
-    }
-    get colorPath() {
-      return storageKeys.chatColor(this.id);
-    }
-    get messageDirPath() {
-      return storageKeys.chatMessages(this.id);
-    }
-    getMessagePath = (id) => {
-      return [...this.messageDirPath, id];
-    };
-    // set
-    setPrimaryChannel = (primaryChannel) => {
-      this.info.primaryChannel = primaryChannel;
-      this.storeInfo();
-      this.chatListModel.updateIndices();
-      this.subscribe();
-    };
-    setSecondaryChannels = (secondaryChannels) => {
-      this.info.secondaryChannels = secondaryChannels;
-      this.storeInfo();
-    };
-    setEncryptionKey = (key) => {
-      this.info.encryptionKey = key;
-      this.storeInfo();
-    };
-    setColor = (color) => {
-      this.color = color;
-      this.storeColor();
-    };
-    // store & add
-    storeInfo = () => {
-      this.storageModel.writeStringifiable(this.infoPath, this.info);
-    };
-    storeColor = () => {
-      this.storageModel.write(this.colorPath, this.color);
-    };
-    addMessage = async (chatMessage) => {
-      await this.decryptMessage(chatMessage);
-      if (chatMessage.body != "") {
-        const messagePath = this.getMessagePath(chatMessage.id);
-        this.storageModel.writeStringifiable(messagePath, chatMessage);
-        this.chatMessageHandler(chatMessage);
-      }
-      this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
-    };
-    // delete
-    delete = () => {
-      this.chatListModel.untrackChat(this);
-      const dirPath = [...storageKeys.chats, this.id];
-      this.storageModel.removeRecursive(dirPath);
-    };
-    // load
-    loadInfo = () => {
-      const info = this.storageModel.readStringifiable(this.infoPath);
-      if (info != null) {
-        this.info = info;
-      } else {
-        this.info = _ChatModel.generateChatInfo("0");
-      }
-    };
-    loadColor = () => {
-      const path = this.colorPath;
-      const color = this.storageModel.read(path);
-      if (!color) {
-        this.color = "standard" /* Standard */;
-      } else {
-        this.color = color;
-      }
-    };
-    get messages() {
-      const messageIds = this.storageModel.list(this.messageDirPath);
-      if (!Array.isArray(messageIds)) return [];
-      const messages = [];
-      for (const messageId of messageIds) {
-        const messagePath = this.getMessagePath(messageId);
-        const message = this.storageModel.readStringifiable(messagePath);
-        if (checkIsValidObject(message) == false) continue;
-        messages.push(message);
-      }
-      const sorted = messages.sort(
-        (a, b) => a.dateSent.localeCompare(b.dateSent)
-      );
-      return sorted;
-    }
-    // messaging
-    sendMessage = async (body, file) => {
-      const senderName = this.settingsModel.username;
-      if (senderName == "") return false;
-      const allChannels = [this.info.primaryChannel];
-      for (const secondaryChannel of this.info.secondaryChannels) {
-        allChannels.push(secondaryChannel);
-      }
-      const combinedChannel = allChannels.join("/");
-      const chatMessage = await _ChatModel.createChatMessage(
-        combinedChannel,
-        senderName,
-        this.info.encryptionKey,
-        body,
-        file
-      );
-      this.addMessage(chatMessage);
-      this.connectionModel.sendMessageOrStore(chatMessage);
-      return true;
-    };
-    handleMessage = (body) => {
-      const chatMessage = parseValidObject(body);
-      if (chatMessage == null) return;
-      chatMessage.status = "received" /* Received */;
-      this.addMessage(chatMessage);
-    };
-    handleMessageSent = (chatMessage) => {
-      chatMessage.status = "sent" /* Sent */;
-      this.addMessage(chatMessage);
-    };
-    decryptMessage = async (chatMessage) => {
-      const decryptedBody = await decryptString(
-        chatMessage.body,
-        this.info.encryptionKey
-      );
-      const decryptedFile = await decryptString(
-        chatMessage.stringifiedFile ?? "",
-        this.info.encryptionKey
-      );
-      chatMessage.body = decryptedBody;
-      chatMessage.stringifiedFile = decryptedFile;
-    };
-    setMessageHandler = (handler) => {
-      this.chatMessageHandler = handler;
-    };
-    subscribe = () => {
-      this.connectionModel.addChannel(this.info.primaryChannel);
-    };
-    // init
-    constructor(storageModel2, connectionModel2, settingsModel2, chatListModel2, chatId) {
-      this.id = chatId;
-      this.connectionModel = connectionModel2;
-      this.settingsModel = settingsModel2;
-      this.storageModel = storageModel2;
-      this.chatListModel = chatListModel2;
-      this.loadInfo();
-      this.loadColor();
-      this.subscribe();
-      connectionModel2.setMessageSentHandler(this.handleMessageSent);
-      this.fileModel = new FileModel(this, this.storageModel);
-    }
-    // utility
-    static generateChatInfo = (primaryChannel) => {
-      return {
-        dataVersion: DATA_VERSION,
-        primaryChannel,
-        secondaryChannels: [],
-        encryptionKey: "",
-        hasUnreadMessages: false
-      };
-    };
-    static createChatMessage = async (channel, sender, encryptionKey, body, file) => {
-      const chatMessage = {
-        dataVersion: DATA_VERSION,
-        id: v4_default(),
-        channel,
-        sender,
-        body,
-        dateSent: createTimestamp(),
-        status: "outbox" /* Outbox */,
-        stringifiedFile: ""
-      };
-      if (file != void 0) {
-        const stringifiedFile = stringify(file);
-        chatMessage.stringifiedFile = stringifiedFile;
-      }
-      if (encryptionKey != "") {
-        chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
-        chatMessage.stringifiedFile = await encryptString(
-          chatMessage.stringifiedFile,
-          encryptionKey
-        );
-      }
-      return chatMessage;
-    };
-  };
-
-  // src/Model/chatListModel.ts
-  var ChatListModel = class {
-    storageModel;
-    settingsModel;
-    connectionModel;
-    // data
-    chatModels = /* @__PURE__ */ new Set();
-    sortedPrimaryChannels = [];
-    // handlers
-    messageHandler = (data) => {
-      for (const chatModel of this.chatModels) {
-        const channel = data.messageChannel;
-        const body = data.messageBody;
-        if (channel == void 0) return;
-        if (body == void 0) return;
-        const allChannels = channel.split("/");
-        for (const channel2 of allChannels) {
-          if (channel2 != chatModel.info.primaryChannel) continue;
-          chatModel.handleMessage(body);
-          break;
-        }
-      }
-    };
-    // store & add
-    addChatModel = (chatModel) => {
-      this.chatModels.add(chatModel);
-      this.updateIndices();
-    };
-    createChat = (primaryChannel) => {
-      const id = v4_default();
-      const chatModel = new ChatModel(
-        this.storageModel,
-        this.connectionModel,
-        this.settingsModel,
-        this,
-        id
-      );
-      chatModel.setPrimaryChannel(primaryChannel);
-      this.addChatModel(chatModel);
-      return chatModel;
-    };
-    untrackChat = (chat) => {
-      this.chatModels.delete(chat);
-      this.updateIndices();
-    };
-    // sorting
-    updateIndices = () => {
-      this.sortedPrimaryChannels = [];
-      let allChannels = [];
-      for (const chatModel of this.chatModels) {
-        allChannels.push(chatModel.info.primaryChannel);
-      }
-      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
-    };
-    getIndexOfPrimaryChannel(primaryChannel) {
-      return this.sortedPrimaryChannels.indexOf(primaryChannel);
-    }
-    // load
-    loadChats = () => {
-      const chatDir = storageKeys.chats;
-      const chatIds = this.storageModel.list(chatDir);
-      for (const chatId of chatIds) {
-        const chatModel = new ChatModel(
-          this.storageModel,
-          this.connectionModel,
-          this.settingsModel,
-          this,
-          chatId
-        );
-        this.addChatModel(chatModel);
-      }
-    };
-    // init
-    constructor(storageModel2, settingsModel2, connectionModel2) {
-      this.storageModel = storageModel2;
-      this.settingsModel = settingsModel2;
-      this.connectionModel = connectionModel2;
-      this.loadChats();
-      connectionModel2.setMessageHandler(this.messageHandler);
-    }
-  };
 
   // node_modules/bloatless-react/index.ts
   var State = class {
@@ -881,6 +275,679 @@
     children.filter((x) => x).forEach((child) => element.append(child));
     return element;
   }
+
+  // src/Model/Utility/typeSafety.ts
+  var DATA_VERSION = "v2";
+  function checkIsValidObject(object) {
+    return object.dataVersion == DATA_VERSION;
+  }
+  function checkMatchesObjectStructure(objectToCheck, reference) {
+    if (typeof reference != "object") {
+      return typeof objectToCheck == typeof reference;
+    }
+    for (const key of Object.keys(reference)) {
+      const requiredType = typeof reference[key];
+      const actualType = typeof objectToCheck[key];
+      if (requiredType != actualType) return false;
+      if (Array.isArray(reference[key])) {
+        if (objectToCheck[key].length == 0) continue;
+        const doesFirstItemMatch = checkMatchesObjectStructure(
+          objectToCheck[key][0],
+          reference[key][0]
+        );
+        if (doesFirstItemMatch == false) return false;
+      } else if (requiredType == "object") {
+        const doesNestedObjectMatch = checkMatchesObjectStructure(
+          objectToCheck[key],
+          reference[key]
+        );
+        if (doesNestedObjectMatch == false) return false;
+      }
+    }
+    return true;
+  }
+
+  // src/Model/Utility/utility.ts
+  function createTimestamp() {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  }
+  function stringify(data) {
+    return JSON.stringify(data, null, 4);
+  }
+  function parse(string) {
+    try {
+      return JSON.parse(string);
+    } catch {
+      return {};
+    }
+  }
+  function parseValidObject(string, reference) {
+    const parsed = parse(string);
+    if (checkIsValidObject(parsed) == false) return null;
+    const doesMatchReference = checkMatchesObjectStructure(
+      parsed,
+      reference
+    );
+    if (doesMatchReference == false) return null;
+    return parsed;
+  }
+  function localeCompare(a, b) {
+    return a.localeCompare(b);
+  }
+
+  // src/Model/storageModel.ts
+  var PATH_COMPONENT_SEPARATOR = "\\";
+  var StorageModel = class _StorageModel {
+    storageEntryTree = {};
+    // basic
+    write = (pathComponents, value) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.setItem(pathString, value);
+      this.updateTree(...pathComponents);
+    };
+    read = (pathComponents) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      return localStorage.getItem(pathString);
+    };
+    remove = (pathComponents, shouldInitialize = true) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.removeItem(pathString);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+    };
+    removeRecursively = (pathComponentsOfEntityToDelete) => {
+      a: for (const key of Object.keys(localStorage)) {
+        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
+        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue a;
+          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
+            continue a;
+        }
+        this.remove(pathComponentsOfCurrentEntity, false);
+      }
+      this.initializeTree();
+    };
+    list = (pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const component of pathComponents) {
+        const nextParent = currentParent[component];
+        if (nextParent == void 0) return [];
+        currentParent = nextParent;
+      }
+      return [...Object.keys(currentParent).sort(localeCompare)];
+    };
+    // stringifiable
+    writeStringifiable = (pathComponents, value) => {
+      const valueString = stringify(value);
+      this.write(pathComponents, valueString);
+    };
+    readStringifiable = (pathComponents, reference) => {
+      const valueString = this.read(pathComponents);
+      if (!valueString) return null;
+      const object = parseValidObject(valueString, reference);
+      if (object == null) return null;
+      return object;
+    };
+    // init
+    constructor() {
+      this.initializeTree();
+    }
+    // utility
+    initializeTree = () => {
+      console.log("initializing tree");
+      this.storageEntryTree = {};
+      for (const key of Object.keys(localStorage)) {
+        const components = _StorageModel.stringToPathComponents(key);
+        this.updateTree(...components);
+      }
+    };
+    updateTree = (...pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const pathPart of pathComponents) {
+        if (!currentParent[pathPart]) {
+          currentParent[pathPart] = {};
+        }
+        currentParent = currentParent[pathPart];
+      }
+    };
+    printTree = () => {
+      return stringify(this.storageEntryTree);
+    };
+    static getFileName = (pathComponents) => {
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
+    static getFileNameFromString = (pathString) => {
+      const pathComponents = this.stringToPathComponents(pathString);
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
+    static pathComponentsToString = (...pathComponents) => {
+      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
+    };
+    static stringToPathComponents = (string) => {
+      return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
+    };
+    static join = (...items) => {
+      let allComponents = [];
+      for (const item of items) {
+        const parts = this.stringToPathComponents(item);
+        allComponents.push(...parts);
+      }
+      return _StorageModel.pathComponentsToString(...allComponents);
+    };
+  };
+  var storageKeys = {
+    // connection
+    socketAddress: [DATA_VERSION, "connection", "socket-address"],
+    reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
+    outbox: [DATA_VERSION, "connection", "outbox"],
+    mailboxes: [DATA_VERSION, "connection", "mailboxes"],
+    // settings
+    username: [DATA_VERSION, "settings", "user-name"],
+    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
+    // history
+    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
+    // chat
+    chats: [DATA_VERSION, "chat"],
+    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
+    chatLastUsedPage: (id) => [
+      DATA_VERSION,
+      "chat",
+      id,
+      "last-used-page"
+    ],
+    chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
+    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
+    chatFiles: [DATA_VERSION, "chat", "files"]
+  };
+
+  // src/Model/fileModel.ts
+  var FileModel = class _FileModel {
+    chatModel;
+    storageModel;
+    // handler
+    handleStringifiedFile = (stringifiedFile) => {
+      const file = parseValidObject(stringifiedFile, FileReference);
+      if (file == null) return;
+      this.storeFile(file);
+    };
+    // methods
+    addFile = (file) => {
+      this.chatModel.sendMessage("", file);
+    };
+    // storage
+    storeFile = (file) => {
+      for (const fileContent of file.contentVersions) {
+        this.storeFileContent(file, fileContent);
+      }
+    };
+    storeFileContent = (file, fileContent) => {
+      const fileContentName = _FileModel.getFileContentName(fileContent);
+      const fileContentPath = _FileModel.getFileContentPath(
+        file,
+        fileContentName
+      );
+      const existingFileContent = this.storageModel.read(fileContentPath);
+      if (existingFileContent != null) return;
+      const stringifiedContent = stringify(fileContent);
+      this.storageModel.write(fileContentPath, stringifiedContent);
+    };
+    listFileIds = () => {
+      return this.storageModel.list(storageKeys.chatFiles);
+    };
+    listFileContents = (file) => {
+      const filePath = _FileModel.getFilePath(file.id);
+      return this.storageModel.list(filePath);
+    };
+    getFile = (fileId) => {
+      const filePath = _FileModel.getFilePath(fileId);
+      const fileOrNull = this.storageModel.readStringifiable(
+        filePath,
+        FileReference
+      );
+      return fileOrNull;
+    };
+    getLatestFileContentName = (fileContentNames) => {
+      return fileContentNames[fileContentNames.length - 1];
+    };
+    getFileContent = (file, fileContentName) => {
+      const filePath = _FileModel.getFileContentPath(file, fileContentName);
+      const fileContentOrNull = this.storageModel.readStringifiable(filePath, FileContentReference);
+      return fileContentOrNull;
+    };
+    // init
+    constructor(chatModel, storageModel2) {
+      this.chatModel = chatModel;
+      this.storageModel = storageModel2;
+    }
+    // utility
+    static getFilePath = (fileId) => {
+      return [...storageKeys.chatFiles, fileId];
+    };
+    static getFileContentName = (fileContent) => {
+      return fileContent.creationDate + fileContent.id;
+    };
+    static getFileContentPath = (file, fileContentName) => {
+      const filePath = _FileModel.getFilePath(file.id);
+      return [...filePath, fileContentName];
+    };
+    static createFile = () => {
+      return {
+        dataVersion: DATA_VERSION,
+        id: v4_default(),
+        contentVersions: []
+      };
+    };
+  };
+  var FileContentReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    creationDate: "",
+    type: ""
+  };
+  var FileReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    contentVersions: [FileContentReference]
+  };
+
+  // src/Model/Utility/crypto.ts
+  var IV_SIZE = 12;
+  var ENCRYPTION_ALG = "AES-GCM";
+  async function encryptString(plaintext, passphrase) {
+    if (!window.crypto.subtle) return plaintext;
+    const iv = generateIV();
+    const key = await importKey(passphrase, "encrypt");
+    const encryptedArray = await encrypt(iv, key, plaintext);
+    const encryptionData = {
+      iv: uInt8ToArray(iv),
+      encryptedArray: uInt8ToArray(encryptedArray)
+    };
+    return btoa(JSON.stringify(encryptionData));
+  }
+  async function decryptString(cyphertext, passphrase) {
+    try {
+      const encrypionData = JSON.parse(atob(cyphertext));
+      const iv = arrayToUint8(encrypionData.iv);
+      const encryptedArray = arrayToUint8(encrypionData.encryptedArray);
+      const key = await importKey(passphrase, "decrypt");
+      return await decrypt(iv, key, encryptedArray);
+    } catch {
+      return cyphertext;
+    }
+  }
+  function encode(string) {
+    return new TextEncoder().encode(string);
+  }
+  function decode(array) {
+    return new TextDecoder("utf-8").decode(array);
+  }
+  async function encrypt(iv, key, message) {
+    const arrayBuffer = await window.crypto.subtle.encrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      encode(message)
+    );
+    return new Uint8Array(arrayBuffer);
+  }
+  async function decrypt(iv, key, cyphertext) {
+    const arrayBuffer = await crypto.subtle.decrypt(
+      { name: ENCRYPTION_ALG, iv },
+      key,
+      cyphertext
+    );
+    return arrayBufferToString(arrayBuffer);
+  }
+  async function hash(encoded) {
+    return await crypto.subtle.digest("SHA-256", encoded);
+  }
+  function generateIV() {
+    return crypto.getRandomValues(new Uint8Array(IV_SIZE));
+  }
+  async function importKey(passphrase, purpose) {
+    return await crypto.subtle.importKey(
+      "raw",
+      await hash(encode(passphrase)),
+      { name: ENCRYPTION_ALG },
+      false,
+      [purpose]
+    );
+  }
+  function arrayBufferToString(arrayBuffer) {
+    const uInt8Array = new Uint8Array(arrayBuffer);
+    return decode(uInt8Array);
+  }
+  function uInt8ToArray(uInt8Array) {
+    return Array.from(uInt8Array);
+  }
+  function arrayToUint8(array) {
+    return new Uint8Array(array);
+  }
+
+  // src/ViewModel/colors.ts
+  var Color = /* @__PURE__ */ ((Color2) => {
+    Color2["Standard"] = "standard";
+    Color2["Coral"] = "coral";
+    Color2["Yellow"] = "yellow";
+    Color2["Mint"] = "mint";
+    Color2["LightBlue"] = "lightblue";
+    Color2["Blue"] = "blue";
+    Color2["purple"] = "purple";
+    return Color2;
+  })(Color || {});
+
+  // src/Model/chatModel.ts
+  var ChatModel = class _ChatModel {
+    connectionModel;
+    storageModel;
+    settingsModel;
+    chatListModel;
+    fileModel;
+    // data
+    id;
+    info;
+    color;
+    chatMessageHandler = () => {
+    };
+    // sorting
+    get index() {
+      return this.chatListModel.getIndexOfPrimaryChannel(
+        this.info.primaryChannel
+      );
+    }
+    // paths
+    get infoPath() {
+      return storageKeys.chatInfo(this.id);
+    }
+    get colorPath() {
+      return storageKeys.chatColor(this.id);
+    }
+    get messageDirPath() {
+      return storageKeys.chatMessages(this.id);
+    }
+    getMessagePath = (id) => {
+      return [...this.messageDirPath, id];
+    };
+    // set
+    setPrimaryChannel = (primaryChannel) => {
+      this.info.primaryChannel = primaryChannel;
+      this.storeInfo();
+      this.chatListModel.updateIndices();
+      this.subscribe();
+    };
+    setSecondaryChannels = (secondaryChannels) => {
+      this.info.secondaryChannels = secondaryChannels;
+      this.storeInfo();
+    };
+    setEncryptionKey = (key) => {
+      this.info.encryptionKey = key;
+      this.storeInfo();
+    };
+    setColor = (color) => {
+      this.color = color;
+      this.storeColor();
+    };
+    // store & add
+    storeInfo = () => {
+      this.storageModel.writeStringifiable(this.infoPath, this.info);
+    };
+    storeColor = () => {
+      this.storageModel.write(this.colorPath, this.color);
+    };
+    addMessage = async (chatMessage) => {
+      await this.decryptMessage(chatMessage);
+      if (chatMessage.body != "") {
+        const messagePath = this.getMessagePath(chatMessage.id);
+        this.storageModel.writeStringifiable(messagePath, chatMessage);
+        this.chatMessageHandler(chatMessage);
+      }
+      this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
+    };
+    // delete
+    delete = () => {
+      this.chatListModel.untrackChat(this);
+      const dirPath = [...storageKeys.chats, this.id];
+      this.storageModel.removeRecursively(dirPath);
+    };
+    // load
+    loadInfo = () => {
+      const info = this.storageModel.readStringifiable(
+        this.infoPath,
+        ChatInfoReference
+      );
+      if (info != null) {
+        this.info = info;
+      } else {
+        this.info = _ChatModel.generateChatInfo("0");
+      }
+    };
+    loadColor = () => {
+      const path = this.colorPath;
+      const color = this.storageModel.read(path);
+      if (!color) {
+        this.color = "standard" /* Standard */;
+      } else {
+        this.color = color;
+      }
+    };
+    get messages() {
+      const messageIds = this.storageModel.list(this.messageDirPath);
+      if (!Array.isArray(messageIds)) return [];
+      const chatMessages = [];
+      for (const messageId of messageIds) {
+        const messagePath = this.getMessagePath(messageId);
+        const chatMessage = this.storageModel.readStringifiable(messagePath, ChatMessageReference);
+        chatMessages.push(chatMessage);
+      }
+      const sorted = chatMessages.sort(
+        (a, b) => a.dateSent.localeCompare(b.dateSent)
+      );
+      return sorted;
+    }
+    // messaging
+    sendMessage = async (body, file) => {
+      const senderName = this.settingsModel.username;
+      if (senderName == "") return false;
+      const allChannels = [this.info.primaryChannel];
+      for (const secondaryChannel of this.info.secondaryChannels) {
+        allChannels.push(secondaryChannel);
+      }
+      const combinedChannel = allChannels.join("/");
+      const chatMessage = await _ChatModel.createChatMessage(
+        combinedChannel,
+        senderName,
+        this.info.encryptionKey,
+        body,
+        file
+      );
+      this.addMessage(chatMessage);
+      this.connectionModel.sendMessageOrStore(chatMessage);
+      return true;
+    };
+    handleMessage = (body) => {
+      const chatMessage = parseValidObject(
+        body,
+        ChatMessageReference
+      );
+      if (chatMessage == null) return;
+      chatMessage.status = "received" /* Received */;
+      this.addMessage(chatMessage);
+    };
+    handleMessageSent = (chatMessage) => {
+      chatMessage.status = "sent" /* Sent */;
+      this.addMessage(chatMessage);
+    };
+    decryptMessage = async (chatMessage) => {
+      const decryptedBody = await decryptString(
+        chatMessage.body,
+        this.info.encryptionKey
+      );
+      const decryptedFile = await decryptString(
+        chatMessage.stringifiedFile ?? "",
+        this.info.encryptionKey
+      );
+      chatMessage.body = decryptedBody;
+      chatMessage.stringifiedFile = decryptedFile;
+    };
+    setMessageHandler = (handler) => {
+      this.chatMessageHandler = handler;
+    };
+    subscribe = () => {
+      this.connectionModel.addChannel(this.info.primaryChannel);
+    };
+    // init
+    constructor(storageModel2, connectionModel2, settingsModel2, chatListModel2, chatId) {
+      this.id = chatId;
+      this.connectionModel = connectionModel2;
+      this.settingsModel = settingsModel2;
+      this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
+      this.loadInfo();
+      this.loadColor();
+      this.subscribe();
+      connectionModel2.setMessageSentHandler(this.handleMessageSent);
+      this.fileModel = new FileModel(this, this.storageModel);
+    }
+    // utility
+    static generateChatInfo = (primaryChannel) => {
+      return {
+        dataVersion: DATA_VERSION,
+        primaryChannel,
+        secondaryChannels: [],
+        encryptionKey: "",
+        hasUnreadMessages: false
+      };
+    };
+    static createChatMessage = async (channel, sender, encryptionKey, body, file) => {
+      const chatMessage = {
+        dataVersion: DATA_VERSION,
+        id: v4_default(),
+        channel,
+        sender,
+        body,
+        dateSent: createTimestamp(),
+        status: "outbox" /* Outbox */,
+        stringifiedFile: ""
+      };
+      if (file != void 0) {
+        const stringifiedFile = stringify(file);
+        chatMessage.stringifiedFile = stringifiedFile;
+      }
+      if (encryptionKey != "") {
+        chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
+        chatMessage.stringifiedFile = await encryptString(
+          chatMessage.stringifiedFile,
+          encryptionKey
+        );
+      }
+      return chatMessage;
+    };
+  };
+  var ChatInfoReference = {
+    dataVersion: DATA_VERSION,
+    primaryChannel: "",
+    secondaryChannels: [""],
+    encryptionKey: "",
+    hasUnreadMessages: true
+  };
+  var ChatMessageReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    channel: "",
+    sender: "",
+    body: "",
+    dateSent: "",
+    status: "",
+    stringifiedFile: ""
+  };
+
+  // src/Model/chatListModel.ts
+  var ChatListModel = class {
+    storageModel;
+    settingsModel;
+    connectionModel;
+    // data
+    chatModels = /* @__PURE__ */ new Set();
+    sortedPrimaryChannels = [];
+    // handlers
+    messageHandler = (data) => {
+      for (const chatModel of this.chatModels) {
+        const channel = data.messageChannel;
+        const body = data.messageBody;
+        if (channel == void 0) return;
+        if (body == void 0) return;
+        const allChannels = channel.split("/");
+        for (const channel2 of allChannels) {
+          if (channel2 != chatModel.info.primaryChannel) continue;
+          chatModel.handleMessage(body);
+          break;
+        }
+      }
+    };
+    // store & add
+    addChatModel = (chatModel) => {
+      this.chatModels.add(chatModel);
+      this.updateIndices();
+    };
+    createChat = (primaryChannel) => {
+      const id = v4_default();
+      const chatModel = new ChatModel(
+        this.storageModel,
+        this.connectionModel,
+        this.settingsModel,
+        this,
+        id
+      );
+      chatModel.setPrimaryChannel(primaryChannel);
+      this.addChatModel(chatModel);
+      return chatModel;
+    };
+    untrackChat = (chat) => {
+      this.chatModels.delete(chat);
+      this.updateIndices();
+    };
+    // sorting
+    updateIndices = () => {
+      this.sortedPrimaryChannels = [];
+      let allChannels = [];
+      for (const chatModel of this.chatModels) {
+        allChannels.push(chatModel.info.primaryChannel);
+      }
+      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
+    };
+    getIndexOfPrimaryChannel(primaryChannel) {
+      return this.sortedPrimaryChannels.indexOf(primaryChannel);
+    }
+    // load
+    loadChats = () => {
+      const chatDir = storageKeys.chats;
+      const chatIds = this.storageModel.list(chatDir);
+      for (const chatId of chatIds) {
+        const chatModel = new ChatModel(
+          this.storageModel,
+          this.connectionModel,
+          this.settingsModel,
+          this,
+          chatId
+        );
+        this.addChatModel(chatModel);
+      }
+    };
+    // init
+    constructor(storageModel2, settingsModel2, connectionModel2) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
+      this.connectionModel = connectionModel2;
+      this.loadChats();
+      connectionModel2.setMessageHandler(this.messageHandler);
+    }
+  };
 
   // src/ViewModel/chatMessageViewModel.ts
   var ChatMessageViewModel = class {
@@ -1833,17 +1900,16 @@
     getOutboxMessags = () => {
       const outboxPath = storageKeys.outbox;
       const messageIds = this.storageModel.list(outboxPath);
-      let messages = [];
+      let chatMessages = [];
       for (const messageId of messageIds) {
-        const message = this.storageModel.readStringifiable([
-          ...outboxPath,
-          messageId
-        ]);
-        if (message == void 0) continue;
-        if (checkIsValidObject(message) == false) continue;
-        messages.push(message);
+        const chatMessage = this.storageModel.readStringifiable(
+          [...outboxPath, messageId],
+          ChatMessageReference
+        );
+        if (chatMessage == null) continue;
+        chatMessages.push(chatMessage);
       }
-      return messages;
+      return chatMessages;
     };
     addToOutbox = (chatMessage) => {
       const messagePath = [...storageKeys.outbox, chatMessage.id];
@@ -2309,7 +2375,7 @@
     deleteSelectedItem = () => {
       const path = StorageModel.stringToPathComponents(this.selectedPath.value);
       this.lastDeletedItemPath.value = this.selectedPath.value;
-      this.storageModel.removeRecursive(path);
+      this.storageModel.removeRecursively(path);
       this.didMakeChanges.value = true;
     };
     // view methods
@@ -2361,7 +2427,7 @@
     );
   });
   document.body.append(
-    /* @__PURE__ */ React.createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ React.createElement("div", { id: "sky" }), /* @__PURE__ */ React.createElement("div", { id: "grass-1" }), /* @__PURE__ */ React.createElement("div", { id: "grass-2" }))
+    /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
   );
   document.querySelector("main").append(
     HomePage(
