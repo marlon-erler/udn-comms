@@ -84,7 +84,7 @@ export default class SettingsPageViewModel {
   };
 
   // load
-  loadViewRelevantData = (): void => {
+  loadListRelevantData = (): void => {
     this.primaryChannel.value =
       this.chatViewModel.chatModel.info.primaryChannel;
 
@@ -119,6 +119,6 @@ export default class SettingsPageViewModel {
   // init
   constructor(chatViewModel: ChatViewModel) {
     this.chatViewModel = chatViewModel;
-    this.loadViewRelevantData();
+    this.loadListRelevantData();
   }
 }

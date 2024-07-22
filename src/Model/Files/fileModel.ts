@@ -46,7 +46,7 @@ export default class FileModel {
     return [...filePath, fileContentId];
   };
 
-  // handler
+  // handlers
   handleStringifiedFileContent = (stringifiedFileContent: string): void => {
     const fileContent: FileContent<string> | null = parseValidObject(
       stringifiedFileContent,

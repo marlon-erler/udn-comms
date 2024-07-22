@@ -33,7 +33,6 @@ export default class MessagePageViewModel {
     }
   };
 
-  // messaging
   sendMessage = (): void => {
     if (this.cannotSendMessage.value == true) return;
 

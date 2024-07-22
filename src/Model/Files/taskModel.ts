@@ -45,7 +45,7 @@ export default class TaskModel {
     return [...this.getTaskContainerPath(boardId), fileId];
   };
 
-  // handler
+  // handlers
   handleFileContent = (fileContent: FileContent<string>): void => {
     if (
       checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==

@@ -553,7 +553,7 @@
     getTaskReferencePath = (boardId, fileId) => {
       return [...this.getTaskContainerPath(boardId), fileId];
     };
-    // handler
+    // handlers
     handleFileContent = (fileContent) => {
       if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == true) {
         this.handleBoard(fileContent);
@@ -716,7 +716,7 @@
       const filePath = this.getFilePath(fileId);
       return [...filePath, fileContentId];
     };
-    // handler
+    // handlers
     handleStringifiedFileContent = (stringifiedFileContent) => {
       const fileContent = parseValidObject(
         stringifiedFileContent,
@@ -916,6 +916,20 @@
     getMessagePath = (id) => {
       return [...this.getMessageDirPath(), id];
     };
+    // handlers
+    handleMessage = (body) => {
+      const chatMessage = parseValidObject(
+        body,
+        ChatMessageReference
+      );
+      if (chatMessage == null) return;
+      chatMessage.status = "received" /* Received */;
+      this.addMessage(chatMessage);
+    };
+    handleMessageSent = (chatMessage) => {
+      chatMessage.status = "sent" /* Sent */;
+      this.addMessage(chatMessage);
+    };
     // sorting
     get index() {
       return this.chatListModel.getIndexOfPrimaryChannel(
@@ -942,6 +956,15 @@
       this.storeColor();
     };
     // messaging
+    addMessage = async (chatMessage) => {
+      await this.decryptMessage(chatMessage);
+      if (chatMessage.body != "") {
+        const messagePath = this.getMessagePath(chatMessage.id);
+        this.storageModel.writeStringifiable(messagePath, chatMessage);
+        this.chatMessageHandler(chatMessage);
+      }
+      this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
+    };
     sendMessage = async (body, fileContent) => {
       const senderName = this.settingsModel.username;
       if (senderName == "") return false;
@@ -960,19 +983,6 @@
       this.addMessage(chatMessage);
       this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
-    };
-    handleMessage = (body) => {
-      const chatMessage = parseValidObject(
-        body,
-        ChatMessageReference
-      );
-      if (chatMessage == null) return;
-      chatMessage.status = "received" /* Received */;
-      this.addMessage(chatMessage);
-    };
-    handleMessageSent = (chatMessage) => {
-      chatMessage.status = "sent" /* Sent */;
-      this.addMessage(chatMessage);
     };
     decryptMessage = async (chatMessage) => {
       const decryptedBody = await decryptString(
@@ -998,15 +1008,6 @@
     };
     storeColor = () => {
       this.storageModel.write(this.getColorPath(), this.color);
-    };
-    addMessage = async (chatMessage) => {
-      await this.decryptMessage(chatMessage);
-      if (chatMessage.body != "") {
-        const messagePath = this.getMessagePath(chatMessage.id);
-        this.storageModel.writeStringifiable(messagePath, chatMessage);
-        this.chatMessageHandler(chatMessage);
-      }
-      this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
     };
     delete = () => {
       this.chatListModel.untrackChat(this);
@@ -1259,7 +1260,6 @@
         this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
       }
     };
-    // messaging
     sendMessage = () => {
       if (this.cannotSendMessage.value == true) return;
       this.sendMessageFromBody(this.composingMessage.value);
@@ -1357,7 +1357,7 @@
       this.chatViewModel.chatListViewModel.loadChats();
     };
     // load
-    loadViewRelevantData = () => {
+    loadListRelevantData = () => {
       this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
       this.color.value = this.chatViewModel.chatModel.color;
       this.cannotSetEncryptionKey = createProxyState(
@@ -1379,7 +1379,7 @@
     // init
     constructor(chatViewModel) {
       this.chatViewModel = chatViewModel;
-      this.loadViewRelevantData();
+      this.loadListRelevantData();
     }
   };
 
@@ -2426,7 +2426,7 @@
       this.connectionModel.removeAddress(address);
       this.updatePreviousAddresses();
     };
-    // view methods
+    // view
     showConnectionModal = () => {
       this.isShowingConnectionModal.value = true;
     };
@@ -2649,7 +2649,7 @@
       [this.usernameInput],
       () => this.usernameInput.value == "" || this.usernameInput.value == this.settingsModel.username
     );
-    // set
+    // methods
     setName = () => {
       this.settingsModel.setName(this.usernameInput.value);
       this.username.value = this.settingsModel.username;
@@ -2782,7 +2782,7 @@
       this.storageModel.removeRecursively(path);
       this.didMakeChanges.value = true;
     };
-    // view methods
+    // view
     showStorageModal = () => {
       this.isShowingStorageModal.value = true;
     };

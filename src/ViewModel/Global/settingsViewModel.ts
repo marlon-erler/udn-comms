@@ -18,7 +18,7 @@ export default class SettingsViewModel {
       this.usernameInput.value == this.settingsModel.username
   );
 
-  // set
+  // methods
   setName = (): void => {
     this.settingsModel.setName(this.usernameInput.value);
     this.username.value = this.settingsModel.username;

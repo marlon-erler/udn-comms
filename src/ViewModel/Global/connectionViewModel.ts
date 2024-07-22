@@ -62,7 +62,7 @@ export default class ConnectionViewModel {
     this.updatePreviousAddresses();
   };
 
-  // view methods
+  // view
   showConnectionModal = (): void => {
     this.isShowingConnectionModal.value = true;
   };

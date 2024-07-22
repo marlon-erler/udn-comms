@@ -4,7 +4,6 @@ import * as React from "bloatless-react";
 
 import { ChatMessage, ChatMessageStatus } from "../../Model/Chat/chatModel";
 
-import ChatViewModel from "./chatViewModel";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 
 export default class ChatMessageViewModel {

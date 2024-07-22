@@ -35,7 +35,7 @@ export default class StorageViewModel {
     this.didMakeChanges.value = true;
   };
 
-  // view methods
+  // view
   showStorageModal = (): void => {
     this.isShowingStorageModal.value = true;
   };

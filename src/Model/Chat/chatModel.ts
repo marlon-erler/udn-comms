@@ -57,6 +57,23 @@ export default class ChatModel {
     return [...this.getMessageDirPath(), id];
   };
 
+  // handlers
+  handleMessage = (body: string): void => {
+    const chatMessage: ChatMessage | null = parseValidObject(
+      body,
+      ChatMessageReference
+    );
+    if (chatMessage == null) return;
+
+    chatMessage.status = ChatMessageStatus.Received;
+    this.addMessage(chatMessage);
+  };
+
+  handleMessageSent = (chatMessage: ChatMessage): void => {
+    chatMessage.status = ChatMessageStatus.Sent;
+    this.addMessage(chatMessage);
+  };
+
   // sorting
   get index(): number {
     return this.chatListModel.getIndexOfPrimaryChannel(
@@ -88,6 +105,20 @@ export default class ChatModel {
   };
 
   // messaging
+  addMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    await this.decryptMessage(chatMessage);
+
+    // message
+    if (chatMessage.body != "") {
+      const messagePath: string[] = this.getMessagePath(chatMessage.id);
+      this.storageModel.writeStringifiable(messagePath, chatMessage);
+      this.chatMessageHandler(chatMessage);
+    }
+
+    // file
+    this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
+  };
+
   sendMessage = async (
     body: string,
     fileContent?: FileContent<string>
@@ -113,22 +144,6 @@ export default class ChatModel {
     this.addMessage(chatMessage);
     this.connectionModel.sendMessageOrStore(chatMessage);
     return true;
-  };
-
-  handleMessage = (body: string): void => {
-    const chatMessage: ChatMessage | null = parseValidObject(
-      body,
-      ChatMessageReference
-    );
-    if (chatMessage == null) return;
-
-    chatMessage.status = ChatMessageStatus.Received;
-    this.addMessage(chatMessage);
-  };
-
-  handleMessageSent = (chatMessage: ChatMessage): void => {
-    chatMessage.status = ChatMessageStatus.Sent;
-    this.addMessage(chatMessage);
   };
 
   decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
@@ -159,20 +174,6 @@ export default class ChatModel {
 
   storeColor = (): void => {
     this.storageModel.write(this.getColorPath(), this.color);
-  };
-
-  addMessage = async (chatMessage: ChatMessage): Promise<void> => {
-    await this.decryptMessage(chatMessage);
-
-    // message
-    if (chatMessage.body != "") {
-      const messagePath: string[] = this.getMessagePath(chatMessage.id);
-      this.storageModel.writeStringifiable(messagePath, chatMessage);
-      this.chatMessageHandler(chatMessage);
-    }
-
-    // file
-    this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
   };
 
   delete = () => {
