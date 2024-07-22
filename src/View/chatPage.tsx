@@ -15,19 +15,24 @@ export function ChatPage(chatViewModel: ChatViewModel) {
 
   chatViewModel.selectedPage.subscribe((selectedPage) => {
     switch (selectedPage) {
-      case ChatPageType.Settings:
-        return (mainContent.value = SettingsPage(chatViewModel));
-      case ChatPageType.Tasks:
-        return (mainContent.value = TaskPage(chatViewModel));
-      default:
-        return (mainContent.value = MessagePage(chatViewModel));
+      case ChatPageType.Settings: {
+        mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
+        break;
+      }
+      case ChatPageType.Tasks: {
+        mainContent.value = TaskPage(chatViewModel.taskPageViewModel);
+        break;
+      }
+      default: {
+        mainContent.value = MessagePage(chatViewModel.messagePageViewModel);
+      }
     }
   });
 
   return (
     <article
       id="chat-page"
-      set:color={chatViewModel.color}
+      set:color={chatViewModel.settingsPageViewModel.color}
       class="subtle-background"
     >
       <div>

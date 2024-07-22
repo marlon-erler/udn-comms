@@ -104,6 +104,8 @@ const englishTranslations = {
     },
 
     message: {
+      messagesHeadline: "Messages",
+
       composerInputPlaceholder: "Type a message...",
       sendMessageButtonAudioLabel: "send message",
 

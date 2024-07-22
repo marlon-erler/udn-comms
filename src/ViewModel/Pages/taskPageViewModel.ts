@@ -2,14 +2,12 @@ import * as React from "bloatless-react";
 
 import TaskModel, {
   BoardInfoFileContent,
-  TaskFileContent,
 } from "../../Model/Files/taskModel";
 
 import StorageModel from "../../Model/Global/storageModel";
 
-export default class TaskViewModel {
+export default class TaskPageViewModel {
   taskModel: TaskModel;
-  storageModel: StorageModel;
 
   // state
   newBoardNameInput: React.State<string> = new React.State("");
@@ -33,6 +31,5 @@ export default class TaskViewModel {
   // init
   constructor(taskModel: TaskModel, storageModel: StorageModel) {
     this.taskModel = taskModel;
-    this.storageModel = storageModel;
   }
 }

@@ -514,7 +514,7 @@
     }
   };
 
-  // src/ViewModel/colors.ts
+  // src/colors.ts
   var Color = /* @__PURE__ */ ((Color2) => {
     Color2["Standard"] = "standard";
     Color2["Coral"] = "coral";
@@ -897,6 +897,9 @@
     color;
     chatMessageHandler = () => {
     };
+    get secondaryChannels() {
+      return this.info.secondaryChannels.sort(localeCompare);
+    }
     // paths
     getBasePath = () => {
       return StorageModel.getPath("chat", filePaths.chat.chatBase(this.id));
@@ -1195,9 +1198,9 @@
     }
   };
 
-  // src/ViewModel/chatMessageViewModel.ts
+  // src/ViewModel/Chat/chatMessageViewModel.ts
   var ChatMessageViewModel = class {
-    chatViewModel;
+    messagePageViewModel;
     // data
     chatMessage;
     channel;
@@ -1211,10 +1214,10 @@
       navigator.clipboard.writeText(this.body.value);
     };
     resendMessage = () => {
-      this.chatViewModel.sendMessageFromBody(this.body.value);
+      this.messagePageViewModel.sendMessageFromBody(this.body.value);
     };
     decryptMessage = () => {
-      this.chatViewModel.decryptMessage(this);
+      this.messagePageViewModel.decryptMessage(this);
     };
     // load
     loadData = () => {
@@ -1225,22 +1228,75 @@
       this.status.value = this.chatMessage.status;
     };
     // init
-    constructor(chatViewModel, chatMessage, sentByUser) {
-      this.chatViewModel = chatViewModel;
+    constructor(messagePageViewModel, chatMessage, sentByUser) {
+      this.messagePageViewModel = messagePageViewModel;
       this.chatMessage = chatMessage;
       this.sentByUser = sentByUser;
       this.loadData();
     }
   };
 
-  // src/ViewModel/chatViewModel.ts
-  var ChatViewModel = class {
-    chatModel;
-    storageModel;
-    settingsViewModel;
-    chatListViewModel;
+  // src/ViewModel/Pages/messagePageViewModel.ts
+  var MessagePageViewModel = class {
+    chatViewModel;
     // state
-    index = new State(0);
+    chatMessageViewModels = new MapState();
+    composingMessage = new State("");
+    // guards
+    cannotSendMessage;
+    // methods
+    addChatMessage = (chatMessage) => {
+      const chatMessageModel = new ChatMessageViewModel(
+        this,
+        chatMessage,
+        chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
+      );
+      const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
+      if (existingChatMessageViewModel != void 0) {
+        existingChatMessageViewModel.body.value = chatMessage.body;
+        existingChatMessageViewModel.status.value = chatMessage.status;
+      } else {
+        this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
+      }
+    };
+    // messaging
+    sendMessage = () => {
+      if (this.cannotSendMessage.value == true) return;
+      this.sendMessageFromBody(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
+    sendMessageFromBody = (body) => {
+      this.chatViewModel.chatModel.sendMessage(body);
+    };
+    decryptMessage = async (messageViewModel) => {
+      const chatMessage = messageViewModel.chatMessage;
+      await this.chatViewModel.chatModel.decryptMessage(chatMessage);
+      this.chatViewModel.chatModel.addMessage(chatMessage);
+      messageViewModel.loadData();
+    };
+    // load
+    loadData = () => {
+      this.cannotSendMessage = createProxyState(
+        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
+        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
+      );
+    };
+    loadMessages = () => {
+      for (const chatMessage of this.chatViewModel.chatModel.messages) {
+        this.addChatMessage(chatMessage);
+      }
+    };
+    // init
+    constructor(chatViewModel) {
+      this.chatViewModel = chatViewModel;
+      this.loadData();
+    }
+  };
+
+  // src/ViewModel/Pages/settingsPageViewModel.ts
+  var SettingsPageViewModel = class {
+    chatViewModel;
+    // state
     primaryChannel = new State("");
     primaryChannelInput = new State("");
     secondaryChannels = new ListState();
@@ -1252,11 +1308,6 @@
       () => this.shouldShowEncryptionKey.value == true ? "text" : "password"
     );
     color = new State("standard" /* Standard */);
-    selectedPage = new State(
-      "messages" /* Messages */
-    );
-    chatMessageViewModels = new MapState();
-    composingMessage = new State("");
     // guards
     cannotSetPrimaryChannel = createProxyState(
       [this.primaryChannel, this.primaryChannelInput],
@@ -1267,39 +1318,13 @@
       () => this.newSecondaryChannelInput.value == ""
     );
     cannotSetEncryptionKey;
-    cannotSendMessage;
-    // sorting
-    updateIndex = () => {
-      this.index.value = this.chatModel.index;
-    };
-    // view
-    open = () => {
-      this.chatListViewModel.openChat(this);
-      this.loadMessages();
-    };
-    close = () => {
-      this.chatListViewModel.closeChat();
-    };
-    // add
-    addChatMessage = (chatMessage) => {
-      const chatMessageModel = new ChatMessageViewModel(
-        this,
-        chatMessage,
-        chatMessage.sender == this.settingsViewModel.username.value
-      );
-      const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
-      if (existingChatMessageViewModel != void 0) {
-        existingChatMessageViewModel.body.value = chatMessage.body;
-        existingChatMessageViewModel.status.value = chatMessage.status;
-      } else {
-        this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
-      }
-    };
-    // settings
+    // methods
     setPrimaryChannel = () => {
-      this.chatModel.setPrimaryChannel(this.primaryChannelInput.value);
-      this.primaryChannel.value = this.chatModel.info.primaryChannel;
-      this.chatListViewModel.updateIndices();
+      this.chatViewModel.chatModel.setPrimaryChannel(
+        this.primaryChannelInput.value
+      );
+      this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.chatViewModel.chatListViewModel.updateIndices();
     };
     addSecondaryChannel = () => {
       this.secondaryChannels.add(this.newSecondaryChannelInput.value);
@@ -1312,37 +1337,99 @@
       this.storeSecondaryChannels();
     };
     storeSecondaryChannels = () => {
-      this.chatModel.setSecondaryChannels([
+      this.chatViewModel.chatModel.setSecondaryChannels([
         ...this.secondaryChannels.value.values()
       ]);
     };
     setEncryptionKey = () => {
-      this.chatModel.setEncryptionKey(this.encryptionKeyInput.value);
+      this.chatViewModel.chatModel.setEncryptionKey(
+        this.encryptionKeyInput.value
+      );
       this.encryptionKeyInput.callSubscriptions();
     };
     setColor = (newColor) => {
       this.color.value = newColor;
-      this.chatModel.setColor(newColor);
+      this.chatViewModel.chatModel.setColor(newColor);
     };
     remove = () => {
-      this.close();
-      this.chatModel.delete();
-      this.chatListViewModel.loadChats();
+      this.chatViewModel.close();
+      this.chatViewModel.chatModel.delete();
+      this.chatViewModel.chatListViewModel.loadChats();
     };
-    // messaging
-    sendMessage = () => {
-      if (this.cannotSendMessage.value == true) return;
-      this.sendMessageFromBody(this.composingMessage.value);
-      this.composingMessage.value = "";
+    // load
+    loadViewRelevantData = () => {
+      this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.color.value = this.chatViewModel.chatModel.color;
+      this.cannotSetEncryptionKey = createProxyState(
+        [this.encryptionKeyInput],
+        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
+      );
     };
-    sendMessageFromBody = (body) => {
-      this.chatModel.sendMessage(body);
+    loadData = () => {
+      this.primaryChannelInput.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.loadSecondaryChannels();
+      this.encryptionKeyInput.value = this.chatViewModel.chatModel.info.encryptionKey;
     };
-    decryptMessage = async (messageViewModel) => {
-      const chatMessage = messageViewModel.chatMessage;
-      await this.chatModel.decryptMessage(chatMessage);
-      this.chatModel.addMessage(chatMessage);
-      messageViewModel.loadData();
+    loadSecondaryChannels = () => {
+      this.secondaryChannels.clear();
+      for (const secondaryChannel of this.chatViewModel.chatModel.secondaryChannels) {
+        this.secondaryChannels.add(secondaryChannel);
+      }
+    };
+    // init
+    constructor(chatViewModel) {
+      this.chatViewModel = chatViewModel;
+      this.loadViewRelevantData();
+    }
+  };
+
+  // src/ViewModel/Pages/taskPageViewModel.ts
+  var TaskPageViewModel = class {
+    taskModel;
+    // state
+    newBoardNameInput = new State("");
+    boards = new ListState();
+    // guards
+    cannotCreateBoard = createProxyState(
+      [this.newBoardNameInput],
+      () => this.newBoardNameInput.value == ""
+    );
+    // methods
+    createBoard = () => {
+      if (this.cannotCreateBoard.value == true) return;
+      this.taskModel.createBoard(this.newBoardNameInput.value);
+      this.newBoardNameInput.value = "";
+    };
+    // init
+    constructor(taskModel, storageModel2) {
+      this.taskModel = taskModel;
+    }
+  };
+
+  // src/ViewModel/Chat/chatViewModel.ts
+  var ChatViewModel = class {
+    chatModel;
+    storageModel;
+    settingsViewModel;
+    chatListViewModel;
+    taskPageViewModel;
+    messagePageViewModel;
+    settingsPageViewModel;
+    // state
+    index = new State(0);
+    selectedPage = new State(
+      "messages" /* Messages */
+    );
+    // sorting
+    updateIndex = () => {
+      this.index.value = this.chatModel.index;
+    };
+    // view
+    open = () => {
+      this.chatListViewModel.openChat(this);
+    };
+    close = () => {
+      this.chatListViewModel.closeChat();
     };
     // load
     loadPageSelection = () => {
@@ -1358,47 +1445,27 @@
         this.storageModel.write(path, newPage);
       });
     };
-    loadSecondaryChannels = () => {
-      this.secondaryChannels.clear();
-      for (const secondaryChannel of this.chatModel.info.secondaryChannels.sort(
-        localeCompare
-      )) {
-        this.secondaryChannels.add(secondaryChannel);
-      }
-    };
-    loadMessages = () => {
-      for (const chatMessage of this.chatModel.messages) {
-        this.addChatMessage(chatMessage);
-      }
-    };
     // init
     constructor(chatModel, storageModel2, settingsViewModel2, chatListViewModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
       this.settingsViewModel = settingsViewModel2;
       this.chatListViewModel = chatListViewModel2;
-      chatModel.setMessageHandler((chatMessage) => {
-        this.addChatMessage(chatMessage);
-      });
-      this.primaryChannel.value = chatModel.info.primaryChannel;
-      this.primaryChannelInput.value = chatModel.info.primaryChannel;
-      this.encryptionKeyInput.value = chatModel.info.encryptionKey;
-      this.cannotSetEncryptionKey = createProxyState(
-        [this.encryptionKeyInput],
-        () => this.encryptionKeyInput.value == this.chatModel.info.encryptionKey
+      this.taskPageViewModel = new TaskPageViewModel(
+        this.chatModel.fileModel.taskModel,
+        this.storageModel
       );
-      this.color.value = chatModel.color;
-      this.loadSecondaryChannels();
+      this.messagePageViewModel = new MessagePageViewModel(this);
+      this.settingsPageViewModel = new SettingsPageViewModel(this);
+      chatModel.setMessageHandler((chatMessage) => {
+        this.messagePageViewModel.addChatMessage(chatMessage);
+      });
       this.loadPageSelection();
       this.updateIndex();
-      this.cannotSendMessage = createProxyState(
-        [this.settingsViewModel.username, this.composingMessage],
-        () => this.settingsViewModel.username.value == "" || this.composingMessage.value == ""
-      );
     }
   };
 
-  // src/ViewModel/chatListViewModel.ts
+  // src/ViewModel/Chat/chatListViewModel.ts
   var ChatListViewModel = class {
     chatListModel;
     storageModel;
@@ -1565,6 +1632,7 @@
         deleteChatButton: "Delete entire chat"
       },
       message: {
+        messagesHeadline: "Messages",
         composerInputPlaceholder: "Type a message...",
         sendMessageButtonAudioLabel: "send message",
         showMessageInfoButtonAudioLabel: "show message info",
@@ -1661,13 +1729,14 @@
   };
 
   // src/View/ChatPages/messagePage.tsx
-  function MessagePage(chatViewModel) {
+  function MessagePage(messagePageViewModel) {
+    messagePageViewModel.loadMessages();
     const messageContainer = /* @__PURE__ */ createElement(
       "div",
       {
         id: "message-container",
         "children:append": [
-          chatViewModel.chatMessageViewModels,
+          messagePageViewModel.chatMessageViewModels,
           ChatMessageViewModelToView
         ]
       }
@@ -1680,13 +1749,15 @@
       if (scrollFromBottom > 400) return;
       scrollDown();
     }
-    chatViewModel.chatMessageViewModels.subscribeSilent(scrollDownIfApplicable);
+    messagePageViewModel.chatMessageViewModels.subscribeSilent(
+      scrollDownIfApplicable
+    );
     setTimeout(() => scrollDown(), 100);
-    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messagesHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": chatViewModel.composingMessage,
-        "on:enter": chatViewModel.sendMessage,
+        "bind:value": messagePageViewModel.composingMessage,
+        "on:enter": messagePageViewModel.sendMessage,
         placeholder: translations.chatPage.message.composerInputPlaceholder
       }
     ), /* @__PURE__ */ createElement(
@@ -1694,8 +1765,8 @@
       {
         class: "primary",
         "aria-label": translations.chatPage.message.sendMessageButtonAudioLabel,
-        "on:click": chatViewModel.sendMessage,
-        "toggle:disabled": chatViewModel.cannotSendMessage
+        "on:click": messagePageViewModel.sendMessage,
+        "toggle:disabled": messagePageViewModel.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
     )))))));
@@ -1749,25 +1820,26 @@
   }
 
   // src/View/ChatPages/settingsPage.tsx
-  function SettingsPage(chatViewModel) {
+  function SettingsPage(settingsPageViewModel) {
+    settingsPageViewModel.loadData();
     const secondaryChannelConverter = (secondaryChannel) => {
       return DeletableListItem(secondaryChannel, /* @__PURE__ */ createElement("span", null), () => {
-        chatViewModel.removeSecondaryChannel(secondaryChannel);
+        settingsPageViewModel.removeSecondaryChannel(secondaryChannel);
       });
     };
     return /* @__PURE__ */ createElement("div", { id: "settings-page" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": chatViewModel.primaryChannelInput,
-        "on:enter": chatViewModel.setPrimaryChannel
+        "bind:value": settingsPageViewModel.primaryChannelInput,
+        "on:enter": settingsPageViewModel.setPrimaryChannel
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "width-50",
         "aria-label": translations.chatPage.settings.setPrimaryChannelButtonAudioLabel,
-        "on:click": chatViewModel.setPrimaryChannel,
-        "toggle:disabled": chatViewModel.cannotSetPrimaryChannel
+        "on:click": settingsPageViewModel.setPrimaryChannel,
+        "toggle:disabled": settingsPageViewModel.cannotSetPrimaryChannel
       },
       translations.general.setButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
@@ -1776,16 +1848,16 @@
       {
         "aria-label": translations.chatPage.settings.newSecondaryChannelAudioLabel,
         placeholder: translations.chatPage.settings.newSecondaryChannelPlaceholder,
-        "bind:value": chatViewModel.newSecondaryChannelInput,
-        "on:enter": chatViewModel.addSecondaryChannel
+        "bind:value": settingsPageViewModel.newSecondaryChannelInput,
+        "on:enter": settingsPageViewModel.addSecondaryChannel
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
         "aria-label": translations.chatPage.settings.addSecondaryChannelButtonAudioLabel,
-        "on:click": chatViewModel.addSecondaryChannel,
-        "toggle:disabled": chatViewModel.cannotAddSecondaryChannel
+        "on:click": settingsPageViewModel.addSecondaryChannel,
+        "toggle:disabled": settingsPageViewModel.cannotAddSecondaryChannel
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     )), /* @__PURE__ */ createElement(
@@ -1793,24 +1865,24 @@
       {
         class: "flex-column gap width-input",
         "children:append": [
-          chatViewModel.secondaryChannels,
+          settingsPageViewModel.secondaryChannels,
           secondaryChannelConverter
         ]
       }
     ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.encryptionKeyLabel), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": chatViewModel.encryptionKeyInput,
-        "on:enter": chatViewModel.setEncryptionKey,
-        "set:type": chatViewModel.encryptionKeyInputType
+        "bind:value": settingsPageViewModel.encryptionKeyInput,
+        "on:enter": settingsPageViewModel.setEncryptionKey,
+        "set:type": settingsPageViewModel.encryptionKeyInputType
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
       "button",
       {
         class: "width-50",
         "aria-label": translations.chatPage.settings.setEncryptionKeyButtonAudioLabel,
-        "on:click": chatViewModel.setEncryptionKey,
-        "toggle:disabled": chatViewModel.cannotSetEncryptionKey
+        "on:click": settingsPageViewModel.setEncryptionKey,
+        "toggle:disabled": settingsPageViewModel.cannotSetEncryptionKey
       },
       translations.general.setButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
@@ -1818,15 +1890,15 @@
       "input",
       {
         type: "checkbox",
-        "bind:checked": chatViewModel.shouldShowEncryptionKey
+        "bind:checked": settingsPageViewModel.shouldShowEncryptionKey
       }
     ), translations.chatPage.settings.showEncryptionKey), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
       const isSelected = createProxyState(
-        [chatViewModel.color],
-        () => chatViewModel.color.value == color
+        [settingsPageViewModel.color],
+        () => settingsPageViewModel.color.value == color
       );
       function setColor() {
-        chatViewModel.setColor(color);
+        settingsPageViewModel.setColor(color);
       }
       return /* @__PURE__ */ createElement(
         "button",
@@ -1841,25 +1913,29 @@
     })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
       translations.chatPage.settings.deleteChatButton,
       "chat_error",
-      chatViewModel.remove
+      settingsPageViewModel.remove
     )))));
   }
 
   // src/View/ChatPages/taskPage.tsx
-  function TaskPage(chatViewModel) {
+  function TaskPage(taskPageViewModel) {
     return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
+        "bind:value": taskPageViewModel.newBoardNameInput,
+        "on:enter": taskPageViewModel.createBoard,
         placeholder: translations.chatPage.task.newBoardNamePlaceholder
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
-        "aria-label": translations.chatPage.task.createBoardButtonAudioLabel
+        "aria-label": translations.chatPage.task.createBoardButtonAudioLabel,
+        "on:click": taskPageViewModel.createBoard,
+        "toggle:disabled": taskPageViewModel.cannotCreateBoard
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement("div", { class: "flex-row gap" }))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" })));
+    )), /* @__PURE__ */ createElement("div", { class: "flex-row gap" }))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
   }
 
   // src/View/chatPage.tsx
@@ -1867,19 +1943,24 @@
     const mainContent = new State(/* @__PURE__ */ createElement("div", null));
     chatViewModel.selectedPage.subscribe((selectedPage) => {
       switch (selectedPage) {
-        case "settings" /* Settings */:
-          return mainContent.value = SettingsPage(chatViewModel);
-        case "tasks" /* Tasks */:
-          return mainContent.value = TaskPage(chatViewModel);
-        default:
-          return mainContent.value = MessagePage(chatViewModel);
+        case "settings" /* Settings */: {
+          mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
+          break;
+        }
+        case "tasks" /* Tasks */: {
+          mainContent.value = TaskPage(chatViewModel.taskPageViewModel);
+          break;
+        }
+        default: {
+          mainContent.value = MessagePage(chatViewModel.messagePageViewModel);
+        }
       }
     });
     return /* @__PURE__ */ createElement(
       "article",
       {
         id: "chat-page",
-        "set:color": chatViewModel.color,
+        "set:color": chatViewModel.settingsPageViewModel.color,
         class: "subtle-background"
       },
       /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
@@ -2300,7 +2381,7 @@
     }
   };
 
-  // src/ViewModel/connectionViewModel.ts
+  // src/ViewModel/Global/connectionViewModel.ts
   var ConnectionViewModel = class {
     connectionModel;
     // state
@@ -2374,13 +2455,27 @@
 
   // src/View/Components/chatEntry.tsx
   function ChatEntry(chatViewModel) {
-    const view = /* @__PURE__ */ createElement("button", { "set:color": chatViewModel.color, class: "chat-entry tile", "on:click": chatViewModel.open }, /* @__PURE__ */ createElement(
-      "span",
+    const view = /* @__PURE__ */ createElement(
+      "button",
       {
-        class: "shadow",
-        "subscribe:innerText": chatViewModel.primaryChannel
-      }
-    ), /* @__PURE__ */ createElement("h2", { "subscribe:innerText": chatViewModel.primaryChannel }));
+        "set:color": chatViewModel.settingsPageViewModel.color,
+        class: "chat-entry tile",
+        "on:click": chatViewModel.open
+      },
+      /* @__PURE__ */ createElement(
+        "span",
+        {
+          class: "shadow",
+          "subscribe:innerText": chatViewModel.settingsPageViewModel.primaryChannel
+        }
+      ),
+      /* @__PURE__ */ createElement(
+        "h2",
+        {
+          "subscribe:innerText": chatViewModel.settingsPageViewModel.primaryChannel
+        }
+      )
+    );
     chatViewModel.index.subscribe((newIndex) => {
       view.style.order = newIndex;
     });
@@ -2542,7 +2637,7 @@
     }
   };
 
-  // src/ViewModel/settingsViewModel.ts
+  // src/ViewModel/Global/settingsViewModel.ts
   var SettingsViewModel = class {
     settingsModel;
     // state
@@ -2665,7 +2760,7 @@
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(storageViewModel2)), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
-  // src/ViewModel/storageViewModel.ts
+  // src/ViewModel/Global/storageViewModel.ts
   var StorageViewModel = class {
     storageModel;
     // state

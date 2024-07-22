@@ -1,17 +1,19 @@
 import * as React from "bloatless-react";
 
-import ChatViewModel from "../../ViewModel/chatViewModel";
 import { Color } from "../../colors";
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import { DeletableListItem } from "../Components/deletableListItem";
+import SettingsPageViewModel from "../../ViewModel/Pages/settingsPageViewModel";
 import { translations } from "../translations";
 
-export function SettingsPage(chatViewModel: ChatViewModel) {
+export function SettingsPage(settingsPageViewModel: SettingsPageViewModel) {
+  settingsPageViewModel.loadData();
+
   const secondaryChannelConverter: React.StateItemConverter<string> = (
     secondaryChannel: string
   ) => {
     return DeletableListItem(secondaryChannel, <span></span>, () => {
-      chatViewModel.removeSecondaryChannel(secondaryChannel);
+      settingsPageViewModel.removeSecondaryChannel(secondaryChannel);
     });
   };
 
@@ -27,8 +29,8 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             <div>
               <span>{translations.chatPage.settings.primaryChannelLabel}</span>
               <input
-                bind:value={chatViewModel.primaryChannelInput}
-                on:enter={chatViewModel.setPrimaryChannel}
+                bind:value={settingsPageViewModel.primaryChannelInput}
+                on:enter={settingsPageViewModel.setPrimaryChannel}
               ></input>
             </div>
           </label>
@@ -38,8 +40,8 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
               aria-label={
                 translations.chatPage.settings.setPrimaryChannelButtonAudioLabel
               }
-              on:click={chatViewModel.setPrimaryChannel}
-              toggle:disabled={chatViewModel.cannotSetPrimaryChannel}
+              on:click={settingsPageViewModel.setPrimaryChannel}
+              toggle:disabled={settingsPageViewModel.cannotSetPrimaryChannel}
             >
               {translations.general.setButton}
               <span class="icon">check</span>
@@ -56,8 +58,8 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
               placeholder={
                 translations.chatPage.settings.newSecondaryChannelPlaceholder
               }
-              bind:value={chatViewModel.newSecondaryChannelInput}
-              on:enter={chatViewModel.addSecondaryChannel}
+              bind:value={settingsPageViewModel.newSecondaryChannelInput}
+              on:enter={settingsPageViewModel.addSecondaryChannel}
             ></input>
             <button
               class="primary"
@@ -65,8 +67,8 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
                 translations.chatPage.settings
                   .addSecondaryChannelButtonAudioLabel
               }
-              on:click={chatViewModel.addSecondaryChannel}
-              toggle:disabled={chatViewModel.cannotAddSecondaryChannel}
+              on:click={settingsPageViewModel.addSecondaryChannel}
+              toggle:disabled={settingsPageViewModel.cannotAddSecondaryChannel}
             >
               <span class="icon">add</span>
             </button>
@@ -75,7 +77,7 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
           <div
             class="flex-column gap width-input"
             children:append={[
-              chatViewModel.secondaryChannels,
+              settingsPageViewModel.secondaryChannels,
               secondaryChannelConverter,
             ]}
           ></div>
@@ -87,9 +89,9 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             <div>
               <span>{translations.chatPage.settings.encryptionKeyLabel}</span>
               <input
-                bind:value={chatViewModel.encryptionKeyInput}
-                on:enter={chatViewModel.setEncryptionKey}
-                set:type={chatViewModel.encryptionKeyInputType}
+                bind:value={settingsPageViewModel.encryptionKeyInput}
+                on:enter={settingsPageViewModel.setEncryptionKey}
+                set:type={settingsPageViewModel.encryptionKeyInputType}
               ></input>
             </div>
           </label>
@@ -99,8 +101,8 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
               aria-label={
                 translations.chatPage.settings.setEncryptionKeyButtonAudioLabel
               }
-              on:click={chatViewModel.setEncryptionKey}
-              toggle:disabled={chatViewModel.cannotSetEncryptionKey}
+              on:click={settingsPageViewModel.setEncryptionKey}
+              toggle:disabled={settingsPageViewModel.cannotSetEncryptionKey}
             >
               {translations.general.setButton}
               <span class="icon">check</span>
@@ -110,7 +112,7 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
           <label class="inline">
             <input
               type="checkbox"
-              bind:checked={chatViewModel.shouldShowEncryptionKey}
+              bind:checked={settingsPageViewModel.shouldShowEncryptionKey}
             ></input>
             {translations.chatPage.settings.showEncryptionKey}
           </label>
@@ -120,12 +122,12 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
           <div class="flex-row gap width-input">
             {...Object.values(Color).map((color) => {
               const isSelected = React.createProxyState(
-                [chatViewModel.color],
-                () => chatViewModel.color.value == color
+                [settingsPageViewModel.color],
+                () => settingsPageViewModel.color.value == color
               );
 
               function setColor() {
-                chatViewModel.setColor(color);
+                settingsPageViewModel.setColor(color);
               }
 
               return (
@@ -146,7 +148,7 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
             {DangerousActionButton(
               translations.chatPage.settings.deleteChatButton,
               "chat_error",
-              chatViewModel.remove
+              settingsPageViewModel.remove
             )}
           </div>
         </div>

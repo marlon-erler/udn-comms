@@ -3,15 +3,17 @@ import "./messagePage.css";
 import * as React from "bloatless-react";
 
 import { ChatMessageViewModelToView } from "../Components/chatMessage";
-import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
+import MessagePageViewModel from "../../ViewModel/Pages/messagePageViewModel";
 import { translations } from "../translations";
 
-export function MessagePage(chatViewModel: ChatViewModel) {
+export function MessagePage(messagePageViewModel: MessagePageViewModel) {
+  messagePageViewModel.loadMessages();
+
   const messageContainer = (
     <div
       id="message-container"
       children:append={[
-        chatViewModel.chatMessageViewModels,
+        messagePageViewModel.chatMessageViewModels,
         ChatMessageViewModelToView,
       ]}
     ></div>
@@ -28,14 +30,16 @@ export function MessagePage(chatViewModel: ChatViewModel) {
 
     scrollDown();
   }
-  chatViewModel.chatMessageViewModels.subscribeSilent(scrollDownIfApplicable);
+  messagePageViewModel.chatMessageViewModels.subscribeSilent(
+    scrollDownIfApplicable
+  );
   setTimeout(() => scrollDown(), 100);
 
   return (
     <div id="message-page">
       <div class="pane">
         <div class="toolbar">
-          <span subscribe:innerText={chatViewModel.primaryChannel}></span>
+          <span>{translations.chatPage.message.messagesHeadline}</span>
         </div>
         <div class="content">
           {messageContainer}
@@ -43,8 +47,8 @@ export function MessagePage(chatViewModel: ChatViewModel) {
             <div class="content-width-constraint">
               <div class="input-width-constraint">
                 <input
-                  bind:value={chatViewModel.composingMessage}
-                  on:enter={chatViewModel.sendMessage}
+                  bind:value={messagePageViewModel.composingMessage}
+                  on:enter={messagePageViewModel.sendMessage}
                   placeholder={
                     translations.chatPage.message.composerInputPlaceholder
                   }
@@ -54,8 +58,8 @@ export function MessagePage(chatViewModel: ChatViewModel) {
                   aria-label={
                     translations.chatPage.message.sendMessageButtonAudioLabel
                   }
-                  on:click={chatViewModel.sendMessage}
-                  toggle:disabled={chatViewModel.cannotSendMessage}
+                  on:click={messagePageViewModel.sendMessage}
+                  toggle:disabled={messagePageViewModel.cannotSendMessage}
                 >
                   <span class="icon">send</span>
                 </button>

@@ -5,9 +5,10 @@ import * as React from "bloatless-react";
 import { ChatMessage, ChatMessageStatus } from "../../Model/Chat/chatModel";
 
 import ChatViewModel from "./chatViewModel";
+import MessagePageViewModel from "../Pages/messagePageViewModel";
 
 export default class ChatMessageViewModel {
-  chatViewModel: ChatViewModel;
+  messagePageViewModel: MessagePageViewModel;
 
   // data
   chatMessage: ChatMessage;
@@ -25,10 +26,10 @@ export default class ChatMessageViewModel {
     navigator.clipboard.writeText(this.body.value);
   };
   resendMessage = (): void => {
-    this.chatViewModel.sendMessageFromBody(this.body.value);
+    this.messagePageViewModel.sendMessageFromBody(this.body.value);
   };
   decryptMessage = (): void => {
-    this.chatViewModel.decryptMessage(this);
+    this.messagePageViewModel.decryptMessage(this);
   };
 
   // load
@@ -42,11 +43,11 @@ export default class ChatMessageViewModel {
 
   // init
   constructor(
-    chatViewModel: ChatViewModel,
+    messagePageViewModel: MessagePageViewModel,
     chatMessage: ChatMessage,
     sentByUser: boolean
   ) {
-    this.chatViewModel = chatViewModel;
+    this.messagePageViewModel = messagePageViewModel;
 
     this.chatMessage = chatMessage;
     this.sentByUser = sentByUser;

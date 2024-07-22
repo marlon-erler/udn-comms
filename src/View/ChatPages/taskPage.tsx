@@ -1,17 +1,17 @@
 import * as React from "bloatless-react";
 
-import TaskViewModel from "../../ViewModel/Files/taskViewModel";
+import TaskPageViewModel from "../../ViewModel/Pages/taskPageViewModel";
 import { translations } from "../translations";
 
-export function TaskPage(taskViewModel: TaskViewModel) {
+export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   return (
     <div id="task-page">
       <div class="pane side">
         <div class="content">
           <div class="flex-row width-input">
             <input
-              bind:value={taskViewModel.newBoardNameInput}
-              on:enter={taskViewModel.createBoard}
+              bind:value={taskPageViewModel.newBoardNameInput}
+              on:enter={taskPageViewModel.createBoard}
               placeholder={translations.chatPage.task.newBoardNamePlaceholder}
             ></input>
             <button
@@ -19,8 +19,8 @@ export function TaskPage(taskViewModel: TaskViewModel) {
               aria-label={
                 translations.chatPage.task.createBoardButtonAudioLabel
               }
-              on:click={taskViewModel.createBoard}
-              toggle:disabled={taskViewModel.cannotCreateBoard}
+              on:click={taskPageViewModel.createBoard}
+              toggle:disabled={taskPageViewModel.cannotCreateBoard}
             >
               <span class="icon">add</span>
             </button>

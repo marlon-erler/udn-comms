@@ -4,7 +4,7 @@ import * as React from "bloatless-react";
 
 import { Option, StringToOption } from "./Components/option";
 
-import ChatListViewModel from "../ViewModel/chatListViewModel";
+import ChatListViewModel from "../ViewModel/Chat/chatListViewModel";
 import { ChatViewModelToChatEntry } from "./Components/chatEntry";
 import ConnectionViewModel from "../ViewModel/Global/connectionViewModel";
 import SettingsViewModel from "../ViewModel/Global/settingsViewModel";

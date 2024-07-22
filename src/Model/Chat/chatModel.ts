@@ -5,6 +5,7 @@ import FileModel, { FileContent } from "../Files/fileModel";
 import StorageModel, { filePaths } from "../Global/storageModel";
 import {
   createTimestamp,
+  localeCompare,
   parseValidObject,
   stringify,
 } from "../Utility/utility";
@@ -30,6 +31,10 @@ export default class ChatModel {
   color: Color;
 
   chatMessageHandler: (chatMessage: ChatMessage) => void = () => {};
+
+  get secondaryChannels(): string[] {
+    return this.info.secondaryChannels.sort(localeCompare);
+  }
 
   // paths
   getBasePath = (): string[] => {

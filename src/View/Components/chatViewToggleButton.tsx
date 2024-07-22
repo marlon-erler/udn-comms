@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import ChatViewModel, { ChatPageType } from "../../ViewModel/chatViewModel";
+import ChatViewModel, { ChatPageType } from "../../ViewModel/Chat/chatViewModel";
 
 export function ChatViewToggleButton(
   label: string,

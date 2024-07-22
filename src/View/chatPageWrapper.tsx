@@ -2,7 +2,7 @@ import "./chatPage.css";
 
 import * as React from "bloatless-react";
 
-import ChatListViewModel from "../ViewModel/chatListViewModel";
+import ChatListViewModel from "../ViewModel/Chat/chatListViewModel";
 import { ChatPage } from "./chatPage";
 
 export function ChatPageWrapper(chatListViewModel: ChatListViewModel) {
