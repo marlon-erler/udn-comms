@@ -2,7 +2,11 @@
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
 import StorageModel, { filePaths } from "../Global/storageModel";
-import { parseValidObject, stringify } from "../Utility/utility";
+import {
+  createTimestamp,
+  parseValidObject,
+  stringify,
+} from "../Utility/utility";
 
 import ChatModel from "../Chat/chatModel";
 import TaskModel from "./taskModel";
@@ -36,22 +40,26 @@ export default class FileModel {
     const file: File | null = parseValidObject(stringifiedFile, FileReference);
     if (file == null) return;
 
-    this.storeFile(file);
+    this.handleFileAndClearContents(file);
   };
 
-  // methods
-  addFile = (file: File): void => {
-    this.chatModel.sendMessage("", file);
-  };
-
-  // storage
-  storeFile = (file: File): void => {
+  handleFileAndClearContents = (file: File): void => {
     for (const fileContent of file.contentVersions) {
       this.storeFileContent(file, fileContent);
+      this.taskModel.handleTaskFileContent(file, fileContent);
+
+      file.contentVersions.delete(fileContent);
     }
   };
 
-  storeFileContent = (file: File, fileContent: FileContent): void => {
+  // methods
+  addOrUpdateFile = (file: File): void => {
+    this.chatModel.sendMessage("", file);
+    this.handleFileAndClearContents(file);
+  };
+
+  // storage
+  storeFileContent = (file: File, fileContent: FileContent<string>): void => {
     const fileContentName: string = FileModel.getFileContentName(fileContent);
     const fileContentPath: string[] = this.getFileContentPath(
       file,
@@ -92,9 +100,9 @@ export default class FileModel {
   getFileContent = (
     file: File,
     fileContentName: string
-  ): FileContent | null => {
+  ): FileContent<string> | null => {
     const filePath = this.getFileContentPath(file, fileContentName);
-    const fileContentOrNull: FileContent | null =
+    const fileContentOrNull: FileContent<string> | null =
       this.storageModel.readStringifiable(filePath, FileContentReference);
     return fileContentOrNull;
   };
@@ -108,7 +116,7 @@ export default class FileModel {
   }
 
   // utility
-  static getFileContentName = (fileContent: FileContent): string => {
+  static getFileContentName = (fileContent: FileContent<string>): string => {
     return fileContent.creationDate + fileContent.id;
   };
 
@@ -117,7 +125,17 @@ export default class FileModel {
       dataVersion: DATA_VERSION,
 
       id: v4(),
-      contentVersions: [],
+      contentVersions: new Set(),
+    };
+  };
+
+  static createFileContent = <T extends string>(type: T): FileContent<T> => {
+    return {
+      dataVersion: DATA_VERSION,
+
+      id: v4(),
+      creationDate: createTimestamp(),
+      type,
     };
   };
 }
@@ -125,18 +143,18 @@ export default class FileModel {
 // types
 export interface File extends ValidObject {
   id: string;
-  contentVersions: FileContent[];
+  contentVersions: Set<FileContent<string>>;
 }
 
-export interface FileContent extends ValidObject {
+export interface FileContent<T extends string> extends ValidObject {
   id: string;
   creationDate: string;
 
-  type: string;
+  type: T;
 }
 
 // references
-export const FileContentReference: FileContent = {
+export const FileContentReference: FileContent<string> = {
   dataVersion: DATA_VERSION,
 
   id: "",
@@ -148,5 +166,5 @@ export const FileReference: File = {
   dataVersion: DATA_VERSION,
 
   id: "",
-  contentVersions: [FileContentReference],
+  contentVersions: new Set([FileContentReference]),
 };

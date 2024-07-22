@@ -289,11 +289,14 @@
       const requiredType = typeof reference[key];
       const actualType = typeof objectToCheck[key];
       if (requiredType != actualType) return false;
-      if (Array.isArray(reference[key])) {
+      if (Array.isArray(reference[key]) || reference[key] instanceof Set) {
         if (objectToCheck[key].length == 0) continue;
+        if (objectToCheck[key].size == 0) continue;
+        const [firstOfObjectToCheck] = objectToCheck[key];
+        const [fisrtOfReference] = reference[key];
         const doesFirstItemMatch = checkMatchesObjectStructure(
-          objectToCheck[key][0],
-          reference[key][0]
+          firstOfObjectToCheck,
+          fisrtOfReference
         );
         if (doesFirstItemMatch == false) return false;
       } else if (requiredType == "object") {
@@ -478,14 +481,50 @@
   };
 
   // src/Model/Files/taskModel.ts
-  var TaskModel = class {
+  var TaskModel = class _TaskModel {
     chatModel;
     fileModel;
+    // handler
+    handleTaskFileContent = (file, fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
+        return;
+    };
+    // methods
+    createTask = (board, name) => {
+      const file = FileModel.createFile();
+      const taskFileContent = _TaskModel.createTaskFileContent(
+        board,
+        name
+      );
+      file.contentVersions.add(taskFileContent);
+      this.fileModel.addOrUpdateFile(file);
+    };
+    saveTask = (file, newTaskFileContent) => {
+      file.contentVersions.add(newTaskFileContent);
+      this.fileModel.addOrUpdateFile(file);
+    };
     // init
     constructor(chatModel, fileModel) {
       this.chatModel = chatModel;
       this.fileModel = fileModel;
     }
+    // utility
+    static createTaskFileContent = (name, board) => {
+      const fileContent = FileModel.createFileContent("task");
+      return {
+        ...fileContent,
+        name,
+        board
+      };
+    };
+  };
+  var TaskFileContentReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    creationDate: "",
+    type: "task",
+    name: "",
+    board: ""
   };
 
   // src/Model/Files/fileModel.ts
@@ -511,18 +550,20 @@
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile, FileReference);
       if (file == null) return;
-      this.storeFile(file);
+      this.handleFile(file);
+    };
+    handleFile = (file) => {
+      for (const fileContent of file.contentVersions) {
+        this.storeFileContent(file, fileContent);
+        this.taskModel.handleTaskFileContent(file, fileContent);
+      }
     };
     // methods
-    addFile = (file) => {
+    addOrUpdateFile = (file) => {
+      this.handleFile(file);
       this.chatModel.sendMessage("", file);
     };
     // storage
-    storeFile = (file) => {
-      for (const fileContent of file.contentVersions) {
-        this.storeFileContent(file, fileContent);
-      }
-    };
     storeFileContent = (file, fileContent) => {
       const fileContentName = _FileModel.getFileContentName(fileContent);
       const fileContentPath = this.getFileContentPath(
@@ -571,7 +612,15 @@
       return {
         dataVersion: DATA_VERSION,
         id: v4_default(),
-        contentVersions: []
+        contentVersions: /* @__PURE__ */ new Set()
+      };
+    };
+    static createFileContent = (type) => {
+      return {
+        dataVersion: DATA_VERSION,
+        id: v4_default(),
+        creationDate: createTimestamp(),
+        type
       };
     };
   };
@@ -584,7 +633,7 @@
   var FileReference = {
     dataVersion: DATA_VERSION,
     id: "",
-    contentVersions: [FileContentReference]
+    contentVersions: /* @__PURE__ */ new Set([FileContentReference])
   };
 
   // src/Model/Utility/crypto.ts
@@ -2517,5 +2566,11 @@
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
     StorageModal(storageViewModel)
+  );
+  console.log(
+    checkMatchesObjectStructure(
+      { a: 1, c: /* @__PURE__ */ new Set() },
+      { a: 2, c: /* @__PURE__ */ new Set(["bla"]) }
+    )
   );
 })();
