@@ -141,7 +141,6 @@ export const FileContentReference: FileContent = {
 
   id: "",
   creationDate: "",
-
   type: "",
 };
 

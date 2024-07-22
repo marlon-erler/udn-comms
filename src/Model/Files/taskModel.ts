@@ -3,6 +3,7 @@
 import FileModel, { FileContent } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
+import { DATA_VERSION } from "../Utility/typeSafety";
 
 export default class TaskModel {
   chatModel: ChatModel;
@@ -29,3 +30,13 @@ export interface TaskFileContent extends FileContent {
   date?: string;
   time?: string;
 }
+
+export const TaskFileContentReference: TaskFileContent = {
+  dataVersion: DATA_VERSION,
+
+  id: "",
+  creationDate: "",
+  type: "task",
+  
+  board: "",
+};
