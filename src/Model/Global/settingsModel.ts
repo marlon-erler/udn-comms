@@ -5,6 +5,7 @@ import StorageModel, { storageKeys } from "./storageModel";
 export default class SettingsModel {
   storageModel: StorageModel;
 
+  // data
   username: string;
   firstDayOfWeek: string;
 

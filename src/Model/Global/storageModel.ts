@@ -1,4 +1,4 @@
-// this file is responsible for reading and writing persistent data; all storage shall be handled by this file.
+// this file is responsible for reading and writing persistent data.
 
 import {
   DATA_VERSION,

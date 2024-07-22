@@ -25,19 +25,7 @@ export default class ConnectionModel {
 
   channelsToSubscribe: Set<string> = new Set();
 
-  // connection
-  connect = (address: string): void => {
-    this.udn.connect(address);
-  };
-
-  disconnect = (): void => {
-    this.udn.disconnect();
-
-    // do not reconnect
-    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
-    this.storageModel.remove(reconnectAddressPath);
-  };
-
+  // handlers
   handleMessage = (data: Message): void => {
     this.messageHandler(data);
   };
@@ -53,6 +41,19 @@ export default class ConnectionModel {
     this.storeAddress(this.address);
     this.sendSubscriptionRequest();
     this.sendMessagesInOutbox();
+  };
+
+  // connection
+  connect = (address: string): void => {
+    this.udn.connect(address);
+  };
+
+  disconnect = (): void => {
+    this.udn.disconnect();
+
+    // do not reconnect
+    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    this.storageModel.remove(reconnectAddressPath);
   };
 
   // mailbox
@@ -178,7 +179,7 @@ export default class ConnectionModel {
     return this.storageModel.list(dirPath);
   }
 
-  // handlers
+  // other
   setConnectionChangeHandler = (handler: () => void): void => {
     this.connectionChangeHandler = handler;
   };
@@ -193,7 +194,7 @@ export default class ConnectionModel {
     this.messageSentHandler = handler;
   };
 
-  // setup
+  // init
   constructor(storageModel: StorageModel) {
     // create frontend
     this.udn = new UDNFrontend();

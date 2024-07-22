@@ -33,7 +33,23 @@ export default class ChatListModel {
     }
   };
 
-  // store & add
+  // sorting
+  updateIndices = () => {
+    this.sortedPrimaryChannels = [];
+
+    let allChannels: string[] = [];
+    for (const chatModel of this.chatModels) {
+      allChannels.push(chatModel.info.primaryChannel);
+    }
+
+    this.sortedPrimaryChannels = allChannels.sort(localeCompare);
+  };
+
+  getIndexOfPrimaryChannel(primaryChannel: string): number {
+    return this.sortedPrimaryChannels.indexOf(primaryChannel);
+  }
+
+  // storage
   addChatModel = (chatModel: ChatModel) => {
     this.chatModels.add(chatModel);
     this.updateIndices();
@@ -59,22 +75,6 @@ export default class ChatListModel {
     this.chatModels.delete(chat);
     this.updateIndices();
   };
-
-  // sorting
-  updateIndices = () => {
-    this.sortedPrimaryChannels = [];
-
-    let allChannels: string[] = [];
-    for (const chatModel of this.chatModels) {
-      allChannels.push(chatModel.info.primaryChannel);
-    }
-
-    this.sortedPrimaryChannels = allChannels.sort(localeCompare);
-  };
-
-  getIndexOfPrimaryChannel(primaryChannel: string): number {
-    return this.sortedPrimaryChannels.indexOf(primaryChannel);
-  }
 
   // load
   loadChats = (): void => {

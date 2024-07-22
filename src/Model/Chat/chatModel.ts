@@ -31,13 +31,6 @@ export default class ChatModel {
 
   chatMessageHandler: (chatMessage: ChatMessage) => void = () => {};
 
-  // sorting
-  get index(): number {
-    return this.chatListModel.getIndexOfPrimaryChannel(
-      this.info.primaryChannel
-    );
-  }
-
   // paths
   get infoPath(): string[] {
     return storageKeys.chatInfo(this.id);
@@ -55,7 +48,14 @@ export default class ChatModel {
     return [...this.messageDirPath, id];
   };
 
-  // set
+  // sorting
+  get index(): number {
+    return this.chatListModel.getIndexOfPrimaryChannel(
+      this.info.primaryChannel
+    );
+  }
+
+  // settings
   setPrimaryChannel = (primaryChannel: string): void => {
     this.info.primaryChannel = primaryChannel;
     this.storeInfo();
@@ -78,7 +78,69 @@ export default class ChatModel {
     this.storeColor();
   };
 
-  // store & add
+// messaging
+sendMessage = async (body: string, file?: File): Promise<boolean> => {
+  const senderName = this.settingsModel.username;
+  if (senderName == "") return false;
+
+  const allChannels = [this.info.primaryChannel];
+  for (const secondaryChannel of this.info.secondaryChannels) {
+    allChannels.push(secondaryChannel);
+  }
+
+  const combinedChannel: string = allChannels.join("/");
+
+  const chatMessage: ChatMessage = await ChatModel.createChatMessage(
+    combinedChannel,
+    senderName,
+    this.info.encryptionKey,
+    body,
+    file
+  );
+
+  this.addMessage(chatMessage);
+  this.connectionModel.sendMessageOrStore(chatMessage);
+  return true;
+};
+
+handleMessage = (body: string): void => {
+  const chatMessage: ChatMessage | null = parseValidObject(
+    body,
+    ChatMessageReference
+  );
+  if (chatMessage == null) return;
+
+  chatMessage.status = ChatMessageStatus.Received;
+  this.addMessage(chatMessage);
+};
+
+handleMessageSent = (chatMessage: ChatMessage): void => {
+  chatMessage.status = ChatMessageStatus.Sent;
+  this.addMessage(chatMessage);
+};
+
+decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
+  const decryptedBody: string = await decryptString(
+    chatMessage.body,
+    this.info.encryptionKey
+  );
+  const decryptedFile: string = await decryptString(
+    chatMessage.stringifiedFile ?? "",
+    this.info.encryptionKey
+  );
+  chatMessage.body = decryptedBody;
+  chatMessage.stringifiedFile = decryptedFile;
+};
+
+setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
+  this.chatMessageHandler = handler;
+};
+
+subscribe = (): void => {
+  this.connectionModel.addChannel(this.info.primaryChannel);
+};
+
+  // storage
   storeInfo = (): void => {
     this.storageModel.writeStringifiable(this.infoPath, this.info);
   };
@@ -101,7 +163,6 @@ export default class ChatModel {
     this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
   };
 
-  // delete
   delete = () => {
     // untrack
     this.chatListModel.untrackChat(this);
@@ -152,68 +213,6 @@ export default class ChatModel {
     );
     return sorted;
   }
-
-  // messaging
-  sendMessage = async (body: string, file?: File): Promise<boolean> => {
-    const senderName = this.settingsModel.username;
-    if (senderName == "") return false;
-
-    const allChannels = [this.info.primaryChannel];
-    for (const secondaryChannel of this.info.secondaryChannels) {
-      allChannels.push(secondaryChannel);
-    }
-
-    const combinedChannel: string = allChannels.join("/");
-
-    const chatMessage: ChatMessage = await ChatModel.createChatMessage(
-      combinedChannel,
-      senderName,
-      this.info.encryptionKey,
-      body,
-      file
-    );
-
-    this.addMessage(chatMessage);
-    this.connectionModel.sendMessageOrStore(chatMessage);
-    return true;
-  };
-
-  handleMessage = (body: string): void => {
-    const chatMessage: ChatMessage | null = parseValidObject(
-      body,
-      ChatMessageReference
-    );
-    if (chatMessage == null) return;
-
-    chatMessage.status = ChatMessageStatus.Received;
-    this.addMessage(chatMessage);
-  };
-
-  handleMessageSent = (chatMessage: ChatMessage): void => {
-    chatMessage.status = ChatMessageStatus.Sent;
-    this.addMessage(chatMessage);
-  };
-
-  decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
-    const decryptedBody: string = await decryptString(
-      chatMessage.body,
-      this.info.encryptionKey
-    );
-    const decryptedFile: string = await decryptString(
-      chatMessage.stringifiedFile ?? "",
-      this.info.encryptionKey
-    );
-    chatMessage.body = decryptedBody;
-    chatMessage.stringifiedFile = decryptedFile;
-  };
-
-  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
-    this.chatMessageHandler = handler;
-  };
-
-  subscribe = (): void => {
-    this.connectionModel.addChannel(this.info.primaryChannel);
-  };
 
   // init
   constructor(
