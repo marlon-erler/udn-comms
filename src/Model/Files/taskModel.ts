@@ -25,14 +25,6 @@ export default class TaskModel {
     return this.fileModel.getModelDirectoryPath("taskModel");
   };
 
-  getLocationDirPath = (): string[] => {
-    return [...this.getBasePath(), subDirectories.locations];
-  };
-
-  getTaskLocationPath = (fileId: string): string[] => {
-    return [...this.getLocationDirPath(), fileId];
-  };
-
   getBoardDirPath = (): string[] => {
     return [...this.getBasePath(), subDirectories.boards];
   };
@@ -191,7 +183,6 @@ export default class TaskModel {
 }
 
 export const subDirectories = {
-  locations: "locations",
   boards: "boards",
   boardInfo: "info",
   boardTasks: "tasks",
