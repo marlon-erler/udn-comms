@@ -17,15 +17,17 @@ export function checkMatchesObjectStructure(
     const actualType = typeof objectToCheck[key];
     if (requiredType != actualType) return false;
 
-    if (Array.isArray(reference[key])) {
+    if (Array.isArray(reference[key]) || reference[key] instanceof Set) {
       // only check if array is not empty
       if (objectToCheck[key].length == 0) continue;
+      if (objectToCheck[key].size == 0) continue;
 
       // check first item of array
-      // recurse into objects
+      const [firstOfObjectToCheck] = objectToCheck[key];
+      const [fisrtOfReference] = reference[key];
       const doesFirstItemMatch = checkMatchesObjectStructure(
-        objectToCheck[key][0],
-        reference[key][0]
+        firstOfObjectToCheck,
+        fisrtOfReference
       );
       if (doesFirstItemMatch == false) return false;
     } else if (requiredType == "object") {
