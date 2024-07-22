@@ -571,6 +571,7 @@
     createBoard = (name) => {
       const boardInfoFileContent = _TaskModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
       this.updateBoard(boardInfoFileContent);
+      return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
       this.storeBoard(boardInfoFileContent);
@@ -591,8 +592,8 @@
     };
     listBoardIds = () => {
       const boardContainerPath = this.getBoardContainerPath();
-      const boardNames = this.storageModel.list(boardContainerPath);
-      return boardNames;
+      const boardIds = this.storageModel.list(boardContainerPath);
+      return boardIds;
     };
     getBoardInfo = (fileId) => {
       const boardInfoFileContentOrNull = this.fileModel.getLatestFileContent(
@@ -1409,9 +1410,9 @@
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
-      this.taskModel.createBoard(this.newBoardNameInput.value);
+      const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
-      this.loadData();
+      this.boards.add(boardInfoFileContent);
     };
     // view
     showBoard = (boardInfo) => {

@@ -37,10 +37,11 @@ export default class TaskPageViewModel {
   createBoard = (): void => {
     if (this.cannotCreateBoard.value == true) return;
 
-    this.taskModel.createBoard(this.newBoardNameInput.value);
+    const boardInfoFileContent: BoardInfoFileContent =
+      this.taskModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
 
-    this.loadData();
+    this.boards.add(boardInfoFileContent);
   };
 
   // view

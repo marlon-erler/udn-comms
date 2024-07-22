@@ -68,10 +68,11 @@ export default class TaskModel {
   };
 
   // boards
-  createBoard = (name: string): void => {
+  createBoard = (name: string): BoardInfoFileContent => {
     const boardInfoFileContent: BoardInfoFileContent =
       TaskModel.createBoardInfoFileContent(v4(), name, Color.Standard);
     this.updateBoard(boardInfoFileContent);
+    return boardInfoFileContent;
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
@@ -100,8 +101,8 @@ export default class TaskModel {
 
   listBoardIds = (): string[] => {
     const boardContainerPath: string[] = this.getBoardContainerPath();
-    const boardNames: string[] = this.storageModel.list(boardContainerPath);
-    return boardNames;
+    const boardIds: string[] = this.storageModel.list(boardContainerPath);
+    return boardIds;
   };
 
   getBoardInfo = (fileId: string): BoardInfoFileContent | null => {
