@@ -85,7 +85,7 @@ export default class ChatModel {
   // messaging
   sendMessage = async (
     body: string,
-    fileContent: FileContent<string>
+    fileContent?: FileContent<string>
   ): Promise<boolean> => {
     const senderName = this.settingsModel.username;
     if (senderName == "") return false;
@@ -263,7 +263,7 @@ export default class ChatModel {
     sender: string,
     encryptionKey: string,
     body: string,
-    fileContent: FileContent<string>
+    fileContent?: FileContent<string>
   ): Promise<ChatMessage> => {
     const chatMessage: ChatMessage = {
       dataVersion: DATA_VERSION,
