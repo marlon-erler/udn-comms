@@ -138,25 +138,6 @@ export default class FileModel {
     this.storageModel = storageModel;
 
     this.taskModel = new TaskModel(this.storageModel, chatModel, this);
-
-    // DEV
-    // this.taskModel.createBoard("Hello");
-    // const boards = this.taskModel.listBoardIds();
-    // console.log(boards);
-
-    // const boardId = boards[0];
-
-    // const firstBoardInfo = this.taskModel.getBoardInfo(boardId);
-    // console.log(firstBoardInfo);
-
-    // const newInfo = TaskModel.createBoardInfoFileContent(
-    //   boardId,
-    //   "renamed",
-    //   Color.Coral
-    // );
-    // this.taskModel.createOrUpdateBoard(newInfo);
-
-    // setTimeout(() => this.taskModel.deleteBoard(boardId), 7000);
   }
 
   // utility

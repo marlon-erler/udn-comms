@@ -538,6 +538,9 @@
     getBoardFilePath = (boardId) => {
       return [...this.fileModel.getFilePath(boardId)];
     };
+    getTaskFilePath = (taskId) => {
+      return [...this.fileModel.getFilePath(taskId)];
+    };
     getBoardContainerPath = () => {
       return [...this.getBasePath(), subDirectories.boards];
     };
@@ -547,11 +550,8 @@
     getTaskContainerPath = (boardId) => {
       return [...this.getBoardDirectoryPath(boardId), subDirectories.boardTasks];
     };
-    getTaskPath = (boardId, fileId) => {
+    getTaskReferencePath = (boardId, fileId) => {
       return [...this.getTaskContainerPath(boardId), fileId];
-    };
-    getTaskContentPath = (boardId, fileId, versionId) => {
-      return [...this.getTaskPath(boardId, fileId), versionId];
     };
     // handler
     handleFileContent = (fileContent) => {
@@ -562,14 +562,32 @@
       }
     };
     handleBoard = (boardInfoFileContent) => {
-      console.log("board", boardInfoFileContent);
+      this.storeBoard(boardInfoFileContent);
     };
     handleTask = (taskFileContent) => {
+      this.storeTask(taskFileContent);
     };
     // boards
     createBoard = (name) => {
       const boardInfoFileContent = _TaskModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
-      this.createOrUpdateBoard(boardInfoFileContent);
+      this.updateBoard(boardInfoFileContent);
+    };
+    updateBoard = (boardInfoFileContent) => {
+      this.storeBoard(boardInfoFileContent);
+      this.chatModel.sendMessage("", boardInfoFileContent);
+    };
+    storeBoard = (boardInfoFileContent) => {
+      this.fileModel.addFileContent(boardInfoFileContent);
+      const boardDirectoryPath = this.getBoardDirectoryPath(
+        boardInfoFileContent.fileId
+      );
+      this.storageModel.write(boardDirectoryPath, "");
+    };
+    deleteBoard = (boardId) => {
+      const boardFilePath = this.getBoardFilePath(boardId);
+      const boardDirectoryPath = this.getBoardDirectoryPath(boardId);
+      this.storageModel.removeRecursively(boardFilePath);
+      this.storageModel.removeRecursively(boardDirectoryPath);
     };
     listBoardIds = () => {
       const boardContainerPath = this.getBoardContainerPath();
@@ -583,37 +601,42 @@
       );
       return boardInfoFileContentOrNull;
     };
-    createOrUpdateBoard = (boardInfoFileContent) => {
-      this.fileModel.addFileContent(boardInfoFileContent);
-      const boardDirectoryPath = this.getBoardDirectoryPath(
-        boardInfoFileContent.fileId
-      );
-      this.storageModel.write(boardDirectoryPath, "");
-    };
-    deleteBoard = (boardId) => {
-      const boardFilePath = this.getBoardFilePath(boardId);
-      const boardDirectoryPath = this.getBoardDirectoryPath(boardId);
-      this.storageModel.removeRecursively(boardFilePath);
-      this.storageModel.removeRecursively(boardDirectoryPath);
-    };
     //tasks
     createTask = (boardId, name) => {
       const taskFileContent = _TaskModel.createTaskFileContent(
         v4_default(),
-        boardId,
-        name
+        name,
+        boardId
       );
-      this.fileModel.addFileContent(taskFileContent);
+      this.updateTask(taskFileContent);
     };
-    listTaskIds = (boardName) => {
-      const getTaskDirPath = this.getTaskContainerPath(boardName);
-      const fileIds = this.storageModel.list(getTaskDirPath);
+    updateTask = (taskFileContent) => {
+      this.storeTask(taskFileContent);
+      this.chatModel.sendMessage("", taskFileContent);
+    };
+    storeTask = (taskFileContent) => {
+      this.fileModel.addFileContent(taskFileContent);
+      const taskReferencePath = this.getTaskReferencePath(
+        taskFileContent.boardId,
+        taskFileContent.fileId
+      );
+      console.log("storing", taskReferencePath);
+      this.storageModel.write(taskReferencePath, "");
+    };
+    listTaskIds = (boardId) => {
+      const taskContainerPath = this.getTaskContainerPath(boardId);
+      console.log("listing", taskContainerPath);
+      const fileIds = this.storageModel.list(taskContainerPath);
       return fileIds;
     };
-    moveTask = (taskFileId, oldBoardId, newBoardId) => {
-      const sourcePath = this.getTaskPath(oldBoardId, taskFileId);
-      const destinationPath = this.getTaskPath(newBoardId, taskFileId);
-      this.storageModel.renameRecursively(sourcePath, destinationPath);
+    deleteTask = (boardId, taskId) => {
+      const taskFilePath = this.getTaskFilePath(taskId);
+      const taskReferencePath = this.getTaskReferencePath(
+        boardId,
+        taskId
+      );
+      this.storageModel.removeRecursively(taskFilePath);
+      this.storageModel.removeRecursively(taskReferencePath);
     };
     // init
     constructor(storageModel2, chatModel, fileModel) {
@@ -758,6 +781,35 @@
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
       this.taskModel = new TaskModel(this.storageModel, chatModel, this);
+      this.taskModel.createBoard("Hello");
+      const boards = this.taskModel.listBoardIds();
+      console.log("boards", boards);
+      const boardId = boards[0];
+      console.log("board id", this.taskModel.getBoardInfo(boardId));
+      const newInfo = TaskModel.createBoardInfoFileContent(
+        boardId,
+        "renamed",
+        "coral" /* Coral */
+      );
+      this.taskModel.updateBoard(newInfo);
+      console.log("info", this.taskModel.getBoardInfo(boardId));
+      this.taskModel.createTask(boardId, "New task");
+      const tasks = this.taskModel.listTaskIds(boardId);
+      console.log("tasks", tasks);
+      const taskId = tasks[0];
+      console.log("task id", taskId);
+      const newTaskContent = TaskModel.createTaskFileContent(
+        taskId,
+        "renamed",
+        boardId
+      );
+      this.taskModel.updateTask(newTaskContent);
+      setTimeout(() => {
+        this.taskModel.deleteTask(boardId, taskId);
+      }, 2e4);
+      setTimeout(() => {
+        this.taskModel.deleteBoard(boardId);
+      }, 3e4);
     }
     // utility
     static generateFileContentId = (creationDate) => {
@@ -2540,7 +2592,7 @@
     const path = StorageModel.stringToPathComponents(pathString);
     const fileName = StorageModel.getFileName(path);
     const items = new ListState();
-    const style = `text-indent: ${path.length * 2}rem`;
+    const style = `text-indent: ${path.length}rem`;
     function loadItems() {
       items.clear();
       const directoryItems = storageViewModel2.storageModel.list(path);

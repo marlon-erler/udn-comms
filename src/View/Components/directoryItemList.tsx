@@ -1,6 +1,8 @@
 import * as React from "bloatless-react";
 
-import StorageModel, { PATH_COMPONENT_SEPARATOR } from "../../Model/Global/storageModel";
+import StorageModel, {
+  PATH_COMPONENT_SEPARATOR,
+} from "../../Model/Global/storageModel";
 
 import StorageViewModel from "../../ViewModel/storageViewModel";
 
@@ -18,7 +20,7 @@ export function DirectoryItemList(
   const fileName = StorageModel.getFileName(path);
   const items = new React.ListState<string>();
 
-  const style = `text-indent: ${path.length * 2}rem`;
+  const style = `text-indent: ${path.length}rem`;
 
   // methods
   function loadItems() {
@@ -42,7 +44,7 @@ export function DirectoryItemList(
     if (!items.value.has(lastDeletedItemPath)) return;
 
     select();
-    setTimeout(() => loadItems(), 50)
+    setTimeout(() => loadItems(), 50);
   });
 
   // state

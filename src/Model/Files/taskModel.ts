@@ -25,6 +25,10 @@ export default class TaskModel {
     return [...this.fileModel.getFilePath(boardId)];
   };
 
+  getTaskFilePath = (taskId: string): string[] => {
+    return [...this.fileModel.getFilePath(taskId)];
+  };
+
   getBoardContainerPath = (): string[] => {
     return [...this.getBasePath(), subDirectories.boards];
   };
@@ -37,16 +41,8 @@ export default class TaskModel {
     return [...this.getBoardDirectoryPath(boardId), subDirectories.boardTasks];
   };
 
-  getTaskPath = (boardId: string, fileId: string): string[] => {
+  getTaskReferencePath = (boardId: string, fileId: string): string[] => {
     return [...this.getTaskContainerPath(boardId), fileId];
-  };
-
-  getTaskContentPath = (
-    boardId: string,
-    fileId: string,
-    versionId: string
-  ): string[] => {
-    return [...this.getTaskPath(boardId, fileId), versionId];
   };
 
   // handler
@@ -55,7 +51,7 @@ export default class TaskModel {
       checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==
       true
     ) {
-      this.handleBoard(fileContent as BoardInfoVersion);
+      this.handleBoard(fileContent as BoardInfoFileContent);
     } else if (
       checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true
     ) {
@@ -63,35 +59,27 @@ export default class TaskModel {
     }
   };
 
-  handleBoard = (boardInfoFileContent: BoardInfoVersion) => {
-    console.log("board", boardInfoFileContent);
+  handleBoard = (boardInfoFileContent: BoardInfoFileContent) => {
+    this.storeBoard(boardInfoFileContent);
   };
 
-  handleTask = (taskFileContent: TaskFileContent) => {};
+  handleTask = (taskFileContent: TaskFileContent) => {
+    this.storeTask(taskFileContent);
+  };
 
   // boards
   createBoard = (name: string): void => {
-    const boardInfoFileContent: BoardInfoVersion =
+    const boardInfoFileContent: BoardInfoFileContent =
       TaskModel.createBoardInfoFileContent(v4(), name, Color.Standard);
-    this.createOrUpdateBoard(boardInfoFileContent);
+    this.updateBoard(boardInfoFileContent);
   };
 
-  listBoardIds = (): string[] => {
-    const boardContainerPath: string[] = this.getBoardContainerPath();
-    const boardNames: string[] = this.storageModel.list(boardContainerPath);
-    return boardNames;
+  updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.storeBoard(boardInfoFileContent);
+    this.chatModel.sendMessage("", boardInfoFileContent);
   };
 
-  getBoardInfo = (fileId: string): BoardInfoVersion | null => {
-    const boardInfoFileContentOrNull: BoardInfoVersion | null =
-      this.fileModel.getLatestFileContent(
-        fileId,
-        BoardInfoFileContentReference
-      );
-    return boardInfoFileContentOrNull;
-  };
-
-  createOrUpdateBoard = (boardInfoFileContent: BoardInfoVersion): void => {
+  storeBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     // store info
     this.fileModel.addFileContent(boardInfoFileContent);
 
@@ -110,30 +98,65 @@ export default class TaskModel {
     this.storageModel.removeRecursively(boardDirectoryPath);
   };
 
+  listBoardIds = (): string[] => {
+    const boardContainerPath: string[] = this.getBoardContainerPath();
+    const boardNames: string[] = this.storageModel.list(boardContainerPath);
+    return boardNames;
+  };
+
+  getBoardInfo = (fileId: string): BoardInfoFileContent | null => {
+    const boardInfoFileContentOrNull: BoardInfoFileContent | null =
+      this.fileModel.getLatestFileContent(
+        fileId,
+        BoardInfoFileContentReference
+      );
+    return boardInfoFileContentOrNull;
+  };
+
   //tasks
   createTask = (boardId: string, name: string): void => {
     const taskFileContent: TaskFileContent = TaskModel.createTaskFileContent(
       v4(),
-      boardId,
-      name
+      name,
+      boardId
     );
-    this.fileModel.addFileContent(taskFileContent);
+    this.updateTask(taskFileContent);
   };
 
-  listTaskIds = (boardName: string): string[] => {
-    const getTaskDirPath: string[] = this.getTaskContainerPath(boardName);
-    const fileIds: string[] = this.storageModel.list(getTaskDirPath);
+  updateTask = (taskFileContent: TaskFileContent): void => {
+    this.storeTask(taskFileContent);
+    this.chatModel.sendMessage("", taskFileContent);
+  };
+
+  storeTask = (taskFileContent: TaskFileContent): void => {
+    // store info
+    this.fileModel.addFileContent(taskFileContent);
+
+    // add to board
+    const taskReferencePath: string[] = this.getTaskReferencePath(
+      taskFileContent.boardId,
+      taskFileContent.fileId
+    );
+    console.log("storing", taskReferencePath);
+    this.storageModel.write(taskReferencePath, "");
+  };
+
+  listTaskIds = (boardId: string): string[] => {
+    const taskContainerPath: string[] = this.getTaskContainerPath(boardId);
+    console.log("listing", taskContainerPath);
+    const fileIds: string[] = this.storageModel.list(taskContainerPath);
     return fileIds;
   };
 
-  moveTask = (
-    taskFileId: string,
-    oldBoardId: string,
-    newBoardId: string
-  ): void => {
-    const sourcePath: string[] = this.getTaskPath(oldBoardId, taskFileId);
-    const destinationPath: string[] = this.getTaskPath(newBoardId, taskFileId);
-    this.storageModel.renameRecursively(sourcePath, destinationPath);
+  deleteTask = (boardId: string, taskId: string): void => {
+    const taskFilePath: string[] = this.getTaskFilePath(taskId);
+    const taskReferencePath: string[] = this.getTaskReferencePath(
+      boardId,
+      taskId
+    );
+
+    this.storageModel.removeRecursively(taskFilePath);
+    this.storageModel.removeRecursively(taskReferencePath);
   };
 
   // init
@@ -152,7 +175,7 @@ export default class TaskModel {
     fileId: string,
     name: string,
     color: Color
-  ): BoardInfoVersion => {
+  ): BoardInfoFileContent => {
     const fileContent: FileContent<"board-info"> = FileModel.createFileContent(
       fileId,
       "board-info"
@@ -189,7 +212,7 @@ export const subDirectories = {
 };
 
 // types
-export interface BoardInfoVersion extends FileContent<"board-info"> {
+export interface BoardInfoFileContent extends FileContent<"board-info"> {
   name: string;
   color: Color;
 }
@@ -209,7 +232,7 @@ export interface TaskFileContent extends FileContent<"task"> {
 }
 
 // reference
-export const BoardInfoFileContentReference: BoardInfoVersion = {
+export const BoardInfoFileContentReference: BoardInfoFileContent = {
   dataVersion: DATA_VERSION,
 
   fileId: "string",

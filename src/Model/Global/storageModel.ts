@@ -3,7 +3,6 @@
 import {
   DATA_VERSION,
   ValidObject,
-  checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
 import { localeCompare, parseValidObject, stringify } from "../Utility/utility";
 
