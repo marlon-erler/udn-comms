@@ -6,9 +6,9 @@ import { Option, StringToOption } from "./Components/option";
 
 import ChatListViewModel from "../ViewModel/chatListViewModel";
 import { ChatViewModelToChatEntry } from "./Components/chatEntry";
-import ConnectionViewModel from "../ViewModel/connectionViewModel";
-import SettingsViewModel from "../ViewModel/settingsViewModel";
-import StorageViewModel from "../ViewModel/storageViewModel";
+import ConnectionViewModel from "../ViewModel/Global/connectionViewModel";
+import SettingsViewModel from "../ViewModel/Global/settingsViewModel";
+import StorageViewModel from "../ViewModel/Global/storageViewModel";
 import { translations } from "./translations";
 
 export function HomePage(

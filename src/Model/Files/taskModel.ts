@@ -7,7 +7,7 @@ import {
 import FileModel, { FileContent } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
-import { Color } from "../../ViewModel/colors";
+import { Color } from "../../colors";
 import StorageModel from "../Global/storageModel";
 import { v4 } from "uuid";
 

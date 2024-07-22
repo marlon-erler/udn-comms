@@ -3,7 +3,7 @@ import "./messagePage.css";
 import * as React from "bloatless-react";
 
 import { ChatMessageViewModelToView } from "../Components/chatMessage";
-import ChatViewModel from "../../ViewModel/chatViewModel";
+import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
 import { translations } from "../translations";
 
 export function MessagePage(chatViewModel: ChatViewModel) {

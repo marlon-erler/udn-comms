@@ -2,7 +2,7 @@
 
 import * as React from "bloatless-react";
 
-import { ChatMessage, ChatMessageStatus } from "../Model/Chat/chatModel";
+import { ChatMessage, ChatMessageStatus } from "../../Model/Chat/chatModel";
 
 import ChatViewModel from "./chatViewModel";
 

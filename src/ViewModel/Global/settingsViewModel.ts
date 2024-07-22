@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import SettingsModel from "../Model/Global/settingsModel";
+import SettingsModel from "../../Model/Global/settingsModel";
 
 export default class SettingsViewModel {
   settingsModel: SettingsModel;

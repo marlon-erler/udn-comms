@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import ChatViewModel from "../../ViewModel/chatViewModel";
+import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
 import { translations } from "../translations";
 
 export function TaskPage(chatViewModel: ChatViewModel) {

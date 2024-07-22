@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import ConnectionViewModel from "../../ViewModel/connectionViewModel";
+import ConnectionViewModel from "../../ViewModel/Global/connectionViewModel";
 import { DeletableListItem } from "../Components/deletableListItem";
 import { translations } from "../translations";
 

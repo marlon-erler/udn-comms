@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
 import ChatViewModel from "../../ViewModel/chatViewModel";
-import { Color } from "../../ViewModel/colors";
+import { Color } from "../../colors";
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import { DeletableListItem } from "../Components/deletableListItem";
 import { translations } from "../translations";

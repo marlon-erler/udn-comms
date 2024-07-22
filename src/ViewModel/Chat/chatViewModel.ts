@@ -1,13 +1,13 @@
 import * as React from "bloatless-react";
 
-import ChatModel, { ChatMessage } from "../Model/Chat/chatModel";
-import StorageModel, { filePaths } from "../Model/Global/storageModel";
+import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
+import StorageModel, { filePaths } from "../../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import ChatMessageViewModel from "./chatMessageViewModel";
-import { Color } from "./colors";
-import SettingsViewModel from "./settingsViewModel";
-import { localeCompare } from "../Model/Utility/utility";
+import { Color } from "../../colors";
+import SettingsViewModel from "../Global/settingsViewModel";
+import { localeCompare } from "../../Model/Utility/utility";
 
 export default class ChatViewModel {
   chatModel: ChatModel;

@@ -4,17 +4,17 @@ import "./colors.css";
 import * as React from "bloatless-react";
 
 import ChatListModel from "./Model/Chat/chatListModel";
-import ChatListViewModel from "./ViewModel/chatListViewModel";
+import ChatListViewModel from "./ViewModel/Chat/chatListViewModel";
 import { ChatPageWrapper } from "./View/chatPageWrapper";
 import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionModel from "./Model/Global/connectionModel";
-import ConnectionViewModel from "./ViewModel/connectionViewModel";
+import ConnectionViewModel from "./ViewModel/Global/connectionViewModel";
 import { HomePage } from "./View/homePage";
 import SettingsModel from "./Model/Global/settingsModel";
-import SettingsViewModel from "./ViewModel/settingsViewModel";
+import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
 import { StorageModal } from "./View/Modals/storageModal";
 import StorageModel from "./Model/Global/storageModel";
-import StorageViewModel from "./ViewModel/storageViewModel";
+import StorageViewModel from "./ViewModel/Global/storageViewModel";
 
 // models
 const storageModel = new StorageModel();

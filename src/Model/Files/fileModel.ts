@@ -9,7 +9,7 @@ import {
 } from "../Utility/utility";
 
 import ChatModel from "../Chat/chatModel";
-import { Color } from "../../ViewModel/colors";
+import { Color } from "../../colors";
 import TaskModel from "./taskModel";
 import { v4 } from "uuid";
 

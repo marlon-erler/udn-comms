@@ -5,7 +5,7 @@ import * as React from "bloatless-react";
 import { DangerousActionButton } from "./dangerousActionButton";
 import { DirectoryItemList } from "./directoryItemList";
 import { PATH_COMPONENT_SEPARATOR } from "../../Model/Global/storageModel";
-import StorageViewModel from "../../ViewModel/storageViewModel";
+import StorageViewModel from "../../ViewModel/Global/storageViewModel";
 import { translations } from "../translations";
 
 export function FileBrowser(storageViewModel: StorageViewModel) {

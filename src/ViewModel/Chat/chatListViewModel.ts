@@ -1,10 +1,10 @@
 import * as React from "bloatless-react";
 
-import ChatListModel from "../Model/Chat/chatListModel";
-import ChatModel from "../Model/Chat/chatModel";
+import ChatListModel from "../../Model/Chat/chatListModel";
+import ChatModel from "../../Model/Chat/chatModel";
 import ChatViewModel from "./chatViewModel";
-import SettingsViewModel from "./settingsViewModel";
-import StorageModel from "../Model/Global/storageModel";
+import SettingsViewModel from "../Global/settingsViewModel";
+import StorageModel from "../../Model/Global/storageModel";
 
 export default class ChatListViewModel {
   chatListModel: ChatListModel;

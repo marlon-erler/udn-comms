@@ -11,7 +11,7 @@ import {
 import { decryptString, encryptString } from "../Utility/crypto";
 
 import ChatListModel from "./chatListModel";
-import { Color } from "../../ViewModel/colors";
+import { Color } from "../../colors";
 import ConnectionModel from "../Global/connectionModel";
 import SettingsModel from "../Global/settingsModel";
 import { v4 } from "uuid";

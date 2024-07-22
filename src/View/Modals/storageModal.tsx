@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
 import { FileBrowser } from "../Components/fileBrowser";
-import StorageViewModel from "../../ViewModel/storageViewModel";
+import StorageViewModel from "../../ViewModel/Global/storageViewModel";
 import { translations } from "../translations";
 
 export function StorageModal(storageViewModel: StorageViewModel) {
