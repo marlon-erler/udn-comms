@@ -1,7 +1,7 @@
 // this file is responsible for managing chats.
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
-import FileModel, { FileVersion } from "../Files/fileModel";
+import FileModel, { FileContent } from "../Files/fileModel";
 import StorageModel, { filePaths } from "../Global/storageModel";
 import {
   createTimestamp,
@@ -85,7 +85,7 @@ export default class ChatModel {
   // messaging
   sendMessage = async (
     body: string,
-    fileVersion: FileVersion<string>
+    fileContent: FileContent<string>
   ): Promise<boolean> => {
     const senderName = this.settingsModel.username;
     if (senderName == "") return false;
@@ -102,7 +102,7 @@ export default class ChatModel {
       senderName,
       this.info.encryptionKey,
       body,
-      fileVersion
+      fileContent
     );
 
     this.addMessage(chatMessage);
@@ -167,7 +167,7 @@ export default class ChatModel {
     }
 
     // file
-    this.fileModel.handleStringifiedFileVersion(chatMessage.stringifiedFile);
+    this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
   };
 
   delete = () => {
@@ -263,7 +263,7 @@ export default class ChatModel {
     sender: string,
     encryptionKey: string,
     body: string,
-    fileVersion: FileVersion<string>
+    fileContent: FileContent<string>
   ): Promise<ChatMessage> => {
     const chatMessage: ChatMessage = {
       dataVersion: DATA_VERSION,
@@ -278,8 +278,8 @@ export default class ChatModel {
       status: ChatMessageStatus.Outbox,
       stringifiedFile: "",
     };
-    if (fileVersion != undefined) {
-      const stringifiedFile = stringify(fileVersion);
+    if (fileContent != undefined) {
+      const stringifiedFile = stringify(fileContent);
       chatMessage.stringifiedFile = stringifiedFile;
     }
 

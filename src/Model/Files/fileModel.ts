@@ -41,49 +41,49 @@ export default class FileModel {
     return [...this.getFileContainerPath(), fileId];
   };
 
-  getFileVersionPath = (fileId: string, fileVersionId: string): string[] => {
+  getFileContentPath = (fileId: string, fileContentId: string): string[] => {
     const filePath: string[] = this.getFilePath(fileId);
-    return [...filePath, fileVersionId];
+    return [...filePath, fileContentId];
   };
 
   // handler
-  handleStringifiedFileVersion = (stringifiedFileVersion: string): void => {
-    const fileVersion: FileVersion<string> | null = parseValidObject(
-      stringifiedFileVersion,
-      FileVersionReference
+  handleStringifiedFileContent = (stringifiedFileContent: string): void => {
+    const fileContent: FileContent<string> | null = parseValidObject(
+      stringifiedFileContent,
+      FileContentReference
     );
-    if (fileVersion == null) return;
+    if (fileContent == null) return;
 
-    this.handleFileVersion(fileVersion);
+    this.handleFileContent(fileContent);
   };
 
-  handleFileVersion = (fileVersion: FileVersion<string>): void => {
-    const didStore: boolean = this.storeFileVersion(fileVersion);
+  handleFileContent = (fileContent: FileContent<string>): void => {
+    const didStore: boolean = this.storeFileContent(fileContent);
     if (didStore == false) return;
 
-    this.taskModel.handleFileVersion(fileVersion);
+    this.taskModel.handleFileContent(fileContent);
   };
 
   // methods
-  addFileVersion = (fileVersion: FileVersion<string>): void => {
-    this.handleFileVersion(fileVersion);
-    this.chatModel.sendMessage("", fileVersion);
+  addFileContent = (fileContent: FileContent<string>): void => {
+    this.handleFileContent(fileContent);
+    this.chatModel.sendMessage("", fileContent);
   };
 
   // storage
-  storeFileVersion = (fileVersion: FileVersion<string>): boolean => {
-    const fileVersionPath: string[] = this.getFileVersionPath(
-      fileVersion.fileId,
-      fileVersion.fileVersionId
+  storeFileContent = (fileContent: FileContent<string>): boolean => {
+    const fileContentPath: string[] = this.getFileContentPath(
+      fileContent.fileId,
+      fileContent.fileContentId
     );
 
-    // check if fileVersion already exists
-    const existingFileVersion: string | null =
-      this.storageModel.read(fileVersionPath);
-    if (existingFileVersion != null) return false;
+    // check if fileContent already exists
+    const existingFileContent: string | null =
+      this.storageModel.read(fileContentPath);
+    if (existingFileContent != null) return false;
 
-    const stringifiedContent: string = stringify(fileVersion);
-    this.storageModel.write(fileVersionPath, stringifiedContent);
+    const stringifiedContent: string = stringify(fileContent);
+    this.storageModel.write(fileContentPath, stringifiedContent);
     return true;
   };
 
@@ -91,45 +91,45 @@ export default class FileModel {
     return this.storageModel.list(this.getBasePath());
   };
 
-  listFileVersionIds = (fileId: string): string[] => {
+  listFileContentIds = (fileId: string): string[] => {
     const filePath: string[] = this.getFilePath(fileId);
     return this.storageModel.list(filePath);
   };
 
-  selectLatestFileVersionId = (
-    fileVersionIds: string[]
+  selectLatestFileContentId = (
+    fileContentIds: string[]
   ): string | undefined => {
-    return fileVersionIds[fileVersionIds.length - 1];
+    return fileContentIds[fileContentIds.length - 1];
   };
 
-  getFileVersion = <T extends FileVersion<string>>(
+  getFileContent = <T extends FileContent<string>>(
     fileId: string,
-    fileVersionName: string,
+    fileContentName: string,
     reference: T
   ): T | null => {
-    const filePath: string[] = this.getFileVersionPath(fileId, fileVersionName);
-    const fileVersionOrNull: T | null = this.storageModel.readStringifiable(
+    const filePath: string[] = this.getFileContentPath(fileId, fileContentName);
+    const fileContentOrNull: T | null = this.storageModel.readStringifiable(
       filePath,
       reference
     );
-    return fileVersionOrNull;
+    return fileContentOrNull;
   };
 
-  getLatestFileVersion = <T extends FileVersion<string>>(
+  getLatestFileContent = <T extends FileContent<string>>(
     fileId: string,
     reference: T
   ): T | null => {
-    const fileVersionsIds: string[] = this.listFileVersionIds(fileId);
-    const latestFileVersionId: string | undefined =
-      this.selectLatestFileVersionId(fileVersionsIds);
-    if (latestFileVersionId == undefined) return null;
+    const fileContentsIds: string[] = this.listFileContentIds(fileId);
+    const latestFileContentId: string | undefined =
+      this.selectLatestFileContentId(fileContentsIds);
+    if (latestFileContentId == undefined) return null;
 
-    const fileVersion: T | null = this.getFileVersion(
+    const fileContent: T | null = this.getFileContent(
       fileId,
-      latestFileVersionId,
+      latestFileContentId,
       reference
     );
-    return fileVersion;
+    return fileContent;
   };
 
   // init
@@ -149,7 +149,7 @@ export default class FileModel {
     // const firstBoardInfo = this.taskModel.getBoardInfo(boardId);
     // console.log(firstBoardInfo);
 
-    // const newInfo = TaskModel.createBoardInfoFileVersion(
+    // const newInfo = TaskModel.createBoardInfoFileContent(
     //   boardId,
     //   "renamed",
     //   Color.Coral
@@ -160,22 +160,22 @@ export default class FileModel {
   }
 
   // utility
-  static generateFileVersionId = (creationDate): string => {
+  static generateFileContentId = (creationDate): string => {
     return creationDate + v4();
   };
 
-  static createFileVersion = <T extends string>(
+  static createFileContent = <T extends string>(
     fileId: string,
     type: T
-  ): FileVersion<T> => {
+  ): FileContent<T> => {
     const creationDate: string = createTimestamp();
-    const fileVersionId: string = FileModel.generateFileVersionId(creationDate);
+    const fileContentId: string = FileModel.generateFileContentId(creationDate);
 
     return {
       dataVersion: DATA_VERSION,
 
       fileId,
-      fileVersionId,
+      fileContentId,
       creationDate,
       type,
     };
@@ -190,20 +190,20 @@ export const subDirectories = {
 };
 
 // types
-export interface FileVersion<T extends string> extends ValidObject {
+export interface FileContent<T extends string> extends ValidObject {
   fileId: string;
-  fileVersionId: string;
+  fileContentId: string;
   creationDate: string;
 
   type: T;
 }
 
 // references
-export const FileVersionReference: FileVersion<string> = {
+export const FileContentReference: FileContent<string> = {
   dataVersion: DATA_VERSION,
 
   fileId: "",
-  fileVersionId: "",
+  fileContentId: "",
   creationDate: "",
 
   type: "",

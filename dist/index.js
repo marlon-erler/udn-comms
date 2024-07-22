@@ -554,22 +554,22 @@
       return [...this.getTaskPath(boardId, fileId), versionId];
     };
     // handler
-    handleFileVersion = (fileVersion) => {
-      if (checkMatchesObjectStructure(fileVersion, BoardInfoFileVersionReference) == true) {
-        this.handleBoard(fileVersion);
-      } else if (checkMatchesObjectStructure(fileVersion, TaskFileVersionReference) == true) {
-        this.handleTask(fileVersion);
+    handleFileContent = (fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == true) {
+        this.handleBoard(fileContent);
+      } else if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true) {
+        this.handleTask(fileContent);
       }
     };
-    handleBoard = (boardInfoFileVersion) => {
-      console.log("board", boardInfoFileVersion);
+    handleBoard = (boardInfoFileContent) => {
+      console.log("board", boardInfoFileContent);
     };
-    handleTask = (taskFileVersion) => {
+    handleTask = (taskFileContent) => {
     };
     // boards
     createBoard = (name) => {
-      const boardInfoFileVersion = _TaskModel.createBoardInfoFileVersion(v4_default(), name, "standard" /* Standard */);
-      this.createOrUpdateBoard(boardInfoFileVersion);
+      const boardInfoFileContent = _TaskModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
+      this.createOrUpdateBoard(boardInfoFileContent);
     };
     listBoardIds = () => {
       const boardContainerPath = this.getBoardContainerPath();
@@ -577,35 +577,33 @@
       return boardNames;
     };
     getBoardInfo = (fileId) => {
-      const boardInfoFileVersionOrNull = this.fileModel.getLatestFileVersion(
+      const boardInfoFileContentOrNull = this.fileModel.getLatestFileContent(
         fileId,
-        BoardInfoFileVersionReference
+        BoardInfoFileContentReference
       );
-      return boardInfoFileVersionOrNull;
+      return boardInfoFileContentOrNull;
     };
-    createOrUpdateBoard = (boardInfoFileVersion) => {
-      this.fileModel.addFileVersion(boardInfoFileVersion);
+    createOrUpdateBoard = (boardInfoFileContent) => {
+      this.fileModel.addFileContent(boardInfoFileContent);
       const boardDirectoryPath = this.getBoardDirectoryPath(
-        boardInfoFileVersion.fileId
+        boardInfoFileContent.fileId
       );
       this.storageModel.write(boardDirectoryPath, "");
     };
     deleteBoard = (boardId) => {
       const boardFilePath = this.getBoardFilePath(boardId);
       const boardDirectoryPath = this.getBoardDirectoryPath(boardId);
-      console.log(boardFilePath);
-      console.log(boardDirectoryPath);
       this.storageModel.removeRecursively(boardFilePath);
       this.storageModel.removeRecursively(boardDirectoryPath);
     };
     //tasks
     createTask = (boardId, name) => {
-      const taskFileVersion = _TaskModel.createTaskFileVersion(
+      const taskFileContent = _TaskModel.createTaskFileContent(
         v4_default(),
         boardId,
         name
       );
-      this.fileModel.addFileVersion(taskFileVersion);
+      this.fileModel.addFileContent(taskFileContent);
     };
     listTaskIds = (boardName) => {
       const getTaskDirPath = this.getTaskContainerPath(boardName);
@@ -624,24 +622,24 @@
       this.storageModel = storageModel2;
     }
     // utility
-    static createBoardInfoFileVersion = (fileId, name, color) => {
-      const fileVersion = FileModel.createFileVersion(
+    static createBoardInfoFileContent = (fileId, name, color) => {
+      const fileContent = FileModel.createFileContent(
         fileId,
         "board-info"
       );
       return {
-        ...fileVersion,
+        ...fileContent,
         name,
         color
       };
     };
-    static createTaskFileVersion = (fileId, name, boardId) => {
-      const fileVersion = FileModel.createFileVersion(
+    static createTaskFileContent = (fileId, name, boardId) => {
+      const fileContent = FileModel.createFileContent(
         fileId,
         "task"
       );
       return {
-        ...fileVersion,
+        ...fileContent,
         name,
         boardId
       };
@@ -651,19 +649,19 @@
     boards: "boards",
     boardTasks: "tasks"
   };
-  var BoardInfoFileVersionReference = {
+  var BoardInfoFileContentReference = {
     dataVersion: DATA_VERSION,
     fileId: "string",
-    fileVersionId: "",
+    fileContentId: "",
     creationDate: "",
     type: "board-info",
     name: "",
     color: ""
   };
-  var TaskFileVersionReference = {
+  var TaskFileContentReference = {
     dataVersion: DATA_VERSION,
     fileId: "string",
-    fileVersionId: "",
+    fileContentId: "",
     creationDate: "",
     type: "task",
     name: "",
@@ -691,100 +689,87 @@
     getFilePath = (fileId) => {
       return [...this.getFileContainerPath(), fileId];
     };
-    getFileVersionPath = (fileId, fileVersionId) => {
+    getFileContentPath = (fileId, fileContentId) => {
       const filePath = this.getFilePath(fileId);
-      return [...filePath, fileVersionId];
+      return [...filePath, fileContentId];
     };
     // handler
-    handleStringifiedFileVersion = (stringifiedFileVersion) => {
-      const fileVersion = parseValidObject(
-        stringifiedFileVersion,
-        FileVersionReference
+    handleStringifiedFileContent = (stringifiedFileContent) => {
+      const fileContent = parseValidObject(
+        stringifiedFileContent,
+        FileContentReference
       );
-      if (fileVersion == null) return;
-      this.handleFileVersion(fileVersion);
+      if (fileContent == null) return;
+      this.handleFileContent(fileContent);
     };
-    handleFileVersion = (fileVersion) => {
-      const didStore = this.storeFileVersion(fileVersion);
+    handleFileContent = (fileContent) => {
+      const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
-      this.taskModel.handleFileVersion(fileVersion);
+      this.taskModel.handleFileContent(fileContent);
     };
     // methods
-    addFileVersion = (fileVersion) => {
-      this.handleFileVersion(fileVersion);
-      this.chatModel.sendMessage("", fileVersion);
+    addFileContent = (fileContent) => {
+      this.handleFileContent(fileContent);
+      this.chatModel.sendMessage("", fileContent);
     };
     // storage
-    storeFileVersion = (fileVersion) => {
-      const fileVersionPath = this.getFileVersionPath(
-        fileVersion.fileId,
-        fileVersion.fileVersionId
+    storeFileContent = (fileContent) => {
+      const fileContentPath = this.getFileContentPath(
+        fileContent.fileId,
+        fileContent.fileContentId
       );
-      const existingFileVersion = this.storageModel.read(fileVersionPath);
-      if (existingFileVersion != null) return false;
-      const stringifiedContent = stringify(fileVersion);
-      this.storageModel.write(fileVersionPath, stringifiedContent);
+      const existingFileContent = this.storageModel.read(fileContentPath);
+      if (existingFileContent != null) return false;
+      const stringifiedContent = stringify(fileContent);
+      this.storageModel.write(fileContentPath, stringifiedContent);
       return true;
     };
     listFileIds = () => {
       return this.storageModel.list(this.getBasePath());
     };
-    listFileVersionIds = (fileId) => {
+    listFileContentIds = (fileId) => {
       const filePath = this.getFilePath(fileId);
       return this.storageModel.list(filePath);
     };
-    selectLatestFileVersionId = (fileVersionIds) => {
-      return fileVersionIds[fileVersionIds.length - 1];
+    selectLatestFileContentId = (fileContentIds) => {
+      return fileContentIds[fileContentIds.length - 1];
     };
-    getFileVersion = (fileId, fileVersionName, reference) => {
-      const filePath = this.getFileVersionPath(fileId, fileVersionName);
-      const fileVersionOrNull = this.storageModel.readStringifiable(
+    getFileContent = (fileId, fileContentName, reference) => {
+      const filePath = this.getFileContentPath(fileId, fileContentName);
+      const fileContentOrNull = this.storageModel.readStringifiable(
         filePath,
         reference
       );
-      return fileVersionOrNull;
+      return fileContentOrNull;
     };
-    getLatestFileVersion = (fileId, reference) => {
-      const fileVersionsIds = this.listFileVersionIds(fileId);
-      const latestFileVersionId = this.selectLatestFileVersionId(fileVersionsIds);
-      if (latestFileVersionId == void 0) return null;
-      const fileVersion = this.getFileVersion(
+    getLatestFileContent = (fileId, reference) => {
+      const fileContentsIds = this.listFileContentIds(fileId);
+      const latestFileContentId = this.selectLatestFileContentId(fileContentsIds);
+      if (latestFileContentId == void 0) return null;
+      const fileContent = this.getFileContent(
         fileId,
-        latestFileVersionId,
+        latestFileContentId,
         reference
       );
-      return fileVersion;
+      return fileContent;
     };
     // init
     constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
       this.taskModel = new TaskModel(this.storageModel, chatModel, this);
-      this.taskModel.createBoard("Hello");
-      const boards = this.taskModel.listBoardIds();
-      console.log(boards);
-      const boardId = boards[0];
-      const firstBoardInfo = this.taskModel.getBoardInfo(boardId);
-      console.log(firstBoardInfo);
-      const newInfo = TaskModel.createBoardInfoFileVersion(
-        boardId,
-        "renamed",
-        "coral" /* Coral */
-      );
-      this.taskModel.createOrUpdateBoard(newInfo);
-      setTimeout(() => this.taskModel.deleteBoard(boardId), 7e3);
     }
     // utility
-    static generateFileVersionId = (creationDate) => {
+    static generateFileContentId = (creationDate) => {
       return creationDate + v4_default();
     };
-    static createFileVersion = (fileId, type) => {
+    static createFileContent = (fileId, type) => {
       const creationDate = createTimestamp();
-      const fileVersionId = _FileModel.generateFileVersionId(creationDate);
+      const fileContentId = _FileModel.generateFileContentId(creationDate);
       return {
         dataVersion: DATA_VERSION,
         fileId,
-        fileVersionId,
+        fileContentId,
         creationDate,
         type
       };
@@ -795,10 +780,10 @@
     model: "model",
     taskModel: "tasks"
   };
-  var FileVersionReference = {
+  var FileContentReference = {
     dataVersion: DATA_VERSION,
     fileId: "",
-    fileVersionId: "",
+    fileContentId: "",
     creationDate: "",
     type: ""
   };
@@ -931,7 +916,7 @@
       this.storeColor();
     };
     // messaging
-    sendMessage = async (body, fileVersion) => {
+    sendMessage = async (body, fileContent) => {
       const senderName = this.settingsModel.username;
       if (senderName == "") return false;
       const allChannels = [this.info.primaryChannel];
@@ -944,7 +929,7 @@
         senderName,
         this.info.encryptionKey,
         body,
-        fileVersion
+        fileContent
       );
       this.addMessage(chatMessage);
       this.connectionModel.sendMessageOrStore(chatMessage);
@@ -995,7 +980,7 @@
         this.storageModel.writeStringifiable(messagePath, chatMessage);
         this.chatMessageHandler(chatMessage);
       }
-      this.fileModel.handleStringifiedFileVersion(chatMessage.stringifiedFile);
+      this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
     };
     delete = () => {
       this.chatListModel.untrackChat(this);
@@ -1062,7 +1047,7 @@
         hasUnreadMessages: false
       };
     };
-    static createChatMessage = async (channel, sender, encryptionKey, body, fileVersion) => {
+    static createChatMessage = async (channel, sender, encryptionKey, body, fileContent) => {
       const chatMessage = {
         dataVersion: DATA_VERSION,
         id: v4_default(),
@@ -1073,8 +1058,8 @@
         status: "outbox" /* Outbox */,
         stringifiedFile: ""
       };
-      if (fileVersion != void 0) {
-        const stringifiedFile = stringify(fileVersion);
+      if (fileContent != void 0) {
+        const stringifiedFile = stringify(fileContent);
         chatMessage.stringifiedFile = stringifiedFile;
       }
       if (encryptionKey != "") {
