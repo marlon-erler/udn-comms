@@ -2,18 +2,14 @@
 
 import {
   DATA_VERSION,
-  ValidObject,
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
-import FileModel, {
-  File,
-  FileContent,
-  FileContentReference,
-} from "./fileModel";
+import FileModel, { FileVersion } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../ViewModel/colors";
 import StorageModel from "../Global/storageModel";
+import { v4 } from "uuid";
 
 export default class TaskModel {
   storageModel: StorageModel;
@@ -22,113 +18,104 @@ export default class TaskModel {
 
   // paths
   getBasePath = (): string[] => {
-    return this.fileModel.getModelDirectoryPath("taskModel");
+    return this.fileModel.getModelContainerPath("taskModel");
   };
 
-  getBoardDirPath = (): string[] => {
+  getBoardFilePath = (boardId: string): string[] => {
+    return [...this.fileModel.getFilePath(boardId), boardId];
+  };
+
+  getBoardContainerPath = (): string[] => {
     return [...this.getBasePath(), subDirectories.boards];
   };
 
-  getBoardPath = (boardId: string): string[] => {
-    return [...this.getBoardDirPath(), boardId];
+  getBoardDirectoryPath = (boardId: string): string[] => {
+    return [...this.getBoardContainerPath(), boardId];
   };
 
-  getBoardInfoPath = (boardId: string): string[] => {
-    return [...this.getBoardPath(boardId), subDirectories.boardInfo];
-  };
-
-  getTaskDirPath = (boardId: string): string[] => {
-    return [...this.getBoardPath(boardId), subDirectories.boardTasks];
+  getTaskContainerPath = (boardId: string): string[] => {
+    return [...this.getBoardDirectoryPath(boardId), subDirectories.boardTasks];
   };
 
   getTaskPath = (boardId: string, fileId: string): string[] => {
-    return [...this.getTaskDirPath(boardId), fileId];
+    return [...this.getTaskContainerPath(boardId), fileId];
   };
 
   getTaskContentPath = (
     boardId: string,
     fileId: string,
-    contentName: string
+    versionId: string
   ): string[] => {
-    return [...this.getTaskPath(boardId, fileId), contentName];
+    return [...this.getTaskPath(boardId, fileId), versionId];
   };
 
   // handler
-  handleFileContent = (file: File, fileContent: FileContent<string>): void => {
+  handleFileVersion = (fileVersion: FileVersion<string>): void => {
     if (
-      checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==
+      checkMatchesObjectStructure(fileVersion, BoardInfoFileVersionReference) ==
       true
     ) {
-      // todo
+      this.handleBoard(fileVersion as BoardInfoVersion);
     } else if (
-      checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true
+      checkMatchesObjectStructure(fileVersion, TaskFileVersionReference) == true
     ) {
-      // todo
+      this.handleTask(fileVersion as TaskFileVersion);
     }
   };
 
+  handleBoard = (boardInfoFileVersion: BoardInfoVersion) => {
+    console.log("board", boardInfoFileVersion);
+  };
+
+  handleTask = (taskFileVersion: TaskFileVersion) => {};
+
   // boards
   createBoard = (name: string): void => {
-    const file: File = FileModel.createFile();
-    const boardInfoFileContent: BoardInfoFileContent =
-      TaskModel.createBoardInfoFileContent(name, Color.Standard);
-    this.fileModel.addOrUpdateFile(file, boardInfoFileContent);
+    const boardInfoFileVersion: BoardInfoVersion =
+      TaskModel.createBoardInfoFileVersion(v4(), name, Color.Standard);
+    this.createOrUpdateBoard(boardInfoFileVersion);
   };
 
   listBoardIds = (): string[] => {
-    const boardDirPath: string[] = this.getBoardDirPath();
-    const boardNames: string[] = this.storageModel.list(boardDirPath);
+    const boardContainerPath: string[] = this.getBoardContainerPath();
+    const boardNames: string[] = this.storageModel.list(boardContainerPath);
     return boardNames;
   };
 
-  getBoardInfo = (boardId: string): BoardInfoFileContent | null => {
-    const boardInfoPath: string[] = this.getBoardInfoPath(boardId);
-    const boardInfoFileContentOrNull: BoardInfoFileContent | null =
-      this.storageModel.readStringifiable(
-        boardInfoPath,
-        BoardInfoFileContentReference
+  getBoardInfo = (fileId: string): BoardInfoVersion | null => {
+    const boardInfoFileVersionOrNull: BoardInfoVersion | null =
+      this.fileModel.getLatestFileVersion(
+        fileId,
+        BoardInfoFileVersionReference
       );
-    return boardInfoFileContentOrNull;
+    return boardInfoFileVersionOrNull;
+  };
+
+  createOrUpdateBoard = (boardInfoFileVersion: BoardInfoVersion): void => {
+    // store info
+    this.fileModel.addFileVersion(boardInfoFileVersion);
+
+    // add to list
+    const boardDirectoryPath: string[] = this.getBoardDirectoryPath(
+      boardInfoFileVersion.fileId
+    );
+    this.storageModel.write(boardDirectoryPath, "");
   };
 
   //tasks
   createTask = (boardId: string, name: string): void => {
-    const file: File = FileModel.createFile();
-    const taskFileContent: TaskFileContent = TaskModel.createTaskFileContent(
+    const taskFileVersion: TaskFileVersion = TaskModel.createTaskFileVersion(
+      v4(),
       boardId,
       name
     );
-    this.fileModel.addOrUpdateFile(file, taskFileContent);
+    this.fileModel.addFileVersion(taskFileVersion);
   };
 
   listTaskIds = (boardName: string): string[] => {
-    const getTaskDirPath: string[] = this.getTaskDirPath(boardName);
+    const getTaskDirPath: string[] = this.getTaskContainerPath(boardName);
     const fileIds: string[] = this.storageModel.list(getTaskDirPath);
     return fileIds;
-  };
-
-  getTaskVersionNames = (boardName: string, fileId: string): string[] => {
-    const fileDirectoryPath: string[] = this.getTaskPath(boardName, fileId);
-    const versionNames: string[] = this.storageModel.list(fileDirectoryPath);
-    return versionNames;
-  };
-
-  getTaskFileContent = (
-    boardName: string,
-    fileId: string,
-    versionName: string
-  ): TaskFileContent | null => {
-    const fileContentPath: string[] = this.getTaskContentPath(
-      boardName,
-      fileId,
-      versionName
-    );
-    const taskFileContentOrNull: TaskFileContent | null =
-      this.storageModel.readStringifiable(
-        fileContentPath,
-        TaskFileContentReference
-      );
-    return taskFileContentOrNull;
   };
 
   moveTask = (
@@ -153,28 +140,34 @@ export default class TaskModel {
   }
 
   // utility
-  static createBoardInfoFileContent = (
+  static createBoardInfoFileVersion = (
+    fileId: string,
     name: string,
     color: Color
-  ): BoardInfoFileContent => {
-    const fileContent: FileContent<"board"> =
-      FileModel.createFileContent("board");
+  ): BoardInfoVersion => {
+    const fileVersion: FileVersion<"board-info"> = FileModel.createFileVersion(
+      fileId,
+      "board-info"
+    );
     return {
-      ...fileContent,
+      ...fileVersion,
 
       name,
       color,
     };
   };
 
-  static createTaskFileContent = (
+  static createTaskFileVersion = (
+    fileId: string,
     name: string,
     boardId: string
-  ): TaskFileContent => {
-    const fileContent: FileContent<"task"> =
-      FileModel.createFileContent("task");
+  ): TaskFileVersion => {
+    const fileVersion: FileVersion<"task"> = FileModel.createFileVersion(
+      fileId,
+      "task"
+    );
     return {
-      ...fileContent,
+      ...fileVersion,
 
       name,
       boardId,
@@ -184,17 +177,16 @@ export default class TaskModel {
 
 export const subDirectories = {
   boards: "boards",
-  boardInfo: "info",
   boardTasks: "tasks",
 };
 
 // types
-export interface BoardInfoFileContent extends FileContent<"board"> {
+export interface BoardInfoVersion extends FileVersion<"board-info"> {
   name: string;
   color: Color;
 }
 
-export interface TaskFileContent extends FileContent<"task"> {
+export interface TaskFileVersion extends FileVersion<"task"> {
   name: string;
   boardId: string;
 
@@ -209,21 +201,24 @@ export interface TaskFileContent extends FileContent<"task"> {
 }
 
 // reference
-export const BoardInfoFileContentReference: BoardInfoFileContent = {
+export const BoardInfoFileVersionReference: BoardInfoVersion = {
   dataVersion: DATA_VERSION,
 
-  id: "",
+  fileId: "string",
+  fileVersionId: "",
   creationDate: "",
-  type: "board",
+
+  type: "board-info",
 
   name: "",
   color: "" as Color,
 };
 
-export const TaskFileContentReference: TaskFileContent = {
+export const TaskFileVersionReference: TaskFileVersion = {
   dataVersion: DATA_VERSION,
 
-  id: "",
+  fileId: "string",
+  fileVersionId: "",
   creationDate: "",
   type: "task",
 
