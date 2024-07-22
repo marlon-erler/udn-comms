@@ -26,6 +26,12 @@ export default class FileModel {
     );
   };
 
+  getModelDirectoryPath = (
+    modelName: keyof typeof modelDirectories
+  ): string[] => {
+    return [...this.getBasePath(), modelName];
+  };
+
   getFilePath = (fileId: string): string[] => {
     return [...this.getBasePath(), fileId];
   };
@@ -139,6 +145,11 @@ export default class FileModel {
     };
   };
 }
+
+// paths
+export const modelDirectories = {
+  taskModel: "tasks",
+};
 
 // types
 export interface File extends ValidObject {

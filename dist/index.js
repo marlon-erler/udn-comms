@@ -496,8 +496,7 @@
         board,
         name
       );
-      file.contentVersions.add(taskFileContent);
-      this.fileModel.addOrUpdateFile(file);
+      this.saveTask(file, taskFileContent);
     };
     saveTask = (file, newTaskFileContent) => {
       file.contentVersions.add(newTaskFileContent);
@@ -550,18 +549,19 @@
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile, FileReference);
       if (file == null) return;
-      this.handleFile(file);
+      this.handleFileAndClearContents(file);
     };
-    handleFile = (file) => {
+    handleFileAndClearContents = (file) => {
       for (const fileContent of file.contentVersions) {
         this.storeFileContent(file, fileContent);
         this.taskModel.handleTaskFileContent(file, fileContent);
+        file.contentVersions.delete(fileContent);
       }
     };
     // methods
     addOrUpdateFile = (file) => {
-      this.handleFile(file);
       this.chatModel.sendMessage("", file);
+      this.handleFileAndClearContents(file);
     };
     // storage
     storeFileContent = (file, fileContent) => {
@@ -578,10 +578,6 @@
     listFileIds = () => {
       return this.storageModel.list(this.getBasePath());
     };
-    listFileContents = (file) => {
-      const filePath = this.getFilePath(file.id);
-      return this.storageModel.list(filePath);
-    };
     getFile = (fileId) => {
       const filePath = this.getFilePath(fileId);
       const fileOrNull = this.storageModel.readStringifiable(
@@ -589,6 +585,10 @@
         FileReference
       );
       return fileOrNull;
+    };
+    listFileContents = (file) => {
+      const filePath = this.getFilePath(file.id);
+      return this.storageModel.list(filePath);
     };
     getLatestFileContentName = (fileContentNames) => {
       return fileContentNames[fileContentNames.length - 1];
@@ -2566,11 +2566,5 @@
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
     StorageModal(storageViewModel)
-  );
-  console.log(
-    checkMatchesObjectStructure(
-      { a: 1, c: /* @__PURE__ */ new Set() },
-      { a: 2, c: /* @__PURE__ */ new Set(["bla"]) }
-    )
   );
 })();

@@ -13,6 +13,31 @@ export default class TaskModel {
   chatModel: ChatModel;
   fileModel: FileModel;
 
+  // paths
+  getBasePath = (): string[] => {
+    return this.fileModel.getModelDirectoryPath("taskModel");
+  };
+
+  getLocationDirPath = (): string[] => {
+    return [...this.getBasePath(), subDirectories.locations];
+  };
+
+  getTaskLocationPath = (fileId: string): string[] => {
+    return [...this.getLocationDirPath(), fileId];
+  };
+
+  getBoardDirPath = (): string[] => {
+    return [...this.getBasePath(), subDirectories.boards];
+  };
+
+  getBoardPath = (boardName: string): string[] => {
+    return [...this.getBoardDirPath(), boardName];
+  };
+
+  getTaskPath = (boardName: string, fileId: string): string[] => {
+    return [...this.getBoardPath(boardName), fileId];
+  };
+
   // handler
   handleTaskFileContent = (
     file: File,
@@ -42,6 +67,12 @@ export default class TaskModel {
     this.fileModel.addOrUpdateFile(file);
   };
 
+  // locations
+  updateTaskLocation = (
+    file: File,
+    taskFileContent: TaskFileContent
+  ): void => {};
+
   // init
   constructor(chatModel: ChatModel, fileModel: FileModel) {
     this.chatModel = chatModel;
@@ -63,6 +94,11 @@ export default class TaskModel {
     };
   };
 }
+
+export const subDirectories = {
+  locations: "locations",
+  boards: "boards",
+};
 
 // types
 export interface TaskFileContent extends FileContent<"task"> {
