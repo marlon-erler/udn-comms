@@ -55,15 +55,6 @@ export default class MessagePageViewModel {
 
   // load
   loadData = (): void => {
-    this.cannotSendMessage = React.createProxyState(
-      [this.chatViewModel.settingsViewModel.username, this.composingMessage],
-      () =>
-        this.chatViewModel.settingsViewModel.username.value == "" ||
-        this.composingMessage.value == ""
-    );
-  };
-
-  loadMessages = (): void => {
     for (const chatMessage of this.chatViewModel.chatModel.messages) {
       this.addChatMessage(chatMessage);
     }
@@ -72,6 +63,12 @@ export default class MessagePageViewModel {
   // init
   constructor(chatViewModel: ChatViewModel) {
     this.chatViewModel = chatViewModel;
-    this.loadData();
+    
+    this.cannotSendMessage = React.createProxyState(
+      [this.chatViewModel.settingsViewModel.username, this.composingMessage],
+      () =>
+        this.chatViewModel.settingsViewModel.username.value == "" ||
+        this.composingMessage.value == ""
+    );
   }
 }

@@ -89,13 +89,6 @@ export default class SettingsPageViewModel {
       this.chatViewModel.chatModel.info.primaryChannel;
 
     this.color.value = this.chatViewModel.chatModel.color;
-
-    this.cannotSetEncryptionKey = React.createProxyState(
-      [this.encryptionKeyInput],
-      () =>
-        this.encryptionKeyInput.value ==
-        this.chatViewModel.chatModel.info.encryptionKey
-    );
   };
 
   loadData = (): void => {
@@ -120,5 +113,12 @@ export default class SettingsPageViewModel {
   constructor(chatViewModel: ChatViewModel) {
     this.chatViewModel = chatViewModel;
     this.loadListRelevantData();
+
+    this.cannotSetEncryptionKey = React.createProxyState(
+      [this.encryptionKeyInput],
+      () =>
+        this.encryptionKeyInput.value ==
+        this.chatViewModel.chatModel.info.encryptionKey
+    );
   }
 }

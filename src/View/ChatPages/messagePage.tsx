@@ -7,7 +7,7 @@ import MessagePageViewModel from "../../ViewModel/Pages/messagePageViewModel";
 import { translations } from "../translations";
 
 export function MessagePage(messagePageViewModel: MessagePageViewModel) {
-  messagePageViewModel.loadMessages();
+  messagePageViewModel.loadData();
 
   const messageContainer = (
     <div
