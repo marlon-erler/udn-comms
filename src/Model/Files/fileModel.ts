@@ -5,11 +5,14 @@ import StorageModel, { storageKeys } from "../Global/storageModel";
 import { parseValidObject, stringify } from "../Utility/utility";
 
 import ChatModel from "../Chat/chatModel";
+import TaskModel from "./taskModel";
 import { v4 } from "uuid";
 
 export default class FileModel {
   chatModel: ChatModel;
   storageModel: StorageModel;
+
+  taskModel: TaskModel;
 
   // handler
   handleStringifiedFile = (stringifiedFile: string): void => {
@@ -83,6 +86,8 @@ export default class FileModel {
   constructor(chatModel: ChatModel, storageModel: StorageModel) {
     this.chatModel = chatModel;
     this.storageModel = storageModel;
+
+    this.taskModel = new TaskModel(chatModel, this);
   }
 
   // utility
