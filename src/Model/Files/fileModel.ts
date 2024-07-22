@@ -79,11 +79,6 @@ export default class FileModel {
     return this.storageModel.list(this.getBasePath());
   };
 
-  listFileContents = (file: File): string[] => {
-    const filePath: string[] = this.getFilePath(file.id);
-    return this.storageModel.list(filePath);
-  };
-
   getFile = (fileId: string): File | null => {
     const filePath = this.getFilePath(fileId);
     const fileOrNull: File | null = this.storageModel.readStringifiable(
@@ -91,6 +86,11 @@ export default class FileModel {
       FileReference
     );
     return fileOrNull;
+  };
+
+  listFileContents = (file: File): string[] => {
+    const filePath: string[] = this.getFilePath(file.id);
+    return this.storageModel.list(filePath);
   };
 
   getLatestFileContentName = (fileContentNames: string[]): string | null => {
