@@ -220,6 +220,9 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #main {
   width: calc(100% - var(--ribbon-size));
+  overflow-x: scroll;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
 }
 #chat-page #main > div,
 #chat-page > div > #main > div > .pane,
@@ -230,6 +233,19 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #main > div > .pane {
   flex-direction: column;
+  scroll-snap-align: center;
+  min-width: 100%;
+}
+@media (min-width: 1024px) {
+  #chat-page > div > #main > div > .pane {
+    min-width: unset;
+  }
+  #chat-page > div > #main > div > .pane.side {
+    max-width: 18rem;
+  }
+}
+#chat-page > div > #main > div > .pane:not(:last-child) {
+  border-right: 1px solid var(--border);
 }
 #chat-page > div > #main > div > .pane > .content {
   flex-direction: column;
