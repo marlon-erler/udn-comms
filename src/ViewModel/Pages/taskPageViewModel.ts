@@ -1,8 +1,13 @@
 import * as React from "bloatless-react";
 
-import TaskModel, { BoardInfoFileContent } from "../../Model/Files/taskModel";
+import TaskModel, {
+  BoardInfoFileContent,
+  BoardInfoFileContentReference,
+} from "../../Model/Files/taskModel";
 
+import { FileContent } from "../../Model/Files/fileModel";
 import StorageModel from "../../Model/Global/storageModel";
+import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
 export default class TaskPageViewModel {
   taskModel: TaskModel;
@@ -18,6 +23,16 @@ export default class TaskPageViewModel {
     () => this.newBoardNameInput.value == ""
   );
 
+  // handlers
+  handleFileContent = (fileContent: FileContent<string>): void => {
+    if (
+      checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==
+      false
+    )
+      return;
+    this.showBoard(fileContent as BoardInfoFileContent);
+  };
+
   // methods
   createBoard = (): void => {
     if (this.cannotCreateBoard.value == true) return;
@@ -28,6 +43,11 @@ export default class TaskPageViewModel {
     this.loadData();
   };
 
+  // view
+  showBoard = (boardInfo: BoardInfoFileContent): void => {
+    this.boards.add(boardInfo);
+  };
+
   // load
   loadData = (): void => {
     this.boards.clear();
@@ -36,9 +56,9 @@ export default class TaskPageViewModel {
     for (const boardId of boardIds) {
       const boardInfo: BoardInfoFileContent | null =
         this.taskModel.getBoardInfo(boardId);
-        if (boardInfo == null) continue;
-        
-      this.boards.add(boardInfo);
+      if (boardInfo == null) continue;
+
+      this.showBoard(boardInfo);
     }
   };
 

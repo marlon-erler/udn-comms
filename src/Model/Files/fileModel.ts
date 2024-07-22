@@ -9,7 +9,6 @@ import {
 } from "../Utility/utility";
 
 import ChatModel from "../Chat/chatModel";
-import { Color } from "../../colors";
 import TaskModel from "./taskModel";
 import { v4 } from "uuid";
 
@@ -18,6 +17,9 @@ export default class FileModel {
   storageModel: StorageModel;
 
   taskModel: TaskModel;
+
+  fileContentHandler: (fileContent: FileContent<string>) => void = () => {};
+
 
   // paths
   getBasePath = (): string[] => {
@@ -62,6 +64,7 @@ export default class FileModel {
     if (didStore == false) return;
 
     this.taskModel.handleFileContent(fileContent);
+    this.fileContentHandler(fileContent);
   };
 
   // methods
@@ -132,6 +135,11 @@ export default class FileModel {
     return fileContent;
   };
 
+  // other
+  setFileContentHandler = (handler: (fileContent: FileContent<string>) => void): void => {
+    this.fileContentHandler = handler;
+  };
+  
   // init
   constructor(chatModel: ChatModel, storageModel: StorageModel) {
     this.chatModel = chatModel;

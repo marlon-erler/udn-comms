@@ -696,6 +696,8 @@
     chatModel;
     storageModel;
     taskModel;
+    fileContentHandler = () => {
+    };
     // paths
     getBasePath = () => {
       return StorageModel.getPath(
@@ -729,6 +731,7 @@
       const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
       this.taskModel.handleFileContent(fileContent);
+      this.fileContentHandler(fileContent);
     };
     // methods
     addFileContent = (fileContent) => {
@@ -775,6 +778,10 @@
         reference
       );
       return fileContent;
+    };
+    // other
+    setFileContentHandler = (handler) => {
+      this.fileContentHandler = handler;
     };
     // init
     constructor(chatModel, storageModel2) {
@@ -996,9 +1003,6 @@
       chatMessage.body = decryptedBody;
       chatMessage.stringifiedFile = decryptedFile;
     };
-    setMessageHandler = (handler) => {
-      this.chatMessageHandler = handler;
-    };
     subscribe = () => {
       this.connectionModel.addChannel(this.info.primaryChannel);
     };
@@ -1013,6 +1017,10 @@
       this.chatListModel.untrackChat(this);
       const dirPath = this.getBasePath();
       this.storageModel.removeRecursively(dirPath);
+    };
+    // other
+    setMessageHandler = (handler) => {
+      this.chatMessageHandler = handler;
     };
     // load
     loadInfo = () => {
@@ -1246,20 +1254,6 @@
     // guards
     cannotSendMessage;
     // methods
-    addChatMessage = (chatMessage) => {
-      const chatMessageModel = new ChatMessageViewModel(
-        this,
-        chatMessage,
-        chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
-      );
-      const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
-      if (existingChatMessageViewModel != void 0) {
-        existingChatMessageViewModel.body.value = chatMessage.body;
-        existingChatMessageViewModel.status.value = chatMessage.status;
-      } else {
-        this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
-      }
-    };
     sendMessage = () => {
       if (this.cannotSendMessage.value == true) return;
       this.sendMessageFromBody(this.composingMessage.value);
@@ -1274,10 +1268,25 @@
       this.chatViewModel.chatModel.addMessage(chatMessage);
       messageViewModel.loadData();
     };
+    // view
+    showChatMessage = (chatMessage) => {
+      const chatMessageModel = new ChatMessageViewModel(
+        this,
+        chatMessage,
+        chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
+      );
+      const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
+      if (existingChatMessageViewModel != void 0) {
+        existingChatMessageViewModel.body.value = chatMessage.body;
+        existingChatMessageViewModel.status.value = chatMessage.status;
+      } else {
+        this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
+      }
+    };
     // load
     loadData = () => {
       for (const chatMessage of this.chatViewModel.chatModel.messages) {
-        this.addChatMessage(chatMessage);
+        this.showChatMessage(chatMessage);
       }
     };
     // init
@@ -1391,12 +1400,22 @@
       [this.newBoardNameInput],
       () => this.newBoardNameInput.value == ""
     );
+    // handlers
+    handleFileContent = (fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == false)
+        return;
+      this.showBoard(fileContent);
+    };
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
       this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.loadData();
+    };
+    // view
+    showBoard = (boardInfo) => {
+      this.boards.add(boardInfo);
     };
     // load
     loadData = () => {
@@ -1405,7 +1424,7 @@
       for (const boardId of boardIds) {
         const boardInfo = this.taskModel.getBoardInfo(boardId);
         if (boardInfo == null) continue;
-        this.boards.add(boardInfo);
+        this.showBoard(boardInfo);
       }
     };
     // init
@@ -1466,8 +1485,13 @@
       this.messagePageViewModel = new MessagePageViewModel(this);
       this.settingsPageViewModel = new SettingsPageViewModel(this);
       chatModel.setMessageHandler((chatMessage) => {
-        this.messagePageViewModel.addChatMessage(chatMessage);
+        this.messagePageViewModel.showChatMessage(chatMessage);
       });
+      chatModel.fileModel.setFileContentHandler(
+        (fileContent) => {
+          this.taskPageViewModel.handleFileContent(fileContent);
+        }
+      );
       this.loadPageSelection();
       this.updateIndex();
     }

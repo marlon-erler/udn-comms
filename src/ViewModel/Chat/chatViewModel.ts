@@ -4,6 +4,7 @@ import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
 import StorageModel, { filePaths } from "../../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
+import { FileContent } from "../../Model/Files/fileModel";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 import SettingsPageViewModel from "../Pages/settingsPageViewModel";
 import SettingsViewModel from "../Global/settingsViewModel";
@@ -78,9 +79,14 @@ export default class ChatViewModel {
     this.settingsPageViewModel = new SettingsPageViewModel(this);
 
     // handlers
-    chatModel.setMessageHandler((chatMessage) => {
-      this.messagePageViewModel.addChatMessage(chatMessage);
+    chatModel.setMessageHandler((chatMessage: ChatMessage) => {
+      this.messagePageViewModel.showChatMessage(chatMessage);
     });
+    chatModel.fileModel.setFileContentHandler(
+      (fileContent: FileContent<string>) => {
+        this.taskPageViewModel.handleFileContent(fileContent);
+      }
+    );
 
     // load
     this.loadPageSelection();

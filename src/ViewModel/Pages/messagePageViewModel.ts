@@ -16,23 +16,6 @@ export default class MessagePageViewModel {
   cannotSendMessage: React.State<boolean>;
 
   // methods
-  addChatMessage = (chatMessage: ChatMessage): void => {
-    const chatMessageModel = new ChatMessageViewModel(
-      this,
-      chatMessage,
-      chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
-    );
-
-    const existingChatMessageViewModel: ChatMessageViewModel | undefined =
-      this.chatMessageViewModels.value.get(chatMessage.id);
-    if (existingChatMessageViewModel != undefined) {
-      existingChatMessageViewModel.body.value = chatMessage.body;
-      existingChatMessageViewModel.status.value = chatMessage.status;
-    } else {
-      this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
-    }
-  };
-
   sendMessage = (): void => {
     if (this.cannotSendMessage.value == true) return;
 
@@ -53,10 +36,28 @@ export default class MessagePageViewModel {
     messageViewModel.loadData();
   };
 
+  // view
+  showChatMessage = (chatMessage: ChatMessage): void => {
+    const chatMessageModel = new ChatMessageViewModel(
+      this,
+      chatMessage,
+      chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
+    );
+
+    const existingChatMessageViewModel: ChatMessageViewModel | undefined =
+      this.chatMessageViewModels.value.get(chatMessage.id);
+    if (existingChatMessageViewModel != undefined) {
+      existingChatMessageViewModel.body.value = chatMessage.body;
+      existingChatMessageViewModel.status.value = chatMessage.status;
+    } else {
+      this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
+    }
+  };
+
   // load
   loadData = (): void => {
     for (const chatMessage of this.chatViewModel.chatModel.messages) {
-      this.addChatMessage(chatMessage);
+      this.showChatMessage(chatMessage);
     }
   };
 

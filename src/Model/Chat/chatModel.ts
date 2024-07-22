@@ -159,10 +159,6 @@ export default class ChatModel {
     chatMessage.stringifiedFile = decryptedFile;
   };
 
-  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
-    this.chatMessageHandler = handler;
-  };
-
   subscribe = (): void => {
     this.connectionModel.addChannel(this.info.primaryChannel);
   };
@@ -183,6 +179,11 @@ export default class ChatModel {
     // delete
     const dirPath: string[] = this.getBasePath();
     this.storageModel.removeRecursively(dirPath);
+  };
+
+  // other
+  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
+    this.chatMessageHandler = handler;
   };
 
   // load
