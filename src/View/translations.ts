@@ -72,7 +72,7 @@ const englishTranslations = {
     path: "Path",
     content: "Content",
 
-    deleteItem: "Delete item"
+    deleteItem: "Delete item",
   },
 
   chatPage: {
@@ -119,6 +119,11 @@ const englishTranslations = {
       resendMessageButton: "Resend message",
       decryptMessageButton: "Decrypt message",
       deleteMessageButton: "Delete message",
+    },
+
+    task: {
+      newBoardNamePlaceholder: "Create a board",
+      createBoardButtonAudioLabel: "create board",
     },
   },
 };

@@ -1577,6 +1577,10 @@
         resendMessageButton: "Resend message",
         decryptMessageButton: "Decrypt message",
         deleteMessageButton: "Delete message"
+      },
+      task: {
+        newBoardNamePlaceholder: "Create a board",
+        createBoardButtonAudioLabel: "create board"
       }
     }
   };
@@ -1843,7 +1847,19 @@
 
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(chatViewModel) {
-    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" })), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" })));
+    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.chatPage.task.newBoardNamePlaceholder
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.task.createBoardButtonAudioLabel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement("div", { class: "flex-row gap" }))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" })));
   }
 
   // src/View/chatPage.tsx
@@ -2442,7 +2458,7 @@
       (weekdayName, i) => Option(
         weekdayName,
         i.toString(),
-        i == settingsViewModel2.firstDayOfWeekInput.value
+        i.toString() == settingsViewModel2.firstDayOfWeekInput.value
       )
     )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
