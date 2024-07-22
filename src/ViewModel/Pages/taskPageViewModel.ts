@@ -5,6 +5,7 @@ import TaskModel, {
   BoardInfoFileContentReference,
 } from "../../Model/Files/taskModel";
 
+import BoardViewModel from "./boardViewModel";
 import { FileContent } from "../../Model/Files/fileModel";
 import StorageModel from "../../Model/Global/storageModel";
 import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
@@ -15,7 +16,7 @@ export default class TaskPageViewModel {
   // state
   newBoardNameInput: React.State<string> = new React.State("");
 
-  boards: React.ListState<BoardInfoFileContent> = new React.ListState();
+  boardViewModels: React.ListState<BoardViewModel> = new React.ListState();
 
   // guards
   cannotCreateBoard: React.State<boolean> = React.createProxyState(
@@ -41,17 +42,18 @@ export default class TaskPageViewModel {
       this.taskModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
 
-    this.boards.add(boardInfoFileContent);
+    this.showBoard(boardInfoFileContent);
   };
 
   // view
   showBoard = (boardInfo: BoardInfoFileContent): void => {
-    this.boards.add(boardInfo);
+    const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);
+    this.boardViewModels.add(boardViewModel);
   };
 
   // load
   loadData = (): void => {
-    this.boards.clear();
+    this.boardViewModels.clear();
 
     const boardIds: string[] = this.taskModel.listBoardIds();
     for (const boardId of boardIds) {

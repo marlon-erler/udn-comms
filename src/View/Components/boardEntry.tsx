@@ -1,15 +1,15 @@
 import * as React from "bloatless-react";
 
-import { BoardInfoFileContent } from "../../Model/Files/taskModel";
+import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 
-export function BoardEntry(boardInfo: BoardInfoFileContent) {
+export function BoardEntry(boardViewModel: BoardViewModel) {
   const view = (
     <button
-      color={boardInfo.color}
+      set:color={boardViewModel.color}
       class="tile colored-tile"
     >
-      <span class="shadow">{boardInfo.name}</span>
-      <b>{boardInfo.name}</b>
+      <span class="shadow" subscribe:innerText={boardViewModel.name}></span>
+      <b subscribe:innerText={boardViewModel.name}></b>
     </button>
   );
 
@@ -17,7 +17,7 @@ export function BoardEntry(boardInfo: BoardInfoFileContent) {
 }
 
 export const BoardInfoToEntry: React.StateItemConverter<
-  BoardInfoFileContent
-> = (boardInfo: BoardInfoFileContent) => {
-  return BoardEntry(boardInfo);
+  BoardViewModel
+> = (boardViewModel: BoardViewModel) => {
+  return BoardEntry(boardViewModel);
 };

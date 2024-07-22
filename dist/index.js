@@ -1390,12 +1390,34 @@
     }
   };
 
+  // src/ViewModel/Pages/boardViewModel.ts
+  var BoardViewModel = class {
+    taskPageViewModel;
+    // data
+    boardInfo;
+    name = new State("");
+    color = new State("standard" /* Standard */);
+    // load
+    loadListRelevantData = () => {
+      this.name.value = this.boardInfo.name;
+      this.color.value = this.boardInfo.color;
+    };
+    loadData = () => {
+    };
+    // init
+    constructor(taskPageViewModel, boardInfo) {
+      this.taskPageViewModel = taskPageViewModel;
+      this.boardInfo = boardInfo;
+      this.loadListRelevantData();
+    }
+  };
+
   // src/ViewModel/Pages/taskPageViewModel.ts
   var TaskPageViewModel = class {
     taskModel;
     // state
     newBoardNameInput = new State("");
-    boards = new ListState();
+    boardViewModels = new ListState();
     // guards
     cannotCreateBoard = createProxyState(
       [this.newBoardNameInput],
@@ -1412,15 +1434,16 @@
       if (this.cannotCreateBoard.value == true) return;
       const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
-      this.boards.add(boardInfoFileContent);
+      this.showBoard(boardInfoFileContent);
     };
     // view
     showBoard = (boardInfo) => {
-      this.boards.add(boardInfo);
+      const boardViewModel = new BoardViewModel(this, boardInfo);
+      this.boardViewModels.add(boardViewModel);
     };
     // load
     loadData = () => {
-      this.boards.clear();
+      this.boardViewModels.clear();
       const boardIds = this.taskModel.listBoardIds();
       for (const boardId of boardIds) {
         const boardInfo = this.taskModel.getBoardInfo(boardId);
@@ -1951,20 +1974,20 @@
   }
 
   // src/View/Components/boardEntry.tsx
-  function BoardEntry(boardInfo) {
+  function BoardEntry(boardViewModel) {
     const view = /* @__PURE__ */ createElement(
       "button",
       {
-        color: boardInfo.color,
+        "set:color": boardViewModel.color,
         class: "tile colored-tile"
       },
-      /* @__PURE__ */ createElement("span", { class: "shadow" }, boardInfo.name),
-      /* @__PURE__ */ createElement("b", null, boardInfo.name)
+      /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
+      /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
     );
     return view;
   }
-  var BoardInfoToEntry = (boardInfo) => {
-    return BoardEntry(boardInfo);
+  var BoardInfoToEntry = (boardViewModel) => {
+    return BoardEntry(boardViewModel);
   };
 
   // src/View/ChatPages/taskPage.tsx
@@ -1991,7 +2014,7 @@
       {
         class: "grid gap",
         style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
-        "children:append": [taskPageViewModel.boards, BoardInfoToEntry]
+        "children:append": [taskPageViewModel.boardViewModels, BoardInfoToEntry]
       }
     ))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
   }

@@ -34,7 +34,7 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
           <div
             class="grid gap"
             style="grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))"
-            children:append={[taskPageViewModel.boards, BoardInfoToEntry]}
+            children:append={[taskPageViewModel.boardViewModels, BoardInfoToEntry]}
           ></div>
         </div>
       </div>

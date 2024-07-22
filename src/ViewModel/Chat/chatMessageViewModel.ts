@@ -1,5 +1,3 @@
-// this file is responsible for managing individual chat messages.
-
 import * as React from "bloatless-react";
 
 import { ChatMessage, ChatMessageStatus } from "../../Model/Chat/chatModel";
