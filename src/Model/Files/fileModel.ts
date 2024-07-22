@@ -1,12 +1,13 @@
 // this file is responsible for managing files within chats.
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
-import StorageModel, { filePaths } from "../Global/storageModel";
 import {
+  HandlerManager,
   createTimestamp,
   parseValidObject,
   stringify,
 } from "../Utility/utility";
+import StorageModel, { filePaths } from "../Global/storageModel";
 
 import ChatModel from "../Chat/chatModel";
 import TaskModel from "./taskModel";
@@ -18,7 +19,7 @@ export default class FileModel {
 
   taskModel: TaskModel;
 
-  fileContentHandler: (fileContent: FileContent<string>) => void = () => {};
+  fileContentHandlerManager: HandlerManager<FileContent<string>> = new HandlerManager();
 
   // paths
   getBasePath = (): string[] => {
@@ -63,7 +64,7 @@ export default class FileModel {
     if (didStore == false) return;
 
     this.taskModel.handleFileContent(fileContent);
-    this.fileContentHandler(fileContent);
+    this.fileContentHandlerManager.trigger(fileContent);
   };
 
   // methods
@@ -132,11 +133,6 @@ export default class FileModel {
       reference
     );
     return fileContent;
-  };
-
-  // other
-  setFileContentHandler = (handler: (fileContent: FileContent<string>) => void): void => {
-    this.fileContentHandler = handler;
   };
   
   // init

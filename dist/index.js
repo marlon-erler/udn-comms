@@ -314,6 +314,22 @@
   function createTimestamp() {
     return (/* @__PURE__ */ new Date()).toISOString();
   }
+  var HandlerManager = class {
+    handlers = /* @__PURE__ */ new Set();
+    // manage
+    addHandler = (handler) => {
+      this.handlers.add(handler);
+    };
+    deleteHandler = (handler) => {
+      this.handlers.delete(handler);
+    };
+    // trigger
+    trigger = (item) => {
+      for (const handler of this.handlers) {
+        handler(item);
+      }
+    };
+  };
   function stringify(data) {
     return JSON.stringify(data, null, 4);
   }
@@ -531,8 +547,7 @@
     storageModel;
     chatModel;
     fileModel;
-    boardHandler = () => {
-    };
+    boardHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
       return this.fileModel.getModelContainerPath("taskModel");
@@ -576,9 +591,9 @@
       return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
-      this.boardHandler(boardInfoFileContent);
       this.storeBoard(boardInfoFileContent);
       this.chatModel.sendMessage("", boardInfoFileContent);
+      this.boardHandlerManager.trigger(boardInfoFileContent);
     };
     storeBoard = (boardInfoFileContent) => {
       this.fileModel.addFileContent(boardInfoFileContent);
@@ -642,16 +657,12 @@
       this.storageModel.removeRecursively(taskFilePath);
       this.storageModel.removeRecursively(taskReferencePath);
     };
-    // other
-    setBoardHandler = (handler) => {
-      this.boardHandler = handler;
-    };
     // init
     constructor(storageModel2, chatModel, fileModel) {
       this.chatModel = chatModel;
       this.fileModel = fileModel;
       this.storageModel = storageModel2;
-      fileModel.setFileContentHandler(this.handleFileContent);
+      fileModel.fileContentHandlerManager.addHandler(this.handleFileContent);
     }
     // utility
     static createBoardInfoFileContent = (fileId, name, color) => {
@@ -705,8 +716,7 @@
     chatModel;
     storageModel;
     taskModel;
-    fileContentHandler = () => {
-    };
+    fileContentHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
       return StorageModel.getPath(
@@ -740,7 +750,7 @@
       const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
       this.taskModel.handleFileContent(fileContent);
-      this.fileContentHandler(fileContent);
+      this.fileContentHandlerManager.trigger(fileContent);
     };
     // methods
     addFileContent = (fileContent) => {
@@ -787,10 +797,6 @@
         reference
       );
       return fileContent;
-    };
-    // other
-    setFileContentHandler = (handler) => {
-      this.fileContentHandler = handler;
     };
     // init
     constructor(chatModel, storageModel2) {
@@ -911,8 +917,7 @@
     id;
     info;
     color;
-    chatMessageHandler = () => {
-    };
+    chatMessageHandlerManager = new HandlerManager();
     get secondaryChannels() {
       return this.info.secondaryChannels.sort(localeCompare);
     }
@@ -970,7 +975,7 @@
       if (chatMessage.body != "") {
         const messagePath = this.getMessagePath(chatMessage.id);
         this.storageModel.writeStringifiable(messagePath, chatMessage);
-        this.chatMessageHandler(chatMessage);
+        this.chatMessageHandlerManager.trigger(chatMessage);
       }
       this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
     };
@@ -1019,10 +1024,6 @@
       this.chatListModel.untrackChat(this);
       const dirPath = this.getBasePath();
       this.storageModel.removeRecursively(dirPath);
-    };
-    // other
-    setMessageHandler = (handler) => {
-      this.chatMessageHandler = handler;
     };
     // load
     loadInfo = () => {
@@ -1439,9 +1440,11 @@
     // init
     constructor(taskModel, storageModel2) {
       this.taskModel = taskModel;
-      taskModel.setBoardHandler((boardInfoFileContent) => {
-        this.showBoard(boardInfoFileContent);
-      });
+      taskModel.boardHandlerManager.addHandler(
+        (boardInfoFileContent) => {
+          this.showBoard(boardInfoFileContent);
+        }
+      );
     }
   };
 
@@ -1492,7 +1495,7 @@
       );
       this.messagePageViewModel = new MessagePageViewModel(this);
       this.settingsPageViewModel = new SettingsPageViewModel(this);
-      chatModel.setMessageHandler((chatMessage) => {
+      chatModel.chatMessageHandlerManager.addHandler((chatMessage) => {
         this.messagePageViewModel.showChatMessage(chatMessage);
       });
       this.loadPageSelection();

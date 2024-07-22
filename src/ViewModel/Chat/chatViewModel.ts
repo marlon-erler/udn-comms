@@ -74,7 +74,7 @@ export default class ChatViewModel {
     this.settingsPageViewModel = new SettingsPageViewModel(this);
 
     // handlers
-    chatModel.setMessageHandler((chatMessage: ChatMessage) => {
+    chatModel.chatMessageHandlerManager.addHandler((chatMessage: ChatMessage) => {
       this.messagePageViewModel.showChatMessage(chatMessage);
     });
 

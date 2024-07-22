@@ -1,14 +1,18 @@
 // this file is responsible for managing chats.
 
-import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
-import FileModel, { FileContent } from "../Files/fileModel";
-import StorageModel, { filePaths } from "../Global/storageModel";
 import {
+  DATA_VERSION,
+  ValidObject,
+} from "../Utility/typeSafety";
+import FileModel, { FileContent } from "../Files/fileModel";
+import {
+  HandlerManager,
   createTimestamp,
   localeCompare,
   parseValidObject,
   stringify,
 } from "../Utility/utility";
+import StorageModel, { filePaths } from "../Global/storageModel";
 import { decryptString, encryptString } from "../Utility/crypto";
 
 import ChatListModel from "./chatListModel";
@@ -30,7 +34,7 @@ export default class ChatModel {
   info: ChatInfo;
   color: Color;
 
-  chatMessageHandler: (chatMessage: ChatMessage) => void = () => {};
+  chatMessageHandlerManager: HandlerManager<ChatMessage> = new HandlerManager();
 
   get secondaryChannels(): string[] {
     return this.info.secondaryChannels.sort(localeCompare);
@@ -104,7 +108,7 @@ export default class ChatModel {
     if (chatMessage.body != "") {
       const messagePath: string[] = this.getMessagePath(chatMessage.id);
       this.storageModel.writeStringifiable(messagePath, chatMessage);
-      this.chatMessageHandler(chatMessage);
+      this.chatMessageHandlerManager.trigger(chatMessage);
     }
 
     // file
@@ -171,11 +175,6 @@ export default class ChatModel {
     // delete
     const dirPath: string[] = this.getBasePath();
     this.storageModel.removeRecursively(dirPath);
-  };
-
-  // other
-  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
-    this.chatMessageHandler = handler;
   };
 
   // load

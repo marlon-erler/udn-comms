@@ -8,6 +8,7 @@ import FileModel, { FileContent } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../colors";
+import { HandlerManager } from "../Utility/utility";
 import StorageModel from "../Global/storageModel";
 import { v4 } from "uuid";
 
@@ -16,7 +17,8 @@ export default class TaskModel {
   chatModel: ChatModel;
   fileModel: FileModel;
 
-  boardHandler: (boardInfoFileContent: BoardInfoFileContent) => void = () => {};
+  boardHandlerManager: HandlerManager<BoardInfoFileContent> =
+    new HandlerManager();
 
   // paths
   getBasePath = (): string[] => {
@@ -78,9 +80,9 @@ export default class TaskModel {
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.boardHandler(boardInfoFileContent);
     this.storeBoard(boardInfoFileContent);
     this.chatModel.sendMessage("", boardInfoFileContent);
+    this.boardHandlerManager.trigger(boardInfoFileContent);
   };
 
   storeBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
@@ -163,13 +165,6 @@ export default class TaskModel {
     this.storageModel.removeRecursively(taskReferencePath);
   };
 
-  // other
-  setBoardHandler = (
-    handler: (boardInfoFileContent: BoardInfoFileContent) => void
-  ): void => {
-    this.boardHandler = handler;
-  };
-
   // init
   constructor(
     storageModel: StorageModel,
@@ -181,7 +176,7 @@ export default class TaskModel {
     this.storageModel = storageModel;
 
     // handlers
-    fileModel.setFileContentHandler(this.handleFileContent);
+    fileModel.fileContentHandlerManager.addHandler(this.handleFileContent);
   }
 
   // utility

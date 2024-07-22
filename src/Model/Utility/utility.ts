@@ -5,6 +5,29 @@ export function createTimestamp(): string {
   return new Date().toISOString();
 }
 
+// handlers
+export type Handler<T> = (item: T) => void;
+
+export class HandlerManager<T> {
+  handlers: Set<Handler<T>> = new Set();
+
+  // manage
+  addHandler = (handler: Handler<T>): void => {
+    this.handlers.add(handler);
+  };
+
+  deleteHandler = (handler: Handler<T>): void => {
+    this.handlers.delete(handler);
+  };
+
+  // trigger
+  trigger = (item: T): void => {
+    for (const handler of this.handlers) {
+      handler(item);
+    }
+  };
+}
+
 // string
 export function stringify(data: any): string {
   return JSON.stringify(data, null, 4);

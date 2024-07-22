@@ -70,8 +70,10 @@ export default class TaskPageViewModel {
     this.taskModel = taskModel;
 
     // handlers
-    taskModel.setBoardHandler((boardInfoFileContent: BoardInfoFileContent) => {
-      this.showBoard(boardInfoFileContent);
-    });
+    taskModel.boardHandlerManager.addHandler(
+      (boardInfoFileContent: BoardInfoFileContent) => {
+        this.showBoard(boardInfoFileContent);
+      }
+    );
   }
 }
