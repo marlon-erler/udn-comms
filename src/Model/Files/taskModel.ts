@@ -22,7 +22,7 @@ export default class TaskModel {
   };
 
   getBoardFilePath = (boardId: string): string[] => {
-    return [...this.fileModel.getFilePath(boardId), boardId];
+    return [...this.fileModel.getFilePath(boardId)];
   };
 
   getBoardContainerPath = (): string[] => {
@@ -100,6 +100,14 @@ export default class TaskModel {
       boardInfoFileVersion.fileId
     );
     this.storageModel.write(boardDirectoryPath, "");
+  };
+
+  deleteBoard = (boardId: string): void => {
+    const boardFilePath: string[] = this.getBoardFilePath(boardId);
+    const boardDirectoryPath: string[] = this.getBoardDirectoryPath(boardId);
+
+    this.storageModel.removeRecursively(boardFilePath);
+    this.storageModel.removeRecursively(boardDirectoryPath);
   };
 
   //tasks

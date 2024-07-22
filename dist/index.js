@@ -536,7 +536,7 @@
       return this.fileModel.getModelContainerPath("taskModel");
     };
     getBoardFilePath = (boardId) => {
-      return [...this.fileModel.getFilePath(boardId), boardId];
+      return [...this.fileModel.getFilePath(boardId)];
     };
     getBoardContainerPath = () => {
       return [...this.getBasePath(), subDirectories.boards];
@@ -589,6 +589,14 @@
         boardInfoFileVersion.fileId
       );
       this.storageModel.write(boardDirectoryPath, "");
+    };
+    deleteBoard = (boardId) => {
+      const boardFilePath = this.getBoardFilePath(boardId);
+      const boardDirectoryPath = this.getBoardDirectoryPath(boardId);
+      console.log(boardFilePath);
+      console.log(boardDirectoryPath);
+      this.storageModel.removeRecursively(boardFilePath);
+      this.storageModel.removeRecursively(boardDirectoryPath);
     };
     //tasks
     createTask = (boardId, name) => {
@@ -764,6 +772,7 @@
         "coral" /* Coral */
       );
       this.taskModel.createOrUpdateBoard(newInfo);
+      setTimeout(() => this.taskModel.deleteBoard(boardId), 7e3);
     }
     // utility
     static generateFileVersionId = (creationDate) => {
