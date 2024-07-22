@@ -71,6 +71,15 @@ export default class StorageModel {
     return [...Object.keys(currentParent).sort(localeCompare)];
   };
 
+  rename = (sourcePathComponents: string[], destinationPathComponents: string[]): boolean => {
+    const content: string|null = this.read(sourcePathComponents);
+    if (content == null) return false;
+
+    this.write(destinationPathComponents, content);
+    this.remove(sourcePathComponents);
+    return true;
+  }
+
   // stringifiable
   writeStringifiable = (pathComponents: string[], value: ValidObject): void => {
     const valueString: string = stringify(value);
@@ -89,6 +98,7 @@ export default class StorageModel {
 
     return object;
   };
+  
 
   // tree
   initializeTree = (): void => {
