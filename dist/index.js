@@ -342,40 +342,12 @@
   var PATH_COMPONENT_SEPARATOR = "\\";
   var StorageModel = class _StorageModel {
     storageEntryTree = {};
-    // basic
-    write = (pathComponents, value) => {
-      const pathString = _StorageModel.pathComponentsToString(
-        ...pathComponents
-      );
-      localStorage.setItem(pathString, value);
-      this.updateTree(...pathComponents);
-    };
+    // read
     read = (pathComponents) => {
       const pathString = _StorageModel.pathComponentsToString(
         ...pathComponents
       );
       return localStorage.getItem(pathString);
-    };
-    remove = (pathComponents, shouldInitialize = true) => {
-      const pathString = _StorageModel.pathComponentsToString(
-        ...pathComponents
-      );
-      localStorage.removeItem(pathString);
-      if (shouldInitialize == true) {
-        this.initializeTree();
-      }
-    };
-    removeRecursively = (pathComponentsOfEntityToDelete) => {
-      a: for (const key of Object.keys(localStorage)) {
-        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
-        for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
-          if (!pathComponentsOfCurrentEntity[i]) continue a;
-          if (pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i])
-            continue a;
-        }
-        this.remove(pathComponentsOfCurrentEntity, false);
-      }
-      this.initializeTree();
     };
     list = (pathComponents) => {
       let currentParent = this.storageEntryTree;
@@ -386,12 +358,67 @@
       }
       return [...Object.keys(currentParent).sort(localeCompare)];
     };
-    rename = (sourcePathComponents, destinationPathComponents) => {
+    // write
+    write = (pathComponents, value) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.setItem(pathString, value);
+      this.updateTree(...pathComponents);
+    };
+    remove = (pathComponents, shouldInitialize = true) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.removeItem(pathString);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+    };
+    removeRecursively = (pathComponents) => {
+      loop_over_files: for (const key of Object.keys(localStorage)) {
+        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
+        loop_over_path_components: for (let i = 0; i < pathComponents.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
+          if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
+            continue loop_over_files;
+        }
+        this.remove(pathComponentsOfCurrentEntity, false);
+      }
+      this.initializeTree();
+    };
+    rename = (sourcePathComponents, destinationPathComponents, shouldInitialize = true) => {
       const content = this.read(sourcePathComponents);
       if (content == null) return false;
       this.write(destinationPathComponents, content);
       this.remove(sourcePathComponents);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
       return true;
+    };
+    renameRecursively = (sourcePathComponents, destinationPathComponents) => {
+      loop_over_files: for (const key of Object.keys(localStorage)) {
+        const originalPathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
+        loop_over_path_components: for (let i = 0; i < sourcePathComponents.length; i++) {
+          if (!originalPathComponentsOfCurrentEntity[i]) continue loop_over_files;
+          if (originalPathComponentsOfCurrentEntity[i] != sourcePathComponents[i])
+            continue loop_over_files;
+        }
+        const relativePathOfCurrentEntity = originalPathComponentsOfCurrentEntity.slice(
+          sourcePathComponents.length
+        );
+        const destinationPathComponentsOfCurrentEntity = [
+          ...destinationPathComponents,
+          ...relativePathOfCurrentEntity
+        ];
+        this.rename(
+          originalPathComponentsOfCurrentEntity,
+          destinationPathComponentsOfCurrentEntity,
+          false
+        );
+      }
+      this.initializeTree();
     };
     // stringifiable
     writeStringifiable = (pathComponents, value) => {
@@ -439,7 +466,7 @@
       return pathComponents[pathComponents.length - 1] || "\\";
     };
     static pathComponentsToString = (...pathComponents) => {
-      return pathComponents.join(PATH_COMPONENT_SEPARATOR);
+      return pathComponents.filter((x) => x != "").join(PATH_COMPONENT_SEPARATOR);
     };
     static stringToPathComponents = (string) => {
       return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
@@ -549,6 +576,14 @@
       const boardNames = this.storageModel.list(boardDirPath);
       return boardNames;
     };
+    getBoardInfo = (boardId) => {
+      const boardInfoPath = this.getBoardInfoPath(boardId);
+      const boardInfoFileContentOrNull = this.storageModel.readStringifiable(
+        boardInfoPath,
+        BoardInfoFileContentReference
+      );
+      return boardInfoFileContentOrNull;
+    };
     //tasks
     createTask = (boardId, name) => {
       const file = FileModel.createFile();
@@ -580,23 +615,9 @@
       );
       return taskFileContentOrNull;
     };
-    // locations
-    getTaskLocation = (file) => {
-      const locationPath = this.getTaskLocationPath(file.id);
-      const locationOrNull = this.storageModel.readStringifiable(locationPath, TaskLocationReference);
-      return locationOrNull;
-    };
-    storeTaskLocation = (file, taskLocation) => {
-      const locationPath = this.getTaskLocationPath(file.id);
-      this.storageModel.writeStringifiable(locationPath, taskLocation);
-    };
-    updateTaskLocation = (file, newLocation) => {
-      const previousLocation = this.getTaskLocation(file);
-      if (previousLocation == null) return false;
-      const oldBoardName = previousLocation.boardId;
-      const sourcePath = this.getTaskPath(oldBoardName, file.id);
-      const newBoardName = newLocation.boardId;
-      const destinationPath = this.getTaskPath(newBoardName, file.id);
+    moveTask = (taskFileId, oldBoardId, newBoardId) => {
+      const sourcePath = this.getTaskPath(oldBoardId, taskFileId);
+      const destinationPath = this.getTaskPath(newBoardId, taskFileId);
       return this.storageModel.rename(sourcePath, destinationPath);
     };
     // init
@@ -643,10 +664,6 @@
     creationDate: "",
     type: "task",
     name: "",
-    boardId: ""
-  };
-  var TaskLocationReference = {
-    dataVersion: DATA_VERSION,
     boardId: ""
   };
 

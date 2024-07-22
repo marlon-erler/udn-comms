@@ -12,20 +12,32 @@ export const PATH_COMPONENT_SEPARATOR = "\\";
 export default class StorageModel {
   storageEntryTree: StorageEntry = {};
 
-  // basic
+  // read
+  read = (pathComponents: string[]): string | null => {
+    const pathString: string = StorageModel.pathComponentsToString(
+      ...pathComponents
+    );
+    return localStorage.getItem(pathString);
+  };
+
+  list = (pathComponents: string[]): string[] => {
+    let currentParent: StorageEntry = this.storageEntryTree;
+    for (const component of pathComponents) {
+      const nextParent: StorageEntry | undefined = currentParent[component];
+      if (nextParent == undefined) return [];
+      currentParent = nextParent;
+    }
+
+    return [...Object.keys(currentParent).sort(localeCompare)];
+  };
+
+  // write
   write = (pathComponents: string[], value: string): void => {
     const pathString: string = StorageModel.pathComponentsToString(
       ...pathComponents
     );
     localStorage.setItem(pathString, value);
     this.updateTree(...pathComponents);
-  };
-
-  read = (pathComponents: string[]): string | null => {
-    const pathString: string = StorageModel.pathComponentsToString(
-      ...pathComponents
-    );
-    return localStorage.getItem(pathString);
   };
 
   remove = (
@@ -42,43 +54,86 @@ export default class StorageModel {
     }
   };
 
-  removeRecursively = (pathComponentsOfEntityToDelete: string[]): void => {
-    a: for (const key of Object.keys(localStorage)) {
+  removeRecursively = (pathComponents: string[]): void => {
+    loop_over_files: for (const key of Object.keys(localStorage)) {
+      // get path of current entity
       const pathComponentsOfCurrentEntity: string[] =
         StorageModel.stringToPathComponents(key);
 
-      for (let i = 0; i < pathComponentsOfEntityToDelete.length; i++) {
-        if (!pathComponentsOfCurrentEntity[i]) continue a;
-        if (
-          pathComponentsOfCurrentEntity[i] != pathComponentsOfEntityToDelete[i]
-        )
-          continue a;
+      // exit if entity does not match
+      loop_over_path_components: for (
+        let i = 0;
+        i < pathComponents.length;
+        i++
+      ) {
+        if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
+        if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
+          continue loop_over_files;
       }
 
+      // remove
       this.remove(pathComponentsOfCurrentEntity, false);
     }
     this.initializeTree();
   };
 
-  list = (pathComponents: string[]): string[] => {
-    let currentParent: StorageEntry = this.storageEntryTree;
-    for (const component of pathComponents) {
-      const nextParent: StorageEntry | undefined = currentParent[component];
-      if (nextParent == undefined) return [];
-      currentParent = nextParent;
-    }
-
-    return [...Object.keys(currentParent).sort(localeCompare)];
-  };
-
-  rename = (sourcePathComponents: string[], destinationPathComponents: string[]): boolean => {
-    const content: string|null = this.read(sourcePathComponents);
+  rename = (
+    sourcePathComponents: string[],
+    destinationPathComponents: string[],
+    shouldInitialize: boolean = true
+  ): boolean => {
+    const content: string | null = this.read(sourcePathComponents);
     if (content == null) return false;
+
 
     this.write(destinationPathComponents, content);
     this.remove(sourcePathComponents);
+
+    if (shouldInitialize == true) {
+      this.initializeTree();
+    }
     return true;
-  }
+  };
+
+  renameRecursively = (
+    sourcePathComponents: string[],
+    destinationPathComponents: string[]
+  ): void => {
+    loop_over_files: for (const key of Object.keys(localStorage)) {
+      // get path of current entity
+      const originalPathComponentsOfCurrentEntity: string[] =
+        StorageModel.stringToPathComponents(key);
+
+      // exit if entity does not match
+      loop_over_path_components: for (
+        let i = 0;
+        i < sourcePathComponents.length;
+        i++
+      ) {
+        if (!originalPathComponentsOfCurrentEntity[i]) continue loop_over_files;
+        if (originalPathComponentsOfCurrentEntity[i] != sourcePathComponents[i])
+          continue loop_over_files;
+      }
+
+      // assemble destinationPath
+      const relativePathOfCurrentEntity =
+        originalPathComponentsOfCurrentEntity.slice(
+          sourcePathComponents.length
+        );
+      const destinationPathComponentsOfCurrentEntity = [
+        ...destinationPathComponents,
+        ...relativePathOfCurrentEntity,
+      ];
+
+      // rename
+      this.rename(
+        originalPathComponentsOfCurrentEntity,
+        destinationPathComponentsOfCurrentEntity,
+        false
+      );
+    }
+    this.initializeTree();
+  };
 
   // stringifiable
   writeStringifiable = (pathComponents: string[], value: ValidObject): void => {
@@ -98,7 +153,6 @@ export default class StorageModel {
 
     return object;
   };
-  
 
   // tree
   initializeTree = (): void => {
@@ -142,7 +196,7 @@ export default class StorageModel {
   };
 
   static pathComponentsToString = (...pathComponents: string[]): string => {
-    return pathComponents.join(PATH_COMPONENT_SEPARATOR);
+    return pathComponents.filter((x) => x != "").join(PATH_COMPONENT_SEPARATOR);
   };
 
   static stringToPathComponents = (string: string): string[] => {
