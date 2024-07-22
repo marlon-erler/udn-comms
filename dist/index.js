@@ -511,6 +511,9 @@
     getTaskPath = (boardName, fileId) => {
       return [...this.getBoardPath(boardName), fileId];
     };
+    getTaskContentPath = (boardName, fileId, contentName) => {
+      return [...this.getTaskPath(boardName, fileId), contentName];
+    };
     // handler
     handleTaskFileContent = (file, fileContent) => {
       if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
@@ -535,14 +538,46 @@
       const locationOrNull = this.storageModel.readStringifiable(locationPath, TaskLocationReference);
       return locationOrNull;
     };
-    storeTaskLocation = (file, taskFileContent) => {
+    storeTaskLocation = (file, taskLocation) => {
       const locationPath = this.getTaskLocationPath(file.id);
-      this.storageModel.writeStringifiable(locationPath, taskFileContent);
+      this.storageModel.writeStringifiable(locationPath, taskLocation);
     };
-    updateTaskLocation = (file, newTaskFileContent) => {
+    updateTaskLocation = (file, newLocation) => {
       const previousLocation = this.getTaskLocation(file);
-      if (previousLocation != null) {
-      }
+      if (previousLocation == null) return false;
+      const oldBoardName = previousLocation.board;
+      const sourcePath = this.getTaskPath(oldBoardName, file.id);
+      const newBoardName = newLocation.board;
+      const destinationPath = this.getTaskPath(newBoardName, file.id);
+      return this.storageModel.rename(sourcePath, destinationPath);
+    };
+    // storage
+    listBoardsNames = () => {
+      const boardDirPath = this.getBoardDirPath();
+      const boardNames = this.storageModel.list(boardDirPath);
+      return boardNames;
+    };
+    listFileIdsOfBoard = (boardName) => {
+      const boardPath = this.getBoardPath(boardName);
+      const fileIds = this.storageModel.list(boardPath);
+      return fileIds;
+    };
+    getTaskVersionNames = (boardName, fileId) => {
+      const fileDirectoryPath = this.getTaskPath(boardName, fileId);
+      const versionNames = this.storageModel.list(fileDirectoryPath);
+      return versionNames;
+    };
+    getTaskFileContent = (boardName, fileId, versionName) => {
+      const fileContentPath = this.getTaskContentPath(
+        boardName,
+        fileId,
+        versionName
+      );
+      const taskFileContentOrNull = this.storageModel.readStringifiable(
+        fileContentPath,
+        TaskFileContentReference
+      );
+      return taskFileContentOrNull;
     };
     // init
     constructor(storageModel2, chatModel, fileModel) {
@@ -649,7 +684,7 @@
     };
     getFileContent = (file, fileContentName) => {
       const filePath = this.getFileContentPath(file, fileContentName);
-      const fileContentOrNull = this.storageModel.readStringifiable(filePath, FileContentReference);
+      const fileContentOrNull = this.storageModel.readStringifiable(filePath, FileContentReference2);
       return fileContentOrNull;
     };
     // init
@@ -678,7 +713,7 @@
       };
     };
   };
-  var FileContentReference = {
+  var FileContentReference2 = {
     dataVersion: DATA_VERSION,
     id: "",
     creationDate: "",
@@ -687,7 +722,7 @@
   var FileReference = {
     dataVersion: DATA_VERSION,
     id: "",
-    contentVersions: /* @__PURE__ */ new Set([FileContentReference])
+    contentVersions: /* @__PURE__ */ new Set([FileContentReference2])
   };
 
   // src/Model/Utility/crypto.ts
@@ -1440,10 +1475,8 @@
       pages: {
         settings: "Settings",
         messages: "Messages",
-        allObjects: "All objects",
-        kanban: "Kanban",
-        calendar: "Calendar",
-        progress: "Progress"
+        tasks: "Tasks",
+        calendar: "Calendar"
       },
       settings: {
         settingsHeadline: "Settings",
@@ -1734,6 +1767,11 @@
     ))));
   }
 
+  // src/View/ChatPages/taskPage.tsx
+  function TaskPage(chatViewModel) {
+    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { "subscribe:innerText": chatViewModel.primaryChannel })), /* @__PURE__ */ createElement("div", { class: "content" }));
+  }
+
   // src/View/chatPage.tsx
   function ChatPage(chatViewModel) {
     const mainContent = new State(/* @__PURE__ */ createElement("div", null));
@@ -1741,49 +1779,49 @@
       switch (selectedPage) {
         case "settings" /* Settings */:
           return mainContent.value = SettingsPage(chatViewModel);
+        case "tasks" /* Tasks */:
+          return mainContent.value = TaskPage(chatViewModel);
         default:
           return mainContent.value = MessagePage(chatViewModel);
       }
     });
-    return /* @__PURE__ */ createElement("article", { id: "chat-page", "set:color": chatViewModel.color, class: "subtle-background" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
-      "button",
+    return /* @__PURE__ */ createElement(
+      "article",
       {
-        class: "ghost",
-        "aria-label": translations.chatPage.closeChatAudioLabe,
-        "on:click": chatViewModel.close
+        id: "chat-page",
+        "set:color": chatViewModel.color,
+        class: "subtle-background"
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    ), /* @__PURE__ */ createElement("span", null, ChatViewToggleButton(
-      translations.chatPage.pages.calendar,
-      "calendar_month",
-      "calendar" /* Calendar */,
-      chatViewModel
-    ), ChatViewToggleButton(
-      translations.chatPage.pages.progress,
-      "window",
-      "progress" /* Progress */,
-      chatViewModel
-    ), ChatViewToggleButton(
-      translations.chatPage.pages.kanban,
-      "view_kanban",
-      "kanban" /* Kanban */,
-      chatViewModel
-    ), ChatViewToggleButton(
-      translations.chatPage.pages.allObjects,
-      "deployed_code",
-      "all" /* AllObjects */,
-      chatViewModel
-    ), ChatViewToggleButton(
-      translations.chatPage.pages.messages,
-      "forum",
-      "messages" /* Messages */,
-      chatViewModel
-    ), ChatViewToggleButton(
-      translations.chatPage.pages.settings,
-      "settings",
-      "settings" /* Settings */,
-      chatViewModel
-    ))), /* @__PURE__ */ createElement("div", { id: "main", "children:set": mainContent })));
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "ghost",
+          "aria-label": translations.chatPage.closeChatAudioLabe,
+          "on:click": chatViewModel.close
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+      ), /* @__PURE__ */ createElement("span", null, ChatViewToggleButton(
+        translations.chatPage.pages.calendar,
+        "calendar_month",
+        "calendar" /* Calendar */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.tasks,
+        "task_alt",
+        "tasks" /* Tasks */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.messages,
+        "forum",
+        "messages" /* Messages */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.settings,
+        "settings",
+        "settings" /* Settings */,
+        chatViewModel
+      ))), /* @__PURE__ */ createElement("div", { id: "main", "children:set": mainContent }))
+    );
   }
 
   // src/View/chatPageWrapper.tsx

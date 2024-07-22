@@ -7,6 +7,7 @@ import ChatViewModel, { ChatPageType } from "../ViewModel/chatViewModel";
 import { ChatViewToggleButton } from "./Components/chatViewToggleButton";
 import { MessagePage } from "./ChatPages/messagePage";
 import { SettingsPage } from "./ChatPages/settingsPage";
+import { TaskPage } from "./ChatPages/taskPage";
 import { translations } from "./translations";
 
 export function ChatPage(chatViewModel: ChatViewModel) {
@@ -16,13 +17,19 @@ export function ChatPage(chatViewModel: ChatViewModel) {
     switch (selectedPage) {
       case ChatPageType.Settings:
         return (mainContent.value = SettingsPage(chatViewModel));
+      case ChatPageType.Tasks:
+        return (mainContent.value = TaskPage(chatViewModel));
       default:
         return (mainContent.value = MessagePage(chatViewModel));
     }
   });
 
   return (
-    <article id="chat-page" set:color={chatViewModel.color} class="subtle-background">
+    <article
+      id="chat-page"
+      set:color={chatViewModel.color}
+      class="subtle-background"
+    >
       <div>
         <div id="ribbon">
           <button
@@ -41,21 +48,9 @@ export function ChatPage(chatViewModel: ChatViewModel) {
               chatViewModel
             )}
             {ChatViewToggleButton(
-              translations.chatPage.pages.progress,
-              "window",
-              ChatPageType.Progress,
-              chatViewModel
-            )}
-            {ChatViewToggleButton(
-              translations.chatPage.pages.kanban,
-              "view_kanban",
-              ChatPageType.Kanban,
-              chatViewModel
-            )}
-            {ChatViewToggleButton(
-              translations.chatPage.pages.allObjects,
-              "deployed_code",
-              ChatPageType.AllObjects,
+              translations.chatPage.pages.tasks,
+              "task_alt",
+              ChatPageType.Tasks,
               chatViewModel
             )}
             {ChatViewToggleButton(

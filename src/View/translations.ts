@@ -82,10 +82,8 @@ const englishTranslations = {
     pages: {
       settings: "Settings",
       messages: "Messages",
-      allObjects: "All objects",
-      kanban: "Kanban",
+      tasks: "Tasks",
       calendar: "Calendar",
-      progress: "Progress",
     },
 
     settings: {

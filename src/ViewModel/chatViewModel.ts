@@ -231,8 +231,6 @@ export default class ChatViewModel {
 export enum ChatPageType {
   Settings = "settings",
   Messages = "messages",
-  AllObjects = "all",
-  Kanban = "kanban",
+  Tasks = "tasks",
   Calendar = "calendar",
-  Progress = "progress",
 }
