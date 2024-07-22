@@ -106,7 +106,7 @@ export function HomePage(
               Option(
                 weekdayName,
                 i.toString(),
-                i == settingsViewModel.firstDayOfWeekInput.value
+                i.toString() == settingsViewModel.firstDayOfWeekInput.value
               )
             )}
           </select>
