@@ -476,30 +476,6 @@
       firstDayOfWeek: ["first-day-of-week"]
     }
   };
-  var storageKeys = {
-    // connection
-    socketAddress: [DATA_VERSION, "connection", "socket-address"],
-    reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
-    outbox: [DATA_VERSION, "connection", "outbox"],
-    mailboxes: [DATA_VERSION, "connection", "mailboxes"],
-    // settings
-    username: [DATA_VERSION, "settings", "user-name"],
-    firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
-    // history
-    previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
-    // chat
-    chats: [DATA_VERSION, "chat"],
-    chatInfo: (id) => [DATA_VERSION, "chat", id, "info"],
-    chatLastUsedPage: (id) => [
-      DATA_VERSION,
-      "chat",
-      id,
-      "last-used-page"
-    ],
-    chatColor: (id) => [DATA_VERSION, "chat", id, "color"],
-    chatMessages: (id) => [DATA_VERSION, "chat", id, "messages"],
-    chatFiles: [DATA_VERSION, "chat", "files"]
-  };
 
   // src/Model/Files/taskModel.ts
   var TaskModel = class {
@@ -1158,7 +1134,10 @@
     };
     // load
     loadPageSelection = () => {
-      const path = storageKeys.chatLastUsedPage(this.chatModel.id);
+      const path = StorageModel.getPath(
+        "chat",
+        filePaths.chat.lastUsedPage(this.chatModel.id)
+      );
       const lastUsedPage = this.storageModel.read(path);
       if (lastUsedPage != null) {
         this.selectedPage.value = lastUsedPage;
@@ -2082,7 +2061,7 @@
       this.udn.onmailboxconnect = (mailboxId) => {
         console.log(`using mailbox ${mailboxId}`);
       };
-      const reconnectAddressPath = this.getPreviousAddressPath();
+      const reconnectAddressPath = this.getReconnectAddressPath();
       const reconnectAddress = storageModel2.read(reconnectAddressPath);
       if (reconnectAddress != null) {
         this.connect(reconnectAddress);

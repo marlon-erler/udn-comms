@@ -257,7 +257,7 @@ export default class ConnectionModel {
     };
 
     // reconnect
-    const reconnectAddressPath: string[] = this.getPreviousAddressPath();
+    const reconnectAddressPath: string[] = this.getReconnectAddressPath();
     const reconnectAddress: string | null =
       storageModel.read(reconnectAddressPath);
     if (reconnectAddress != null) {
