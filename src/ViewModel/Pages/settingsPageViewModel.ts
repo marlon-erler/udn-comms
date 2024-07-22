@@ -42,7 +42,6 @@ export default class SettingsPageViewModel {
     );
     this.primaryChannel.value =
       this.chatViewModel.chatModel.info.primaryChannel;
-    this.chatViewModel.chatListViewModel.updateIndices();
   };
 
   addSecondaryChannel = (): void => {
@@ -80,7 +79,7 @@ export default class SettingsPageViewModel {
   remove = (): void => {
     this.chatViewModel.close();
     this.chatViewModel.chatModel.delete();
-    this.chatViewModel.chatListViewModel.loadChats();
+    this.chatViewModel.chatListViewModel.untrackChat(this.chatViewModel);
   };
 
   // load
