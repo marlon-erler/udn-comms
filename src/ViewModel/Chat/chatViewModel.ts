@@ -27,11 +27,6 @@ export default class ChatViewModel {
     ChatPageType.Messages
   );
 
-  // sorting
-  updateIndex = (): void => {
-    this.index.value = this.chatModel.index;
-  };
-
   // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
@@ -90,7 +85,6 @@ export default class ChatViewModel {
 
     // load
     this.loadPageSelection();
-    this.updateIndex();
   }
 }
 

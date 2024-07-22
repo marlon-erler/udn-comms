@@ -938,17 +938,10 @@
       chatMessage.status = "sent" /* Sent */;
       this.addMessage(chatMessage);
     };
-    // sorting
-    get index() {
-      return this.chatListModel.getIndexOfPrimaryChannel(
-        this.info.primaryChannel
-      );
-    }
     // settings
     setPrimaryChannel = (primaryChannel) => {
       this.info.primaryChannel = primaryChannel;
       this.storeInfo();
-      this.chatListModel.updateIndices();
       this.subscribe();
     };
     setSecondaryChannels = (secondaryChannels) => {
@@ -1133,7 +1126,6 @@
     connectionModel;
     // data
     chatModels = /* @__PURE__ */ new Set();
-    sortedPrimaryChannels = [];
     // handlers
     messageHandler = (data) => {
       for (const chatModel of this.chatModels) {
@@ -1149,22 +1141,9 @@
         }
       }
     };
-    // sorting
-    updateIndices = () => {
-      this.sortedPrimaryChannels = [];
-      let allChannels = [];
-      for (const chatModel of this.chatModels) {
-        allChannels.push(chatModel.info.primaryChannel);
-      }
-      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
-    };
-    getIndexOfPrimaryChannel(primaryChannel) {
-      return this.sortedPrimaryChannels.indexOf(primaryChannel);
-    }
     // storage
     addChatModel = (chatModel) => {
       this.chatModels.add(chatModel);
-      this.updateIndices();
     };
     createChat = (primaryChannel) => {
       const id = v4_default();
@@ -1181,7 +1160,6 @@
     };
     untrackChat = (chat) => {
       this.chatModels.delete(chat);
-      this.updateIndices();
     };
     // load
     loadChats = () => {
@@ -1471,10 +1449,6 @@
     selectedPage = new State(
       "messages" /* Messages */
     );
-    // sorting
-    updateIndex = () => {
-      this.index.value = this.chatModel.index;
-    };
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
@@ -1517,7 +1491,6 @@
         }
       );
       this.loadPageSelection();
-      this.updateIndex();
     }
   };
 
@@ -1543,7 +1516,6 @@
       this.newChatPrimaryChannel.value = "";
       const chatViewModel = this.createChatViewModel(chatModel);
       this.chatViewModels.add(chatViewModel);
-      this.updateIndices();
     };
     untrackChat = (chatViewModel) => {
       this.chatListModel.untrackChat(chatViewModel.chatModel);
@@ -1563,12 +1535,6 @@
     };
     closeChat = () => {
       this.selectedChat.value = void 0;
-    };
-    // sorting
-    updateIndices = () => {
-      for (const chatViewModel of this.chatViewModels.value) {
-        chatViewModel.updateIndex();
-      }
     };
     // load
     loadChats = () => {

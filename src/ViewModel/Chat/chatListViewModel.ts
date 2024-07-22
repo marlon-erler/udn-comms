@@ -34,8 +34,6 @@ export default class ChatListViewModel {
 
     const chatViewModel: ChatViewModel = this.createChatViewModel(chatModel);
     this.chatViewModels.add(chatViewModel);
-
-    this.updateIndices();
   };
 
   untrackChat = (chatViewModel: ChatViewModel): void => {
@@ -59,13 +57,6 @@ export default class ChatListViewModel {
 
   closeChat = (): void => {
     this.selectedChat.value = undefined;
-  };
-
-  // sorting
-  updateIndices = (): void => {
-    for (const chatViewModel of this.chatViewModels.value) {
-      chatViewModel.updateIndex();
-    }
   };
 
   // load

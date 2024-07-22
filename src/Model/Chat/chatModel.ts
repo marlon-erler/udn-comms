@@ -74,18 +74,10 @@ export default class ChatModel {
     this.addMessage(chatMessage);
   };
 
-  // sorting
-  get index(): number {
-    return this.chatListModel.getIndexOfPrimaryChannel(
-      this.info.primaryChannel
-    );
-  }
-
   // settings
   setPrimaryChannel = (primaryChannel: string): void => {
     this.info.primaryChannel = primaryChannel;
     this.storeInfo();
-    this.chatListModel.updateIndices();
     this.subscribe();
   };
 
