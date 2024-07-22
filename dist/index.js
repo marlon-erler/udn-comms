@@ -1964,7 +1964,7 @@
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
     taskPageViewModel.loadData();
-    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": taskPageViewModel.newBoardNameInput,
@@ -1980,12 +1980,15 @@
         "toggle:disabled": taskPageViewModel.cannotCreateBoard
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement(
       "div",
       {
         class: "grid gap",
         style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
-        "children:append": [taskPageViewModel.boardViewModels, BoardInfoToEntry]
+        "children:append": [
+          taskPageViewModel.boardViewModels,
+          BoardInfoToEntry
+        ]
       }
     ))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
   }

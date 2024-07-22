@@ -10,7 +10,7 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   return (
     <div id="task-page">
       <div class="pane side">
-        <div class="content">
+        <div class="toolbar">
           <div class="flex-row width-input">
             <input
               bind:value={taskPageViewModel.newBoardNameInput}
@@ -28,13 +28,15 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
               <span class="icon">add</span>
             </button>
           </div>
-
-          <hr></hr>
-
+        </div>
+        <div class="content">
           <div
             class="grid gap"
             style="grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))"
-            children:append={[taskPageViewModel.boardViewModels, BoardInfoToEntry]}
+            children:append={[
+              taskPageViewModel.boardViewModels,
+              BoardInfoToEntry,
+            ]}
           ></div>
         </div>
       </div>
