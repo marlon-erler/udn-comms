@@ -2,6 +2,7 @@
 
 import {
   DATA_VERSION,
+  ValidObject,
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
 import FileModel, { File, FileContent } from "./fileModel";
@@ -78,6 +79,13 @@ export interface TaskFileContent extends FileContent<"task"> {
   time?: string;
 }
 
+export interface TaskLocation extends ValidObject {
+  board: string;
+  category?: string;
+  status?: string;
+}
+
+// reference
 export const TaskFileContentReference: TaskFileContent = {
   dataVersion: DATA_VERSION,
 
@@ -86,5 +94,11 @@ export const TaskFileContentReference: TaskFileContent = {
   type: "task",
 
   name: "",
+  board: "",
+};
+
+export const TaskLocationReference: TaskLocation = {
+  dataVersion: DATA_VERSION,
+
   board: "",
 };
