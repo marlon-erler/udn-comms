@@ -33,31 +33,33 @@ export function MessagePage(chatViewModel: ChatViewModel) {
 
   return (
     <div id="message-page">
-      <div class="toolbar">
-        <span subscribe:innerText={chatViewModel.primaryChannel}></span>
-      </div>
-      <div class="content">
-        {messageContainer}
-        <div id="composer">
-          <div class="content-width-constraint">
-            <div class="input-width-constraint">
-              <input
-                bind:value={chatViewModel.composingMessage}
-                on:enter={chatViewModel.sendMessage}
-                placeholder={
-                  translations.chatPage.message.composerInputPlaceholder
-                }
-              ></input>
-              <button
-                class="primary"
-                aria-label={
-                  translations.chatPage.message.sendMessageButtonAudioLabel
-                }
-                on:click={chatViewModel.sendMessage}
-                toggle:disabled={chatViewModel.cannotSendMessage}
-              >
-                <span class="icon">send</span>
-              </button>
+      <div class="pane">
+        <div class="toolbar">
+          <span subscribe:innerText={chatViewModel.primaryChannel}></span>
+        </div>
+        <div class="content">
+          {messageContainer}
+          <div id="composer">
+            <div class="content-width-constraint">
+              <div class="input-width-constraint">
+                <input
+                  bind:value={chatViewModel.composingMessage}
+                  on:enter={chatViewModel.sendMessage}
+                  placeholder={
+                    translations.chatPage.message.composerInputPlaceholder
+                  }
+                ></input>
+                <button
+                  class="primary"
+                  aria-label={
+                    translations.chatPage.message.sendMessageButtonAudioLabel
+                  }
+                  on:click={chatViewModel.sendMessage}
+                  toggle:disabled={chatViewModel.cannotSendMessage}
+                >
+                  <span class="icon">send</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

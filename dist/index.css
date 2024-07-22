@@ -205,31 +205,34 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page {
   --ribbon-size: calc(var(--control-height) + 2 * var(--gap-between-tiles));
 }
-#chat-page #ribbon,
-#chat-page .toolbar,
-#chat-page #main,
-#chat-page #main .content {
+#chat-page > div,
+#chat-page > div > #ribbon,
+#chat-page > div > #main,
+#chat-page > div > #main > div,
+#chat-page > div > #main > div > .pane,
+#chat-page > div > #main > div > .pane > .toolbar,
+#chat-page > div > #main > div > .pane > .content {
   display: flex;
 }
 #chat-page > div {
   padding: 0px;
   overflow: hidden;
-  display: flex;
 }
-#chat-page #main {
+#chat-page > div > #main {
   width: calc(100% - var(--ribbon-size));
-  display: flex;
-  flex-direction: column;
 }
 #chat-page #main > div,
-#chat-page #main .content {
+#chat-page > div > #main > div > .pane,
+#chat-page > div > #main > div > .pane > .content {
   width: 100%;
   height: 100%;
   flex: 1;
-  display: flex;
+}
+#chat-page > div > #main > div > .pane {
   flex-direction: column;
 }
-#chat-page #main .content {
+#chat-page > div > #main > div > .pane > .content {
+  flex-direction: column;
   overflow: auto;
   padding: var(--content-padding);
 }
@@ -238,41 +241,41 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page #main .content {
   flex-direction: column;
 }
-#chat-page #ribbon {
+#chat-page > div > #ribbon {
   width: var(--ribbon-size);
   border-right: 1px solid var(--border);
   justify-content: space-between;
   padding-bottom: var(--safe-area-bottom);
 }
-#chat-page #ribbon > span {
+#chat-page > div > #ribbon > span {
   height: 100%;
   flex: 1;
   overflow: auto;
   justify-content: flex-end;
 }
-#chat-page #main .toolbar {
+#chat-page > div > #main > div > .pane > .toolbar {
   height: var(--ribbon-size);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   padding-left: var(--content-padding);
   border-top: 1px solid var(--border);
 }
-#chat-page #ribbon,
-#chat-page .toolbar {
+#chat-page > div > #ribbon,
+#chat-page > div > #main > div > .pane > .toolbar {
   align-items: center;
 }
 #chat-page #ribbon > span,
-#chat-page .toolbar > span {
+#chat-page > div > #main > div > .pane > .toolbar > span {
   display: flex;
   flex-direction: column;
   padding: var(--gap-between-tiles);
   gap: var(--gap-between-tiles);
 }
-#chat-page #ribbon > span {
+#chat-page > div > #ribbon > span {
   width: 100%;
 }
-#chat-page #ribbon button,
-#chat-page .toolbar button {
+#chat-page > div > #ribbon button,
+#chat-page > div > #main > div > .pane > .toolbar button {
   padding: 0px;
   width: 100%;
   max-width: var(--control-height);
@@ -281,7 +284,7 @@ body[showing-chat] #chat-page-wrapper {
   align-items: center;
   justify-content: center;
 }
-#chat-page #ribbon > button {
+#chat-page > div > #ribbon > button {
   margin-top: var(--gap-between-tiles);
 }
 

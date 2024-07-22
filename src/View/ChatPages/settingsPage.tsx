@@ -16,136 +16,139 @@ export function SettingsPage(chatViewModel: ChatViewModel) {
   };
 
   return (
-    <div>
-      <div class="toolbar">
-        <span>{translations.chatPage.settings.settingsHeadline}</span>
-      </div>
-      <div class="content">
-        <label class="tile flex-no">
-          <span class="icon">forum</span>
-          <div>
-            <span>{translations.chatPage.settings.primaryChannelLabel}</span>
-            <input
-              bind:value={chatViewModel.primaryChannelInput}
-              on:enter={chatViewModel.setPrimaryChannel}
-            ></input>
+    <div id="settings-page">
+      <div class="pane">
+        <div class="toolbar">
+          <span>{translations.chatPage.settings.settingsHeadline}</span>
+        </div>
+        <div class="content">
+          <label class="tile flex-no">
+            <span class="icon">forum</span>
+            <div>
+              <span>{translations.chatPage.settings.primaryChannelLabel}</span>
+              <input
+                bind:value={chatViewModel.primaryChannelInput}
+                on:enter={chatViewModel.setPrimaryChannel}
+              ></input>
+            </div>
+          </label>
+          <div class="flex-row justify-end width-input">
+            <button
+              class="width-50"
+              aria-label={
+                translations.chatPage.settings.setPrimaryChannelButtonAudioLabel
+              }
+              on:click={chatViewModel.setPrimaryChannel}
+              toggle:disabled={chatViewModel.cannotSetPrimaryChannel}
+            >
+              {translations.general.setButton}
+              <span class="icon">check</span>
+            </button>
           </div>
-        </label>
-        <div class="flex-row justify-end width-input">
-          <button
-            class="width-50"
-            aria-label={
-              translations.chatPage.settings.setPrimaryChannelButtonAudioLabel
-            }
-            on:click={chatViewModel.setPrimaryChannel}
-            toggle:disabled={chatViewModel.cannotSetPrimaryChannel}
-          >
-            {translations.general.setButton}
-            <span class="icon">check</span>
-          </button>
-        </div>
 
-        <hr></hr>
+          <hr></hr>
 
-        <div class="flex-row width-input margin-bottom">
-          <input
-            aria-label={
-              translations.chatPage.settings.newSecondaryChannelAudioLabel
-            }
-            placeholder={
-              translations.chatPage.settings.newSecondaryChannelPlaceholder
-            }
-            bind:value={chatViewModel.newSecondaryChannelInput}
-            on:enter={chatViewModel.addSecondaryChannel}
-          ></input>
-          <button
-            class="primary"
-            aria-label={
-              translations.chatPage.settings.addSecondaryChannelButtonAudioLabel
-            }
-            on:click={chatViewModel.addSecondaryChannel}
-            toggle:disabled={chatViewModel.cannotAddSecondaryChannel}
-          >
-            <span class="icon">add</span>
-          </button>
-        </div>
-
-        <div
-          class="flex-column gap width-input"
-          children:append={[
-            chatViewModel.secondaryChannels,
-            secondaryChannelConverter,
-          ]}
-        ></div>
-
-        <hr></hr>
-
-        <label class="tile flex-no">
-          <span class="icon">key</span>
-          <div>
-            <span>{translations.chatPage.settings.encryptionKeyLabel}</span>
+          <div class="flex-row width-input margin-bottom">
             <input
-              bind:value={chatViewModel.encryptionKeyInput}
-              on:enter={chatViewModel.setEncryptionKey}
-              set:type={chatViewModel.encryptionKeyInputType}
+              aria-label={
+                translations.chatPage.settings.newSecondaryChannelAudioLabel
+              }
+              placeholder={
+                translations.chatPage.settings.newSecondaryChannelPlaceholder
+              }
+              bind:value={chatViewModel.newSecondaryChannelInput}
+              on:enter={chatViewModel.addSecondaryChannel}
             ></input>
+            <button
+              class="primary"
+              aria-label={
+                translations.chatPage.settings
+                  .addSecondaryChannelButtonAudioLabel
+              }
+              on:click={chatViewModel.addSecondaryChannel}
+              toggle:disabled={chatViewModel.cannotAddSecondaryChannel}
+            >
+              <span class="icon">add</span>
+            </button>
           </div>
-        </label>
-        <div class="flex-row justify-end width-input">
-          <button
-            class="width-50"
-            aria-label={
-              translations.chatPage.settings.setEncryptionKeyButtonAudioLabel
-            }
-            on:click={chatViewModel.setEncryptionKey}
-            toggle:disabled={chatViewModel.cannotSetEncryptionKey}
-          >
-            {translations.general.setButton}
-            <span class="icon">check</span>
-          </button>
-        </div>
 
-        <label class="inline">
-          <input
-            type="checkbox"
-            bind:checked={chatViewModel.shouldShowEncryptionKey}
-          ></input>
-          {translations.chatPage.settings.showEncryptionKey}
-        </label>
+          <div
+            class="flex-column gap width-input"
+            children:append={[
+              chatViewModel.secondaryChannels,
+              secondaryChannelConverter,
+            ]}
+          ></div>
 
-        <hr></hr>
+          <hr></hr>
 
-        <div class="flex-row gap width-input">
-          {...Object.values(Color).map((color) => {
-            const isSelected = React.createProxyState(
-              [chatViewModel.color],
-              () => chatViewModel.color.value == color
-            );
+          <label class="tile flex-no">
+            <span class="icon">key</span>
+            <div>
+              <span>{translations.chatPage.settings.encryptionKeyLabel}</span>
+              <input
+                bind:value={chatViewModel.encryptionKeyInput}
+                on:enter={chatViewModel.setEncryptionKey}
+                set:type={chatViewModel.encryptionKeyInputType}
+              ></input>
+            </div>
+          </label>
+          <div class="flex-row justify-end width-input">
+            <button
+              class="width-50"
+              aria-label={
+                translations.chatPage.settings.setEncryptionKeyButtonAudioLabel
+              }
+              on:click={chatViewModel.setEncryptionKey}
+              toggle:disabled={chatViewModel.cannotSetEncryptionKey}
+            >
+              {translations.general.setButton}
+              <span class="icon">check</span>
+            </button>
+          </div>
 
-            function setColor() {
-              chatViewModel.setColor(color);
-            }
+          <label class="inline">
+            <input
+              type="checkbox"
+              bind:checked={chatViewModel.shouldShowEncryptionKey}
+            ></input>
+            {translations.chatPage.settings.showEncryptionKey}
+          </label>
 
-            return (
-              <button
-                color={color}
-                class="fill-color width-100 flex"
-                style="height: 2rem"
-                toggle:selected={isSelected}
-                on:click={setColor}
-              ></button>
-            );
-          })}
-        </div>
+          <hr></hr>
 
-        <hr></hr>
+          <div class="flex-row gap width-input">
+            {...Object.values(Color).map((color) => {
+              const isSelected = React.createProxyState(
+                [chatViewModel.color],
+                () => chatViewModel.color.value == color
+              );
 
-        <div class="width-input">
-          {DangerousActionButton(
-            translations.chatPage.settings.deleteChatButton,
-            "chat_error",
-            chatViewModel.remove
-          )}
+              function setColor() {
+                chatViewModel.setColor(color);
+              }
+
+              return (
+                <button
+                  color={color}
+                  class="fill-color width-100 flex"
+                  style="height: 2rem"
+                  toggle:selected={isSelected}
+                  on:click={setColor}
+                ></button>
+              );
+            })}
+          </div>
+
+          <hr></hr>
+
+          <div class="width-input">
+            {DangerousActionButton(
+              translations.chatPage.settings.deleteChatButton,
+              "chat_error",
+              chatViewModel.remove
+            )}
+          </div>
         </div>
       </div>
     </div>
