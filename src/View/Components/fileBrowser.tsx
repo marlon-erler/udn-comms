@@ -2,12 +2,9 @@ import "./fileBrowser.css";
 
 import * as React from "bloatless-react";
 
-import StorageModel, {
-  PATH_COMPONENT_SEPARATOR,
-} from "../../Model/storageModel";
-
 import { DangerousActionButton } from "./dangerousActionButton";
 import { DirectoryItemList } from "./directoryItemList";
+import { PATH_COMPONENT_SEPARATOR } from "../../Model/Global/storageModel";
 import StorageViewModel from "../../ViewModel/storageViewModel";
 import { translations } from "../translations";
 

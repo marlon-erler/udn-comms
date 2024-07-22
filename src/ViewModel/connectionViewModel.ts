@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import ConnectionModel from "../Model/connectionModel";
+import ConnectionModel from "../Model/Global/connectionModel";
 
 export default class ConnectionViewModel {
   connectionModel: ConnectionModel;

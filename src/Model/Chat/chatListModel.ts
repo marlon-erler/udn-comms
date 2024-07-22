@@ -1,10 +1,10 @@
-import StorageModel, { storageKeys } from "./storageModel";
+import StorageModel, { storageKeys } from "../Global/storageModel";
 
 import ChatModel from "./chatModel";
-import ConnectionModel from "./connectionModel";
+import ConnectionModel from "../Global/connectionModel";
 import { Message } from "udn-frontend";
-import SettingsModel from "./settingsModel";
-import { localeCompare } from "./Utility/utility";
+import SettingsModel from "../Global/settingsModel";
+import { localeCompare } from "../Utility/utility";
 import { v4 } from "uuid";
 
 export default class ChatListModel {

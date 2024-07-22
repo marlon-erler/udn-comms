@@ -1,8 +1,8 @@
 import * as React from "bloatless-react";
 
 import { ChatMessageInfoModal } from "./chatMessageInfoModal";
-import { ChatMessageStatus } from "../../Model/chatModel";
-import ChatMessageViewModel from "../../Model/chatMessageViewModel";
+import { ChatMessageStatus } from "../../Model/Chat/chatModel";
+import ChatMessageViewModel from "../../ViewModel/chatMessageViewModel";
 import { translations } from "../translations";
 
 export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {

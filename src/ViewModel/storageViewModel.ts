@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import StorageModel, { PATH_COMPONENT_SEPARATOR } from "../Model/storageModel";
+import StorageModel, { PATH_COMPONENT_SEPARATOR } from "../Model/Global/storageModel";
 
 import { translations } from "../View/translations";
 

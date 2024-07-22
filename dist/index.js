@@ -335,7 +335,7 @@
     return a.localeCompare(b);
   }
 
-  // src/Model/storageModel.ts
+  // src/Model/Global/storageModel.ts
   var PATH_COMPONENT_SEPARATOR = "\\";
   var StorageModel = class _StorageModel {
     storageEntryTree = {};
@@ -467,7 +467,7 @@
     chatFiles: [DATA_VERSION, "chat", "files"]
   };
 
-  // src/Model/fileModel.ts
+  // src/Model/Files/fileModel.ts
   var FileModel = class _FileModel {
     chatModel;
     storageModel;
@@ -642,7 +642,7 @@
     return Color2;
   })(Color || {});
 
-  // src/Model/chatModel.ts
+  // src/Model/Chat/chatModel.ts
   var ChatModel = class _ChatModel {
     connectionModel;
     storageModel;
@@ -867,7 +867,7 @@
     stringifiedFile: ""
   };
 
-  // src/Model/chatListModel.ts
+  // src/Model/Chat/chatListModel.ts
   var ChatListModel = class {
     storageModel;
     settingsModel;
@@ -1826,7 +1826,7 @@
     }
   };
 
-  // src/Model/connectionModel.ts
+  // src/Model/Global/connectionModel.ts
   var ConnectionModel = class {
     udn;
     storageModel;
@@ -2198,7 +2198,7 @@
     return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("div", null, overviewSection, chatSection));
   }
 
-  // src/Model/settingsModel.ts
+  // src/Model/Global/settingsModel.ts
   var SettingsModel = class {
     storageModel;
     username;

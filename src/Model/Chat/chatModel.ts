@@ -1,19 +1,19 @@
 // this file is responsible for managing chats.
 
-import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
-import FileModel, { File } from "./fileModel";
-import StorageModel, { storageKeys } from "./storageModel";
+import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
+import FileModel, { File } from "../Files/fileModel";
+import StorageModel, { storageKeys } from "../Global/storageModel";
 import {
   createTimestamp,
   parseValidObject,
   stringify,
-} from "./Utility/utility";
-import { decryptString, encryptString } from "./Utility/crypto";
+} from "../Utility/utility";
+import { decryptString, encryptString } from "../Utility/crypto";
 
 import ChatListModel from "./chatListModel";
-import { Color } from "../ViewModel/colors";
-import ConnectionModel from "./connectionModel";
-import SettingsModel from "./settingsModel";
+import { Color } from "../../ViewModel/colors";
+import ConnectionModel from "../Global/connectionModel";
+import SettingsModel from "../Global/settingsModel";
 import { v4 } from "uuid";
 
 export default class ChatModel {

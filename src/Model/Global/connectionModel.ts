@@ -1,10 +1,10 @@
 // this file is responsible for managing UDN connections.
 
-import { ChatMessage, ChatMessageReference } from "./chatModel";
+import { ChatMessage, ChatMessageReference } from "../Chat/chatModel";
 import StorageModel, { storageKeys } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 
-import { stringify } from "./Utility/utility";
+import { stringify } from "../Utility/utility";
 
 export default class ConnectionModel {
   udn: UDNFrontend;

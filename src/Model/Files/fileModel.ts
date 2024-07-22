@@ -1,10 +1,10 @@
 // this file is responsible for managing files within chats.
 
-import { DATA_VERSION, ValidObject } from "./Utility/typeSafety";
-import StorageModel, { storageKeys } from "./storageModel";
-import { parseValidObject, stringify } from "./Utility/utility";
+import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
+import StorageModel, { storageKeys } from "../Global/storageModel";
+import { parseValidObject, stringify } from "../Utility/utility";
 
-import ChatModel from "./chatModel";
+import ChatModel from "../Chat/chatModel";
 import { v4 } from "uuid";
 
 export default class FileModel {

@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
-import ChatModel, { ChatMessage } from "../Model/chatModel";
-import StorageModel, { storageKeys } from "../Model/storageModel";
+import ChatModel, { ChatMessage } from "../Model/Chat/chatModel";
+import StorageModel, { storageKeys } from "../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import ChatMessageViewModel from "./chatMessageViewModel";
