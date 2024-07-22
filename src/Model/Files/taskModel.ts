@@ -139,12 +139,16 @@ export default class TaskModel {
     return taskFileContentOrNull;
   };
 
-  moveTask = (taskFileId: string, oldBoardId: string, newBoardId: string): boolean => {
+  moveTask = (
+    taskFileId: string,
+    oldBoardId: string,
+    newBoardId: string
+  ): void => {
     const sourcePath: string[] = this.getTaskPath(oldBoardId, taskFileId);
     const destinationPath: string[] = this.getTaskPath(newBoardId, taskFileId);
-    return this.storageModel.rename(sourcePath, destinationPath);
-  }
-  
+    this.storageModel.renameRecursively(sourcePath, destinationPath);
+  };
+
   // init
   constructor(
     storageModel: StorageModel,
