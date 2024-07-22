@@ -16,7 +16,7 @@ export default class TaskPageViewModel {
   // state
   newBoardNameInput: React.State<string> = new React.State("");
 
-  boardViewModels: React.ListState<BoardViewModel> = new React.ListState();
+  boardViewModels: React.MapState<BoardViewModel> = new React.MapState();
 
   // guards
   cannotCreateBoard: React.State<boolean> = React.createProxyState(
@@ -48,7 +48,7 @@ export default class TaskPageViewModel {
   // view
   showBoard = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);
-    this.boardViewModels.add(boardViewModel);
+    this.boardViewModels.set(boardInfo.fileId, boardViewModel);
   };
 
   // load
@@ -68,5 +68,10 @@ export default class TaskPageViewModel {
   // init
   constructor(taskModel: TaskModel, storageModel: StorageModel) {
     this.taskModel = taskModel;
+
+    // handlers
+    taskModel.setBoardHandler((boardInfoFileContent: BoardInfoFileContent) => {
+      this.showBoard(boardInfoFileContent);
+    });
   }
 }

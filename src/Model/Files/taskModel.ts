@@ -16,6 +16,8 @@ export default class TaskModel {
   chatModel: ChatModel;
   fileModel: FileModel;
 
+  boardHandler: (boardInfoFileContent: BoardInfoFileContent) => void = () => {};
+
   // paths
   getBasePath = (): string[] => {
     return this.fileModel.getModelContainerPath("taskModel");
@@ -60,7 +62,7 @@ export default class TaskModel {
   };
 
   handleBoard = (boardInfoFileContent: BoardInfoFileContent) => {
-    this.storeBoard(boardInfoFileContent);
+    this.updateBoard(boardInfoFileContent);
   };
 
   handleTask = (taskFileContent: TaskFileContent) => {
@@ -76,6 +78,7 @@ export default class TaskModel {
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.boardHandler(boardInfoFileContent);
     this.storeBoard(boardInfoFileContent);
     this.chatModel.sendMessage("", boardInfoFileContent);
   };
@@ -160,6 +163,13 @@ export default class TaskModel {
     this.storageModel.removeRecursively(taskReferencePath);
   };
 
+  // other
+  setBoardHandler = (
+    handler: (boardInfoFileContent: BoardInfoFileContent) => void
+  ): void => {
+    this.boardHandler = handler;
+  };
+
   // init
   constructor(
     storageModel: StorageModel,
@@ -169,6 +179,9 @@ export default class TaskModel {
     this.chatModel = chatModel;
     this.fileModel = fileModel;
     this.storageModel = storageModel;
+
+    // handlers
+    fileModel.setFileContentHandler(this.handleFileContent);
   }
 
   // utility

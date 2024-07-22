@@ -20,7 +20,6 @@ export default class FileModel {
 
   fileContentHandler: (fileContent: FileContent<string>) => void = () => {};
 
-
   // paths
   getBasePath = (): string[] => {
     return StorageModel.getPath(

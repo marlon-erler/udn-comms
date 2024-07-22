@@ -77,11 +77,6 @@ export default class ChatViewModel {
     chatModel.setMessageHandler((chatMessage: ChatMessage) => {
       this.messagePageViewModel.showChatMessage(chatMessage);
     });
-    chatModel.fileModel.setFileContentHandler(
-      (fileContent: FileContent<string>) => {
-        this.taskPageViewModel.handleFileContent(fileContent);
-      }
-    );
 
     // load
     this.loadPageSelection();

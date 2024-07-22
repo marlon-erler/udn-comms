@@ -531,6 +531,8 @@
     storageModel;
     chatModel;
     fileModel;
+    boardHandler = () => {
+    };
     // paths
     getBasePath = () => {
       return this.fileModel.getModelContainerPath("taskModel");
@@ -562,7 +564,7 @@
       }
     };
     handleBoard = (boardInfoFileContent) => {
-      this.storeBoard(boardInfoFileContent);
+      this.updateBoard(boardInfoFileContent);
     };
     handleTask = (taskFileContent) => {
       this.storeTask(taskFileContent);
@@ -574,6 +576,7 @@
       return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
+      this.boardHandler(boardInfoFileContent);
       this.storeBoard(boardInfoFileContent);
       this.chatModel.sendMessage("", boardInfoFileContent);
     };
@@ -639,11 +642,16 @@
       this.storageModel.removeRecursively(taskFilePath);
       this.storageModel.removeRecursively(taskReferencePath);
     };
+    // other
+    setBoardHandler = (handler) => {
+      this.boardHandler = handler;
+    };
     // init
     constructor(storageModel2, chatModel, fileModel) {
       this.chatModel = chatModel;
       this.fileModel = fileModel;
       this.storageModel = storageModel2;
+      fileModel.setFileContentHandler(this.handleFileContent);
     }
     // utility
     static createBoardInfoFileContent = (fileId, name, color) => {
@@ -1394,7 +1402,7 @@
     taskModel;
     // state
     newBoardNameInput = new State("");
-    boardViewModels = new ListState();
+    boardViewModels = new MapState();
     // guards
     cannotCreateBoard = createProxyState(
       [this.newBoardNameInput],
@@ -1416,7 +1424,7 @@
     // view
     showBoard = (boardInfo) => {
       const boardViewModel = new BoardViewModel(this, boardInfo);
-      this.boardViewModels.add(boardViewModel);
+      this.boardViewModels.set(boardInfo.fileId, boardViewModel);
     };
     // load
     loadData = () => {
@@ -1431,6 +1439,9 @@
     // init
     constructor(taskModel, storageModel2) {
       this.taskModel = taskModel;
+      taskModel.setBoardHandler((boardInfoFileContent) => {
+        this.showBoard(boardInfoFileContent);
+      });
     }
   };
 
@@ -1484,11 +1495,6 @@
       chatModel.setMessageHandler((chatMessage) => {
         this.messagePageViewModel.showChatMessage(chatMessage);
       });
-      chatModel.fileModel.setFileContentHandler(
-        (fileContent) => {
-          this.taskPageViewModel.handleFileContent(fileContent);
-        }
-      );
       this.loadPageSelection();
     }
   };
