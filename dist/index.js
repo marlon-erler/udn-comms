@@ -781,35 +781,6 @@
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
       this.taskModel = new TaskModel(this.storageModel, chatModel, this);
-      this.taskModel.createBoard("Hello");
-      const boards = this.taskModel.listBoardIds();
-      console.log("boards", boards);
-      const boardId = boards[0];
-      console.log("board id", this.taskModel.getBoardInfo(boardId));
-      const newInfo = TaskModel.createBoardInfoFileContent(
-        boardId,
-        "renamed",
-        "coral" /* Coral */
-      );
-      this.taskModel.updateBoard(newInfo);
-      console.log("info", this.taskModel.getBoardInfo(boardId));
-      this.taskModel.createTask(boardId, "New task");
-      const tasks = this.taskModel.listTaskIds(boardId);
-      console.log("tasks", tasks);
-      const taskId = tasks[0];
-      console.log("task id", taskId);
-      const newTaskContent = TaskModel.createTaskFileContent(
-        taskId,
-        "renamed",
-        boardId
-      );
-      this.taskModel.updateTask(newTaskContent);
-      setTimeout(() => {
-        this.taskModel.deleteTask(boardId, taskId);
-      }, 2e4);
-      setTimeout(() => {
-        this.taskModel.deleteBoard(boardId);
-      }, 3e4);
     }
     // utility
     static generateFileContentId = (creationDate) => {

@@ -39,6 +39,10 @@
 }
 
 @media (min-width: 700px) {
+  #message-page #composer input {
+    border-left: 1px solid var(--border);
+  }
+
   #message-page #composer .content-width-constraint,
   #message-page #composer .input-width-constraint {
     display: flex;
