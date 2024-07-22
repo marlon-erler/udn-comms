@@ -395,11 +395,7 @@
       if (object == null) return null;
       return object;
     };
-    // init
-    constructor() {
-      this.initializeTree();
-    }
-    // utility
+    // tree
     initializeTree = () => {
       console.log("initializing tree");
       this.storageEntryTree = {};
@@ -420,6 +416,11 @@
     printTree = () => {
       return stringify(this.storageEntryTree);
     };
+    // init
+    constructor() {
+      this.initializeTree();
+    }
+    // utility
     static getFileName = (pathComponents) => {
       return pathComponents[pathComponents.length - 1] || "\\";
     };
@@ -441,6 +442,39 @@
       }
       return _StorageModel.pathComponentsToString(...allComponents);
     };
+    static getPath(locationName, filePath) {
+      return [DATA_VERSION, storageLocations[locationName], ...filePath];
+    }
+  };
+  var storageLocations = {
+    connectionModel: "connection",
+    chat: "chat",
+    settingsModel: "settings"
+  };
+  var filePaths = {
+    connectionModel: {
+      socketAddress: ["socket-address"],
+      reconnectAddress: ["reconnect-address"],
+      outbox: ["outbox"],
+      mailboxes: ["mailboxes"],
+      previousAddresses: ["previous-addresses"]
+    },
+    chat: {
+      base: [],
+      chatBase: (id) => [id],
+      info: (id) => [...filePaths.chat.chatBase(id), "info"],
+      color: (id) => [...filePaths.chat.chatBase(id), "color"],
+      messages: (id) => [...filePaths.chat.chatBase(id), "messages"],
+      files: (id) => [...filePaths.chat.chatBase(id), "files"],
+      lastUsedPage: (id) => [
+        ...filePaths.chat.chatBase(id),
+        "last-used-page"
+      ]
+    },
+    settingsModel: {
+      username: ["user-name"],
+      firstDayOfWeek: ["first-day-of-week"]
+    }
   };
   var storageKeys = {
     // connection
@@ -467,10 +501,36 @@
     chatFiles: [DATA_VERSION, "chat", "files"]
   };
 
+  // src/Model/Files/taskModel.ts
+  var TaskModel = class {
+    chatModel;
+    fileModel;
+    // init
+    constructor(chatModel, fileModel) {
+      this.chatModel = chatModel;
+      this.fileModel = fileModel;
+    }
+  };
+
   // src/Model/Files/fileModel.ts
   var FileModel = class _FileModel {
     chatModel;
     storageModel;
+    taskModel;
+    // paths
+    getBasePath = () => {
+      return StorageModel.getPath(
+        "chat",
+        filePaths.chat.files(this.chatModel.id)
+      );
+    };
+    getFilePath = (fileId) => {
+      return [...this.getBasePath(), fileId];
+    };
+    getFileContentPath = (file, fileContentName) => {
+      const filePath = this.getFilePath(file.id);
+      return [...filePath, fileContentName];
+    };
     // handler
     handleStringifiedFile = (stringifiedFile) => {
       const file = parseValidObject(stringifiedFile, FileReference);
@@ -489,7 +549,7 @@
     };
     storeFileContent = (file, fileContent) => {
       const fileContentName = _FileModel.getFileContentName(fileContent);
-      const fileContentPath = _FileModel.getFileContentPath(
+      const fileContentPath = this.getFileContentPath(
         file,
         fileContentName
       );
@@ -499,14 +559,14 @@
       this.storageModel.write(fileContentPath, stringifiedContent);
     };
     listFileIds = () => {
-      return this.storageModel.list(storageKeys.chatFiles);
+      return this.storageModel.list(this.getBasePath());
     };
     listFileContents = (file) => {
-      const filePath = _FileModel.getFilePath(file.id);
+      const filePath = this.getFilePath(file.id);
       return this.storageModel.list(filePath);
     };
     getFile = (fileId) => {
-      const filePath = _FileModel.getFilePath(fileId);
+      const filePath = this.getFilePath(fileId);
       const fileOrNull = this.storageModel.readStringifiable(
         filePath,
         FileReference
@@ -517,7 +577,7 @@
       return fileContentNames[fileContentNames.length - 1];
     };
     getFileContent = (file, fileContentName) => {
-      const filePath = _FileModel.getFileContentPath(file, fileContentName);
+      const filePath = this.getFileContentPath(file, fileContentName);
       const fileContentOrNull = this.storageModel.readStringifiable(filePath, FileContentReference);
       return fileContentOrNull;
     };
@@ -525,17 +585,11 @@
     constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
+      this.taskModel = new TaskModel(chatModel, this);
     }
     // utility
-    static getFilePath = (fileId) => {
-      return [...storageKeys.chatFiles, fileId];
-    };
     static getFileContentName = (fileContent) => {
       return fileContent.creationDate + fileContent.id;
-    };
-    static getFileContentPath = (file, fileContentName) => {
-      const filePath = _FileModel.getFilePath(file.id);
-      return [...filePath, fileContentName];
     };
     static createFile = () => {
       return {
@@ -655,26 +709,29 @@
     color;
     chatMessageHandler = () => {
     };
+    // paths
+    getBasePath = () => {
+      return StorageModel.getPath("chat", filePaths.chat.chatBase(this.id));
+    };
+    getInfoPath = () => {
+      return StorageModel.getPath("chat", filePaths.chat.info(this.id));
+    };
+    getColorPath = () => {
+      return StorageModel.getPath("chat", filePaths.chat.color(this.id));
+    };
+    getMessageDirPath = () => {
+      return StorageModel.getPath("chat", filePaths.chat.messages(this.id));
+    };
+    getMessagePath = (id) => {
+      return [...this.getMessageDirPath(), id];
+    };
     // sorting
     get index() {
       return this.chatListModel.getIndexOfPrimaryChannel(
         this.info.primaryChannel
       );
     }
-    // paths
-    get infoPath() {
-      return storageKeys.chatInfo(this.id);
-    }
-    get colorPath() {
-      return storageKeys.chatColor(this.id);
-    }
-    get messageDirPath() {
-      return storageKeys.chatMessages(this.id);
-    }
-    getMessagePath = (id) => {
-      return [...this.messageDirPath, id];
-    };
-    // set
+    // settings
     setPrimaryChannel = (primaryChannel) => {
       this.info.primaryChannel = primaryChannel;
       this.storeInfo();
@@ -693,63 +750,6 @@
       this.color = color;
       this.storeColor();
     };
-    // store & add
-    storeInfo = () => {
-      this.storageModel.writeStringifiable(this.infoPath, this.info);
-    };
-    storeColor = () => {
-      this.storageModel.write(this.colorPath, this.color);
-    };
-    addMessage = async (chatMessage) => {
-      await this.decryptMessage(chatMessage);
-      if (chatMessage.body != "") {
-        const messagePath = this.getMessagePath(chatMessage.id);
-        this.storageModel.writeStringifiable(messagePath, chatMessage);
-        this.chatMessageHandler(chatMessage);
-      }
-      this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
-    };
-    // delete
-    delete = () => {
-      this.chatListModel.untrackChat(this);
-      const dirPath = [...storageKeys.chats, this.id];
-      this.storageModel.removeRecursively(dirPath);
-    };
-    // load
-    loadInfo = () => {
-      const info = this.storageModel.readStringifiable(
-        this.infoPath,
-        ChatInfoReference
-      );
-      if (info != null) {
-        this.info = info;
-      } else {
-        this.info = _ChatModel.generateChatInfo("0");
-      }
-    };
-    loadColor = () => {
-      const path = this.colorPath;
-      const color = this.storageModel.read(path);
-      if (!color) {
-        this.color = "standard" /* Standard */;
-      } else {
-        this.color = color;
-      }
-    };
-    get messages() {
-      const messageIds = this.storageModel.list(this.messageDirPath);
-      if (!Array.isArray(messageIds)) return [];
-      const chatMessages = [];
-      for (const messageId of messageIds) {
-        const messagePath = this.getMessagePath(messageId);
-        const chatMessage = this.storageModel.readStringifiable(messagePath, ChatMessageReference);
-        chatMessages.push(chatMessage);
-      }
-      const sorted = chatMessages.sort(
-        (a, b) => a.dateSent.localeCompare(b.dateSent)
-      );
-      return sorted;
-    }
     // messaging
     sendMessage = async (body, file) => {
       const senderName = this.settingsModel.username;
@@ -801,6 +801,64 @@
     subscribe = () => {
       this.connectionModel.addChannel(this.info.primaryChannel);
     };
+    // storage
+    storeInfo = () => {
+      this.storageModel.writeStringifiable(this.getInfoPath(), this.info);
+    };
+    storeColor = () => {
+      this.storageModel.write(this.getColorPath(), this.color);
+    };
+    addMessage = async (chatMessage) => {
+      await this.decryptMessage(chatMessage);
+      if (chatMessage.body != "") {
+        const messagePath = this.getMessagePath(chatMessage.id);
+        this.storageModel.writeStringifiable(messagePath, chatMessage);
+        this.chatMessageHandler(chatMessage);
+      }
+      this.fileModel.handleStringifiedFile(chatMessage.stringifiedFile);
+    };
+    delete = () => {
+      this.chatListModel.untrackChat(this);
+      const dirPath = this.getBasePath();
+      this.storageModel.removeRecursively(dirPath);
+    };
+    // load
+    loadInfo = () => {
+      const info = this.storageModel.readStringifiable(
+        this.getInfoPath(),
+        ChatInfoReference
+      );
+      if (info != null) {
+        this.info = info;
+      } else {
+        this.info = _ChatModel.generateChatInfo("0");
+      }
+    };
+    loadColor = () => {
+      const path = this.getColorPath();
+      const color = this.storageModel.read(path);
+      if (!color) {
+        this.color = "standard" /* Standard */;
+      } else {
+        this.color = color;
+      }
+    };
+    get messages() {
+      const messageIds = this.storageModel.list(
+        this.getMessageDirPath()
+      );
+      if (!Array.isArray(messageIds)) return [];
+      const chatMessages = [];
+      for (const messageId of messageIds) {
+        const messagePath = this.getMessagePath(messageId);
+        const chatMessage = this.storageModel.readStringifiable(messagePath, ChatMessageReference);
+        chatMessages.push(chatMessage);
+      }
+      const sorted = chatMessages.sort(
+        (a, b) => a.dateSent.localeCompare(b.dateSent)
+      );
+      return sorted;
+    }
     // init
     constructor(storageModel2, connectionModel2, settingsModel2, chatListModel2, chatId) {
       this.id = chatId;
@@ -890,7 +948,19 @@
         }
       }
     };
-    // store & add
+    // sorting
+    updateIndices = () => {
+      this.sortedPrimaryChannels = [];
+      let allChannels = [];
+      for (const chatModel of this.chatModels) {
+        allChannels.push(chatModel.info.primaryChannel);
+      }
+      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
+    };
+    getIndexOfPrimaryChannel(primaryChannel) {
+      return this.sortedPrimaryChannels.indexOf(primaryChannel);
+    }
+    // storage
     addChatModel = (chatModel) => {
       this.chatModels.add(chatModel);
       this.updateIndices();
@@ -912,21 +982,9 @@
       this.chatModels.delete(chat);
       this.updateIndices();
     };
-    // sorting
-    updateIndices = () => {
-      this.sortedPrimaryChannels = [];
-      let allChannels = [];
-      for (const chatModel of this.chatModels) {
-        allChannels.push(chatModel.info.primaryChannel);
-      }
-      this.sortedPrimaryChannels = allChannels.sort(localeCompare);
-    };
-    getIndexOfPrimaryChannel(primaryChannel) {
-      return this.sortedPrimaryChannels.indexOf(primaryChannel);
-    }
     // load
     loadChats = () => {
-      const chatDir = storageKeys.chats;
+      const chatDir = StorageModel.getPath("chat", filePaths.chat.base);
       const chatIds = this.storageModel.list(chatDir);
       for (const chatId of chatIds) {
         const chatModel = new ChatModel(
@@ -1844,15 +1902,7 @@
     messageSentHandler = () => {
     };
     channelsToSubscribe = /* @__PURE__ */ new Set();
-    // connection
-    connect = (address) => {
-      this.udn.connect(address);
-    };
-    disconnect = () => {
-      this.udn.disconnect();
-      const reconnectAddressPath = storageKeys.reconnectAddress;
-      this.storageModel.remove(reconnectAddressPath);
-    };
+    // handlers
     handleMessage = (data) => {
       this.messageHandler(data);
     };
@@ -1866,23 +1916,41 @@
       this.sendSubscriptionRequest();
       this.sendMessagesInOutbox();
     };
+    // connection
+    connect = (address) => {
+      this.udn.connect(address);
+    };
+    disconnect = () => {
+      this.udn.disconnect();
+      const reconnectAddressPath = StorageModel.getPath(
+        "connectionModel",
+        filePaths.connectionModel.reconnectAddress
+      );
+      this.storageModel.remove(reconnectAddressPath);
+    };
     // mailbox
+    getMailboxPath = (address) => {
+      const mailboxDirPath = StorageModel.getPath(
+        "connectionModel",
+        filePaths.connectionModel.mailboxes
+      );
+      const mailboxFilePath = [...mailboxDirPath, address];
+      return mailboxFilePath;
+    };
     requestNewMailbox = () => {
       console.trace("requesting mailbox");
       this.udn.requestMailbox();
     };
     connectMailbox = () => {
       if (this.address == void 0) return;
-      const path = [...storageKeys.mailboxes, this.address];
-      const mailboxId = this.storageModel.read(path);
+      const mailboxId = this.storageModel.read(this.getMailboxPath(this.address));
       console.log("connecting mailbox", mailboxId);
       if (mailboxId == null) return this.requestNewMailbox();
       this.udn.connectMailbox(mailboxId);
     };
     storeMailbox = (mailboxId) => {
       if (this.address == void 0) return;
-      const path = [...storageKeys.mailboxes, this.address];
-      this.storageModel.write(path, mailboxId);
+      this.storageModel.write(this.getMailboxPath(this.address), mailboxId);
     };
     // subscription
     addChannel = (channel) => {
@@ -1897,8 +1965,14 @@
       this.connectMailbox();
     };
     // outbox
+    getOutboxPath = () => {
+      return StorageModel.getPath(
+        "connectionModel",
+        filePaths.connectionModel.outbox
+      );
+    };
     getOutboxMessags = () => {
-      const outboxPath = storageKeys.outbox;
+      const outboxPath = this.getOutboxPath();
       const messageIds = this.storageModel.list(outboxPath);
       let chatMessages = [];
       for (const messageId of messageIds) {
@@ -1912,11 +1986,11 @@
       return chatMessages;
     };
     addToOutbox = (chatMessage) => {
-      const messagePath = [...storageKeys.outbox, chatMessage.id];
+      const messagePath = [...this.getOutboxPath(), chatMessage.id];
       this.storageModel.writeStringifiable(messagePath, chatMessage);
     };
     removeFromOutbox = (chatMessage) => {
-      const messagePath = [...storageKeys.outbox, chatMessage.id];
+      const messagePath = [...this.getOutboxPath(), chatMessage.id];
       this.storageModel.remove(messagePath);
     };
     sendMessagesInOutbox = () => {
@@ -1943,14 +2017,26 @@
       return isSent;
     };
     // storage
+    getPreviousAddressPath = () => {
+      return StorageModel.getPath(
+        "connectionModel",
+        filePaths.connectionModel.previousAddresses
+      );
+    };
     getAddressPath = (address) => {
-      const dirPath = storageKeys.previousAddresses;
+      const dirPath = this.getPreviousAddressPath();
       return [...dirPath, address];
+    };
+    getReconnectAddressPath = () => {
+      return StorageModel.getPath(
+        "connectionModel",
+        filePaths.connectionModel.reconnectAddress
+      );
     };
     storeAddress = (address) => {
       const addressPath = this.getAddressPath(address);
       this.storageModel.write(addressPath, "");
-      const reconnectAddressPath = storageKeys.reconnectAddress;
+      const reconnectAddressPath = this.getReconnectAddressPath();
       this.storageModel.write(reconnectAddressPath, address);
     };
     removeAddress = (address) => {
@@ -1958,10 +2044,10 @@
       this.storageModel.remove(addressPath);
     };
     get addresses() {
-      const dirPath = storageKeys.previousAddresses;
+      const dirPath = this.getPreviousAddressPath();
       return this.storageModel.list(dirPath);
     }
-    // handlers
+    // other
     setConnectionChangeHandler = (handler) => {
       this.connectionChangeHandler = handler;
     };
@@ -1971,7 +2057,7 @@
     setMessageSentHandler = (handler) => {
       this.messageSentHandler = handler;
     };
-    // setup
+    // init
     constructor(storageModel2) {
       this.udn = new UDNFrontend();
       this.storageModel = storageModel2;
@@ -1996,7 +2082,7 @@
       this.udn.onmailboxconnect = (mailboxId) => {
         console.log(`using mailbox ${mailboxId}`);
       };
-      const reconnectAddressPath = storageKeys.reconnectAddress;
+      const reconnectAddressPath = this.getPreviousAddressPath();
       const reconnectAddress = storageModel2.read(reconnectAddressPath);
       if (reconnectAddress != null) {
         this.connect(reconnectAddress);
@@ -2201,27 +2287,40 @@
   // src/Model/Global/settingsModel.ts
   var SettingsModel = class {
     storageModel;
+    // data
     username;
     firstDayOfWeek;
-    // set
+    // storage
     setName(newValue) {
       this.username = newValue;
-      const path = storageKeys.username;
+      const path = StorageModel.getPath(
+        "settingsModel",
+        filePaths.settingsModel.username
+      );
       this.storageModel.write(path, newValue);
     }
     setFirstDayOfWeek(newValue) {
       this.firstDayOfWeek = newValue;
-      const path = storageKeys.firstDayOfWeek;
+      const path = StorageModel.getPath(
+        "settingsModel",
+        filePaths.settingsModel.firstDayOfWeek
+      );
       this.storageModel.write(path, newValue);
     }
     // load
     loadUsernam() {
-      const path = storageKeys.username;
+      const path = StorageModel.getPath(
+        "settingsModel",
+        filePaths.settingsModel.username
+      );
       const content = this.storageModel.read(path);
       this.username = content ?? "";
     }
     loadFirstDayofWeek() {
-      const path = storageKeys.firstDayOfWeek;
+      const path = StorageModel.getPath(
+        "settingsModel",
+        filePaths.settingsModel.firstDayOfWeek
+      );
       const content = this.storageModel.read(path);
       this.firstDayOfWeek = content ?? "0";
     }

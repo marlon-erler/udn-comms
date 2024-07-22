@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
 import ChatModel, { ChatMessage } from "../Model/Chat/chatModel";
-import StorageModel, { storageKeys } from "../Model/Global/storageModel";
+import StorageModel, { filePaths } from "../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import ChatMessageViewModel from "./chatMessageViewModel";
@@ -134,7 +134,7 @@ export default class ChatViewModel {
   // messaging
   sendMessage = (): void => {
     if (this.cannotSendMessage.value == true) return;
-    
+
     this.sendMessageFromBody(this.composingMessage.value);
     this.composingMessage.value = "";
   };
@@ -154,7 +154,10 @@ export default class ChatViewModel {
 
   // load
   loadPageSelection = (): void => {
-    const path: string[] = storageKeys.chatLastUsedPage(this.chatModel.id);
+    const path: string[] = StorageModel.getPath(
+      "chat",
+      filePaths.chat.lastUsedPage(this.chatModel.id)
+    );
     const lastUsedPage: string | null = this.storageModel.read(path);
     if (lastUsedPage != null) {
       this.selectedPage.value = lastUsedPage as any;
@@ -178,7 +181,7 @@ export default class ChatViewModel {
     for (const chatMessage of this.chatModel.messages) {
       this.addChatMessage(chatMessage);
     }
-  }
+  };
 
   // init
   constructor(

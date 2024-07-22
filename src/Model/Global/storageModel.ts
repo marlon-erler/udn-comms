@@ -90,12 +90,7 @@ export default class StorageModel {
     return object;
   };
 
-  // init
-  constructor() {
-    this.initializeTree();
-  }
-
-  // utility
+  // tree
   initializeTree = (): void => {
     console.log("initializing tree");
 
@@ -121,6 +116,12 @@ export default class StorageModel {
     return stringify(this.storageEntryTree);
   };
 
+  // init
+  constructor() {
+    this.initializeTree();
+  }
+
+  // utility
   static getFileName = (pathComponents: string[]): string => {
     return pathComponents[pathComponents.length - 1] || "\\";
   };
@@ -146,36 +147,52 @@ export default class StorageModel {
     }
     return StorageModel.pathComponentsToString(...allComponents);
   };
+
+  static getPath(
+    locationName: keyof typeof storageLocations,
+    filePath: string[]
+  ): string[] {
+    return [DATA_VERSION, storageLocations[locationName], ...filePath];
+  }
 }
 
 // types
 export type StorageEntry = { [key: string]: StorageEntry };
 
-// keys
-export const storageKeys = {
-  // connection
-  socketAddress: [DATA_VERSION, "connection", "socket-address"],
-  reconnectAddress: [DATA_VERSION, "connection", "reconnect-address"],
-  outbox: [DATA_VERSION, "connection", "outbox"],
-  mailboxes: [DATA_VERSION, "connection", "mailboxes"],
+// locations
+const storageLocations = {
+  connectionModel: "connection",
 
-  // settings
-  username: [DATA_VERSION, "settings", "user-name"],
-  firstDayOfWeek: [DATA_VERSION, "settings", "first-day-of-week"],
+  chat: "chat",
 
-  // history
-  previousAddresses: [DATA_VERSION, "history", "previous-addresses"],
+  settingsModel: "settings",
+};
 
-  // chat
-  chats: [DATA_VERSION, "chat"],
-  chatInfo: (id: string) => [DATA_VERSION, "chat", id, "info"],
-  chatLastUsedPage: (id: string) => [
-    DATA_VERSION,
-    "chat",
-    id,
-    "last-used-page",
-  ],
-  chatColor: (id: string) => [DATA_VERSION, "chat", id, "color"],
-  chatMessages: (id: string) => [DATA_VERSION, "chat", id, "messages"],
-  chatFiles: [DATA_VERSION, "chat", "files"],
+export const filePaths = {
+  connectionModel: {
+    socketAddress: ["socket-address"],
+    reconnectAddress: ["reconnect-address"],
+    outbox: ["outbox"],
+    mailboxes: ["mailboxes"],
+
+    previousAddresses: ["previous-addresses"],
+  },
+
+  chat: {
+    base: [],
+    chatBase: (id: string) => [id],
+    info: (id: string) => [...filePaths.chat.chatBase(id), "info"],
+    color: (id: string) => [...filePaths.chat.chatBase(id), "color"],
+    messages: (id: string) => [...filePaths.chat.chatBase(id), "messages"],
+    files: (id: string) => [...filePaths.chat.chatBase(id), "files"],
+    lastUsedPage: (id: string) => [
+      ...filePaths.chat.chatBase(id),
+      "last-used-page",
+    ],
+  },
+
+  settingsModel: {
+    username: ["user-name"],
+    firstDayOfWeek: ["first-day-of-week"],
+  },
 };

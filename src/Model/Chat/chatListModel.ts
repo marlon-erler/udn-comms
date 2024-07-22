@@ -1,4 +1,4 @@
-import StorageModel, { storageKeys } from "../Global/storageModel";
+import StorageModel, { filePaths } from "../Global/storageModel";
 
 import ChatModel from "./chatModel";
 import ConnectionModel from "../Global/connectionModel";
@@ -78,7 +78,7 @@ export default class ChatListModel {
 
   // load
   loadChats = (): void => {
-    const chatDir = storageKeys.chats;
+    const chatDir = StorageModel.getPath("chat", filePaths.chat.base);
     const chatIds = this.storageModel.list(chatDir);
     for (const chatId of chatIds) {
       const chatModel = new ChatModel(

@@ -1,6 +1,6 @@
 // this file is responsible for all settings.
 
-import StorageModel, { storageKeys } from "./storageModel";
+import StorageModel, { filePaths } from "./storageModel";
 
 export default class SettingsModel {
   storageModel: StorageModel;
@@ -9,28 +9,40 @@ export default class SettingsModel {
   username: string;
   firstDayOfWeek: string;
 
-  // set
+  // storage
   setName(newValue: string): void {
     this.username = newValue;
-    const path = storageKeys.username;
+    const path = StorageModel.getPath(
+      "settingsModel",
+      filePaths.settingsModel.username
+    );
     this.storageModel.write(path, newValue);
   }
 
   setFirstDayOfWeek(newValue: string): void {
     this.firstDayOfWeek = newValue;
-    const path = storageKeys.firstDayOfWeek;
+    const path = StorageModel.getPath(
+      "settingsModel",
+      filePaths.settingsModel.firstDayOfWeek
+    );
     this.storageModel.write(path, newValue);
   }
 
   // load
   loadUsernam(): void {
-    const path = storageKeys.username;
+    const path = StorageModel.getPath(
+      "settingsModel",
+      filePaths.settingsModel.username
+    );
     const content = this.storageModel.read(path);
     this.username = content ?? "";
   }
 
   loadFirstDayofWeek(): void {
-    const path = storageKeys.firstDayOfWeek;
+    const path = StorageModel.getPath(
+      "settingsModel",
+      filePaths.settingsModel.firstDayOfWeek
+    );
     const content = this.storageModel.read(path);
     this.firstDayOfWeek = content ?? "0";
   }

@@ -2,7 +2,7 @@
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
 import FileModel, { File } from "../Files/fileModel";
-import StorageModel, { storageKeys } from "../Global/storageModel";
+import StorageModel, { filePaths } from "../Global/storageModel";
 import {
   createTimestamp,
   parseValidObject,
@@ -32,20 +32,24 @@ export default class ChatModel {
   chatMessageHandler: (chatMessage: ChatMessage) => void = () => {};
 
   // paths
-  get infoPath(): string[] {
-    return storageKeys.chatInfo(this.id);
-  }
+  getBasePath = (): string[] => {
+    return StorageModel.getPath("chat", filePaths.chat.chatBase(this.id));
+  };
 
-  get colorPath(): string[] {
-    return storageKeys.chatColor(this.id);
-  }
+  getInfoPath = (): string[] => {
+    return StorageModel.getPath("chat", filePaths.chat.info(this.id));
+  };
 
-  get messageDirPath(): string[] {
-    return storageKeys.chatMessages(this.id);
-  }
+  getColorPath = (): string[] => {
+    return StorageModel.getPath("chat", filePaths.chat.color(this.id));
+  };
+
+  getMessageDirPath = (): string[] => {
+    return StorageModel.getPath("chat", filePaths.chat.messages(this.id));
+  };
 
   getMessagePath = (id: string): string[] => {
-    return [...this.messageDirPath, id];
+    return [...this.getMessageDirPath(), id];
   };
 
   // sorting
@@ -78,75 +82,75 @@ export default class ChatModel {
     this.storeColor();
   };
 
-// messaging
-sendMessage = async (body: string, file?: File): Promise<boolean> => {
-  const senderName = this.settingsModel.username;
-  if (senderName == "") return false;
+  // messaging
+  sendMessage = async (body: string, file?: File): Promise<boolean> => {
+    const senderName = this.settingsModel.username;
+    if (senderName == "") return false;
 
-  const allChannels = [this.info.primaryChannel];
-  for (const secondaryChannel of this.info.secondaryChannels) {
-    allChannels.push(secondaryChannel);
-  }
+    const allChannels = [this.info.primaryChannel];
+    for (const secondaryChannel of this.info.secondaryChannels) {
+      allChannels.push(secondaryChannel);
+    }
 
-  const combinedChannel: string = allChannels.join("/");
+    const combinedChannel: string = allChannels.join("/");
 
-  const chatMessage: ChatMessage = await ChatModel.createChatMessage(
-    combinedChannel,
-    senderName,
-    this.info.encryptionKey,
-    body,
-    file
-  );
+    const chatMessage: ChatMessage = await ChatModel.createChatMessage(
+      combinedChannel,
+      senderName,
+      this.info.encryptionKey,
+      body,
+      file
+    );
 
-  this.addMessage(chatMessage);
-  this.connectionModel.sendMessageOrStore(chatMessage);
-  return true;
-};
+    this.addMessage(chatMessage);
+    this.connectionModel.sendMessageOrStore(chatMessage);
+    return true;
+  };
 
-handleMessage = (body: string): void => {
-  const chatMessage: ChatMessage | null = parseValidObject(
-    body,
-    ChatMessageReference
-  );
-  if (chatMessage == null) return;
+  handleMessage = (body: string): void => {
+    const chatMessage: ChatMessage | null = parseValidObject(
+      body,
+      ChatMessageReference
+    );
+    if (chatMessage == null) return;
 
-  chatMessage.status = ChatMessageStatus.Received;
-  this.addMessage(chatMessage);
-};
+    chatMessage.status = ChatMessageStatus.Received;
+    this.addMessage(chatMessage);
+  };
 
-handleMessageSent = (chatMessage: ChatMessage): void => {
-  chatMessage.status = ChatMessageStatus.Sent;
-  this.addMessage(chatMessage);
-};
+  handleMessageSent = (chatMessage: ChatMessage): void => {
+    chatMessage.status = ChatMessageStatus.Sent;
+    this.addMessage(chatMessage);
+  };
 
-decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
-  const decryptedBody: string = await decryptString(
-    chatMessage.body,
-    this.info.encryptionKey
-  );
-  const decryptedFile: string = await decryptString(
-    chatMessage.stringifiedFile ?? "",
-    this.info.encryptionKey
-  );
-  chatMessage.body = decryptedBody;
-  chatMessage.stringifiedFile = decryptedFile;
-};
+  decryptMessage = async (chatMessage: ChatMessage): Promise<void> => {
+    const decryptedBody: string = await decryptString(
+      chatMessage.body,
+      this.info.encryptionKey
+    );
+    const decryptedFile: string = await decryptString(
+      chatMessage.stringifiedFile ?? "",
+      this.info.encryptionKey
+    );
+    chatMessage.body = decryptedBody;
+    chatMessage.stringifiedFile = decryptedFile;
+  };
 
-setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
-  this.chatMessageHandler = handler;
-};
+  setMessageHandler = (handler: (chatMessage: ChatMessage) => void): void => {
+    this.chatMessageHandler = handler;
+  };
 
-subscribe = (): void => {
-  this.connectionModel.addChannel(this.info.primaryChannel);
-};
+  subscribe = (): void => {
+    this.connectionModel.addChannel(this.info.primaryChannel);
+  };
 
   // storage
   storeInfo = (): void => {
-    this.storageModel.writeStringifiable(this.infoPath, this.info);
+    this.storageModel.writeStringifiable(this.getInfoPath(), this.info);
   };
 
   storeColor = (): void => {
-    this.storageModel.write(this.colorPath, this.color);
+    this.storageModel.write(this.getColorPath(), this.color);
   };
 
   addMessage = async (chatMessage: ChatMessage): Promise<void> => {
@@ -168,14 +172,14 @@ subscribe = (): void => {
     this.chatListModel.untrackChat(this);
 
     // delete
-    const dirPath: string[] = [...storageKeys.chats, this.id];
+    const dirPath: string[] = this.getBasePath();
     this.storageModel.removeRecursively(dirPath);
   };
 
   // load
   loadInfo = (): void => {
     const info: ChatInfo | null = this.storageModel.readStringifiable(
-      this.infoPath,
+      this.getInfoPath(),
       ChatInfoReference
     );
     if (info != null) {
@@ -186,7 +190,7 @@ subscribe = (): void => {
   };
 
   loadColor = (): void => {
-    const path: string[] = this.colorPath;
+    const path: string[] = this.getColorPath();
     const color: string | null = this.storageModel.read(path);
     if (!color) {
       this.color = Color.Standard;
@@ -196,7 +200,9 @@ subscribe = (): void => {
   };
 
   get messages(): ChatMessage[] {
-    const messageIds: string[] = this.storageModel.list(this.messageDirPath);
+    const messageIds: string[] = this.storageModel.list(
+      this.getMessageDirPath()
+    );
     if (!Array.isArray(messageIds)) return [];
 
     const chatMessages: ChatMessage[] = [];

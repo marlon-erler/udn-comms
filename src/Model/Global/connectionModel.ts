@@ -1,7 +1,7 @@
 // this file is responsible for managing UDN connections.
 
 import { ChatMessage, ChatMessageReference } from "../Chat/chatModel";
-import StorageModel, { storageKeys } from "./storageModel";
+import StorageModel, { filePaths } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 
 import { stringify } from "../Utility/utility";
@@ -52,11 +52,23 @@ export default class ConnectionModel {
     this.udn.disconnect();
 
     // do not reconnect
-    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    const reconnectAddressPath: string[] = StorageModel.getPath(
+      "connectionModel",
+      filePaths.connectionModel.reconnectAddress
+    );
     this.storageModel.remove(reconnectAddressPath);
   };
 
   // mailbox
+  getMailboxPath = (address: string): string[] => {
+    const mailboxDirPath = StorageModel.getPath(
+      "connectionModel",
+      filePaths.connectionModel.mailboxes
+    );
+    const mailboxFilePath = [...mailboxDirPath, address];
+    return mailboxFilePath;
+  };
+
   requestNewMailbox = (): void => {
     console.trace("requesting mailbox");
     this.udn.requestMailbox();
@@ -64,8 +76,8 @@ export default class ConnectionModel {
 
   connectMailbox = (): void => {
     if (this.address == undefined) return;
-    const path = [...storageKeys.mailboxes, this.address];
-    const mailboxId = this.storageModel.read(path);
+
+    const mailboxId = this.storageModel.read(this.getMailboxPath(this.address));
     console.log("connecting mailbox", mailboxId);
     if (mailboxId == null) return this.requestNewMailbox();
 
@@ -74,8 +86,7 @@ export default class ConnectionModel {
 
   storeMailbox = (mailboxId: string): void => {
     if (this.address == undefined) return;
-    const path = [...storageKeys.mailboxes, this.address];
-    this.storageModel.write(path, mailboxId);
+    this.storageModel.write(this.getMailboxPath(this.address), mailboxId);
   };
 
   // subscription
@@ -95,8 +106,15 @@ export default class ConnectionModel {
   };
 
   // outbox
+  getOutboxPath = (): string[] => {
+    return StorageModel.getPath(
+      "connectionModel",
+      filePaths.connectionModel.outbox
+    );
+  };
+
   getOutboxMessags = (): ChatMessage[] => {
-    const outboxPath: string[] = storageKeys.outbox;
+    const outboxPath: string[] = this.getOutboxPath();
     const messageIds: string[] = this.storageModel.list(outboxPath);
 
     let chatMessages: ChatMessage[] = [];
@@ -115,12 +133,12 @@ export default class ConnectionModel {
   };
 
   addToOutbox = (chatMessage: ChatMessage): void => {
-    const messagePath: string[] = [...storageKeys.outbox, chatMessage.id];
+    const messagePath: string[] = [...this.getOutboxPath(), chatMessage.id];
     this.storageModel.writeStringifiable(messagePath, chatMessage);
   };
 
   removeFromOutbox = (chatMessage: ChatMessage): void => {
-    const messagePath: string[] = [...storageKeys.outbox, chatMessage.id];
+    const messagePath: string[] = [...this.getOutboxPath(), chatMessage.id];
     this.storageModel.remove(messagePath);
   };
 
@@ -154,9 +172,23 @@ export default class ConnectionModel {
   };
 
   // storage
-  private getAddressPath = (address: string): string[] => {
-    const dirPath = storageKeys.previousAddresses;
+  getPreviousAddressPath = (): string[] => {
+    return StorageModel.getPath(
+      "connectionModel",
+      filePaths.connectionModel.previousAddresses
+    );
+  };
+
+  getAddressPath = (address: string): string[] => {
+    const dirPath = this.getPreviousAddressPath();
     return [...dirPath, address];
+  };
+
+  getReconnectAddressPath = (): string[] => {
+    return StorageModel.getPath(
+      "connectionModel",
+      filePaths.connectionModel.reconnectAddress
+    );
   };
 
   storeAddress = (address: string): void => {
@@ -165,7 +197,7 @@ export default class ConnectionModel {
     this.storageModel.write(addressPath, "");
 
     // reconnect
-    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    const reconnectAddressPath: string[] = this.getReconnectAddressPath();
     this.storageModel.write(reconnectAddressPath, address);
   };
 
@@ -175,7 +207,7 @@ export default class ConnectionModel {
   };
 
   get addresses(): string[] {
-    const dirPath = storageKeys.previousAddresses;
+    const dirPath = this.getPreviousAddressPath();
     return this.storageModel.list(dirPath);
   }
 
@@ -225,11 +257,17 @@ export default class ConnectionModel {
     };
 
     // reconnect
-    const reconnectAddressPath: string[] = storageKeys.reconnectAddress;
+    const reconnectAddressPath: string[] = this.getPreviousAddressPath();
     const reconnectAddress: string | null =
       storageModel.read(reconnectAddressPath);
     if (reconnectAddress != null) {
       this.connect(reconnectAddress);
     }
   }
+}
+
+// paths
+export enum settingsModelStorageFiles {
+  username = "user-name",
+  firstDayOfWeek = "first-day-of-week",
 }

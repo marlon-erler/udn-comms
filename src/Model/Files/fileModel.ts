@@ -1,7 +1,7 @@
 // this file is responsible for managing files within chats.
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
-import StorageModel, { storageKeys } from "../Global/storageModel";
+import StorageModel, { filePaths } from "../Global/storageModel";
 import { parseValidObject, stringify } from "../Utility/utility";
 
 import ChatModel from "../Chat/chatModel";
@@ -13,6 +13,23 @@ export default class FileModel {
   storageModel: StorageModel;
 
   taskModel: TaskModel;
+
+  // paths
+  getBasePath = (): string[] => {
+    return StorageModel.getPath(
+      "chat",
+      filePaths.chat.files(this.chatModel.id)
+    );
+  };
+
+  getFilePath = (fileId: string): string[] => {
+    return [...this.getBasePath(), fileId];
+  };
+
+  getFileContentPath = (file: File, fileContentName: string): string[] => {
+    const filePath: string[] = this.getFilePath(file.id);
+    return [...filePath, fileContentName];
+  };
 
   // handler
   handleStringifiedFile = (stringifiedFile: string): void => {
@@ -36,7 +53,7 @@ export default class FileModel {
 
   storeFileContent = (file: File, fileContent: FileContent): void => {
     const fileContentName: string = FileModel.getFileContentName(fileContent);
-    const fileContentPath: string[] = FileModel.getFileContentPath(
+    const fileContentPath: string[] = this.getFileContentPath(
       file,
       fileContentName
     );
@@ -51,16 +68,16 @@ export default class FileModel {
   };
 
   listFileIds = (): string[] => {
-    return this.storageModel.list(storageKeys.chatFiles);
+    return this.storageModel.list(this.getBasePath());
   };
 
   listFileContents = (file: File): string[] => {
-    const filePath: string[] = FileModel.getFilePath(file.id);
+    const filePath: string[] = this.getFilePath(file.id);
     return this.storageModel.list(filePath);
   };
 
   getFile = (fileId: string): File | null => {
-    const filePath = FileModel.getFilePath(fileId);
+    const filePath = this.getFilePath(fileId);
     const fileOrNull: File | null = this.storageModel.readStringifiable(
       filePath,
       FileReference
@@ -76,7 +93,7 @@ export default class FileModel {
     file: File,
     fileContentName: string
   ): FileContent | null => {
-    const filePath = FileModel.getFileContentPath(file, fileContentName);
+    const filePath = this.getFileContentPath(file, fileContentName);
     const fileContentOrNull: FileContent | null =
       this.storageModel.readStringifiable(filePath, FileContentReference);
     return fileContentOrNull;
@@ -91,20 +108,8 @@ export default class FileModel {
   }
 
   // utility
-  static getFilePath = (fileId: string): string[] => {
-    return [...storageKeys.chatFiles, fileId];
-  };
-
   static getFileContentName = (fileContent: FileContent): string => {
     return fileContent.creationDate + fileContent.id;
-  };
-
-  static getFileContentPath = (
-    file: File,
-    fileContentName: string
-  ): string[] => {
-    const filePath: string[] = FileModel.getFilePath(file.id);
-    return [...filePath, fileContentName];
   };
 
   static createFile = (): File => {
