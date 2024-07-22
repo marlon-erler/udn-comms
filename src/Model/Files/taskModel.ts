@@ -12,6 +12,7 @@ import FileModel, {
 } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
+import { Color } from "../../ViewModel/colors";
 import StorageModel from "../Global/storageModel";
 
 export default class TaskModel {
@@ -36,87 +37,81 @@ export default class TaskModel {
     return [...this.getBasePath(), subDirectories.boards];
   };
 
-  getBoardPath = (boardName: string): string[] => {
-    return [...this.getBoardDirPath(), boardName];
+  getBoardPath = (boardId: string): string[] => {
+    return [...this.getBoardDirPath(), boardId];
   };
 
-  getTaskPath = (boardName: string, fileId: string): string[] => {
-    return [...this.getBoardPath(boardName), fileId];
+  getBoardInfoPath = (boardId: string): string[] => {
+    return [...this.getBoardPath(boardId), subDirectories.boardInfo];
+  };
+
+  getTaskDirPath = (boardId: string): string[] => {
+    return [...this.getBoardPath(boardId), subDirectories.boardTasks];
+  };
+
+  getTaskPath = (boardId: string, fileId: string): string[] => {
+    return [...this.getTaskDirPath(boardId), fileId];
   };
 
   getTaskContentPath = (
-    boardName: string,
+    boardId: string,
     fileId: string,
-    contentName
+    contentName: string
   ): string[] => {
-    return [...this.getTaskPath(boardName, fileId), contentName];
+    return [...this.getTaskPath(boardId, fileId), contentName];
   };
 
   // handler
-  handleTaskFileContent = (
-    file: File,
-    fileContent: FileContent<string>
-  ): void => {
+  handleFileContent = (file: File, fileContent: FileContent<string>): void => {
     if (
-      checkMatchesObjectStructure(fileContent, TaskFileContentReference) ==
-      false
-    )
-      return;
-
-    // TODO handle
+      checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==
+      true
+    ) {
+      // todo
+    } else if (
+      checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true
+    ) {
+      // todo
+    }
   };
 
-  // methods
-  createTask = (board: string, name: string): void => {
+  // boards
+  createBoard = (name: string): void => {
     const file: File = FileModel.createFile();
-    const taskFileContent: TaskFileContent = TaskModel.createTaskFileContent(
-      board,
-      name
-    );
-    this.saveTask(file, taskFileContent);
+    const boardInfoFileContent: BoardInfoFileContent =
+      TaskModel.createBoardInfoFileContent(name, Color.Standard);
+    this.fileModel.addOrUpdateFile(file, boardInfoFileContent);
   };
 
-  saveTask = (file: File, newTaskFileContent: TaskFileContent): void => {
-    file.contentVersions.add(newTaskFileContent);
-    this.fileModel.addOrUpdateFile(file);
-  };
-
-  // locations
-  getTaskLocation = (file: File): TaskLocation | null => {
-    const locationPath: string[] = this.getTaskLocationPath(file.id);
-    const locationOrNull: TaskLocation | null =
-      this.storageModel.readStringifiable(locationPath, TaskLocationReference);
-    return locationOrNull;
-  };
-
-  storeTaskLocation = (file: File, taskLocation: TaskLocation): void => {
-    const locationPath: string[] = this.getTaskLocationPath(file.id);
-    this.storageModel.writeStringifiable(locationPath, taskLocation);
-  };
-
-  updateTaskLocation = (file: File, newLocation: TaskLocation): boolean => {
-    const previousLocation: TaskLocation | null = this.getTaskLocation(file);
-    if (previousLocation == null) return false;
-
-    const oldBoardName: string = previousLocation.board;
-    const sourcePath: string[] = this.getTaskPath(oldBoardName, file.id);
-
-    const newBoardName: string = newLocation.board;
-    const destinationPath: string[] = this.getTaskPath(newBoardName, file.id);
-
-    return this.storageModel.rename(sourcePath, destinationPath);
-  };
-
-  // storage
-  listBoardsNames = (): string[] => {
+  listBoardIds = (): string[] => {
     const boardDirPath: string[] = this.getBoardDirPath();
     const boardNames: string[] = this.storageModel.list(boardDirPath);
     return boardNames;
   };
 
-  listFileIdsOfBoard = (boardName: string): string[] => {
-    const boardPath: string[] = this.getBoardPath(boardName);
-    const fileIds: string[] = this.storageModel.list(boardPath);
+  getBoardInfo = (boardId: string): BoardInfoFileContent | null => {
+    const boardInfoPath: string[] = this.getBoardInfoPath(boardId);
+    const boardInfoFileContentOrNull: BoardInfoFileContent | null =
+      this.storageModel.readStringifiable(
+        boardInfoPath,
+        BoardInfoFileContentReference
+      );
+    return boardInfoFileContentOrNull;
+  };
+
+  //tasks
+  createTask = (boardId: string, name: string): void => {
+    const file: File = FileModel.createFile();
+    const taskFileContent: TaskFileContent = TaskModel.createTaskFileContent(
+      boardId,
+      name
+    );
+    this.fileModel.addOrUpdateFile(file, taskFileContent);
+  };
+
+  listTaskIds = (boardName: string): string[] => {
+    const getTaskDirPath: string[] = this.getTaskDirPath(boardName);
+    const fileIds: string[] = this.storageModel.list(getTaskDirPath);
     return fileIds;
   };
 
@@ -144,6 +139,12 @@ export default class TaskModel {
     return taskFileContentOrNull;
   };
 
+  moveTask = (taskFileId: string, oldBoardId: string, newBoardId: string): boolean => {
+    const sourcePath: string[] = this.getTaskPath(oldBoardId, taskFileId);
+    const destinationPath: string[] = this.getTaskPath(newBoardId, taskFileId);
+    return this.storageModel.rename(sourcePath, destinationPath);
+  }
+  
   // init
   constructor(
     storageModel: StorageModel,
@@ -156,9 +157,23 @@ export default class TaskModel {
   }
 
   // utility
+  static createBoardInfoFileContent = (
+    name: string,
+    color: Color
+  ): BoardInfoFileContent => {
+    const fileContent: FileContent<"board"> =
+      FileModel.createFileContent("board");
+    return {
+      ...fileContent,
+
+      name,
+      color,
+    };
+  };
+
   static createTaskFileContent = (
     name: string,
-    board: string
+    boardId: string
   ): TaskFileContent => {
     const fileContent: FileContent<"task"> =
       FileModel.createFileContent("task");
@@ -166,7 +181,7 @@ export default class TaskModel {
       ...fileContent,
 
       name,
-      board,
+      boardId,
     };
   };
 }
@@ -174,12 +189,19 @@ export default class TaskModel {
 export const subDirectories = {
   locations: "locations",
   boards: "boards",
+  boardInfo: "info",
+  boardTasks: "tasks",
 };
 
 // types
+export interface BoardInfoFileContent extends FileContent<"board"> {
+  name: string;
+  color: Color;
+}
+
 export interface TaskFileContent extends FileContent<"task"> {
   name: string;
-  board: string;
+  boardId: string;
 
   category?: string;
   status?: string;
@@ -191,11 +213,18 @@ export interface TaskFileContent extends FileContent<"task"> {
   time?: string;
 }
 
-export interface TaskLocation extends ValidObject {
-  board: string;
-}
-
 // reference
+export const BoardInfoFileContentReference: BoardInfoFileContent = {
+  dataVersion: DATA_VERSION,
+
+  id: "",
+  creationDate: "",
+  type: "board",
+
+  name: "",
+  color: "" as Color,
+};
+
 export const TaskFileContentReference: TaskFileContent = {
   dataVersion: DATA_VERSION,
 
@@ -204,11 +233,5 @@ export const TaskFileContentReference: TaskFileContent = {
   type: "task",
 
   name: "",
-  board: "",
-};
-
-export const TaskLocationReference: TaskLocation = {
-  dataVersion: DATA_VERSION,
-
-  board: "",
+  boardId: "",
 };

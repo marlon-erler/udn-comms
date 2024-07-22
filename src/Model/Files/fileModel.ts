@@ -52,14 +52,15 @@ export default class FileModel {
   handleFileAndClearContents = (file: File): void => {
     for (const fileContent of file.contentVersions) {
       this.storeFileContent(file, fileContent);
-      this.taskModel.handleTaskFileContent(file, fileContent);
-
-      file.contentVersions.delete(fileContent);
+      this.taskModel.handleFileContent(file, fileContent);
     }
+
+    file.contentVersions = [];
   };
 
   // methods
-  addOrUpdateFile = (file: File): void => {
+  addOrUpdateFile = (file: File, fileContent: FileContent<string>): void => {
+    file.contentVersions.push(fileContent);
     this.chatModel.sendMessage("", file);
     this.handleFileAndClearContents(file);
   };
@@ -131,7 +132,7 @@ export default class FileModel {
       dataVersion: DATA_VERSION,
 
       id: v4(),
-      contentVersions: new Set(),
+      contentVersions: [],
     };
   };
 
@@ -154,7 +155,7 @@ export const modelDirectories = {
 // types
 export interface File extends ValidObject {
   id: string;
-  contentVersions: Set<FileContent<string>>;
+  contentVersions: FileContent<string>[];
 }
 
 export interface FileContent<T extends string> extends ValidObject {
@@ -177,5 +178,5 @@ export const FileReference: File = {
   dataVersion: DATA_VERSION,
 
   id: "",
-  contentVersions: new Set([FileContentReference]),
+  contentVersions: [FileContentReference],
 };

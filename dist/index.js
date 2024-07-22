@@ -487,6 +487,18 @@
     }
   };
 
+  // src/ViewModel/colors.ts
+  var Color = /* @__PURE__ */ ((Color2) => {
+    Color2["Standard"] = "standard";
+    Color2["Coral"] = "coral";
+    Color2["Yellow"] = "yellow";
+    Color2["Mint"] = "mint";
+    Color2["LightBlue"] = "lightblue";
+    Color2["Blue"] = "blue";
+    Color2["purple"] = "purple";
+    return Color2;
+  })(Color || {});
+
   // src/Model/Files/taskModel.ts
   var TaskModel = class _TaskModel {
     storageModel;
@@ -505,61 +517,50 @@
     getBoardDirPath = () => {
       return [...this.getBasePath(), subDirectories.boards];
     };
-    getBoardPath = (boardName) => {
-      return [...this.getBoardDirPath(), boardName];
+    getBoardPath = (boardId) => {
+      return [...this.getBoardDirPath(), boardId];
     };
-    getTaskPath = (boardName, fileId) => {
-      return [...this.getBoardPath(boardName), fileId];
+    getBoardInfoPath = (boardId) => {
+      return [...this.getBoardPath(boardId), subDirectories.boardInfo];
     };
-    getTaskContentPath = (boardName, fileId, contentName) => {
-      return [...this.getTaskPath(boardName, fileId), contentName];
+    getTaskDirPath = (boardId) => {
+      return [...this.getBoardPath(boardId), subDirectories.boardTasks];
+    };
+    getTaskPath = (boardId, fileId) => {
+      return [...this.getTaskDirPath(boardId), fileId];
+    };
+    getTaskContentPath = (boardId, fileId, contentName) => {
+      return [...this.getTaskPath(boardId, fileId), contentName];
     };
     // handler
-    handleTaskFileContent = (file, fileContent) => {
-      if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
-        return;
+    handleFileContent = (file, fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == true) {
+      } else if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true) {
+      }
     };
-    // methods
-    createTask = (board, name) => {
+    // boards
+    createBoard = (name) => {
       const file = FileModel.createFile();
-      const taskFileContent = _TaskModel.createTaskFileContent(
-        board,
-        name
-      );
-      this.saveTask(file, taskFileContent);
+      const boardInfoFileContent = _TaskModel.createBoardInfoFileContent(name, "standard" /* Standard */);
+      this.fileModel.addOrUpdateFile(file, boardInfoFileContent);
     };
-    saveTask = (file, newTaskFileContent) => {
-      file.contentVersions.add(newTaskFileContent);
-      this.fileModel.addOrUpdateFile(file);
-    };
-    // locations
-    getTaskLocation = (file) => {
-      const locationPath = this.getTaskLocationPath(file.id);
-      const locationOrNull = this.storageModel.readStringifiable(locationPath, TaskLocationReference);
-      return locationOrNull;
-    };
-    storeTaskLocation = (file, taskLocation) => {
-      const locationPath = this.getTaskLocationPath(file.id);
-      this.storageModel.writeStringifiable(locationPath, taskLocation);
-    };
-    updateTaskLocation = (file, newLocation) => {
-      const previousLocation = this.getTaskLocation(file);
-      if (previousLocation == null) return false;
-      const oldBoardName = previousLocation.board;
-      const sourcePath = this.getTaskPath(oldBoardName, file.id);
-      const newBoardName = newLocation.board;
-      const destinationPath = this.getTaskPath(newBoardName, file.id);
-      return this.storageModel.rename(sourcePath, destinationPath);
-    };
-    // storage
-    listBoardsNames = () => {
+    listBoardIds = () => {
       const boardDirPath = this.getBoardDirPath();
       const boardNames = this.storageModel.list(boardDirPath);
       return boardNames;
     };
-    listFileIdsOfBoard = (boardName) => {
-      const boardPath = this.getBoardPath(boardName);
-      const fileIds = this.storageModel.list(boardPath);
+    //tasks
+    createTask = (boardId, name) => {
+      const file = FileModel.createFile();
+      const taskFileContent = _TaskModel.createTaskFileContent(
+        boardId,
+        name
+      );
+      this.fileModel.addOrUpdateFile(file, taskFileContent);
+    };
+    listTaskIds = (boardName) => {
+      const getTaskDirPath = this.getTaskDirPath(boardName);
+      const fileIds = this.storageModel.list(getTaskDirPath);
       return fileIds;
     };
     getTaskVersionNames = (boardName, fileId) => {
@@ -579,6 +580,25 @@
       );
       return taskFileContentOrNull;
     };
+    // locations
+    getTaskLocation = (file) => {
+      const locationPath = this.getTaskLocationPath(file.id);
+      const locationOrNull = this.storageModel.readStringifiable(locationPath, TaskLocationReference);
+      return locationOrNull;
+    };
+    storeTaskLocation = (file, taskLocation) => {
+      const locationPath = this.getTaskLocationPath(file.id);
+      this.storageModel.writeStringifiable(locationPath, taskLocation);
+    };
+    updateTaskLocation = (file, newLocation) => {
+      const previousLocation = this.getTaskLocation(file);
+      if (previousLocation == null) return false;
+      const oldBoardName = previousLocation.boardId;
+      const sourcePath = this.getTaskPath(oldBoardName, file.id);
+      const newBoardName = newLocation.boardId;
+      const destinationPath = this.getTaskPath(newBoardName, file.id);
+      return this.storageModel.rename(sourcePath, destinationPath);
+    };
     // init
     constructor(storageModel2, chatModel, fileModel) {
       this.chatModel = chatModel;
@@ -586,18 +606,36 @@
       this.storageModel = storageModel2;
     }
     // utility
-    static createTaskFileContent = (name, board) => {
+    static createBoardInfoFileContent = (name, color) => {
+      const fileContent = FileModel.createFileContent("board");
+      return {
+        ...fileContent,
+        name,
+        color
+      };
+    };
+    static createTaskFileContent = (name, boardId) => {
       const fileContent = FileModel.createFileContent("task");
       return {
         ...fileContent,
         name,
-        board
+        boardId
       };
     };
   };
   var subDirectories = {
     locations: "locations",
-    boards: "boards"
+    boards: "boards",
+    boardInfo: "info",
+    boardTasks: "tasks"
+  };
+  var BoardInfoFileContentReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    creationDate: "",
+    type: "board",
+    name: "",
+    color: ""
   };
   var TaskFileContentReference = {
     dataVersion: DATA_VERSION,
@@ -605,11 +643,11 @@
     creationDate: "",
     type: "task",
     name: "",
-    board: ""
+    boardId: ""
   };
   var TaskLocationReference = {
     dataVersion: DATA_VERSION,
-    board: ""
+    boardId: ""
   };
 
   // src/Model/Files/fileModel.ts
@@ -643,12 +681,13 @@
     handleFileAndClearContents = (file) => {
       for (const fileContent of file.contentVersions) {
         this.storeFileContent(file, fileContent);
-        this.taskModel.handleTaskFileContent(file, fileContent);
-        file.contentVersions.delete(fileContent);
+        this.taskModel.handleFileContent(file, fileContent);
       }
+      file.contentVersions = [];
     };
     // methods
-    addOrUpdateFile = (file) => {
+    addOrUpdateFile = (file, fileContent) => {
+      file.contentVersions.push(fileContent);
       this.chatModel.sendMessage("", file);
       this.handleFileAndClearContents(file);
     };
@@ -701,7 +740,7 @@
       return {
         dataVersion: DATA_VERSION,
         id: v4_default(),
-        contentVersions: /* @__PURE__ */ new Set()
+        contentVersions: []
       };
     };
     static createFileContent = (type) => {
@@ -722,7 +761,7 @@
   var FileReference = {
     dataVersion: DATA_VERSION,
     id: "",
-    contentVersions: /* @__PURE__ */ new Set([FileContentReference2])
+    contentVersions: [FileContentReference2]
   };
 
   // src/Model/Utility/crypto.ts
@@ -797,18 +836,6 @@
   function arrayToUint8(array) {
     return new Uint8Array(array);
   }
-
-  // src/ViewModel/colors.ts
-  var Color = /* @__PURE__ */ ((Color2) => {
-    Color2["Standard"] = "standard";
-    Color2["Coral"] = "coral";
-    Color2["Yellow"] = "yellow";
-    Color2["Mint"] = "mint";
-    Color2["LightBlue"] = "lightblue";
-    Color2["Blue"] = "blue";
-    Color2["purple"] = "purple";
-    return Color2;
-  })(Color || {});
 
   // src/Model/Chat/chatModel.ts
   var ChatModel = class _ChatModel {
