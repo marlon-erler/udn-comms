@@ -260,9 +260,9 @@
                     }
                   });
                 } catch (error) {
+                  console.error(error);
                   throw `error: cannot process subscribe:children directive. 
- Error: ${error} 
- Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation.`;
+ Usage: "children:append={[list, converter]}"; you can find a more detailed example in the documentation.`;
                 }
               }
             }
@@ -1276,12 +1276,6 @@
     };
     // load
     loadData = () => {
-      this.cannotSendMessage = createProxyState(
-        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
-        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
-      );
-    };
-    loadMessages = () => {
       for (const chatMessage of this.chatViewModel.chatModel.messages) {
         this.addChatMessage(chatMessage);
       }
@@ -1289,7 +1283,10 @@
     // init
     constructor(chatViewModel) {
       this.chatViewModel = chatViewModel;
-      this.loadData();
+      this.cannotSendMessage = createProxyState(
+        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
+        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
+      );
     }
   };
 
@@ -1360,10 +1357,6 @@
     loadListRelevantData = () => {
       this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
       this.color.value = this.chatViewModel.chatModel.color;
-      this.cannotSetEncryptionKey = createProxyState(
-        [this.encryptionKeyInput],
-        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
-      );
     };
     loadData = () => {
       this.primaryChannelInput.value = this.chatViewModel.chatModel.info.primaryChannel;
@@ -1380,6 +1373,10 @@
     constructor(chatViewModel) {
       this.chatViewModel = chatViewModel;
       this.loadListRelevantData();
+      this.cannotSetEncryptionKey = createProxyState(
+        [this.encryptionKeyInput],
+        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
+      );
     }
   };
 
@@ -1399,6 +1396,17 @@
       if (this.cannotCreateBoard.value == true) return;
       this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
+      this.loadData();
+    };
+    // load
+    loadData = () => {
+      this.boards.clear();
+      const boardIds = this.taskModel.listBoardIds();
+      for (const boardId of boardIds) {
+        const boardInfo = this.taskModel.getBoardInfo(boardId);
+        if (boardInfo == null) continue;
+        this.boards.add(boardInfo);
+      }
     };
     // init
     constructor(taskModel, storageModel2) {
@@ -1730,7 +1738,7 @@
 
   // src/View/ChatPages/messagePage.tsx
   function MessagePage(messagePageViewModel) {
-    messagePageViewModel.loadMessages();
+    messagePageViewModel.loadData();
     const messageContainer = /* @__PURE__ */ createElement(
       "div",
       {
@@ -1917,8 +1925,18 @@
     )))));
   }
 
+  // src/View/Components/boardEntry.tsx
+  function BoardEntry(boardInfo) {
+    const view = /* @__PURE__ */ createElement("button", { color: boardInfo.color, class: "tile" }, /* @__PURE__ */ createElement("b", null, boardInfo.name));
+    return view;
+  }
+  var BoardInfoToEntry = (boardInfo) => {
+    return BoardEntry(boardInfo);
+  };
+
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
+    taskPageViewModel.loadData();
     return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -1935,7 +1953,14 @@
         "toggle:disabled": taskPageViewModel.cannotCreateBoard
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement("div", { class: "flex-row gap" }))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
+        "children:append": [taskPageViewModel.boards, BoardInfoToEntry]
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
   }
 
   // src/View/chatPage.tsx

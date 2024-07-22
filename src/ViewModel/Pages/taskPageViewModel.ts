@@ -1,8 +1,6 @@
 import * as React from "bloatless-react";
 
-import TaskModel, {
-  BoardInfoFileContent,
-} from "../../Model/Files/taskModel";
+import TaskModel, { BoardInfoFileContent } from "../../Model/Files/taskModel";
 
 import StorageModel from "../../Model/Global/storageModel";
 
@@ -26,6 +24,22 @@ export default class TaskPageViewModel {
 
     this.taskModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
+
+    this.loadData();
+  };
+
+  // load
+  loadData = (): void => {
+    this.boards.clear();
+
+    const boardIds: string[] = this.taskModel.listBoardIds();
+    for (const boardId of boardIds) {
+      const boardInfo: BoardInfoFileContent | null =
+        this.taskModel.getBoardInfo(boardId);
+        if (boardInfo == null) continue;
+        
+      this.boards.add(boardInfo);
+    }
   };
 
   // init

@@ -1,9 +1,12 @@
 import * as React from "bloatless-react";
 
+import { BoardInfoToEntry } from "../Components/boardEntry";
 import TaskPageViewModel from "../../ViewModel/Pages/taskPageViewModel";
 import { translations } from "../translations";
 
 export function TaskPage(taskPageViewModel: TaskPageViewModel) {
+  taskPageViewModel.loadData();
+
   return (
     <div id="task-page">
       <div class="pane side">
@@ -26,7 +29,13 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
             </button>
           </div>
 
-          <div class="flex-row gap"></div>
+          <hr></hr>
+
+          <div
+            class="grid gap"
+            style="grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))"
+            children:append={[taskPageViewModel.boards, BoardInfoToEntry]}
+          ></div>
         </div>
       </div>
       <div class="pane">
