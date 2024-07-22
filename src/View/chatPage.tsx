@@ -2,7 +2,7 @@ import "./homePage.css";
 
 import * as React from "bloatless-react";
 
-import ChatViewModel, { ChatPageType } from "../ViewModel/chatViewModel";
+import ChatViewModel, { ChatPageType } from "../ViewModel/Chat/chatViewModel";
 
 import { ChatViewToggleButton } from "./Components/chatViewToggleButton";
 import { MessagePage } from "./ChatPages/messagePage";

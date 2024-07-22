@@ -2,7 +2,7 @@ import "./chatEntry.css";
 
 import * as React from "bloatless-react";
 
-import ChatViewModel from "../../ViewModel/chatViewModel";
+import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
 
 export function ChatEntry(chatViewModel: ChatViewModel) {
   const view = (
