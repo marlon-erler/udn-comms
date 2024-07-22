@@ -1,26 +1,24 @@
-.chat-entry {
+.colored-tile {
     position: relative;
 
     display: flex;
     align-items: flex-end !important;
     justify-content: start;
 
-    height: 8rem;
-
     overflow: hidden;
 }
 
-.chat-entry h2 {
+.colored-tile h2 {
     margin: 0px;
 }
 
-.chat-entry .shadow {
+.colored-tile .shadow {
     position: absolute;
 
     left: -15px;
     bottom: -45px;
 
-    font-size: 6rem;
+    font-size: 7rem;
 
     opacity: 0.1;
 

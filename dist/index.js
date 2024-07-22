@@ -1927,7 +1927,15 @@
 
   // src/View/Components/boardEntry.tsx
   function BoardEntry(boardInfo) {
-    const view = /* @__PURE__ */ createElement("button", { color: boardInfo.color, class: "tile" }, /* @__PURE__ */ createElement("b", null, boardInfo.name));
+    const view = /* @__PURE__ */ createElement(
+      "button",
+      {
+        color: boardInfo.color,
+        class: "tile colored-tile"
+      },
+      /* @__PURE__ */ createElement("span", { class: "shadow" }, boardInfo.name),
+      /* @__PURE__ */ createElement("b", null, boardInfo.name)
+    );
     return view;
   }
   var BoardInfoToEntry = (boardInfo) => {
@@ -2484,7 +2492,8 @@
       "button",
       {
         "set:color": chatViewModel.settingsPageViewModel.color,
-        class: "chat-entry tile",
+        class: "tile colored-tile",
+        style: "height: 8rem",
         "on:click": chatViewModel.open
       },
       /* @__PURE__ */ createElement(

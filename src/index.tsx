@@ -1,5 +1,6 @@
 import "./base.css";
 import "./colors.css";
+import "./coloredTile.css";
 
 import * as React from "bloatless-react";
 

@@ -1,5 +1,3 @@
-import "./chatEntry.css";
-
 import * as React from "bloatless-react";
 
 import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
@@ -8,7 +6,8 @@ export function ChatEntry(chatViewModel: ChatViewModel) {
   const view = (
     <button
       set:color={chatViewModel.settingsPageViewModel.color}
-      class="chat-entry tile"
+      class="tile colored-tile"
+      style="height: 8rem"
       on:click={chatViewModel.open}
     >
       <span
