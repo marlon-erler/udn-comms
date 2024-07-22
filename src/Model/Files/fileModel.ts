@@ -86,7 +86,7 @@ export default class FileModel {
   };
 
   getFile = (fileId: string): File | null => {
-    const filePath = this.getFilePath(fileId);
+    const filePath: string[] = this.getFilePath(fileId);
     const fileOrNull: File | null = this.storageModel.readStringifiable(
       filePath,
       FileReference
@@ -107,7 +107,7 @@ export default class FileModel {
     file: File,
     fileContentName: string
   ): FileContent<string> | null => {
-    const filePath = this.getFileContentPath(file, fileContentName);
+    const filePath: string[] = this.getFileContentPath(file, fileContentName);
     const fileContentOrNull: FileContent<string> | null =
       this.storageModel.readStringifiable(filePath, FileContentReference);
     return fileContentOrNull;
@@ -118,7 +118,7 @@ export default class FileModel {
     this.chatModel = chatModel;
     this.storageModel = storageModel;
 
-    this.taskModel = new TaskModel(chatModel, this);
+    this.taskModel = new TaskModel(this.storageModel, chatModel, this);
   }
 
   // utility

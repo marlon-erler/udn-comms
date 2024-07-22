@@ -5,11 +5,17 @@ import {
   ValidObject,
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
-import FileModel, { File, FileContent } from "./fileModel";
+import FileModel, {
+  File,
+  FileContent,
+  FileContentReference,
+} from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
+import StorageModel from "../Global/storageModel";
 
 export default class TaskModel {
+  storageModel: StorageModel;
   chatModel: ChatModel;
   fileModel: FileModel;
 
@@ -36,6 +42,14 @@ export default class TaskModel {
 
   getTaskPath = (boardName: string, fileId: string): string[] => {
     return [...this.getBoardPath(boardName), fileId];
+  };
+
+  getTaskContentPath = (
+    boardName: string,
+    fileId: string,
+    contentName
+  ): string[] => {
+    return [...this.getTaskPath(boardName, fileId), contentName];
   };
 
   // handler
@@ -68,15 +82,77 @@ export default class TaskModel {
   };
 
   // locations
-  updateTaskLocation = (
-    file: File,
-    taskFileContent: TaskFileContent
-  ): void => {};
+  getTaskLocation = (file: File): TaskLocation | null => {
+    const locationPath: string[] = this.getTaskLocationPath(file.id);
+    const locationOrNull: TaskLocation | null =
+      this.storageModel.readStringifiable(locationPath, TaskLocationReference);
+    return locationOrNull;
+  };
+
+  storeTaskLocation = (file: File, taskLocation: TaskLocation): void => {
+    const locationPath: string[] = this.getTaskLocationPath(file.id);
+    this.storageModel.writeStringifiable(locationPath, taskLocation);
+  };
+
+  updateTaskLocation = (file: File, newLocation: TaskLocation): boolean => {
+    const previousLocation: TaskLocation | null = this.getTaskLocation(file);
+    if (previousLocation == null) return false;
+
+    const oldBoardName: string = previousLocation.board;
+    const sourcePath: string[] = this.getTaskPath(oldBoardName, file.id);
+
+    const newBoardName: string = newLocation.board;
+    const destinationPath: string[] = this.getTaskPath(newBoardName, file.id);
+
+    return this.storageModel.rename(sourcePath, destinationPath);
+  };
+
+  // storage
+  listBoardsNames = (): string[] => {
+    const boardDirPath: string[] = this.getBoardDirPath();
+    const boardNames: string[] = this.storageModel.list(boardDirPath);
+    return boardNames;
+  };
+
+  listFileIdsOfBoard = (boardName: string): string[] => {
+    const boardPath: string[] = this.getBoardPath(boardName);
+    const fileIds: string[] = this.storageModel.list(boardPath);
+    return fileIds;
+  };
+
+  getTaskVersionNames = (boardName: string, fileId: string): string[] => {
+    const fileDirectoryPath: string[] = this.getTaskPath(boardName, fileId);
+    const versionNames: string[] = this.storageModel.list(fileDirectoryPath);
+    return versionNames;
+  };
+
+  getTaskFileContent = (
+    boardName: string,
+    fileId: string,
+    versionName: string
+  ): TaskFileContent | null => {
+    const fileContentPath: string[] = this.getTaskContentPath(
+      boardName,
+      fileId,
+      versionName
+    );
+    const taskFileContentOrNull: TaskFileContent | null =
+      this.storageModel.readStringifiable(
+        fileContentPath,
+        TaskFileContentReference
+      );
+    return taskFileContentOrNull;
+  };
 
   // init
-  constructor(chatModel: ChatModel, fileModel: FileModel) {
+  constructor(
+    storageModel: StorageModel,
+    chatModel: ChatModel,
+    fileModel: FileModel
+  ) {
     this.chatModel = chatModel;
     this.fileModel = fileModel;
+    this.storageModel = storageModel;
   }
 
   // utility
@@ -117,8 +193,6 @@ export interface TaskFileContent extends FileContent<"task"> {
 
 export interface TaskLocation extends ValidObject {
   board: string;
-  category?: string;
-  status?: string;
 }
 
 // reference

@@ -386,6 +386,13 @@
       }
       return [...Object.keys(currentParent).sort(localeCompare)];
     };
+    rename = (sourcePathComponents, destinationPathComponents) => {
+      const content = this.read(sourcePathComponents);
+      if (content == null) return false;
+      this.write(destinationPathComponents, content);
+      this.remove(sourcePathComponents);
+      return true;
+    };
     // stringifiable
     writeStringifiable = (pathComponents, value) => {
       const valueString = stringify(value);
@@ -468,11 +475,11 @@
       info: (id) => [...filePaths.chat.chatBase(id), "info"],
       color: (id) => [...filePaths.chat.chatBase(id), "color"],
       messages: (id) => [...filePaths.chat.chatBase(id), "messages"],
-      files: (id) => [...filePaths.chat.chatBase(id), "files"],
       lastUsedPage: (id) => [
         ...filePaths.chat.chatBase(id),
         "last-used-page"
-      ]
+      ],
+      files: (id) => [...filePaths.chat.chatBase(id), "files"]
     },
     settingsModel: {
       username: ["user-name"],
@@ -482,8 +489,28 @@
 
   // src/Model/Files/taskModel.ts
   var TaskModel = class _TaskModel {
+    storageModel;
     chatModel;
     fileModel;
+    // paths
+    getBasePath = () => {
+      return this.fileModel.getModelDirectoryPath("taskModel");
+    };
+    getLocationDirPath = () => {
+      return [...this.getBasePath(), subDirectories.locations];
+    };
+    getTaskLocationPath = (fileId) => {
+      return [...this.getLocationDirPath(), fileId];
+    };
+    getBoardDirPath = () => {
+      return [...this.getBasePath(), subDirectories.boards];
+    };
+    getBoardPath = (boardName) => {
+      return [...this.getBoardDirPath(), boardName];
+    };
+    getTaskPath = (boardName, fileId) => {
+      return [...this.getBoardPath(boardName), fileId];
+    };
     // handler
     handleTaskFileContent = (file, fileContent) => {
       if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
@@ -502,10 +529,26 @@
       file.contentVersions.add(newTaskFileContent);
       this.fileModel.addOrUpdateFile(file);
     };
+    // locations
+    getTaskLocation = (file) => {
+      const locationPath = this.getTaskLocationPath(file.id);
+      const locationOrNull = this.storageModel.readStringifiable(locationPath, TaskLocationReference);
+      return locationOrNull;
+    };
+    storeTaskLocation = (file, taskFileContent) => {
+      const locationPath = this.getTaskLocationPath(file.id);
+      this.storageModel.writeStringifiable(locationPath, taskFileContent);
+    };
+    updateTaskLocation = (file, newTaskFileContent) => {
+      const previousLocation = this.getTaskLocation(file);
+      if (previousLocation != null) {
+      }
+    };
     // init
-    constructor(chatModel, fileModel) {
+    constructor(storageModel2, chatModel, fileModel) {
       this.chatModel = chatModel;
       this.fileModel = fileModel;
+      this.storageModel = storageModel2;
     }
     // utility
     static createTaskFileContent = (name, board) => {
@@ -517,12 +560,20 @@
       };
     };
   };
+  var subDirectories = {
+    locations: "locations",
+    boards: "boards"
+  };
   var TaskFileContentReference = {
     dataVersion: DATA_VERSION,
     id: "",
     creationDate: "",
     type: "task",
     name: "",
+    board: ""
+  };
+  var TaskLocationReference = {
+    dataVersion: DATA_VERSION,
     board: ""
   };
 
@@ -537,6 +588,9 @@
         "chat",
         filePaths.chat.files(this.chatModel.id)
       );
+    };
+    getModelDirectoryPath = (modelName) => {
+      return [...this.getBasePath(), modelName];
     };
     getFilePath = (fileId) => {
       return [...this.getBasePath(), fileId];
@@ -602,7 +656,7 @@
     constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
-      this.taskModel = new TaskModel(chatModel, this);
+      this.taskModel = new TaskModel(this.storageModel, chatModel, this);
     }
     // utility
     static getFileContentName = (fileContent) => {
