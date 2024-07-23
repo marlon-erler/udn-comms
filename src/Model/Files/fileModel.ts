@@ -30,13 +30,13 @@ export default class FileModel {
   };
 
   getFileContainerPath = (): string[] => {
-    return [...this.getBasePath(), subDirectories.data];
+    return [...this.getBasePath(), FileModelSubPath.Data];
   };
 
   getModelContainerPath = (
-    modelName: keyof typeof subDirectories
+    modelName: FileModelSubPath
   ): string[] => {
-    return [...this.getBasePath(), subDirectories.model, modelName];
+    return [...this.getBasePath(), FileModelSubPath.Model, modelName];
   };
 
   getFilePath = (fileId: string): string[] => {
@@ -167,10 +167,10 @@ export default class FileModel {
 }
 
 // paths
-export const subDirectories = {
-  data: "data",
-  model: "model",
-  taskModel: "tasks",
+export enum FileModelSubPath {
+  Data = "data",
+  Model = "model",
+  ModelTask = "tasks",
 };
 
 // types

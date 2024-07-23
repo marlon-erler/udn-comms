@@ -576,7 +576,7 @@
     boardHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
-      return this.fileModel.getModelContainerPath("taskModel");
+      return this.fileModel.getModelContainerPath("tasks" /* ModelTask */);
     };
     getBoardFilePath = (boardId) => {
       return [...this.fileModel.getFilePath(boardId)];
@@ -585,13 +585,16 @@
       return [...this.fileModel.getFilePath(taskId)];
     };
     getBoardContainerPath = () => {
-      return [...this.getBasePath(), subDirectories.boards];
+      return [...this.getBasePath(), "boards" /* Boards */];
     };
     getBoardDirectoryPath = (boardId) => {
       return [...this.getBoardContainerPath(), boardId];
     };
     getTaskContainerPath = (boardId) => {
-      return [...this.getBoardDirectoryPath(boardId), subDirectories.boardTasks];
+      return [
+        ...this.getBoardDirectoryPath(boardId),
+        "tasks" /* BoardTasks */
+      ];
     };
     getTaskReferencePath = (boardId, fileId) => {
       return [...this.getTaskContainerPath(boardId), fileId];
@@ -714,10 +717,6 @@
       };
     };
   };
-  var subDirectories = {
-    boards: "boards",
-    boardTasks: "tasks"
-  };
   var BoardInfoFileContentReference = {
     dataVersion: DATA_VERSION,
     fileId: "string",
@@ -751,10 +750,10 @@
       );
     };
     getFileContainerPath = () => {
-      return [...this.getBasePath(), subDirectories2.data];
+      return [...this.getBasePath(), "data" /* Data */];
     };
     getModelContainerPath = (modelName) => {
-      return [...this.getBasePath(), subDirectories2.model, modelName];
+      return [...this.getBasePath(), "model" /* Model */, modelName];
     };
     getFilePath = (fileId) => {
       return [...this.getFileContainerPath(), fileId];
@@ -845,11 +844,6 @@
         type
       };
     };
-  };
-  var subDirectories2 = {
-    data: "data",
-    model: "model",
-    taskModel: "tasks"
   };
   var FileContentReference = {
     dataVersion: DATA_VERSION,

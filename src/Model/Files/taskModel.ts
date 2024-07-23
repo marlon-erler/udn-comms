@@ -4,7 +4,7 @@ import {
   DATA_VERSION,
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
-import FileModel, { FileContent } from "./fileModel";
+import FileModel, { FileContent, FileModelSubPath } from "./fileModel";
 
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../colors";
@@ -22,7 +22,7 @@ export default class TaskModel {
 
   // paths
   getBasePath = (): string[] => {
-    return this.fileModel.getModelContainerPath("taskModel");
+    return this.fileModel.getModelContainerPath(FileModelSubPath.ModelTask);
   };
 
   getBoardFilePath = (boardId: string): string[] => {
@@ -34,7 +34,7 @@ export default class TaskModel {
   };
 
   getBoardContainerPath = (): string[] => {
-    return [...this.getBasePath(), subDirectories.boards];
+    return [...this.getBasePath(), TaskModelSubPaths.Boards];
   };
 
   getBoardDirectoryPath = (boardId: string): string[] => {
@@ -42,7 +42,10 @@ export default class TaskModel {
   };
 
   getTaskContainerPath = (boardId: string): string[] => {
-    return [...this.getBoardDirectoryPath(boardId), subDirectories.boardTasks];
+    return [
+      ...this.getBoardDirectoryPath(boardId),
+      TaskModelSubPaths.BoardTasks,
+    ];
   };
 
   getTaskReferencePath = (boardId: string, fileId: string): string[] => {
@@ -215,9 +218,9 @@ export default class TaskModel {
   };
 }
 
-export const subDirectories = {
-  boards: "boards",
-  boardTasks: "tasks",
+export enum TaskModelSubPaths {
+  Boards = "boards",
+  BoardTasks = "tasks",
 };
 
 // types

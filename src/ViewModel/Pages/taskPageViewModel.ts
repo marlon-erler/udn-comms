@@ -130,3 +130,8 @@ export default class TaskPageViewModel {
     );
   }
 }
+
+export enum TaskPageViewModelSubPaths {
+  LastUsedBoard = "last-used-board",
+  BoardLastUsedView = "last-used-view",
+};
