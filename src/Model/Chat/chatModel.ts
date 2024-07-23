@@ -1,9 +1,6 @@
 // this file is responsible for managing chats.
 
-import {
-  DATA_VERSION,
-  ValidObject,
-} from "../Utility/typeSafety";
+import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
 import FileModel, { FileContent } from "../Files/fileModel";
 import {
   HandlerManager,

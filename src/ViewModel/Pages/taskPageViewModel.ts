@@ -58,7 +58,8 @@ export default class TaskPageViewModel {
       false
     )
       return;
-    this.showBoardInList(fileContent as BoardInfoFileContent);
+    const boardInfo: BoardInfoFileContent = fileContent as BoardInfoFileContent;
+    this.showBoardInList(boardInfo);
   };
 
   // methods
