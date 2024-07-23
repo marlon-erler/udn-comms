@@ -190,7 +190,7 @@ main {
   --accent-luma: 40%;
   --accent-luma-dark: 60%;
   --accent-text-luma: 0%;
-  --accent-text-luma-dark: 100%;
+  --accent-text-luma-dark: 0%;
   --background-luma: 85%;
   --background-luma-dark: 8%;
   --subtle-luma: 95%;
