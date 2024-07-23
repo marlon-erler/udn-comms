@@ -23,6 +23,23 @@ export default class TaskPageViewModel {
     (boardViewModel: BoardViewModel) => boardViewModel.name.value
   );
 
+  // paths
+  getBasePath = (): string[] => {
+    return [...this.taskModel.getBasePath(), TaskPageViewModelSubPaths.View];
+  };
+
+  getLastUsedBoardPath = (): string[] => {
+    return [...this.getBasePath(), TaskPageViewModelSubPaths.ViewLastUsedBoard];
+  };
+
+  getLastUsedViewPath = (boardId: string): string[] => {
+    return [
+      ...this.getBasePath(),
+      boardId,
+      TaskPageViewModelSubPaths.BoardLastUsedView,
+    ];
+  };
+
   // state
   newBoardNameInput: React.State<string> = new React.State("");
 
@@ -80,11 +97,15 @@ export default class TaskPageViewModel {
   selectBoard = (boardViewModel: BoardViewModel): void => {
     this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
     this.chatViewModel.displayedColor.value = boardViewModel.color.value;
+
+    this.storeLastUsedBoard();
   };
 
   closeBoard = (): void => {
     this.selectedBoardId.value = undefined;
     this.chatViewModel.resetColor();
+
+    this.storeLastUsedBoard();
   };
 
   updateIndices = (): void => {
@@ -92,6 +113,25 @@ export default class TaskPageViewModel {
     for (const boardViewModel of this.boardViewModels.value.values()) {
       boardViewModel.updateIndex();
     }
+  };
+
+  // storage
+  storeLastUsedBoard = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedBoardId: string = this.selectedBoardId.value ?? "";
+    this.storageModel.write(path, lastUsedBoardId);
+  };
+
+  openLastUsedBoard = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedBoardId: string | null = this.storageModel.read(path);
+    if (lastUsedBoardId == null) return;
+
+    const boardViewModel: BoardViewModel | undefined =
+      this.boardViewModels.value.get(lastUsedBoardId);
+    if (boardViewModel == undefined) return;
+
+    this.selectBoard(boardViewModel);
   };
 
   // load
@@ -108,6 +148,7 @@ export default class TaskPageViewModel {
     }
 
     this.updateIndices();
+    this.openLastUsedBoard();
   };
 
   // init
@@ -132,6 +173,7 @@ export default class TaskPageViewModel {
 }
 
 export enum TaskPageViewModelSubPaths {
-  LastUsedBoard = "last-used-board",
+  View = "view",
+  ViewLastUsedBoard = "last-used-board",
   BoardLastUsedView = "last-used-view",
-};
+}

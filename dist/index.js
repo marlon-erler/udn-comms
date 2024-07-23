@@ -573,6 +573,7 @@
     storageModel;
     chatModel;
     fileModel;
+    // data
     boardHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
@@ -1501,6 +1502,20 @@
     boardIndexManager = new IndexManager(
       (boardViewModel) => boardViewModel.name.value
     );
+    // paths
+    getBasePath = () => {
+      return [...this.taskModel.getBasePath(), "view" /* View */];
+    };
+    getLastUsedBoardPath = () => {
+      return [...this.getBasePath(), "last-used-board" /* ViewLastUsedBoard */];
+    };
+    getLastUsedViewPath = (boardId) => {
+      return [
+        ...this.getBasePath(),
+        boardId,
+        "last-used-view" /* BoardLastUsedView */
+      ];
+    };
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
@@ -1541,16 +1556,32 @@
     selectBoard = (boardViewModel) => {
       this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
       this.chatViewModel.displayedColor.value = boardViewModel.color.value;
+      this.storeLastUsedBoard();
     };
     closeBoard = () => {
       this.selectedBoardId.value = void 0;
       this.chatViewModel.resetColor();
+      this.storeLastUsedBoard();
     };
     updateIndices = () => {
       this.boardIndexManager.update([...this.boardViewModels.value.values()]);
       for (const boardViewModel of this.boardViewModels.value.values()) {
         boardViewModel.updateIndex();
       }
+    };
+    // storage
+    storeLastUsedBoard = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedBoardId = this.selectedBoardId.value ?? "";
+      this.storageModel.write(path, lastUsedBoardId);
+    };
+    openLastUsedBoard = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedBoardId = this.storageModel.read(path);
+      if (lastUsedBoardId == null) return;
+      const boardViewModel = this.boardViewModels.value.get(lastUsedBoardId);
+      if (boardViewModel == void 0) return;
+      this.selectBoard(boardViewModel);
     };
     // load
     loadData = () => {
@@ -1562,6 +1593,7 @@
         this.showBoardInList(boardInfo);
       }
       this.updateIndices();
+      this.openLastUsedBoard();
     };
     // init
     constructor(taskModel, storageModel2, chatViewModel) {
@@ -1600,7 +1632,6 @@
       this.chatListViewModel.closeChat();
     };
     closeSubPages = () => {
-      this.taskPageViewModel.closeBoard();
     };
     setColor = (color) => {
       this.setDisplayedColor(color);
@@ -1628,6 +1659,7 @@
       }
       this.selectedPage.subscribeSilent((newPage) => {
         this.storageModel.write(path, newPage);
+        this.resetColor();
       });
     };
     // init
@@ -2278,14 +2310,18 @@
       )))
     );
     const mainPageWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent });
-    bulkSubscribe([taskPageViewModel.selectedBoardId], () => {
-      const selectedBoard = taskPageViewModel.selectedBoardId.value;
-      if (selectedBoard == void 0) {
-        listPaneWrapper.scrollIntoView();
-      } else {
-        mainPageWrapper.scrollIntoView();
+    function scroll() {
+      {
+        const selectedBoard = taskPageViewModel.selectedBoardId.value;
+        if (selectedBoard == void 0) {
+          listPaneWrapper.scrollIntoView();
+        } else {
+          mainPageWrapper.scrollIntoView();
+        }
       }
-    });
+    }
+    bulkSubscribe([taskPageViewModel.selectedBoardId], scroll);
+    setTimeout(() => scroll(), 400);
     return /* @__PURE__ */ createElement("div", { id: "task-page" }, listPaneWrapper, mainPageWrapper);
   }
 

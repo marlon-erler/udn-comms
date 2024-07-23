@@ -80,14 +80,18 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
     <div class="pane-wrapper" children:set={paneContent}></div>
   );
 
-  React.bulkSubscribe([taskPageViewModel.selectedBoardId], () => {
-    const selectedBoard = taskPageViewModel.selectedBoardId.value;
-    if (selectedBoard == undefined) {
-      listPaneWrapper.scrollIntoView();
-    } else {
-      mainPageWrapper.scrollIntoView();
+  function scroll() {
+    {
+      const selectedBoard = taskPageViewModel.selectedBoardId.value;
+      if (selectedBoard == undefined) {
+        listPaneWrapper.scrollIntoView();
+      } else {
+        mainPageWrapper.scrollIntoView();
+      }
     }
-  });
+  }
+  React.bulkSubscribe([taskPageViewModel.selectedBoardId], scroll);
+  setTimeout(() => scroll(), 400)
 
   return (
     <div id="task-page">

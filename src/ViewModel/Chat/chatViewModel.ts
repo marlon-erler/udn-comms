@@ -37,9 +37,7 @@ export default class ChatViewModel {
     this.chatListViewModel.closeChat();
   };
 
-  closeSubPages = (): void => {
-    this.taskPageViewModel.closeBoard();
-  };
+  closeSubPages = (): void => {};
 
   setColor = (color: Color): void => {
     this.setDisplayedColor(color);
@@ -55,7 +53,8 @@ export default class ChatViewModel {
   };
 
   updateIndex = (): void => {
-    const index: number = this.chatListViewModel.chatIndexManager.getIndex(this);
+    const index: number =
+      this.chatListViewModel.chatIndexManager.getIndex(this);
     this.index.value = index;
   };
 
@@ -72,6 +71,7 @@ export default class ChatViewModel {
 
     this.selectedPage.subscribeSilent((newPage) => {
       this.storageModel.write(path, newPage);
+      this.resetColor();
     });
   };
 
