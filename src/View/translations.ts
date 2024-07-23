@@ -134,6 +134,7 @@ const englishTranslations = {
       ///
       
       noBoardSelected: "No board selected",
+      boardNotFound: "Board not found",
 
       ///
 

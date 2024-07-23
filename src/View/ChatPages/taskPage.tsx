@@ -9,20 +9,31 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   taskPageViewModel.loadData();
 
   const paneContent = React.createProxyState(
-    [taskPageViewModel.selectedBoard],
+    [taskPageViewModel.selectedBoardId],
     () => {
-      const selectedBoard = taskPageViewModel.selectedBoard.value;
-      if (selectedBoard == undefined) {
-        return [
+      const selectedBoardId = taskPageViewModel.selectedBoardId.value;
+      if (selectedBoardId == undefined) {
+        return (
           <div class="pane align-center justify-center">
             <span class="secondary">
               {translations.chatPage.task.noBoardSelected}
             </span>
-          </div>,
-        ];
-      } else {
-        return BoardPage(selectedBoard);
+          </div>
+        );
       }
+      const selectedBoard =
+        taskPageViewModel.boardViewModels.value.get(selectedBoardId);
+      if (selectedBoard == undefined) {
+        return (
+          <div class="pane align-center justify-center">
+            <span class="secondary">
+              {translations.chatPage.task.boardNotFound}
+            </span>
+          </div>
+        );
+      }
+
+      return BoardPage(selectedBoard);
     }
   );
 
@@ -66,8 +77,8 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
     <div class="pane-wrapper" children:set={paneContent}></div>
   );
 
-  React.bulkSubscribe([taskPageViewModel.selectedBoard], () => {
-    const selectedBoard = taskPageViewModel.selectedBoard.value;
+  React.bulkSubscribe([taskPageViewModel.selectedBoardId], () => {
+    const selectedBoard = taskPageViewModel.selectedBoardId.value;
     if (selectedBoard == undefined) {
       listPaneWrapper.scrollIntoView();
     } else {

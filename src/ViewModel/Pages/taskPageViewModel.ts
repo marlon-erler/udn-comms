@@ -22,8 +22,8 @@ export default class TaskPageViewModel {
 
   boardViewModels: React.MapState<BoardViewModel> = new React.MapState();
 
-  selectedBoard: React.State<BoardViewModel | undefined> = new React.State<
-    BoardViewModel | undefined
+  selectedBoardId: React.State<string | undefined> = new React.State<
+    string | undefined
   >(undefined);
 
   // guards
@@ -64,12 +64,12 @@ export default class TaskPageViewModel {
   };
 
   selectBoard = (boardViewModel: BoardViewModel): void => {
-    this.selectedBoard.value = boardViewModel;
+    this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
     this.chatViewModel.displayedColor.value = boardViewModel.color.value;
   };
 
   closeBoard = (): void => {
-    this.selectedBoard.value = undefined;
+    this.selectedBoardId.value = undefined;
     this.chatViewModel.resetColor();
   };
 

@@ -1438,8 +1438,8 @@
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
       this.isSelected = createProxyState(
-        [this.taskPageViewModel.selectedBoard],
-        () => this.taskPageViewModel.selectedBoard.value == this
+        [this.taskPageViewModel.selectedBoardId],
+        () => this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
       );
       this.color.subscribeSilent((newColor) => {
         this.applyColor(newColor);
@@ -1455,7 +1455,7 @@
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
-    selectedBoard = new State(void 0);
+    selectedBoardId = new State(void 0);
     // guards
     cannotCreateBoard = createProxyState(
       [this.newBoardNameInput],
@@ -1483,11 +1483,11 @@
       this.boardViewModels.set(boardInfo.fileId, boardViewModel);
     };
     selectBoard = (boardViewModel) => {
-      this.selectedBoard.value = boardViewModel;
+      this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
       this.chatViewModel.displayedColor.value = boardViewModel.color.value;
     };
     closeBoard = () => {
-      this.selectedBoard.value = void 0;
+      this.selectedBoardId.value = void 0;
       this.chatViewModel.resetColor();
     };
     // load
@@ -1766,6 +1766,7 @@
         createBoardButtonAudioLabel: "create board",
         ///
         noBoardSelected: "No board selected",
+        boardNotFound: "Board not found",
         ///
         closeBoard: "close board",
         showBoardSettingsButtonAudioLabel: "show board settigns",
@@ -2085,16 +2086,17 @@
   function TaskPage(taskPageViewModel) {
     taskPageViewModel.loadData();
     const paneContent = createProxyState(
-      [taskPageViewModel.selectedBoard],
+      [taskPageViewModel.selectedBoardId],
       () => {
-        const selectedBoard = taskPageViewModel.selectedBoard.value;
-        if (selectedBoard == void 0) {
-          return [
-            /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected))
-          ];
-        } else {
-          return BoardPage(selectedBoard);
+        const selectedBoardId = taskPageViewModel.selectedBoardId.value;
+        if (selectedBoardId == void 0) {
+          return /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected));
         }
+        const selectedBoard = taskPageViewModel.boardViewModels.value.get(selectedBoardId);
+        if (selectedBoard == void 0) {
+          return /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.boardNotFound));
+        }
+        return BoardPage(selectedBoard);
       }
     );
     const listPaneWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
@@ -2125,8 +2127,8 @@
       }
     ))));
     const mainPageWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent });
-    bulkSubscribe([taskPageViewModel.selectedBoard], () => {
-      const selectedBoard = taskPageViewModel.selectedBoard.value;
+    bulkSubscribe([taskPageViewModel.selectedBoardId], () => {
+      const selectedBoard = taskPageViewModel.selectedBoardId.value;
       if (selectedBoard == void 0) {
         listPaneWrapper.scrollIntoView();
       } else {

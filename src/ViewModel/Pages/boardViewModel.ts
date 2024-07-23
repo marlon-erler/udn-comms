@@ -69,8 +69,9 @@ export default class BoardViewModel {
     this.loadListRelevantData();
 
     this.isSelected = React.createProxyState(
-      [this.taskPageViewModel.selectedBoard],
-      () => this.taskPageViewModel.selectedBoard.value == this
+      [this.taskPageViewModel.selectedBoardId],
+      () =>
+        this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
     );
 
     this.color.subscribeSilent((newColor) => {
