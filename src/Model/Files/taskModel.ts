@@ -17,6 +17,7 @@ export default class TaskModel {
   chatModel: ChatModel;
   fileModel: FileModel;
 
+  // data
   boardHandlerManager: HandlerManager<BoardInfoFileContent> =
     new HandlerManager();
 
