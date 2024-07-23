@@ -1454,6 +1454,10 @@
     applyColor = () => {
       this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
     };
+    deleteBoard = () => {
+      this.taskPageViewModel.deleteBoard(this.boardInfo);
+      this.close();
+    };
     // load
     loadListRelevantData = () => {
       this.name.value = this.boardInfo.name;
@@ -1511,6 +1515,11 @@
     };
     updateBoard = (boardInfoFileContent) => {
       this.taskModel.updateBoard(boardInfoFileContent);
+      this.updateIndices();
+    };
+    deleteBoard = (boardInfoFileContent) => {
+      this.taskModel.deleteBoard(boardInfoFileContent.fileId);
+      this.boardViewModels.remove(boardInfoFileContent.fileId);
       this.updateIndices();
     };
     // view
@@ -1835,7 +1844,8 @@
         showBoardSettingsButtonAudioLabel: "show board settigns",
         ///
         boardSettingsHeadline: "Board Settings",
-        boardNameInputLabel: "Board name"
+        boardNameInputLabel: "Board name",
+        deleteBoardButton: "Delete board and all tasks"
       }
     }
   };
@@ -2124,7 +2134,11 @@
         "on:enter": boardViewModel.saveSettings,
         "bind:value": boardViewModel.name
       }
-    ))), ColorPicker(boardViewModel.color)), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), /* @__PURE__ */ createElement("hr", null), ColorPicker(boardViewModel.color), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+      translations.chatPage.task.deleteBoardButton,
+      "delete_forever",
+      boardViewModel.deleteBoard
+    ))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/View/ChatPages/boardPage.tsx

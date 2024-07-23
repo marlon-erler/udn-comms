@@ -65,6 +65,12 @@ export default class TaskPageViewModel {
     this.updateIndices();
   };
 
+  deleteBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.taskModel.deleteBoard(boardInfoFileContent.fileId);
+    this.boardViewModels.remove(boardInfoFileContent.fileId);
+    this.updateIndices();
+  };
+
   // view
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);

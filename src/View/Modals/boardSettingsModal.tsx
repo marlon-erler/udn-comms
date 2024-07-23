@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { ColorPicker } from "../Components/colorPicker";
+import { DangerousActionButton } from "../Components/dangerousActionButton";
 import { translations } from "../translations";
 
 export function BoardSettingsModal(boardViewModel: BoardViewModel) {
@@ -22,7 +23,19 @@ export function BoardSettingsModal(boardViewModel: BoardViewModel) {
             </div>
           </label>
 
+          <hr></hr>
+
           {ColorPicker(boardViewModel.color)}
+
+          <hr></hr>
+
+          <div class="width-input">
+            {DangerousActionButton(
+              translations.chatPage.task.deleteBoardButton,
+              "delete_forever",
+              boardViewModel.deleteBoard
+            )}
+          </div>
         </main>
         <button on:click={boardViewModel.hideSettings}>
           {translations.general.closeButton}

@@ -58,6 +58,11 @@ export default class BoardViewModel {
     this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
   };
 
+  deleteBoard = (): void => {
+    this.taskPageViewModel.deleteBoard(this.boardInfo);
+    this.close();
+  };
+
   // load
   loadListRelevantData = (): void => {
     this.name.value = this.boardInfo.name;

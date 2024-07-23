@@ -146,6 +146,8 @@ const englishTranslations = {
       boardSettingsHeadline: "Board Settings",
 
       boardNameInputLabel: "Board name",
+
+      deleteBoardButton: "Delete board and all tasks",
     },
   },
 };
