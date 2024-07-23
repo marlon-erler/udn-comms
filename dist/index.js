@@ -1412,7 +1412,9 @@
 
   // src/ViewModel/Pages/taskPageViewModel.ts
   var TaskPageViewModel = class {
+    storageModel;
     taskModel;
+    chatViewModel;
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
@@ -1442,9 +1444,11 @@
     };
     selectBoard = (boardViewModel) => {
       this.selectedBoard.value = boardViewModel;
+      this.chatViewModel.displayedColor.value = boardViewModel.color.value;
     };
     closeBoard = () => {
       this.selectedBoard.value = void 0;
+      this.chatViewModel.resetColor();
     };
     // load
     loadData = () => {
@@ -1457,8 +1461,10 @@
       }
     };
     // init
-    constructor(taskModel, storageModel2) {
+    constructor(taskModel, storageModel2, chatViewModel) {
       this.taskModel = taskModel;
+      this.storageModel = storageModel2;
+      this.chatViewModel = chatViewModel;
       taskModel.boardHandlerManager.addHandler(
         (boardInfoFileContent) => {
           this.showBoardInList(boardInfoFileContent);
@@ -1477,16 +1483,23 @@
     messagePageViewModel;
     settingsPageViewModel;
     // state
-    index = new State(0);
+    displayedColor = new State("standard" /* Standard */);
     selectedPage = new State(
       "messages" /* Messages */
     );
+    index = new State(0);
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
     };
     close = () => {
       this.chatListViewModel.closeChat();
+    };
+    closeSubPages = () => {
+      this.taskPageViewModel.closeBoard();
+    };
+    resetColor = () => {
+      this.displayedColor.value = this.settingsPageViewModel.color.value;
     };
     // load
     loadPageSelection = () => {
@@ -1510,14 +1523,18 @@
       this.chatListViewModel = chatListViewModel2;
       this.taskPageViewModel = new TaskPageViewModel(
         this.chatModel.fileModel.taskModel,
-        this.storageModel
+        this.storageModel,
+        this
       );
       this.messagePageViewModel = new MessagePageViewModel(this);
       this.settingsPageViewModel = new SettingsPageViewModel(this);
-      chatModel.chatMessageHandlerManager.addHandler((chatMessage) => {
-        this.messagePageViewModel.showChatMessage(chatMessage);
-      });
+      chatModel.chatMessageHandlerManager.addHandler(
+        (chatMessage) => {
+          this.messagePageViewModel.showChatMessage(chatMessage);
+        }
+      );
       this.loadPageSelection();
+      this.resetColor();
     }
   };
 
@@ -2021,6 +2038,7 @@
   function ChatPage(chatViewModel) {
     const mainContent = new State(/* @__PURE__ */ createElement("div", null));
     chatViewModel.selectedPage.subscribe((selectedPage) => {
+      chatViewModel.closeSubPages();
       switch (selectedPage) {
         case "settings" /* Settings */: {
           mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
@@ -2039,7 +2057,7 @@
       "article",
       {
         id: "chat-page",
-        "set:color": chatViewModel.settingsPageViewModel.color,
+        "set:color": chatViewModel.displayedColor,
         class: "subtle-background"
       },
       /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(

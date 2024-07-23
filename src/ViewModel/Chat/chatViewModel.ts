@@ -4,7 +4,7 @@ import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
 import StorageModel, { filePaths } from "../../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
-import { FileContent } from "../../Model/Files/fileModel";
+import { Color } from "../../colors";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 import SettingsPageViewModel from "../Pages/settingsPageViewModel";
 import SettingsViewModel from "../Global/settingsViewModel";
@@ -21,11 +21,12 @@ export default class ChatViewModel {
   settingsPageViewModel: SettingsPageViewModel;
 
   // state
-  index: React.State<number> = new React.State(0);
-
+  displayedColor: React.State<Color> = new React.State<Color>(Color.Standard);
   selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
     ChatPageType.Messages
   );
+
+  index: React.State<number> = new React.State(0);
 
   // view
   open = (): void => {
@@ -34,6 +35,14 @@ export default class ChatViewModel {
 
   close = (): void => {
     this.chatListViewModel.closeChat();
+  };
+
+  closeSubPages = (): void => {
+    this.taskPageViewModel.closeBoard();
+  }
+
+  resetColor = (): void => {
+    this.displayedColor.value = this.settingsPageViewModel.color.value;
   };
 
   // load
@@ -68,18 +77,22 @@ export default class ChatViewModel {
     // page viewModels
     this.taskPageViewModel = new TaskPageViewModel(
       this.chatModel.fileModel.taskModel,
-      this.storageModel
+      this.storageModel,
+      this
     );
     this.messagePageViewModel = new MessagePageViewModel(this);
     this.settingsPageViewModel = new SettingsPageViewModel(this);
 
     // handlers
-    chatModel.chatMessageHandlerManager.addHandler((chatMessage: ChatMessage) => {
-      this.messagePageViewModel.showChatMessage(chatMessage);
-    });
+    chatModel.chatMessageHandlerManager.addHandler(
+      (chatMessage: ChatMessage) => {
+        this.messagePageViewModel.showChatMessage(chatMessage);
+      }
+    );
 
     // load
     this.loadPageSelection();
+    this.resetColor();
   }
 }
 

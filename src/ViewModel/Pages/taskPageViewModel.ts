@@ -6,12 +6,16 @@ import TaskModel, {
 } from "../../Model/Files/taskModel";
 
 import BoardViewModel from "./boardViewModel";
+import ChatViewModel from "../Chat/chatViewModel";
 import { FileContent } from "../../Model/Files/fileModel";
 import StorageModel from "../../Model/Global/storageModel";
 import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
 export default class TaskPageViewModel {
+  storageModel: StorageModel;
   taskModel: TaskModel;
+
+  chatViewModel: ChatViewModel;
 
   // state
   newBoardNameInput: React.State<string> = new React.State("");
@@ -57,10 +61,12 @@ export default class TaskPageViewModel {
 
   selectBoard = (boardViewModel: BoardViewModel): void => {
     this.selectedBoard.value = boardViewModel;
+    this.chatViewModel.displayedColor.value = boardViewModel.color.value;
   };
 
   closeBoard = (): void => {
     this.selectedBoard.value = undefined;
+    this.chatViewModel.resetColor();
   };
 
   // load
@@ -78,8 +84,15 @@ export default class TaskPageViewModel {
   };
 
   // init
-  constructor(taskModel: TaskModel, storageModel: StorageModel) {
+  constructor(
+    taskModel: TaskModel,
+    storageModel: StorageModel,
+    chatViewModel: ChatViewModel
+  ) {
     this.taskModel = taskModel;
+    this.storageModel = storageModel;
+
+    this.chatViewModel = chatViewModel;
 
     // handlers
     taskModel.boardHandlerManager.addHandler(

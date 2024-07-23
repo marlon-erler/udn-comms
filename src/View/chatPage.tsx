@@ -14,6 +14,8 @@ export function ChatPage(chatViewModel: ChatViewModel) {
   const mainContent = new React.State(<div></div>);
 
   chatViewModel.selectedPage.subscribe((selectedPage) => {
+    chatViewModel.closeSubPages();
+
     switch (selectedPage) {
       case ChatPageType.Settings: {
         mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
@@ -32,7 +34,7 @@ export function ChatPage(chatViewModel: ChatViewModel) {
   return (
     <article
       id="chat-page"
-      set:color={chatViewModel.settingsPageViewModel.color}
+      set:color={chatViewModel.displayedColor}
       class="subtle-background"
     >
       <div>
