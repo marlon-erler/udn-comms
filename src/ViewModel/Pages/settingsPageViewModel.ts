@@ -71,8 +71,7 @@ export default class SettingsPageViewModel {
     this.encryptionKeyInput.callSubscriptions();
   };
 
-  setColor = (newColor: Color): void => {
-    this.color.value = newColor;
+  applyColor = (newColor: Color): void => {
     this.chatViewModel.setColor(newColor);
   };
 
@@ -121,7 +120,7 @@ export default class SettingsPageViewModel {
     );
 
     this.color.subscribe((newColor) => {
-      this.setColor(newColor);
+      this.applyColor(newColor);
     });
   }
 }

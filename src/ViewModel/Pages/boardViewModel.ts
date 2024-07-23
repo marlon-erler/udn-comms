@@ -46,6 +46,10 @@ export default class BoardViewModel {
     this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
   };
 
+  applyColor = (newColor: Color): void => {
+    this.taskPageViewModel.chatViewModel.setDisplayedColor(newColor);
+  };
+
   // load
   loadListRelevantData = (): void => {
     this.name.value = this.boardInfo.name;
@@ -68,5 +72,9 @@ export default class BoardViewModel {
       [this.taskPageViewModel.selectedBoard],
       () => this.taskPageViewModel.selectedBoard.value == this
     );
+
+    this.color.subscribeSilent((newColor) => {
+      this.applyColor(newColor);
+    });
   }
 }

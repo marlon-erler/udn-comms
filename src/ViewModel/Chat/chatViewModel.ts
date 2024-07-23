@@ -39,12 +39,16 @@ export default class ChatViewModel {
 
   closeSubPages = (): void => {
     this.taskPageViewModel.closeBoard();
-  }
+  };
 
   setColor = (color: Color): void => {
-    this.displayedColor.value = color;
+    this.setDisplayedColor(color);
     this.chatModel.setColor(color);
-  }
+  };
+
+  setDisplayedColor = (color: Color): void => {
+    this.displayedColor.value = color;
+  };
 
   resetColor = (): void => {
     this.displayedColor.value = this.settingsPageViewModel.color.value;

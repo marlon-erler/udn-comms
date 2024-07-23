@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
+import { ColorPicker } from "../Components/colorPicker";
 import { translations } from "../translations";
 
 export function BoardSettingsModal(boardViewModel: BoardViewModel) {
@@ -20,6 +21,8 @@ export function BoardSettingsModal(boardViewModel: BoardViewModel) {
               ></input>
             </div>
           </label>
+
+          {ColorPicker(boardViewModel.color)}
         </main>
         <button on:click={boardViewModel.hideSettings}>
           {translations.general.closeButton}

@@ -1352,8 +1352,7 @@
       );
       this.encryptionKeyInput.callSubscriptions();
     };
-    setColor = (newColor) => {
-      this.color.value = newColor;
+    applyColor = (newColor) => {
       this.chatViewModel.setColor(newColor);
     };
     remove = () => {
@@ -1386,7 +1385,7 @@
         () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
       );
       this.color.subscribe((newColor) => {
-        this.setColor(newColor);
+        this.applyColor(newColor);
       });
     }
   };
@@ -1423,6 +1422,9 @@
       );
       this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
     };
+    applyColor = (newColor) => {
+      this.taskPageViewModel.chatViewModel.setDisplayedColor(newColor);
+    };
     // load
     loadListRelevantData = () => {
       this.name.value = this.boardInfo.name;
@@ -1439,6 +1441,9 @@
         [this.taskPageViewModel.selectedBoard],
         () => this.taskPageViewModel.selectedBoard.value == this
       );
+      this.color.subscribeSilent((newColor) => {
+        this.applyColor(newColor);
+      });
     }
   };
 
@@ -1534,8 +1539,11 @@
       this.taskPageViewModel.closeBoard();
     };
     setColor = (color) => {
-      this.displayedColor.value = color;
+      this.setDisplayedColor(color);
       this.chatModel.setColor(color);
+    };
+    setDisplayedColor = (color) => {
+      this.displayedColor.value = color;
     };
     resetColor = () => {
       this.displayedColor.value = this.settingsPageViewModel.color.value;
@@ -2049,7 +2057,7 @@
         "on:enter": boardViewModel.saveSettings,
         "bind:value": boardViewModel.name
       }
-    )))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ))), ColorPicker(boardViewModel.color)), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/View/ChatPages/boardPage.tsx
