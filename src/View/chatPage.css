@@ -30,9 +30,9 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page > div > #ribbon,
 #chat-page > div > #main,
 #chat-page > div > #main > div,
-#chat-page > div > #main > div > .pane,
-#chat-page > div > #main > div > .pane > .toolbar,
-#chat-page > div > #main > div > .pane > .content {
+#chat-page > div > #main > div > .pane-wrapper > .pane,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   display: flex;
 }
 
@@ -50,40 +50,42 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 #chat-page #main > div,
-#chat-page > div > #main > div > .pane,
-#chat-page > div > #main > div > .pane > .content {
+#chat-page > div > #main > div > .pane-wrapper,
+#chat-page > div > #main > div > .pane-wrapper > .pane,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   width: 100%;
   height: 100%;
   flex: 1;
 }
 
-#chat-page > div > #main > div > .pane {
+#chat-page > div > #main > div > .pane-wrapper,
+#chat-page > div > #main > div > .pane-wrapper > .pane {
   flex-direction: column;
   scroll-snap-align: center;
 
   min-width: 100%;
 }
 
-#chat-page > div > #main > div > .pane:not(.side),
-#chat-page > div > #main > div > .pane:not(.side) .content {
+#chat-page > div > #main > div > .pane-wrapper > .pane:not(.side),
+#chat-page > div > #main > div > .pane-wrapper > .pane:not(.side) .content {
   animation: slide-up var(--animation-duration);
 }
 
 @media (min-width: 1024px) {
-  #chat-page > div > #main > div > .pane {
+  #chat-page > div > #main > div > .pane-wrapper {
     min-width: unset;
   }
 
-  #chat-page > div > #main > div > .pane.side {
+  #chat-page > div > #main > div > .pane-wrapper.side {
     max-width: 18rem;
   }
 }
 
-#chat-page > div > #main > div > .pane:not(:last-child) {
+#chat-page > div > #main > div > .pane-wrapper:not(:last-child) {
   border-right: 1px solid var(--border);
 }
 
-#chat-page > div > #main > div > .pane > .content {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   flex-direction: column;
   overflow: auto;
   padding: var(--content-padding);
@@ -97,12 +99,12 @@ body[showing-chat] #chat-page-wrapper {
 
 /* ribbon, toolbar */
 #chat-page > div > #ribbon,
-#chat-page > div > #main > div > .pane > .toolbar {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   align-items: center;
 }
 
 #chat-page #ribbon > span,
-#chat-page > div > #main > div > .pane > .toolbar {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -135,7 +137,7 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 #chat-page > div > #ribbon button,
-#chat-page > div > #main > div > .pane > .toolbar button {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button {
   padding: 0px;
 
   width: 100%;
@@ -148,13 +150,28 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 #chat-page > div > #ribbon button.ribbon-button,
-#chat-page > div > #main > div > .pane > .toolbar button.ribbon-button {
+#chat-page
+  > div
+  > #main
+  > div
+  > .pane-wrapper
+  > .pane
+  > .toolbar
+  button.ribbon-button {
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
 
 #chat-page > div > #ribbon button.ribbon-button > .icon,
-#chat-page > div > #main > div > .pane > .toolbar button.ribbon-button > .icon {
+#chat-page
+  > div
+  > #main
+  > div
+  > .pane-wrapper
+  > .pane
+  > .toolbar
+  button.ribbon-button
+  > .icon {
   font-size: 1.1rem;
 }
 
@@ -162,7 +179,7 @@ body[showing-chat] #chat-page-wrapper {
   width: 100%;
 }
 
-#chat-page > div > #main > div > .pane > .toolbar {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   height: var(--ribbon-size);
   border-bottom: 1px solid var(--border);
 
@@ -173,11 +190,18 @@ body[showing-chat] #chat-page-wrapper {
   border-top: 1px solid var(--border);
 }
 
-#chat-page > div > #main > div > .pane > .toolbar > span {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span {
   padding-left: var(--content-padding);
 }
 
-#chat-page > div > #main > div > .pane > .toolbar :is(input, select, button) {
+#chat-page
+  > div
+  > #main
+  > div
+  > .pane-wrapper
+  > .pane
+  > .toolbar
+  :is(input, select, button) {
   height: 100%;
   flex: 1;
 }

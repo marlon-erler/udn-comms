@@ -37,32 +37,34 @@ export function MessagePage(messagePageViewModel: MessagePageViewModel) {
 
   return (
     <div id="message-page">
-      <div class="pane">
-        <div class="toolbar">
-          <span>{translations.chatPage.message.messagesHeadline}</span>
-        </div>
-        <div class="content">
-          {messageContainer}
-          <div id="composer">
-            <div class="content-width-constraint">
-              <div class="input-width-constraint">
-                <input
-                  bind:value={messagePageViewModel.composingMessage}
-                  on:enter={messagePageViewModel.sendMessage}
-                  placeholder={
-                    translations.chatPage.message.composerInputPlaceholder
-                  }
-                ></input>
-                <button
-                  class="primary"
-                  aria-label={
-                    translations.chatPage.message.sendMessageButtonAudioLabel
-                  }
-                  on:click={messagePageViewModel.sendMessage}
-                  toggle:disabled={messagePageViewModel.cannotSendMessage}
-                >
-                  <span class="icon">send</span>
-                </button>
+      <div class="pane-wrapper">
+        <div class="pane">
+          <div class="toolbar">
+            <span>{translations.chatPage.message.messagesHeadline}</span>
+          </div>
+          <div class="content">
+            {messageContainer}
+            <div id="composer">
+              <div class="content-width-constraint">
+                <div class="input-width-constraint">
+                  <input
+                    bind:value={messagePageViewModel.composingMessage}
+                    on:enter={messagePageViewModel.sendMessage}
+                    placeholder={
+                      translations.chatPage.message.composerInputPlaceholder
+                    }
+                  ></input>
+                  <button
+                    class="primary"
+                    aria-label={
+                      translations.chatPage.message.sendMessageButtonAudioLabel
+                    }
+                    on:click={messagePageViewModel.sendMessage}
+                    toggle:disabled={messagePageViewModel.cannotSendMessage}
+                  >
+                    <span class="icon">send</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

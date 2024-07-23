@@ -1820,7 +1820,7 @@
       scrollDownIfApplicable
     );
     setTimeout(() => scrollDown(), 100);
-    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messagesHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messagesHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": messagePageViewModel.composingMessage,
@@ -1836,7 +1836,7 @@
         "toggle:disabled": messagePageViewModel.cannotSendMessage
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    )))))));
+    ))))))));
   }
 
   // src/View/Components/dangerousActionButton.tsx
@@ -1894,7 +1894,7 @@
         settingsPageViewModel.removeSecondaryChannel(secondaryChannel);
       });
     };
-    return /* @__PURE__ */ createElement("div", { id: "settings-page" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "settings-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": settingsPageViewModel.primaryChannelInput,
@@ -1981,7 +1981,7 @@
       translations.chatPage.settings.deleteChatButton,
       "chat_error",
       settingsPageViewModel.remove
-    )))));
+    ))))));
   }
 
   // src/View/Components/boardEntry.tsx
@@ -2003,6 +2003,11 @@
     return BoardEntry(boardViewModel);
   };
 
+  // src/View/ChatPages/boardPage.tsx
+  function BoardPage(boardViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" }));
+  }
+
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
     taskPageViewModel.loadData();
@@ -2012,14 +2017,14 @@
         const selectedBoard = taskPageViewModel.selectedBoard.value;
         if (selectedBoard == void 0) {
           return [
-            /* @__PURE__ */ createElement("div", { class: "content align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected))
+            /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected))
           ];
         } else {
-          return [/* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })];
+          return BoardPage(selectedBoard);
         }
       }
     );
-    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { "set:color": taskPageViewModel.chatViewModel.displayedColor, class: "pane side background" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": taskPageViewModel.newBoardNameInput,
@@ -2045,7 +2050,7 @@
           BoardInfoToEntry
         ]
       }
-    ))), /* @__PURE__ */ createElement("div", { class: "pane", "children:set": paneContent }));
+    )))), /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent }));
   }
 
   // src/View/chatPage.tsx
