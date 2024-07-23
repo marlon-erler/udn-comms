@@ -27,6 +27,7 @@
   flex: 1;
 
   border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
 }
 
 @media (max-width: 700px) {
@@ -39,10 +40,6 @@
 }
 
 @media (min-width: 700px) {
-  #message-page #composer input {
-    border-left: 1px solid var(--border);
-  }
-
   #message-page #composer .content-width-constraint,
   #message-page #composer .input-width-constraint {
     display: flex;
