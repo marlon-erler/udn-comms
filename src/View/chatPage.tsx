@@ -11,25 +11,24 @@ import { TaskPage } from "./ChatPages/taskPage";
 import { translations } from "./translations";
 
 export function ChatPage(chatViewModel: ChatViewModel) {
-  const mainContent = new React.State(<div></div>);
+  const mainContent = React.createProxyState(
+    [chatViewModel.selectedPage],
+    () => {
+      chatViewModel.closeSubPages();
 
-  chatViewModel.selectedPage.subscribe((selectedPage) => {
-    chatViewModel.closeSubPages();
-
-    switch (selectedPage) {
-      case ChatPageType.Settings: {
-        mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
-        break;
-      }
-      case ChatPageType.Tasks: {
-        mainContent.value = TaskPage(chatViewModel.taskPageViewModel);
-        break;
-      }
-      default: {
-        mainContent.value = MessagePage(chatViewModel.messagePageViewModel);
+      switch (chatViewModel.selectedPage.value) {
+        case ChatPageType.Settings: {
+          return SettingsPage(chatViewModel.settingsPageViewModel);
+        }
+        case ChatPageType.Tasks: {
+          return TaskPage(chatViewModel.taskPageViewModel);
+        }
+        default: {
+          return MessagePage(chatViewModel.messagePageViewModel);
+        }
       }
     }
-  });
+  );
 
   return (
     <article

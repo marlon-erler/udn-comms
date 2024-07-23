@@ -2356,23 +2356,23 @@
 
   // src/View/chatPage.tsx
   function ChatPage(chatViewModel) {
-    const mainContent = new State(/* @__PURE__ */ createElement("div", null));
-    chatViewModel.selectedPage.subscribe((selectedPage) => {
-      chatViewModel.closeSubPages();
-      switch (selectedPage) {
-        case "settings" /* Settings */: {
-          mainContent.value = SettingsPage(chatViewModel.settingsPageViewModel);
-          break;
-        }
-        case "tasks" /* Tasks */: {
-          mainContent.value = TaskPage(chatViewModel.taskPageViewModel);
-          break;
-        }
-        default: {
-          mainContent.value = MessagePage(chatViewModel.messagePageViewModel);
+    const mainContent = createProxyState(
+      [chatViewModel.selectedPage],
+      () => {
+        chatViewModel.closeSubPages();
+        switch (chatViewModel.selectedPage.value) {
+          case "settings" /* Settings */: {
+            return SettingsPage(chatViewModel.settingsPageViewModel);
+          }
+          case "tasks" /* Tasks */: {
+            return TaskPage(chatViewModel.taskPageViewModel);
+          }
+          default: {
+            return MessagePage(chatViewModel.messagePageViewModel);
+          }
         }
       }
-    });
+    );
     return /* @__PURE__ */ createElement(
       "article",
       {
