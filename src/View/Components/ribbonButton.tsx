@@ -12,7 +12,7 @@ export function RibbonButton(
 ) {
   return (
     <button
-      class="ghost ribbon-button"
+      class="ribbon-button"
       aria-label={label}
       toggle:selected={isSelected}
       on:click={select}

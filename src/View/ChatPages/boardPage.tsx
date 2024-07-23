@@ -70,7 +70,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
             <span class="icon">filter_alt</span>
           </button>
           <button
-            class="primary"
+            class="ghost"
             aria-label={translations.chatPage.task.createTaskButtonAudioLabel}
             on:click={boardViewModel.showNewTaskModal}
           >

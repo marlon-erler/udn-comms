@@ -82,11 +82,17 @@ main {
   --primary-active: hsl(var(--hue), 80%, var(--accent-luma));
   --text-on-color: hsl(0, 0%, var(--accent-text-luma));
   --link: hsl(var(--hue), 100%, var(--accent-luma));
+  --surface: hsla(var(--hue), 80%, 30%, 5%);
+  --surface-hover: hsla(var(--hue), 100%, 5%, 10%);
+  --surface-active: hsla(var(--hue), 100%, 5%, 15%);
 }
 @media (prefers-color-scheme: dark) {
   [color]:not([color=standard]) {
     --accent-luma: var(--accent-luma-dark);
     --accent-text-luma: var(--accent-text-luma-dark);
+    --surface: hsla(var(--hue), 100%, 95%, 5%);
+    --surface-hover: hsla(var(--hue), 100%, 95%, 10%);
+    --surface-active: hsla(var(--hue), 100%, 95%, 15%);
   }
 }
 [color]:not([color=standard]).tile {
@@ -269,7 +275,7 @@ body[showing-chat] #chat-page-wrapper {
   overflow: hidden;
 }
 #chat-page > div > #main {
-  width: calc(100% - var(--ribbon-size));
+  width: calc(100% - var(--ribbon-size) - 1px);
   overflow-x: scroll;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
@@ -314,18 +320,19 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   align-items: center;
 }
+#chat-page > div > #ribbon {
+  width: calc(var(--ribbon-size) + 1px);
+  border-right: 1px solid var(--border);
+  padding-bottom: var(--safe-area-bottom);
+}
 #chat-page > div > #ribbon > span,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.ribbon {
-  gap: calc(var(--gap-between-tiles) * 2);
+  gap: var(--gap-between-tiles);
   padding: var(--gap-between-tiles);
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   justify-content: start;
   justify-content: space-between;
-}
-#chat-page > div > #ribbon {
-  width: var(--ribbon-size);
-  padding-bottom: var(--safe-area-bottom);
 }
 #chat-page > div > #ribbon > span {
   height: 100%;
@@ -350,6 +357,7 @@ body[showing-chat] #chat-page-wrapper {
   max-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+  color: var(--primary);
 }
 #chat-page > div > #ribbon button > .icon,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button > .icon {
@@ -362,11 +370,6 @@ body[showing-chat] #chat-page-wrapper {
   height: var(--ribbon-size);
   overflow-x: auto;
   padding: 0px;
-}
-@media (max-width: 1024px) {
-  #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar input {
-    border-left: 1px solid var(--surface-border);
-  }
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {
   padding-left: var(--content-padding);

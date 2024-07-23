@@ -44,7 +44,7 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 #chat-page > div > #main {
-  width: calc(100% - var(--ribbon-size));
+  width: calc(100% - var(--ribbon-size) - 1px);
 
   overflow-x: scroll;
   scroll-behavior: smooth;
@@ -101,6 +101,12 @@ body[showing-chat] #chat-page-wrapper {
   align-items: center;
 }
 
+#chat-page > div > #ribbon {
+  width: calc(var(--ribbon-size) + 1px);
+  border-right: 1px solid var(--border);
+  padding-bottom: var(--safe-area-bottom);
+}
+
 #chat-page > div > #ribbon > span,
 #chat-page
   > div
@@ -110,19 +116,13 @@ body[showing-chat] #chat-page-wrapper {
   > .pane
   > .toolbar
   > span.ribbon {
-  gap: calc(var(--gap-between-tiles) * 2);
+  gap: var(--gap-between-tiles);
   padding: var(--gap-between-tiles);
 }
 
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   justify-content: start;
   justify-content: space-between;
-}
-
-#chat-page > div > #ribbon {
-  width: var(--ribbon-size);
-
-  padding-bottom: var(--safe-area-bottom);
 }
 
 #chat-page > div > #ribbon > span {
@@ -162,6 +162,8 @@ body[showing-chat] #chat-page-wrapper {
 
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+
+  color: var(--primary);
 }
 
 #chat-page > div > #ribbon button > .icon,
@@ -187,12 +189,6 @@ body[showing-chat] #chat-page-wrapper {
   overflow-x: auto;
 
   padding: 0px;
-}
-
-@media (max-width: 1024px) {
-  #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar input {
-    border-left: 1px solid var(--surface-border);
-  }
 }
 
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {

@@ -167,6 +167,9 @@ select:not(.tile *),
 .tile {
   background: var(--surface);
 }
+[selected] {
+  background: var(--background);
+}
 @media (hover: hover) {
   button:hover,
   select:hover,
@@ -179,8 +182,7 @@ select:not(.tile *),
 }
 button:active,
 select:active,
-button.tile.ghost:active,
-[selected] {
+button.tile.ghost:active {
   background: var(--surface-active);
 }
 [selected]:active {

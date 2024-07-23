@@ -1792,7 +1792,7 @@
     return /* @__PURE__ */ createElement(
       "button",
       {
-        class: "ghost ribbon-button",
+        class: "ribbon-button",
         "aria-label": label,
         "toggle:selected": isSelected,
         "on:click": select
@@ -2237,6 +2237,16 @@
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
     boardViewModel.loadData();
+    const mainContent = createProxyState(
+      [boardViewModel.selectedPage],
+      () => {
+        switch (boardViewModel.selectedPage.value) {
+          default: {
+            return /* @__PURE__ */ createElement("div", null);
+          }
+        }
+      }
+    );
     return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
@@ -2279,12 +2289,12 @@
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary",
+        class: "ghost",
         "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
         "on:click": boardViewModel.showNewTaskModal
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content" }), BoardSettingsModal(boardViewModel));
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }), BoardSettingsModal(boardViewModel));
   }
 
   // src/View/ChatPages/taskPage.tsx

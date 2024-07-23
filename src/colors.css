@@ -6,12 +6,20 @@
 
   --text-on-color: hsl(0, 0%, var(--accent-text-luma));
   --link: hsl(var(--hue), 100%, var(--accent-luma));
+
+  --surface: hsla(var(--hue), 80%, 30%, 5%);
+  --surface-hover: hsla(var(--hue), 100%, 5%, 10%);
+  --surface-active: hsla(var(--hue), 100%, 5%, 15%);
 }
 
 @media (prefers-color-scheme: dark) {
   [color]:not([color="standard"]) {
     --accent-luma: var(--accent-luma-dark);
     --accent-text-luma: var(--accent-text-luma-dark);
+
+    --surface: hsla(var(--hue), 100%, 95%, 5%);
+    --surface-hover: hsla(var(--hue), 100%, 95%, 10%);
+    --surface-active: hsla(var(--hue), 100%, 95%, 15%);
   }
 }
 
