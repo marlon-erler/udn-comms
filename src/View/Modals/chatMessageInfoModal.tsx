@@ -4,15 +4,10 @@ import ChatMessageViewModel from "../../ViewModel/Chat/chatMessageViewModel";
 import { translations } from "../translations";
 
 export function ChatMessageInfoModal(
-  chatMessageViewModel: ChatMessageViewModel,
-  isOpen: React.State<boolean>
+  chatMessageViewModel: ChatMessageViewModel
 ) {
-  function closeModal() {
-    isOpen.value = false;
-  }
-
   return (
-    <div class="modal" toggle:open={isOpen}>
+    <div class="modal" toggle:open={chatMessageViewModel.isPresentingInfoModal}>
       <div>
         <main>
           <h2>{translations.chatPage.message.messageInfoHeadline}</h2>
@@ -71,10 +66,7 @@ export function ChatMessageInfoModal(
             </button>
           </div>
         </main>
-        <button
-          on:click={closeModal}
-          aria-label={translations.general.closeButton}
-        >
+        <button on:click={chatMessageViewModel.hideInfoModal}>
           {translations.general.closeButton}
           <span class="icon">close</span>
         </button>

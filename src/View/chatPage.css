@@ -162,7 +162,7 @@ body[showing-chat] #chat-page-wrapper {
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
 
-#chat-page > div > #ribbon button.ribbon-button > .icon,
+#chat-page > div > #ribbon button > .icon,
 #chat-page
   > div
   > #main
@@ -170,7 +170,7 @@ body[showing-chat] #chat-page-wrapper {
   > .pane-wrapper
   > .pane
   > .toolbar
-  button.ribbon-button
+  button
   > .icon {
   font-size: 1.1rem;
 }

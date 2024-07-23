@@ -106,8 +106,12 @@ const englishTranslations = {
     message: {
       messagesHeadline: "Messages",
 
+      ///
+
       composerInputPlaceholder: "Type a message...",
       sendMessageButtonAudioLabel: "send message",
+
+      ///
 
       showMessageInfoButtonAudioLabel: "show message info",
       messageInfoHeadline: "Message Info",
@@ -127,7 +131,20 @@ const englishTranslations = {
       newBoardNamePlaceholder: "Create a board",
       createBoardButtonAudioLabel: "create board",
 
+      ///
+      
       noBoardSelected: "No board selected",
+
+      ///
+
+      closeBoard: "close board",
+      showBoardSettingsButtonAudioLabel: "show board settigns",
+
+      ///
+
+      boardSettingsHeadline: "Board Settings",
+
+      boardNameInputLabel: "Board name",
     },
   },
 };

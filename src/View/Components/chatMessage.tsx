@@ -1,16 +1,11 @@
 import * as React from "bloatless-react";
 
-import { ChatMessageInfoModal } from "./chatMessageInfoModal";
+import { ChatMessageInfoModal } from "../Modals/chatMessageInfoModal";
 import { ChatMessageStatus } from "../../Model/Chat/chatModel";
 import ChatMessageViewModel from "../../ViewModel/Chat/chatMessageViewModel";
 import { translations } from "../translations";
 
 export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
-  const isInfoModalOpen = new React.State(false);
-  function openModal() {
-    isInfoModalOpen.value = true;
-  }
-
   const statusIcon = React.createProxyState(
     [chatMessageViewModel.status],
     () => {
@@ -49,7 +44,7 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
         
         <div class="button-container">
           <button
-            on:click={openModal}
+            on:click={chatMessageViewModel.showInfoModal}
             aria-label={
               translations.chatPage.message.showMessageInfoButtonAudioLabel
             }
@@ -59,7 +54,7 @@ export function ChatMessage(chatMessageViewModel: ChatMessageViewModel) {
         </div>
       </div>
 
-      {ChatMessageInfoModal(chatMessageViewModel, isInfoModalOpen)}
+      {ChatMessageInfoModal(chatMessageViewModel)}
     </div>
   );
 }

@@ -17,6 +17,9 @@ export default class ChatMessageViewModel {
     ChatMessageStatus | undefined
   >(undefined);
   sentByUser: boolean;
+  
+  // state
+  isPresentingInfoModal: React.State<boolean> = new React.State(false);
 
   // methods
   copyMessage = (): void => {
@@ -28,6 +31,15 @@ export default class ChatMessageViewModel {
   decryptMessage = (): void => {
     this.messagePageViewModel.decryptMessage(this);
   };
+
+  // view
+  showInfoModal = (): void => {
+    this.isPresentingInfoModal.value = true;
+  }
+
+  hideInfoModal = (): void => {
+    this.isPresentingInfoModal.value = false;
+  }
 
   // load
   loadData = (): void => {

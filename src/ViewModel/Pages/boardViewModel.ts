@@ -7,13 +7,14 @@ import TaskPageViewModel from "./taskPageViewModel";
 export default class BoardViewModel {
   taskPageViewModel: TaskPageViewModel;
 
-  // data
+  // state
   boardInfo: BoardInfoFileContent;
 
   name: React.State<string> = new React.State("");
   color: React.State<Color> = new React.State<Color>(Color.Standard);
 
   isSelected: React.State<boolean>;
+  isPresentingSettingsModal: React.State<boolean> = new React.State(false);
 
   // view
   select = (): void => {
@@ -22,6 +23,14 @@ export default class BoardViewModel {
 
   close = (): void => {
     this.taskPageViewModel.closeBoard();
+  };
+
+  showSettings = (): void => {
+    this.isPresentingSettingsModal.value = true;
+  };
+
+  hideSettings = (): void => {
+    this.isPresentingSettingsModal.value = false;
   };
 
   // load

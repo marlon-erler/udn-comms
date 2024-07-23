@@ -335,8 +335,8 @@ body[showing-chat] #chat-page-wrapper {
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
-#chat-page > div > #ribbon button.ribbon-button > .icon,
-#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button.ribbon-button > .icon {
+#chat-page > div > #ribbon button > .icon,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button > .icon {
   font-size: 1.1rem;
 }
 #chat-page > div > #ribbon > span {

@@ -175,6 +175,9 @@
     );
     return proxyState;
   }
+  function bulkSubscribe(statesToSubscibe, fn) {
+    statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
+  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -1206,6 +1209,8 @@
     body = new State("");
     status = new State(void 0);
     sentByUser;
+    // state
+    isPresentingInfoModal = new State(false);
     // methods
     copyMessage = () => {
       navigator.clipboard.writeText(this.body.value);
@@ -1215,6 +1220,13 @@
     };
     decryptMessage = () => {
       this.messagePageViewModel.decryptMessage(this);
+    };
+    // view
+    showInfoModal = () => {
+      this.isPresentingInfoModal.value = true;
+    };
+    hideInfoModal = () => {
+      this.isPresentingInfoModal.value = false;
     };
     // load
     loadData = () => {
@@ -1379,17 +1391,24 @@
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class {
     taskPageViewModel;
-    // data
+    // state
     boardInfo;
     name = new State("");
     color = new State("standard" /* Standard */);
     isSelected;
+    isPresentingSettingsModal = new State(false);
     // view
     select = () => {
       this.taskPageViewModel.selectBoard(this);
     };
     close = () => {
       this.taskPageViewModel.closeBoard();
+    };
+    showSettings = () => {
+      this.isPresentingSettingsModal.value = true;
+    };
+    hideSettings = () => {
+      this.isPresentingSettingsModal.value = false;
     };
     // load
     loadListRelevantData = () => {
@@ -1699,8 +1718,10 @@
       },
       message: {
         messagesHeadline: "Messages",
+        ///
         composerInputPlaceholder: "Type a message...",
         sendMessageButtonAudioLabel: "send message",
+        ///
         showMessageInfoButtonAudioLabel: "show message info",
         messageInfoHeadline: "Message Info",
         sentBy: "Sent by",
@@ -1715,7 +1736,14 @@
       task: {
         newBoardNamePlaceholder: "Create a board",
         createBoardButtonAudioLabel: "create board",
-        noBoardSelected: "No board selected"
+        ///
+        noBoardSelected: "No board selected",
+        ///
+        closeBoard: "close board",
+        showBoardSettingsButtonAudioLabel: "show board settigns",
+        ///
+        boardSettingsHeadline: "Board Settings",
+        boardNameInputLabel: "Board name"
       }
     }
   };
@@ -1725,34 +1753,19 @@
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
 
-  // src/View/Components/chatMessageInfoModal.tsx
-  function ChatMessageInfoModal(chatMessageViewModel, isOpen) {
-    function closeModal() {
-      isOpen.value = false;
-    }
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isOpen }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.message.messageInfoHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.sentBy), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.sender))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.timeSent), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.dateSent))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.channel), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.channel))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messageContent), /* @__PURE__ */ createElement(
+  // src/View/Modals/chatMessageInfoModal.tsx
+  function ChatMessageInfoModal(chatMessageViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": chatMessageViewModel.isPresentingInfoModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.message.messageInfoHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.sentBy), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.sender))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.timeSent), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.dateSent))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.channel), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.channel))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messageContent), /* @__PURE__ */ createElement(
       "b",
       {
         class: "break-word",
         "subscribe:innerText": chatMessageViewModel.body
       }
-    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.copyMessage }, translations.chatPage.message.copyMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.resendMessage }, translations.chatPage.message.resendMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "redo")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.decryptMessage }, translations.chatPage.message.decryptMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "key")))), /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": closeModal,
-        "aria-label": translations.general.closeButton
-      },
-      translations.general.closeButton,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    )));
+    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.copyMessage }, translations.chatPage.message.copyMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.resendMessage }, translations.chatPage.message.resendMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "redo")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.decryptMessage }, translations.chatPage.message.decryptMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "key")))), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.hideInfoModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/View/Components/chatMessage.tsx
   function ChatMessage(chatMessageViewModel) {
-    const isInfoModalOpen = new State(false);
-    function openModal() {
-      isInfoModalOpen.value = true;
-    }
     const statusIcon = createProxyState(
       [chatMessageViewModel.status],
       () => {
@@ -1783,12 +1796,12 @@
       ), /* @__PURE__ */ createElement("span", { class: "timestamp ellipsis" }, /* @__PURE__ */ createElement("span", { class: "icon", "subscribe:innerText": statusIcon }), chatMessageViewModel.dateSent)), /* @__PURE__ */ createElement("div", { class: "button-container" }, /* @__PURE__ */ createElement(
         "button",
         {
-          "on:click": openModal,
+          "on:click": chatMessageViewModel.showInfoModal,
           "aria-label": translations.chatPage.message.showMessageInfoButtonAudioLabel
         },
         /* @__PURE__ */ createElement("span", { class: "icon" }, "info")
       ))),
-      ChatMessageInfoModal(chatMessageViewModel, isInfoModalOpen)
+      ChatMessageInfoModal(chatMessageViewModel)
     );
   }
   var ChatMessageViewModelToView = (chatMessageViewModel) => {
@@ -2003,9 +2016,37 @@
     return BoardEntry(boardViewModel);
   };
 
+  // src/View/Modals/boardSettingsModal.tsx
+  function BoardSettingsModal(boardViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.message.messageInfoHeadline)), /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": boardViewModel.hideSettings
+      },
+      translations.general.closeButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+    )));
+  }
+
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" }));
+    return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.closeBoard,
+        "on:click": boardViewModel.close
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.boardSettingsHeadline,
+        "on:click": boardViewModel.showSettings
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "settings")
+    )), /* @__PURE__ */ createElement("div", { class: "content" }), BoardSettingsModal(boardViewModel));
   }
 
   // src/View/ChatPages/taskPage.tsx
@@ -2024,7 +2065,7 @@
         }
       }
     );
-    return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    const listPaneWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         "bind:value": taskPageViewModel.newBoardNameInput,
@@ -2050,7 +2091,17 @@
           BoardInfoToEntry
         ]
       }
-    )))), /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent }));
+    ))));
+    const mainPageWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent });
+    bulkSubscribe([taskPageViewModel.selectedBoard], () => {
+      const selectedBoard = taskPageViewModel.selectedBoard.value;
+      if (selectedBoard == void 0) {
+        listPaneWrapper.scrollIntoView();
+      } else {
+        mainPageWrapper.scrollIntoView();
+      }
+    });
+    return /* @__PURE__ */ createElement("div", { id: "task-page" }, listPaneWrapper, mainPageWrapper);
   }
 
   // src/View/chatPage.tsx
