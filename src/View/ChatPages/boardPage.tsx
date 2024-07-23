@@ -11,6 +11,17 @@ import { translations } from "../translations";
 export function BoardPage(boardViewModel: BoardViewModel) {
   boardViewModel.loadData();
 
+  const mainContent = React.createProxyState(
+    [boardViewModel.selectedPage],
+    () => {
+      switch (boardViewModel.selectedPage.value) {
+        default: {
+          return <div></div>;
+        }
+      }
+    }
+  );
+
   return (
     <div class="pane">
       <div class="toolbar">
@@ -67,7 +78,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
           </button>
         </span>
       </div>
-      <div class="content"></div>
+      <div class="content" children:set={mainContent}></div>
 
       {BoardSettingsModal(boardViewModel)}
     </div>
