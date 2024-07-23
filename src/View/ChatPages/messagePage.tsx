@@ -40,7 +40,7 @@ export function MessagePage(messagePageViewModel: MessagePageViewModel) {
       <div class="pane-wrapper">
         <div class="pane">
           <div class="toolbar">
-            <span>{translations.chatPage.message.messagesHeadline}</span>
+            <span class="title">{translations.chatPage.message.messagesHeadline}</span>
           </div>
           <div class="content">
             {messageContainer}

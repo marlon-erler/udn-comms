@@ -28,10 +28,12 @@ body[showing-chat] #chat-page-wrapper {
 
 #chat-page > div,
 #chat-page > div > #ribbon,
+#chat-page > div > #ribbon > span,
 #chat-page > div > #main,
 #chat-page > div > #main > div,
 #chat-page > div > #main > div > .pane-wrapper > .pane,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   display: flex;
 }
@@ -104,21 +106,18 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 #chat-page #ribbon > span,
-#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: start;
-
-  padding: var(--gap-between-tiles);
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span {
   gap: var(--gap-between-tiles);
+}
+
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
+  justify-content: start;
+  justify-content: space-between;
 }
 
 #chat-page > div > #ribbon {
   width: var(--ribbon-size);
   border-right: 1px solid var(--border);
-
-  justify-content: space-between;
 
   padding-bottom: var(--safe-area-bottom);
 }
@@ -129,18 +128,17 @@ body[showing-chat] #chat-page-wrapper {
   flex: 1;
   overflow-y: auto;
 
-  justify-content: flex-end;
-}
-
-#chat-page > div > #ribbon > span {
   flex-direction: column;
+  justify-content: end;
+
+  padding: var(--gap-between-tiles);
 }
 
 #chat-page > div > #ribbon button,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button {
   padding: 0px;
 
-  width: 100%;
+  width: var(--control-height);
   max-width: var(--control-height);
   height: var(--control-height);
   min-height: var(--control-height);
@@ -158,6 +156,7 @@ body[showing-chat] #chat-page-wrapper {
   > .pane
   > .toolbar
   button.ribbon-button {
+  width: 100%;
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
@@ -190,7 +189,7 @@ body[showing-chat] #chat-page-wrapper {
   border-top: 1px solid var(--border);
 }
 
-#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span {
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {
   padding-left: var(--content-padding);
 }
 

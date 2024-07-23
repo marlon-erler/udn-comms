@@ -23,7 +23,9 @@ export function SettingsPage(settingsPageViewModel: SettingsPageViewModel) {
       <div class="pane-wrapper">
         <div class="pane">
           <div class="toolbar">
-            <span>{translations.chatPage.settings.settingsHeadline}</span>
+            <span class="title">
+              {translations.chatPage.settings.settingsHeadline}
+            </span>
           </div>
           <div class="content">
             <label class="tile flex-no">
