@@ -223,7 +223,7 @@ body[showing-chat] #chat-page-wrapper {
   z-index: 2;
 }
 #chat-page {
-  --ribbon-size: calc(var(--control-height) + 2 * var(--gap-between-tiles));
+  --ribbon-size: var(--control-height);
 }
 #chat-page > div,
 #chat-page > div > #ribbon,
@@ -277,26 +277,6 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page #main .content {
   flex-direction: column;
 }
-#chat-page > div > #ribbon {
-  width: var(--ribbon-size);
-  border-right: 1px solid var(--border);
-  justify-content: space-between;
-  padding-bottom: var(--safe-area-bottom);
-}
-#chat-page > div > #ribbon > span {
-  height: 100%;
-  flex: 1;
-  overflow-y: auto;
-  justify-content: flex-end;
-}
-#chat-page > div > #main > div > .pane > .toolbar {
-  height: var(--ribbon-size);
-  border-bottom: 1px solid var(--border);
-  overflow-y: hidden;
-  overflow-x: auto;
-  padding: var(--gap-between-tiles);
-  border-top: 1px solid var(--border);
-}
 #chat-page > div > #ribbon,
 #chat-page > div > #main > div > .pane > .toolbar {
   align-items: center;
@@ -310,14 +290,19 @@ body[showing-chat] #chat-page-wrapper {
   padding: var(--gap-between-tiles);
   gap: var(--gap-between-tiles);
 }
-#chat-page > div > #main > div > .pane > .toolbar > span {
-  padding-left: var(--content-padding);
+#chat-page > div > #ribbon {
+  width: var(--ribbon-size);
+  border-right: 1px solid var(--border);
+  justify-content: space-between;
+  padding-bottom: var(--safe-area-bottom);
 }
-#chat-page > div > #main > div > .pane > .toolbar :is(input, select, button) {
+#chat-page > div > #ribbon > span {
   height: 100%;
   flex: 1;
+  overflow-y: auto;
+  justify-content: flex-end;
 }
-#chat-page #ribbon > span {
+#chat-page > div > #ribbon > span {
   flex-direction: column;
 }
 #chat-page > div > #ribbon button,
@@ -330,11 +315,32 @@ body[showing-chat] #chat-page-wrapper {
   align-items: center;
   justify-content: center;
 }
+#chat-page > div > #ribbon button.ribbon-button,
+#chat-page > div > #main > div > .pane > .toolbar button.ribbon-button {
+  min-height: unset;
+  height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+}
+#chat-page > div > #ribbon button.ribbon-button > .icon,
+#chat-page > div > #main > div > .pane > .toolbar button.ribbon-button > .icon {
+  font-size: 1.1rem;
+}
 #chat-page > div > #ribbon > span {
   width: 100%;
 }
-#chat-page > div > #ribbon > button {
-  margin-top: var(--gap-between-tiles);
+#chat-page > div > #main > div > .pane > .toolbar {
+  height: var(--ribbon-size);
+  border-bottom: 1px solid var(--border);
+  overflow-y: hidden;
+  overflow-x: auto;
+  padding: 0px;
+  border-top: 1px solid var(--border);
+}
+#chat-page > div > #main > div > .pane > .toolbar > span {
+  padding-left: var(--content-padding);
+}
+#chat-page > div > #main > div > .pane > .toolbar :is(input, select, button) {
+  height: 100%;
+  flex: 1;
 }
 
 /* src/View/homePage.css */

@@ -19,7 +19,7 @@ export function ChatViewToggleButton(
 
   return (
     <button
-      class="ghost"
+      class="ghost ribbon-button"
       aria-label={label}
       toggle:selected={isSelected}
       on:click={select}
