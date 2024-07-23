@@ -53,6 +53,10 @@ export default class TaskPageViewModel {
     this.showBoardInList(boardInfoFileContent);
   };
 
+  updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.taskModel.updateBoard(boardInfoFileContent);
+  };
+
   // view
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);

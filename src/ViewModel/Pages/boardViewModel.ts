@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
-import { BoardInfoFileContent } from "../../Model/Files/taskModel";
+import TaskModel, { BoardInfoFileContent } from "../../Model/Files/taskModel";
+
 import { Color } from "../../colors";
 import TaskPageViewModel from "./taskPageViewModel";
 
@@ -30,7 +31,19 @@ export default class BoardViewModel {
   };
 
   hideSettings = (): void => {
+    this.saveSettings();
     this.isPresentingSettingsModal.value = false;
+  };
+
+  // methods
+  saveSettings = (): void => {
+    const newBoardInfoFileContent: BoardInfoFileContent =
+      TaskModel.createBoardInfoFileContent(
+        this.boardInfo.fileId,
+        this.name.value,
+        this.color.value
+      );
+    this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
   };
 
   // load

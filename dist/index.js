@@ -1408,7 +1408,17 @@
       this.isPresentingSettingsModal.value = true;
     };
     hideSettings = () => {
+      this.saveSettings();
       this.isPresentingSettingsModal.value = false;
+    };
+    // methods
+    saveSettings = () => {
+      const newBoardInfoFileContent = TaskModel.createBoardInfoFileContent(
+        this.boardInfo.fileId,
+        this.name.value,
+        this.color.value
+      );
+      this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
     };
     // load
     loadListRelevantData = () => {
@@ -1455,6 +1465,9 @@
       const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.showBoardInList(boardInfoFileContent);
+    };
+    updateBoard = (boardInfoFileContent) => {
+      this.taskModel.updateBoard(boardInfoFileContent);
     };
     // view
     showBoardInList = (boardInfo) => {
@@ -2018,14 +2031,7 @@
 
   // src/View/Modals/boardSettingsModal.tsx
   function BoardSettingsModal(boardViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.message.messageInfoHeadline)), /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": boardViewModel.hideSettings
-      },
-      translations.general.closeButton,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    )));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement("input", { "bind:value": boardViewModel.name })))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/View/ChatPages/boardPage.tsx
