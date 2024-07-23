@@ -6,20 +6,18 @@ import BoardModel, {
 } from "../../Model/Files/boardModel";
 
 import BoardViewModel from "./boardViewModel";
-import StorageModel from "../../Model/Global/storageModel";
 
 export default class TaskViewModel {
   boardModel: BoardModel;
-  storageModel: StorageModel;
 
   boardViewModel: BoardViewModel;
 
   // data
-  fileId: string;
+  task: TaskFileContent;
 
   // paths
   getFilePath = (): string[] => {
-    return this.boardModel.getTaskFilePath(this.fileId);
+    return this.boardModel.getTaskFilePath(this.task.fileId);
   };
 
   // state
@@ -38,7 +36,7 @@ export default class TaskViewModel {
   save = (): void => {
     const newTaskFileContent: TaskFileContent =
       BoardModel.createTaskFileContent(
-        this.fileId,
+        this.task.fileId,
         this.name.value,
         this.boardViewModel.boardInfo.fileId
       );
@@ -51,39 +49,33 @@ export default class TaskViewModel {
     newTaskFileContent.time = this.time.value;
 
     this.boardModel.updateTask(newTaskFileContent);
+    this.boardViewModel.trackTask(this);
   };
 
   // load
   loadAllData = (): void => {
-    const path: string[] = this.getFilePath();
-    const taskFileContent: TaskFileContent | null =
-      this.storageModel.readStringifiable(path, TaskFileContentReference);
-    if (taskFileContent == null) return;
+    this.name.value = this.task.name;
 
-    this.name.value = taskFileContent.name;
+    this.category.value = this.task.category ?? "";
+    this.status.value = this.task.status ?? "";
 
-    this.category.value = taskFileContent.category ?? "";
-    this.status.value = taskFileContent.status ?? "";
+    this.description.value = this.task.description ?? "";
 
-    this.description.value = taskFileContent.description ?? "";
-
-    this.priority.value = taskFileContent.priority ?? "";
-    this.date.value = taskFileContent.date ?? "";
-    this.time.value = taskFileContent.time ?? "";
+    this.priority.value = this.task.priority ?? "";
+    this.date.value = this.task.date ?? "";
+    this.time.value = this.task.time ?? "";
   };
 
   // init
   constructor(
     boardModel: BoardModel,
-    storageModel: StorageModel,
     boardViewModel: BoardViewModel,
-    fileId: string
+    taskFileContent: TaskFileContent
   ) {
     this.boardModel = boardModel;
-    this.storageModel = storageModel;
     this.boardViewModel = boardViewModel;
 
-    this.fileId = fileId;
+    this.task = taskFileContent;
 
     this.loadAllData();
   }

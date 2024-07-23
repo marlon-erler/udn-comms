@@ -77,21 +77,21 @@ export default class ChatViewModel {
 
   // init
   constructor(
-    chatModel: ChatModel,
     storageModel: StorageModel,
+    chatModel: ChatModel,
     settingsViewModel: SettingsViewModel,
     chatListViewModel: ChatListViewModel
   ) {
     // models
-    this.chatModel = chatModel;
     this.storageModel = storageModel;
+    this.chatModel = chatModel;
     this.settingsViewModel = settingsViewModel;
     this.chatListViewModel = chatListViewModel;
 
     // page viewModels
     this.taskPageViewModel = new TaskPageViewModel(
-      this.chatModel.fileModel.taskModel,
       this.storageModel,
+      this.chatModel.fileModel.taskModel,
       this
     );
     this.messagePageViewModel = new MessagePageViewModel(this);

@@ -128,13 +128,13 @@ export default class BoardModel {
   };
 
   //tasks
-  createTask = (boardId: string, name: string): void => {
+  createTask = (boardId: string): TaskFileContent => {
     const taskFileContent: TaskFileContent = BoardModel.createTaskFileContent(
       v4(),
-      name,
+      "",
       boardId
     );
-    this.updateTask(taskFileContent);
+    return taskFileContent;
   };
 
   updateTask = (taskFileContent: TaskFileContent): void => {
@@ -160,6 +160,12 @@ export default class BoardModel {
     console.log("listing", taskContainerPath);
     const fileIds: string[] = this.storageModel.list(taskContainerPath);
     return fileIds;
+  };
+
+  getTaskFileContent = (taskId: string): TaskFileContent | null => {
+    const taskFileContentOrNull: TaskFileContent | null =
+      this.fileModel.getLatestFileContent(taskId, TaskFileContentReference);
+    return taskFileContentOrNull;
   };
 
   deleteTask = (boardId: string, taskId: string): void => {

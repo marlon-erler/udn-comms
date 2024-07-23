@@ -4,10 +4,10 @@ import BoardModel, {
   BoardInfoFileContent,
   BoardInfoFileContentReference,
 } from "../../Model/Files/boardModel";
+import FileModel, { FileContent } from "../../Model/Files/fileModel";
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
-import { FileContent } from "../../Model/Files/fileModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
@@ -154,12 +154,12 @@ export default class TaskPageViewModel {
 
   // init
   constructor(
-    boardModel: BoardModel,
     storageModel: StorageModel,
+    boardModel: BoardModel,
     chatViewModel: ChatViewModel
   ) {
-    this.boardModel = boardModel;
     this.storageModel = storageModel;
+    this.boardModel = boardModel;
 
     this.chatViewModel = chatViewModel;
 

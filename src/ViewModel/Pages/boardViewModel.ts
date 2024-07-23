@@ -2,12 +2,15 @@ import * as React from "bloatless-react";
 
 import BoardModel, {
   BoardInfoFileContent,
-  BoardInfoFileContentReference,
+  TaskFileContent,
+  TaskFileContentReference,
 } from "../../Model/Files/boardModel";
 
 import { Color } from "../../colors";
+import FileModel from "../../Model/Files/fileModel";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskPageViewModel from "./taskPageViewModel";
+import TaskViewModel from "./taskViewModel";
 
 export default class BoardViewModel {
   storageModel: StorageModel;
@@ -32,6 +35,8 @@ export default class BoardViewModel {
   );
 
   index: React.State<number> = new React.State(0);
+
+  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
 
   // paths
   getBasePath = (): string[] => {
@@ -82,7 +87,7 @@ export default class BoardViewModel {
     this.index.value = index;
   };
 
-  // methods
+  // settings
   saveSettings = (): void => {
     const newBoardInfoFileContent: BoardInfoFileContent =
       BoardModel.createBoardInfoFileContent(
@@ -102,7 +107,18 @@ export default class BoardViewModel {
     this.close();
   };
 
-  // store
+  // tasks
+  createTask = (): TaskViewModel => {
+    const taskFileContent: TaskFileContent = this.boardModel.createTask(this.boardInfo.fileId);
+    const taskViewModel: TaskViewModel = new TaskViewModel(this.boardModel, this, taskFileContent);
+    return taskViewModel;
+  }
+
+  trackTask = (taskViewModel: TaskViewModel): void => {
+    this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
+  }
+
+  // storage
   storeLastUsedView = (): void => {
     const path: string[] = this.getLastUsedBoardPath();
     const lastUsedView: string = this.selectedPage.value;
@@ -123,8 +139,29 @@ export default class BoardViewModel {
     this.color.value = this.boardInfo.color;
   };
 
+  loadTasks = (): void => {
+    this.taskViewModels.clear();
+
+    const taskIds: string[] = this.boardModel.listTaskIds(
+      this.boardInfo.fileId
+    );
+    for (const taskId of taskIds) {
+      const taskFileContent: TaskFileContent | null =
+        this.boardModel.getTaskFileContent(taskId);
+      if (taskFileContent == null) continue;
+
+      const taskViewModel: TaskViewModel = new TaskViewModel(
+        this.boardModel,
+        this,
+        taskFileContent
+      );
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+    }
+  };
+
   loadData = (): void => {
     this.restoreLastUsedView();
+    this.loadTasks();
   };
 
   // init

@@ -565,8 +565,8 @@
     return Color2;
   })(Color || {});
 
-  // src/Model/Files/taskModel.ts
-  var TaskModel = class _TaskModel {
+  // src/Model/Files/boardModel.ts
+  var BoardModel = class _BoardModel {
     storageModel;
     chatModel;
     fileModel;
@@ -616,7 +616,7 @@
     };
     // boards
     createBoard = (name) => {
-      const boardInfoFileContent = _TaskModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
+      const boardInfoFileContent = _BoardModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
       this.updateBoard(boardInfoFileContent);
       return boardInfoFileContent;
     };
@@ -651,13 +651,13 @@
       return boardInfoFileContentOrNull;
     };
     //tasks
-    createTask = (boardId, name) => {
-      const taskFileContent = _TaskModel.createTaskFileContent(
+    createTask = (boardId) => {
+      const taskFileContent = _BoardModel.createTaskFileContent(
         v4_default(),
-        name,
+        "",
         boardId
       );
-      this.updateTask(taskFileContent);
+      return taskFileContent;
     };
     updateTask = (taskFileContent) => {
       this.storeTask(taskFileContent);
@@ -677,6 +677,10 @@
       console.log("listing", taskContainerPath);
       const fileIds = this.storageModel.list(taskContainerPath);
       return fileIds;
+    };
+    getTaskFileContent = (taskId) => {
+      const taskFileContentOrNull = this.fileModel.getLatestFileContent(taskId, TaskFileContentReference);
+      return taskFileContentOrNull;
     };
     deleteTask = (boardId, taskId) => {
       const taskFilePath = this.getTaskFilePath(taskId);
@@ -828,7 +832,7 @@
     constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
-      this.taskModel = new TaskModel(this.storageModel, chatModel, this);
+      this.taskModel = new BoardModel(this.storageModel, chatModel, this);
     }
     // utility
     static generateFileContentId = (creationDate) => {
@@ -1409,12 +1413,67 @@
     }
   };
 
+  // src/ViewModel/Pages/taskViewModel.ts
+  var TaskViewModel = class {
+    boardModel;
+    boardViewModel;
+    // data
+    task;
+    // paths
+    getFilePath = () => {
+      return this.boardModel.getTaskFilePath(this.task.fileId);
+    };
+    // state
+    name = new State("");
+    category = new State("");
+    status = new State("");
+    description = new State("");
+    priority = new State("");
+    date = new State("");
+    time = new State("");
+    // storage
+    save = () => {
+      const newTaskFileContent = BoardModel.createTaskFileContent(
+        this.task.fileId,
+        this.name.value,
+        this.boardViewModel.boardInfo.fileId
+      );
+      newTaskFileContent.status = this.status.value;
+      newTaskFileContent.category = this.category.value;
+      newTaskFileContent.description = this.description.value;
+      newTaskFileContent.priority = this.priority.value;
+      newTaskFileContent.date = this.date.value;
+      newTaskFileContent.time = this.time.value;
+      this.boardModel.updateTask(newTaskFileContent);
+      this.boardViewModel.trackTask(this);
+    };
+    // load
+    loadAllData = () => {
+      this.name.value = this.task.name;
+      this.category.value = this.task.category ?? "";
+      this.status.value = this.task.status ?? "";
+      this.description.value = this.task.description ?? "";
+      this.priority.value = this.task.priority ?? "";
+      this.date.value = this.task.date ?? "";
+      this.time.value = this.task.time ?? "";
+    };
+    // init
+    constructor(boardModel, boardViewModel, taskFileContent) {
+      this.boardModel = boardModel;
+      this.boardViewModel = boardViewModel;
+      this.task = taskFileContent;
+      this.loadAllData();
+    }
+  };
+
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class {
     storageModel;
+    boardModel;
     taskPageViewModel;
-    // state
+    // data
     boardInfo;
+    // state
     name = new State("");
     color = new State("standard" /* Standard */);
     isSelected;
@@ -1425,6 +1484,7 @@
       "list" /* List */
     );
     index = new State(0);
+    taskViewModels = new MapState();
     // paths
     getBasePath = () => {
       return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
@@ -1462,9 +1522,9 @@
       const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
       this.index.value = index;
     };
-    // methods
+    // settings
     saveSettings = () => {
-      const newBoardInfoFileContent = TaskModel.createBoardInfoFileContent(
+      const newBoardInfoFileContent = BoardModel.createBoardInfoFileContent(
         this.boardInfo.fileId,
         this.name.value,
         this.color.value
@@ -1478,7 +1538,16 @@
       this.taskPageViewModel.deleteBoard(this.boardInfo);
       this.close();
     };
-    // store
+    // tasks
+    createTask = () => {
+      const taskFileContent = this.boardModel.createTask(this.boardInfo.fileId);
+      const taskViewModel = new TaskViewModel(this.boardModel, this, taskFileContent);
+      return taskViewModel;
+    };
+    trackTask = (taskViewModel) => {
+      this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
+    };
+    // storage
     storeLastUsedView = () => {
       const path = this.getLastUsedBoardPath();
       const lastUsedView = this.selectedPage.value;
@@ -1495,12 +1564,30 @@
       this.name.value = this.boardInfo.name;
       this.color.value = this.boardInfo.color;
     };
+    loadTasks = () => {
+      this.taskViewModels.clear();
+      const taskIds = this.boardModel.listTaskIds(
+        this.boardInfo.fileId
+      );
+      for (const taskId of taskIds) {
+        const taskFileContent = this.boardModel.getTaskFileContent(taskId);
+        if (taskFileContent == null) continue;
+        const taskViewModel = new TaskViewModel(
+          this.boardModel,
+          this,
+          taskFileContent
+        );
+        this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+      }
+    };
     loadData = () => {
       this.restoreLastUsedView();
+      this.loadTasks();
     };
     // init
-    constructor(taskPageViewModel, boardInfo, storageModel2) {
+    constructor(storageModel2, boardModel, taskPageViewModel, boardInfo) {
       this.storageModel = storageModel2;
+      this.boardModel = boardModel;
       this.taskPageViewModel = taskPageViewModel;
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
@@ -1521,7 +1608,7 @@
   // src/ViewModel/Pages/taskPageViewModel.ts
   var TaskPageViewModel = class {
     storageModel;
-    taskModel;
+    boardModel;
     chatViewModel;
     // data
     boardIndexManager = new IndexManager(
@@ -1529,7 +1616,7 @@
     );
     // paths
     getBasePath = () => {
-      return [...this.taskModel.getViewPath()];
+      return [...this.boardModel.getViewPath()];
     };
     getBoardViewPath = (boardId) => {
       return [...this.getBasePath(), boardId];
@@ -1555,26 +1642,27 @@
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
-      const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
+      const boardInfoFileContent = this.boardModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.showBoardInList(boardInfoFileContent);
       this.updateIndices();
     };
     updateBoard = (boardInfoFileContent) => {
-      this.taskModel.updateBoard(boardInfoFileContent);
+      this.boardModel.updateBoard(boardInfoFileContent);
       this.updateIndices();
     };
     deleteBoard = (boardInfoFileContent) => {
-      this.taskModel.deleteBoard(boardInfoFileContent.fileId);
+      this.boardModel.deleteBoard(boardInfoFileContent.fileId);
       this.boardViewModels.remove(boardInfoFileContent.fileId);
       this.updateIndices();
     };
     // view
     showBoardInList = (boardInfo) => {
       const boardViewModel = new BoardViewModel(
+        this.storageModel,
+        this.boardModel,
         this,
-        boardInfo,
-        this.storageModel
+        boardInfo
       );
       this.boardViewModels.set(boardInfo.fileId, boardViewModel);
     };
@@ -1611,9 +1699,9 @@
     // load
     loadData = () => {
       this.boardViewModels.clear();
-      const boardIds = this.taskModel.listBoardIds();
+      const boardIds = this.boardModel.listBoardIds();
       for (const boardId of boardIds) {
-        const boardInfo = this.taskModel.getBoardInfo(boardId);
+        const boardInfo = this.boardModel.getBoardInfo(boardId);
         if (boardInfo == null) continue;
         this.showBoardInList(boardInfo);
       }
@@ -1621,11 +1709,11 @@
       this.openLastUsedBoard();
     };
     // init
-    constructor(taskModel, storageModel2, chatViewModel) {
-      this.taskModel = taskModel;
+    constructor(storageModel2, boardModel, chatViewModel) {
       this.storageModel = storageModel2;
+      this.boardModel = boardModel;
       this.chatViewModel = chatViewModel;
-      taskModel.boardHandlerManager.addHandler(
+      boardModel.boardHandlerManager.addHandler(
         (boardInfoFileContent) => {
           this.showBoardInList(boardInfoFileContent);
           this.updateIndices();
@@ -1688,14 +1776,14 @@
       });
     };
     // init
-    constructor(chatModel, storageModel2, settingsViewModel2, chatListViewModel2) {
-      this.chatModel = chatModel;
+    constructor(storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
       this.storageModel = storageModel2;
+      this.chatModel = chatModel;
       this.settingsViewModel = settingsViewModel2;
       this.chatListViewModel = chatListViewModel2;
       this.taskPageViewModel = new TaskPageViewModel(
-        this.chatModel.fileModel.taskModel,
         this.storageModel,
+        this.chatModel.fileModel.taskModel,
         this
       );
       this.messagePageViewModel = new MessagePageViewModel(this);
@@ -1712,8 +1800,8 @@
 
   // src/ViewModel/Chat/chatListViewModel.ts
   var ChatListViewModel = class {
-    chatListModel;
     storageModel;
+    chatListModel;
     settingsViewModel;
     // data
     chatIndexManager = new IndexManager(
@@ -1747,8 +1835,8 @@
     };
     createChatViewModel = (chatModel) => {
       return new ChatViewModel(
-        chatModel,
         this.storageModel,
+        chatModel,
         this.settingsViewModel,
         this
       );
@@ -1776,9 +1864,9 @@
       this.updateIndices();
     };
     // init
-    constructor(chatListModel2, storageModel2, settingsViewModel2) {
-      this.chatListModel = chatListModel2;
+    constructor(storageModel2, chatListModel2, settingsViewModel2) {
       this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
       this.settingsViewModel = settingsViewModel2;
       this.loadChats();
     }
@@ -3236,8 +3324,8 @@
   var settingsViewModel = new SettingsViewModel(settingsModel);
   var connectionViewModel = new ConnectionViewModel(connectionModel);
   var chatListViewModel = new ChatListViewModel(
-    chatListModel,
     storageModel,
+    chatListModel,
     settingsViewModel
   );
   chatListViewModel.selectedChat.subscribe(() => {

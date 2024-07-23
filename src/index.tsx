@@ -32,8 +32,8 @@ const storageViewModel = new StorageViewModel(storageModel);
 const settingsViewModel = new SettingsViewModel(settingsModel);
 const connectionViewModel = new ConnectionViewModel(connectionModel);
 const chatListViewModel = new ChatListViewModel(
-  chatListModel,
   storageModel,
+  chatListModel,
   settingsViewModel
 );
 
