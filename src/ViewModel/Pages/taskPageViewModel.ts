@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import BoardModel, {
   BoardInfoFileContent,
   BoardInfoFileContentReference,
-} from "../../Model/Files/boadModel";
+} from "../../Model/Files/boardModel";
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
@@ -14,7 +14,7 @@ import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
 export default class TaskPageViewModel {
   storageModel: StorageModel;
-  taskModel: BoardModel;
+  boardModel: BoardModel;
 
   chatViewModel: ChatViewModel;
 
@@ -25,7 +25,7 @@ export default class TaskPageViewModel {
 
   // paths
   getBasePath = (): string[] => {
-    return [...this.taskModel.getViewPath()];
+    return [...this.boardModel.getViewPath()];
   };
 
   getBoardViewPath = (boardId): string[] => {
@@ -66,7 +66,7 @@ export default class TaskPageViewModel {
     if (this.cannotCreateBoard.value == true) return;
 
     const boardInfoFileContent: BoardInfoFileContent =
-      this.taskModel.createBoard(this.newBoardNameInput.value);
+      this.boardModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
 
     this.showBoardInList(boardInfoFileContent);
@@ -74,12 +74,12 @@ export default class TaskPageViewModel {
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.taskModel.updateBoard(boardInfoFileContent);
+    this.boardModel.updateBoard(boardInfoFileContent);
     this.updateIndices();
   };
 
   deleteBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.taskModel.deleteBoard(boardInfoFileContent.fileId);
+    this.boardModel.deleteBoard(boardInfoFileContent.fileId);
     this.boardViewModels.remove(boardInfoFileContent.fileId);
     this.updateIndices();
   };
@@ -87,9 +87,10 @@ export default class TaskPageViewModel {
   // view
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(
+      this.storageModel,
+      this.boardModel,
       this,
-      boardInfo,
-      this.storageModel
+      boardInfo
     );
     this.boardViewModels.set(boardInfo.fileId, boardViewModel);
   };
@@ -138,10 +139,10 @@ export default class TaskPageViewModel {
   loadData = (): void => {
     this.boardViewModels.clear();
 
-    const boardIds: string[] = this.taskModel.listBoardIds();
+    const boardIds: string[] = this.boardModel.listBoardIds();
     for (const boardId of boardIds) {
       const boardInfo: BoardInfoFileContent | null =
-        this.taskModel.getBoardInfo(boardId);
+        this.boardModel.getBoardInfo(boardId);
       if (boardInfo == null) continue;
 
       this.showBoardInList(boardInfo);
@@ -153,17 +154,17 @@ export default class TaskPageViewModel {
 
   // init
   constructor(
-    taskModel: BoardModel,
+    boardModel: BoardModel,
     storageModel: StorageModel,
     chatViewModel: ChatViewModel
   ) {
-    this.taskModel = taskModel;
+    this.boardModel = boardModel;
     this.storageModel = storageModel;
 
     this.chatViewModel = chatViewModel;
 
     // handlers
-    taskModel.boardHandlerManager.addHandler(
+    boardModel.boardHandlerManager.addHandler(
       (boardInfoFileContent: BoardInfoFileContent) => {
         this.showBoardInList(boardInfoFileContent);
         this.updateIndices();

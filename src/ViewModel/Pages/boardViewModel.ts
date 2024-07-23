@@ -1,6 +1,9 @@
 import * as React from "bloatless-react";
 
-import BoardModel, { BoardInfoFileContent } from "../../Model/Files/boadModel";
+import BoardModel, {
+  BoardInfoFileContent,
+  BoardInfoFileContentReference,
+} from "../../Model/Files/boardModel";
 
 import { Color } from "../../colors";
 import StorageModel from "../../Model/Global/storageModel";
@@ -8,11 +11,14 @@ import TaskPageViewModel from "./taskPageViewModel";
 
 export default class BoardViewModel {
   storageModel: StorageModel;
+  boardModel: BoardModel;
+
   taskPageViewModel: TaskPageViewModel;
 
-  // state
+  // data
   boardInfo: BoardInfoFileContent;
 
+  // state
   name: React.State<string> = new React.State("");
   color: React.State<Color> = new React.State<Color>(Color.Standard);
 
@@ -123,11 +129,13 @@ export default class BoardViewModel {
 
   // init
   constructor(
+    storageModel: StorageModel,
+    boardModel: BoardModel,
     taskPageViewModel: TaskPageViewModel,
-    boardInfo: BoardInfoFileContent,
-    storageModel: StorageModel
+    boardInfo: BoardInfoFileContent
   ) {
     this.storageModel = storageModel;
+    this.boardModel = boardModel;
     this.taskPageViewModel = taskPageViewModel;
     this.boardInfo = boardInfo;
 

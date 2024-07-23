@@ -9,7 +9,7 @@ import {
 } from "../Utility/utility";
 import StorageModel, { filePaths } from "../Global/storageModel";
 
-import BoardModel from "./boadModel";
+import BoardModel from "./boardModel";
 import ChatModel from "../Chat/chatModel";
 import { v4 } from "uuid";
 

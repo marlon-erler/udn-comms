@@ -243,7 +243,7 @@ export interface TaskFileContent extends FileContent<"task"> {
 
   description?: string;
 
-  priority?: number;
+  priority?: string;
   date?: string;
   time?: string;
 }
