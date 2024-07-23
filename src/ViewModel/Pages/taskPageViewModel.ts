@@ -1,9 +1,9 @@
 import * as React from "bloatless-react";
 
-import TaskModel, {
+import BoardModel, {
   BoardInfoFileContent,
   BoardInfoFileContentReference,
-} from "../../Model/Files/taskModel";
+} from "../../Model/Files/boadModel";
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
@@ -14,7 +14,7 @@ import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
 export default class TaskPageViewModel {
   storageModel: StorageModel;
-  taskModel: TaskModel;
+  taskModel: BoardModel;
 
   chatViewModel: ChatViewModel;
 
@@ -153,7 +153,7 @@ export default class TaskPageViewModel {
 
   // init
   constructor(
-    taskModel: TaskModel,
+    taskModel: BoardModel,
     storageModel: StorageModel,
     chatViewModel: ChatViewModel
   ) {

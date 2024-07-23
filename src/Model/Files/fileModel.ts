@@ -9,15 +9,15 @@ import {
 } from "../Utility/utility";
 import StorageModel, { filePaths } from "../Global/storageModel";
 
+import BoardModel from "./boadModel";
 import ChatModel from "../Chat/chatModel";
-import TaskModel from "./taskModel";
 import { v4 } from "uuid";
 
 export default class FileModel {
   chatModel: ChatModel;
   storageModel: StorageModel;
 
-  taskModel: TaskModel;
+  taskModel: BoardModel;
 
   fileContentHandlerManager: HandlerManager<FileContent<string>> = new HandlerManager();
 
@@ -140,7 +140,7 @@ export default class FileModel {
     this.chatModel = chatModel;
     this.storageModel = storageModel;
 
-    this.taskModel = new TaskModel(this.storageModel, chatModel, this);
+    this.taskModel = new BoardModel(this.storageModel, chatModel, this);
   }
 
   // utility

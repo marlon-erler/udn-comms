@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import TaskModel, { BoardInfoFileContent } from "../../Model/Files/taskModel";
+import BoardModel, { BoardInfoFileContent } from "../../Model/Files/boadModel";
 
 import { Color } from "../../colors";
 import StorageModel from "../../Model/Global/storageModel";
@@ -79,7 +79,7 @@ export default class BoardViewModel {
   // methods
   saveSettings = (): void => {
     const newBoardInfoFileContent: BoardInfoFileContent =
-      TaskModel.createBoardInfoFileContent(
+      BoardModel.createBoardInfoFileContent(
         this.boardInfo.fileId,
         this.name.value,
         this.color.value

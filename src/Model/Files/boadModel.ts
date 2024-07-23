@@ -1,4 +1,4 @@
-// thile file is responsible for managing task files within chats.
+// thile file is responsible for managing boards within chats and tasks within boards.
 
 import {
   DATA_VERSION,
@@ -12,7 +12,7 @@ import { HandlerManager } from "../Utility/utility";
 import StorageModel from "../Global/storageModel";
 import { v4 } from "uuid";
 
-export default class TaskModel {
+export default class BoardModel {
   storageModel: StorageModel;
   chatModel: ChatModel;
   fileModel: FileModel;
@@ -82,7 +82,7 @@ export default class TaskModel {
   // boards
   createBoard = (name: string): BoardInfoFileContent => {
     const boardInfoFileContent: BoardInfoFileContent =
-      TaskModel.createBoardInfoFileContent(v4(), name, Color.Standard);
+      BoardModel.createBoardInfoFileContent(v4(), name, Color.Standard);
     this.updateBoard(boardInfoFileContent);
     return boardInfoFileContent;
   };
@@ -129,7 +129,7 @@ export default class TaskModel {
 
   //tasks
   createTask = (boardId: string, name: string): void => {
-    const taskFileContent: TaskFileContent = TaskModel.createTaskFileContent(
+    const taskFileContent: TaskFileContent = BoardModel.createTaskFileContent(
       v4(),
       name,
       boardId
