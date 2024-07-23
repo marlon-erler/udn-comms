@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import ChatListModel from "../../Model/Chat/chatListModel";
 import ChatModel from "../../Model/Chat/chatModel";
 import ChatViewModel from "./chatViewModel";
+import { IndexManager } from "../../Model/Utility/utility";
 import SettingsViewModel from "../Global/settingsViewModel";
 import StorageModel from "../../Model/Global/storageModel";
 
@@ -14,6 +15,10 @@ export default class ChatListViewModel {
   // state
   newChatPrimaryChannel: React.State<string> = new React.State("");
   chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
+  indexManager: IndexManager<ChatViewModel> = new IndexManager(
+    (chatViewModel: ChatViewModel) =>
+      chatViewModel.settingsPageViewModel.primaryChannel.value
+  );
 
   selectedChat: React.State<ChatViewModel | undefined> = new React.State<
     ChatViewModel | undefined
@@ -33,6 +38,11 @@ export default class ChatListViewModel {
     this.newChatPrimaryChannel.value = "";
 
     const chatViewModel: ChatViewModel = this.createChatViewModel(chatModel);
+    this.trackChat(chatViewModel);
+    this.updateIndices();
+  };
+
+  trackChat = (chatViewModel: ChatViewModel): void => {
     this.chatViewModels.add(chatViewModel);
   };
 
@@ -50,6 +60,13 @@ export default class ChatListViewModel {
     );
   };
 
+  updateIndices = (): void => {
+    this.indexManager.update([...this.chatViewModels.value.values()]);
+    for (const chatViewModel of this.chatViewModels.value) {
+      chatViewModel.updateIndex();
+    }
+  };
+
   // view
   openChat = (chatViewModel: ChatViewModel): void => {
     this.selectedChat.value = chatViewModel;
@@ -64,8 +81,9 @@ export default class ChatListViewModel {
     this.chatViewModels.clear();
     for (const chatModel of this.chatListModel.chatModels.values()) {
       const chatViewModel = this.createChatViewModel(chatModel);
-      this.chatViewModels.add(chatViewModel);
+      this.trackChat(chatViewModel);
     }
+    this.updateIndices();
   };
 
   // init

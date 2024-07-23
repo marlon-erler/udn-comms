@@ -28,6 +28,37 @@ export class HandlerManager<T> {
   };
 }
 
+// sorting
+export class IndexManager<T> {
+  private itemToString: (item: T) => string;
+
+  sortedStrings: string[] = [];
+
+  // methods
+  update = (items: T[]): void => {
+    this.sortedStrings = [];
+
+    let strings: string[] = [];
+    for (const item of items) {
+      const string: string = this.itemToString(item);
+      strings.push(string);
+    }
+
+    this.sortedStrings = strings.sort(localeCompare);
+  };
+
+  getIndex = (item: T): number => {
+    const string: string = this.itemToString(item);
+    const index: number = this.sortedStrings.indexOf(string);
+    return index;
+  };
+
+  // init
+  constructor(itemToString: (item: T) => string) {
+    this.itemToString = itemToString;
+  }
+}
+
 // string
 export function stringify(data: any): string {
   return JSON.stringify(data, null, 4);

@@ -333,6 +333,29 @@
       }
     };
   };
+  var IndexManager = class {
+    itemToString;
+    sortedStrings = [];
+    // methods
+    update = (items) => {
+      this.sortedStrings = [];
+      let strings = [];
+      for (const item of items) {
+        const string = this.itemToString(item);
+        strings.push(string);
+      }
+      this.sortedStrings = strings.sort(localeCompare);
+    };
+    getIndex = (item) => {
+      const string = this.itemToString(item);
+      const index = this.sortedStrings.indexOf(string);
+      return index;
+    };
+    // init
+    constructor(itemToString) {
+      this.itemToString = itemToString;
+    }
+  };
   function stringify(data) {
     return JSON.stringify(data, null, 4);
   }
@@ -1330,6 +1353,7 @@
         this.primaryChannelInput.value
       );
       this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.chatViewModel.chatListViewModel.updateIndices();
     };
     addSecondaryChannel = () => {
       this.secondaryChannels.add(this.newSecondaryChannelInput.value);
@@ -1549,6 +1573,10 @@
     resetColor = () => {
       this.displayedColor.value = this.settingsPageViewModel.color.value;
     };
+    updateIndex = () => {
+      const index = this.chatListViewModel.indexManager.getIndex(this);
+      this.index.value = index;
+    };
     // load
     loadPageSelection = () => {
       const path = StorageModel.getPath(
@@ -1594,6 +1622,9 @@
     // state
     newChatPrimaryChannel = new State("");
     chatViewModels = new ListState();
+    indexManager = new IndexManager(
+      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
+    );
     selectedChat = new State(void 0);
     // guards
     cannotCreateChat = createProxyState(
@@ -1607,6 +1638,10 @@
       );
       this.newChatPrimaryChannel.value = "";
       const chatViewModel = this.createChatViewModel(chatModel);
+      this.trackChat(chatViewModel);
+      this.updateIndices();
+    };
+    trackChat = (chatViewModel) => {
       this.chatViewModels.add(chatViewModel);
     };
     untrackChat = (chatViewModel) => {
@@ -1621,6 +1656,12 @@
         this
       );
     };
+    updateIndices = () => {
+      this.indexManager.update([...this.chatViewModels.value.values()]);
+      for (const chatViewModel of this.chatViewModels.value) {
+        chatViewModel.updateIndex();
+      }
+    };
     // view
     openChat = (chatViewModel) => {
       this.selectedChat.value = chatViewModel;
@@ -1633,8 +1674,9 @@
       this.chatViewModels.clear();
       for (const chatModel of this.chatListModel.chatModels.values()) {
         const chatViewModel = this.createChatViewModel(chatModel);
-        this.chatViewModels.add(chatViewModel);
+        this.trackChat(chatViewModel);
       }
+      this.updateIndices();
     };
     // init
     constructor(chatListModel2, storageModel2, settingsViewModel2) {

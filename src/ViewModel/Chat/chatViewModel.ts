@@ -54,6 +54,11 @@ export default class ChatViewModel {
     this.displayedColor.value = this.settingsPageViewModel.color.value;
   };
 
+  updateIndex = (): void => {
+    const index: number = this.chatListViewModel.indexManager.getIndex(this);
+    this.index.value = index;
+  };
+
   // load
   loadPageSelection = (): void => {
     const path: string[] = StorageModel.getPath(

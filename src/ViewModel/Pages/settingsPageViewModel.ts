@@ -42,6 +42,8 @@ export default class SettingsPageViewModel {
     );
     this.primaryChannel.value =
       this.chatViewModel.chatModel.info.primaryChannel;
+
+    this.chatViewModel.chatListViewModel.updateIndices();
   };
 
   addSecondaryChannel = (): void => {
