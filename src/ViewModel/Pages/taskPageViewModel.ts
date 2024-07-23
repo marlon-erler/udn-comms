@@ -25,19 +25,11 @@ export default class TaskPageViewModel {
 
   // paths
   getBasePath = (): string[] => {
-    return [...this.taskModel.getBasePath(), TaskPageViewModelSubPaths.View];
+    return [...this.taskModel.getBasePath()];
   };
 
   getLastUsedBoardPath = (): string[] => {
-    return [...this.getBasePath(), TaskPageViewModelSubPaths.ViewLastUsedBoard];
-  };
-
-  getLastUsedViewPath = (boardId: string): string[] => {
-    return [
-      ...this.getBasePath(),
-      boardId,
-      TaskPageViewModelSubPaths.BoardLastUsedView,
-    ];
+    return [...this.getBasePath(), TaskPageViewModelSubPaths.LastUsedBoard];
   };
 
   // state
@@ -173,7 +165,5 @@ export default class TaskPageViewModel {
 }
 
 export enum TaskPageViewModelSubPaths {
-  View = "view",
-  ViewLastUsedBoard = "last-used-board",
-  BoardLastUsedView = "last-used-view",
+  LastUsedBoard = "last-used-board",
 }

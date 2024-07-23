@@ -1504,17 +1504,10 @@
     );
     // paths
     getBasePath = () => {
-      return [...this.taskModel.getBasePath(), "view" /* View */];
+      return [...this.taskModel.getBasePath()];
     };
     getLastUsedBoardPath = () => {
-      return [...this.getBasePath(), "last-used-board" /* ViewLastUsedBoard */];
-    };
-    getLastUsedViewPath = (boardId) => {
-      return [
-        ...this.getBasePath(),
-        boardId,
-        "last-used-view" /* BoardLastUsedView */
-      ];
+      return [...this.getBasePath(), "last-used-board" /* LastUsedBoard */];
     };
     // state
     newBoardNameInput = new State("");
