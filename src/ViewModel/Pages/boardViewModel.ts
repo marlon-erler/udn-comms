@@ -19,6 +19,10 @@ export default class BoardViewModel {
   isPresentingFilterModal: React.State<boolean> = new React.State(false);
   isPresentingNewTaskModal: React.State<boolean> = new React.State(false);
 
+  selectedPage: React.State<BoardPageType> = new React.State<BoardPageType>(
+    BoardPageType.List
+  );
+
   index: React.State<number> = new React.State(0);
 
   // view
@@ -110,4 +114,11 @@ export default class BoardViewModel {
       this.applyColor();
     });
   }
+}
+
+// types
+export enum BoardPageType {
+  List = "list",
+  Kanban = "kanban",
+  StatusGrid = "status-grid",
 }

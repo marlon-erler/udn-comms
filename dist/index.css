@@ -358,7 +358,6 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   height: var(--ribbon-size);
-  border-top: 1px solid var(--border);
   overflow-x: auto;
   padding: 0px;
 }

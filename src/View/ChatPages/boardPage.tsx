@@ -1,7 +1,11 @@
 import * as React from "bloatless-react";
 
+import BoardViewModel, {
+  BoardPageType,
+} from "../../ViewModel/Pages/boardViewModel";
+
 import { BoardSettingsModal } from "../Modals/boardSettingsModal";
-import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
+import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
 import { translations } from "../translations";
 
 export function BoardPage(boardViewModel: BoardViewModel) {
@@ -25,27 +29,24 @@ export function BoardPage(boardViewModel: BoardViewModel) {
           </button>
         </span>
         <span class="scroll-h ribbon">
-          <button
-            class="ghost ribbon-button"
-            aria-label={translations.chatPage.task.listViewButtonAudioLabel}
-            on:click={boardViewModel.close}
-          >
-            <span class="icon">view_list</span>
-          </button>
-          <button
-            class="ghost ribbon-button"
-            aria-label={translations.chatPage.task.kanbanViewButtonAudioLabel}
-            on:click={boardViewModel.showSettings}
-          >
-            <span class="icon">view_kanban</span>
-          </button>
-          <button
-            class="ghost ribbon-button"
-            aria-label={translations.chatPage.task.statusViewButtonAudioLabel}
-            on:click={boardViewModel.showSettings}
-          >
-            <span class="icon">grid_view</span>
-          </button>
+          {BoardViewToggleButton(
+            translations.chatPage.task.listViewButtonAudioLabel,
+            "view_list",
+            BoardPageType.List,
+            boardViewModel
+          )}
+          {BoardViewToggleButton(
+            translations.chatPage.task.kanbanViewButtonAudioLabel,
+            "view_kanban",
+            BoardPageType.Kanban,
+            boardViewModel
+          )}
+          {BoardViewToggleButton(
+            translations.chatPage.task.statusViewButtonAudioLabel,
+            "grid_view",
+            BoardPageType.StatusGrid,
+            boardViewModel
+          )}
         </span>
         <span>
           <button

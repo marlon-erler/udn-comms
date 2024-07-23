@@ -1,6 +1,10 @@
 import * as React from "bloatless-react";
 
-import ChatViewModel, { ChatPageType } from "../../ViewModel/Chat/chatViewModel";
+import ChatViewModel, {
+  ChatPageType,
+} from "../../ViewModel/Chat/chatViewModel";
+
+import { RibbonButton } from "./ribbonButton";
 
 export function ChatViewToggleButton(
   label: string,
@@ -17,14 +21,5 @@ export function ChatViewToggleButton(
     () => chatViewModel.selectedPage.value == page
   );
 
-  return (
-    <button
-      class="ghost ribbon-button"
-      aria-label={label}
-      toggle:selected={isSelected}
-      on:click={select}
-    >
-      <span class="icon">{icon}</span>
-    </button>
-  );
+  return RibbonButton(label, icon, isSelected, select);
 }

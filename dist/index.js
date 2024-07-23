@@ -1425,6 +1425,9 @@
     isPresentingSettingsModal = new State(false);
     isPresentingFilterModal = new State(false);
     isPresentingNewTaskModal = new State(false);
+    selectedPage = new State(
+      "list" /* List */
+    );
     index = new State(0);
     // view
     select = () => {
@@ -1730,15 +1733,8 @@
     }
   };
 
-  // src/View/Components/chatViewToggleButton.tsx
-  function ChatViewToggleButton(label, icon, page, chatViewModel) {
-    function select() {
-      chatViewModel.selectedPage.value = page;
-    }
-    const isSelected = createProxyState(
-      [chatViewModel.selectedPage],
-      () => chatViewModel.selectedPage.value == page
-    );
+  // src/View/Components/ribbonButton.tsx
+  function RibbonButton(label, icon, isSelected, select) {
     return /* @__PURE__ */ createElement(
       "button",
       {
@@ -1749,6 +1745,18 @@
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
     );
+  }
+
+  // src/View/Components/chatViewToggleButton.tsx
+  function ChatViewToggleButton(label, icon, page, chatViewModel) {
+    function select() {
+      chatViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [chatViewModel.selectedPage],
+      () => chatViewModel.selectedPage.value == page
+    );
+    return RibbonButton(label, icon, isSelected, select);
   }
 
   // src/View/translations.ts
@@ -2160,6 +2168,18 @@
     ))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
+  // src/View/Components/boardViewToggleButton.tsx
+  function BoardViewToggleButton(label, icon, page, boardViewModel) {
+    function select() {
+      boardViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [boardViewModel.selectedPage],
+      () => boardViewModel.selectedPage.value == page
+    );
+    return RibbonButton(label, icon, isSelected, select);
+  }
+
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
     return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
@@ -2178,30 +2198,21 @@
         "on:click": boardViewModel.showSettings
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "settings")
-    )), /* @__PURE__ */ createElement("span", { class: "scroll-h ribbon" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "ghost ribbon-button",
-        "aria-label": translations.chatPage.task.listViewButtonAudioLabel,
-        "on:click": boardViewModel.close
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "view_list")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "ghost ribbon-button",
-        "aria-label": translations.chatPage.task.kanbanViewButtonAudioLabel,
-        "on:click": boardViewModel.showSettings
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "view_kanban")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "ghost ribbon-button",
-        "aria-label": translations.chatPage.task.statusViewButtonAudioLabel,
-        "on:click": boardViewModel.showSettings
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "grid_view")
+    )), /* @__PURE__ */ createElement("span", { class: "scroll-h ribbon" }, BoardViewToggleButton(
+      translations.chatPage.task.listViewButtonAudioLabel,
+      "view_list",
+      "list" /* List */,
+      boardViewModel
+    ), BoardViewToggleButton(
+      translations.chatPage.task.kanbanViewButtonAudioLabel,
+      "view_kanban",
+      "kanban" /* Kanban */,
+      boardViewModel
+    ), BoardViewToggleButton(
+      translations.chatPage.task.statusViewButtonAudioLabel,
+      "grid_view",
+      "status-grid" /* StatusGrid */,
+      boardViewModel
     )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
