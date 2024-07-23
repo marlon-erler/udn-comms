@@ -1383,6 +1383,14 @@
     boardInfo;
     name = new State("");
     color = new State("standard" /* Standard */);
+    isSelected;
+    // view
+    select = () => {
+      this.taskPageViewModel.selectBoard(this);
+    };
+    close = () => {
+      this.taskPageViewModel.closeBoard();
+    };
     // load
     loadListRelevantData = () => {
       this.name.value = this.boardInfo.name;
@@ -1395,6 +1403,10 @@
       this.taskPageViewModel = taskPageViewModel;
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
+      this.isSelected = createProxyState(
+        [this.taskPageViewModel.selectedBoard],
+        () => this.taskPageViewModel.selectedBoard.value == this
+      );
     }
   };
 
@@ -1404,6 +1416,7 @@
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
+    selectedBoard = new State(void 0);
     // guards
     cannotCreateBoard = createProxyState(
       [this.newBoardNameInput],
@@ -1413,19 +1426,25 @@
     handleFileContent = (fileContent) => {
       if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == false)
         return;
-      this.showBoard(fileContent);
+      this.showBoardInList(fileContent);
     };
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
       const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
-      this.showBoard(boardInfoFileContent);
+      this.showBoardInList(boardInfoFileContent);
     };
     // view
-    showBoard = (boardInfo) => {
+    showBoardInList = (boardInfo) => {
       const boardViewModel = new BoardViewModel(this, boardInfo);
       this.boardViewModels.set(boardInfo.fileId, boardViewModel);
+    };
+    selectBoard = (boardViewModel) => {
+      this.selectedBoard.value = boardViewModel;
+    };
+    closeBoard = () => {
+      this.selectedBoard.value = void 0;
     };
     // load
     loadData = () => {
@@ -1434,7 +1453,7 @@
       for (const boardId of boardIds) {
         const boardInfo = this.taskModel.getBoardInfo(boardId);
         if (boardInfo == null) continue;
-        this.showBoard(boardInfo);
+        this.showBoardInList(boardInfo);
       }
     };
     // init
@@ -1442,7 +1461,7 @@
       this.taskModel = taskModel;
       taskModel.boardHandlerManager.addHandler(
         (boardInfoFileContent) => {
-          this.showBoard(boardInfoFileContent);
+          this.showBoardInList(boardInfoFileContent);
         }
       );
     }
@@ -1953,7 +1972,9 @@
       "button",
       {
         "set:color": boardViewModel.color,
-        class: "tile colored-tile"
+        class: "tile colored-tile",
+        "toggle:selected": boardViewModel.isSelected,
+        "on:click": boardViewModel.select
       },
       /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
       /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })

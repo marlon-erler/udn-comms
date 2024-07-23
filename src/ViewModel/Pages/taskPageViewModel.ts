@@ -18,6 +18,10 @@ export default class TaskPageViewModel {
 
   boardViewModels: React.MapState<BoardViewModel> = new React.MapState();
 
+  selectedBoard: React.State<BoardViewModel | undefined> = new React.State<
+    BoardViewModel | undefined
+  >(undefined);
+
   // guards
   cannotCreateBoard: React.State<boolean> = React.createProxyState(
     [this.newBoardNameInput],
@@ -31,7 +35,7 @@ export default class TaskPageViewModel {
       false
     )
       return;
-    this.showBoard(fileContent as BoardInfoFileContent);
+    this.showBoardInList(fileContent as BoardInfoFileContent);
   };
 
   // methods
@@ -42,13 +46,21 @@ export default class TaskPageViewModel {
       this.taskModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
 
-    this.showBoard(boardInfoFileContent);
+    this.showBoardInList(boardInfoFileContent);
   };
 
   // view
-  showBoard = (boardInfo: BoardInfoFileContent): void => {
+  showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);
     this.boardViewModels.set(boardInfo.fileId, boardViewModel);
+  };
+
+  selectBoard = (boardViewModel: BoardViewModel): void => {
+    this.selectedBoard.value = boardViewModel;
+  };
+
+  closeBoard = (): void => {
+    this.selectedBoard.value = undefined;
   };
 
   // load
@@ -61,7 +73,7 @@ export default class TaskPageViewModel {
         this.taskModel.getBoardInfo(boardId);
       if (boardInfo == null) continue;
 
-      this.showBoard(boardInfo);
+      this.showBoardInList(boardInfo);
     }
   };
 
@@ -72,7 +84,7 @@ export default class TaskPageViewModel {
     // handlers
     taskModel.boardHandlerManager.addHandler(
       (boardInfoFileContent: BoardInfoFileContent) => {
-        this.showBoard(boardInfoFileContent);
+        this.showBoardInList(boardInfoFileContent);
       }
     );
   }

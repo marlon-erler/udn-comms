@@ -7,6 +7,9 @@ export function BoardEntry(boardViewModel: BoardViewModel) {
     <button
       set:color={boardViewModel.color}
       class="tile colored-tile"
+
+      toggle:selected={boardViewModel.isSelected}
+      on:click={boardViewModel.select}
     >
       <span class="shadow" subscribe:innerText={boardViewModel.name}></span>
       <b subscribe:innerText={boardViewModel.name}></b>
