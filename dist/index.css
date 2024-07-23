@@ -564,6 +564,22 @@ body[showing-chat] #chat-page-wrapper {
   text-align: right;
 }
 
+/* src/View/ChatPages/taskPage.css */
+@media (max-width: 1024px) {
+  #task-page #board-list {
+    display: false;
+  }
+  #task-page #board-content {
+    display: none;
+  }
+  #task-page[isshowingboard] #board-list {
+    display: none;
+  }
+  #task-page[isshowingboard] #board-content {
+    display: flex;
+  }
+}
+
 /* src/View/Components/fileBrowser.css */
 .file-browser {
   width: 100%;

@@ -175,9 +175,6 @@
     );
     return proxyState;
   }
-  function bulkSubscribe(statesToSubscibe, fn) {
-    statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
-  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -2300,6 +2297,10 @@
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
     taskPageViewModel.loadData();
+    const isShowingBoard = createProxyState(
+      [taskPageViewModel.selectedBoardId],
+      () => taskPageViewModel.selectedBoardId.value != void 0
+    );
     const paneContent = createProxyState(
       [taskPageViewModel.selectedBoardId],
       () => {
@@ -2314,9 +2315,10 @@
         return BoardPage(selectedBoard);
       }
     );
-    const listPaneWrapper = /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "task-page", "toggle:isshowingboard": isShowingBoard }, /* @__PURE__ */ createElement(
       "div",
       {
+        id: "board-list",
         class: "pane-wrapper side background",
         "set:color": taskPageViewModel.chatViewModel.displayedColor
       },
@@ -2347,21 +2349,7 @@
           ]
         }
       )))
-    );
-    const mainPageWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent });
-    function scroll() {
-      {
-        const selectedBoard = taskPageViewModel.selectedBoardId.value;
-        if (selectedBoard == void 0) {
-          listPaneWrapper.scrollIntoView();
-        } else {
-          mainPageWrapper.scrollIntoView();
-        }
-      }
-    }
-    bulkSubscribe([taskPageViewModel.selectedBoardId], scroll);
-    setTimeout(() => scroll(), 400);
-    return /* @__PURE__ */ createElement("div", { id: "task-page" }, listPaneWrapper, mainPageWrapper);
+    ), /* @__PURE__ */ createElement("div", { id: "board-content", class: "pane-wrapper", "children:set": paneContent }));
   }
 
   // src/View/chatPage.tsx

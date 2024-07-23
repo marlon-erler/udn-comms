@@ -1,0 +1,17 @@
+@media (max-width: 1024px) {
+    #task-page #board-list {
+        display: false;
+    }
+
+    #task-page #board-content {
+        display: none;
+    }
+
+    #task-page[isshowingboard] #board-list {
+        display: none;
+    }
+
+    #task-page[isshowingboard] #board-content {
+        display: flex;
+    }
+}
