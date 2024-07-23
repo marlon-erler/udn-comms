@@ -110,7 +110,7 @@ body[showing-chat] #chat-page-wrapper {
   > .pane
   > .toolbar
   > span.ribbon {
-  gap: var(--gap-between-tiles);
+  gap: calc(var(--gap-between-tiles) * 2);
   padding: var(--gap-between-tiles);
 }
 

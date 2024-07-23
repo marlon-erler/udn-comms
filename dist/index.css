@@ -314,7 +314,7 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #ribbon > span,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.ribbon {
-  gap: var(--gap-between-tiles);
+  gap: calc(var(--gap-between-tiles) * 2);
   padding: var(--gap-between-tiles);
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
