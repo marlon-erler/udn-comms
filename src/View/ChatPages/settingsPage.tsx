@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import { Color } from "../../colors";
+import { ColorPicker } from "../Components/colorPicker";
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import { DeletableListItem } from "../Components/deletableListItem";
 import SettingsPageViewModel from "../../ViewModel/Pages/settingsPageViewModel";
@@ -126,28 +127,7 @@ export function SettingsPage(settingsPageViewModel: SettingsPageViewModel) {
 
             <hr></hr>
 
-            <div class="flex-row gap width-input">
-              {...Object.values(Color).map((color) => {
-                const isSelected = React.createProxyState(
-                  [settingsPageViewModel.color],
-                  () => settingsPageViewModel.color.value == color
-                );
-
-                function setColor() {
-                  settingsPageViewModel.setColor(color);
-                }
-
-                return (
-                  <button
-                    color={color}
-                    class="fill-color width-100 flex"
-                    style="height: 2rem"
-                    toggle:selected={isSelected}
-                    on:click={setColor}
-                  ></button>
-                );
-              })}
-            </div>
+            {ColorPicker(settingsPageViewModel.color)}
 
             <hr></hr>
 

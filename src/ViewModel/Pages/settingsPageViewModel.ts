@@ -73,7 +73,7 @@ export default class SettingsPageViewModel {
 
   setColor = (newColor: Color): void => {
     this.color.value = newColor;
-    this.chatViewModel.chatModel.setColor(newColor);
+    this.chatViewModel.setColor(newColor);
   };
 
   remove = (): void => {
@@ -119,5 +119,9 @@ export default class SettingsPageViewModel {
         this.encryptionKeyInput.value ==
         this.chatViewModel.chatModel.info.encryptionKey
     );
+
+    this.color.subscribe((newColor) => {
+      this.setColor(newColor);
+    });
   }
 }

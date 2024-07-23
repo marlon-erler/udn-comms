@@ -1354,7 +1354,7 @@
     };
     setColor = (newColor) => {
       this.color.value = newColor;
-      this.chatViewModel.chatModel.setColor(newColor);
+      this.chatViewModel.setColor(newColor);
     };
     remove = () => {
       this.chatViewModel.close();
@@ -1385,6 +1385,9 @@
         [this.encryptionKeyInput],
         () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
       );
+      this.color.subscribe((newColor) => {
+        this.setColor(newColor);
+      });
     }
   };
 
@@ -1529,6 +1532,10 @@
     };
     closeSubPages = () => {
       this.taskPageViewModel.closeBoard();
+    };
+    setColor = (color) => {
+      this.displayedColor.value = color;
+      this.chatModel.setColor(color);
     };
     resetColor = () => {
       this.displayedColor.value = this.settingsPageViewModel.color.value;
@@ -1865,6 +1872,29 @@
     ))))))));
   }
 
+  // src/View/Components/colorPicker.tsx
+  function ColorPicker(selectedColor) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
+      const isSelected = createProxyState(
+        [selectedColor],
+        () => selectedColor.value == color
+      );
+      function setColor() {
+        selectedColor.value = color;
+      }
+      return /* @__PURE__ */ createElement(
+        "button",
+        {
+          color,
+          class: "fill-color width-100 flex",
+          style: "height: 2rem",
+          "toggle:selected": isSelected,
+          "on:click": setColor
+        }
+      );
+    }));
+  }
+
   // src/View/Components/dangerousActionButton.tsx
   function DangerousActionButton(label, icon, action) {
     const isActionRequested = new State(false);
@@ -1985,25 +2015,7 @@
         type: "checkbox",
         "bind:checked": settingsPageViewModel.shouldShowEncryptionKey
       }
-    ), translations.chatPage.settings.showEncryptionKey), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
-      const isSelected = createProxyState(
-        [settingsPageViewModel.color],
-        () => settingsPageViewModel.color.value == color
-      );
-      function setColor() {
-        settingsPageViewModel.setColor(color);
-      }
-      return /* @__PURE__ */ createElement(
-        "button",
-        {
-          color,
-          class: "fill-color width-100 flex",
-          style: "height: 2rem",
-          "toggle:selected": isSelected,
-          "on:click": setColor
-        }
-      );
-    })), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+    ), translations.chatPage.settings.showEncryptionKey), /* @__PURE__ */ createElement("hr", null), ColorPicker(settingsPageViewModel.color), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
       translations.chatPage.settings.deleteChatButton,
       "chat_error",
       settingsPageViewModel.remove
@@ -2031,7 +2043,13 @@
 
   // src/View/Modals/boardSettingsModal.tsx
   function BoardSettingsModal(boardViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement("input", { "bind:value": boardViewModel.name })))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "on:enter": boardViewModel.saveSettings,
+        "bind:value": boardViewModel.name
+      }
+    )))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
   // src/View/ChatPages/boardPage.tsx
