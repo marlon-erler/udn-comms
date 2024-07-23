@@ -1714,7 +1714,8 @@
       },
       task: {
         newBoardNamePlaceholder: "Create a board",
-        createBoardButtonAudioLabel: "create board"
+        createBoardButtonAudioLabel: "create board",
+        noBoardSelected: "No board selected"
       }
     }
   };
@@ -2005,6 +2006,19 @@
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
     taskPageViewModel.loadData();
+    const paneContent = createProxyState(
+      [taskPageViewModel.selectedBoard],
+      () => {
+        const selectedBoard = taskPageViewModel.selectedBoard.value;
+        if (selectedBoard == void 0) {
+          return [
+            /* @__PURE__ */ createElement("div", { class: "content align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected))
+          ];
+        } else {
+          return [/* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })];
+        }
+      }
+    );
     return /* @__PURE__ */ createElement("div", { id: "task-page" }, /* @__PURE__ */ createElement("div", { class: "pane side" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -2031,7 +2045,7 @@
           BoardInfoToEntry
         ]
       }
-    ))), /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }), /* @__PURE__ */ createElement("div", { class: "content" })));
+    ))), /* @__PURE__ */ createElement("div", { class: "pane", "children:set": paneContent }));
   }
 
   // src/View/chatPage.tsx

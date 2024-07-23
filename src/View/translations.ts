@@ -126,6 +126,8 @@ const englishTranslations = {
     task: {
       newBoardNamePlaceholder: "Create a board",
       createBoardButtonAudioLabel: "create board",
+
+      noBoardSelected: "No board selected",
     },
   },
 };

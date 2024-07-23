@@ -7,6 +7,24 @@ import { translations } from "../translations";
 export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   taskPageViewModel.loadData();
 
+  const paneContent = React.createProxyState(
+    [taskPageViewModel.selectedBoard],
+    () => {
+      const selectedBoard = taskPageViewModel.selectedBoard.value;
+      if (selectedBoard == undefined) {
+        return [
+          <div class="content align-center justify-center">
+            <span class="secondary">
+              {translations.chatPage.task.noBoardSelected}
+            </span>
+          </div>,
+        ];
+      } else {
+        return [<div class="toolbar"></div>, <div class="content"></div>];
+      }
+    }
+  );
+
   return (
     <div id="task-page">
       <div class="pane side">
@@ -40,10 +58,8 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
           ></div>
         </div>
       </div>
-      <div class="pane">
-        <div class="toolbar"></div>
-        <div class="content"></div>
-      </div>
+
+      <div class="pane" children:set={paneContent}></div>
     </div>
   );
 }
