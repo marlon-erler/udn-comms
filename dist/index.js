@@ -1423,6 +1423,7 @@
     color = new State("standard" /* Standard */);
     isSelected;
     isPresentingSettingsModal = new State(false);
+    index = new State(0);
     // view
     select = () => {
       this.taskPageViewModel.selectBoard(this);
@@ -1436,6 +1437,10 @@
     hideSettings = () => {
       this.saveSettings();
       this.isPresentingSettingsModal.value = false;
+    };
+    updateIndex = () => {
+      const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
+      this.index.value = index;
     };
     // methods
     saveSettings = () => {
@@ -1477,6 +1482,10 @@
     storageModel;
     taskModel;
     chatViewModel;
+    // data
+    boardIndexManager = new IndexManager(
+      (boardViewModel) => boardViewModel.name.value
+    );
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
@@ -1498,9 +1507,11 @@
       const boardInfoFileContent = this.taskModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.showBoardInList(boardInfoFileContent);
+      this.updateIndices();
     };
     updateBoard = (boardInfoFileContent) => {
       this.taskModel.updateBoard(boardInfoFileContent);
+      this.updateIndices();
     };
     // view
     showBoardInList = (boardInfo) => {
@@ -1515,6 +1526,12 @@
       this.selectedBoardId.value = void 0;
       this.chatViewModel.resetColor();
     };
+    updateIndices = () => {
+      this.boardIndexManager.update([...this.boardViewModels.value.values()]);
+      for (const boardViewModel of this.boardViewModels.value.values()) {
+        boardViewModel.updateIndex();
+      }
+    };
     // load
     loadData = () => {
       this.boardViewModels.clear();
@@ -1524,6 +1541,7 @@
         if (boardInfo == null) continue;
         this.showBoardInList(boardInfo);
       }
+      this.updateIndices();
     };
     // init
     constructor(taskModel, storageModel2, chatViewModel) {
@@ -1533,6 +1551,7 @@
       taskModel.boardHandlerManager.addHandler(
         (boardInfoFileContent) => {
           this.showBoardInList(boardInfoFileContent);
+          this.updateIndices();
         }
       );
     }
@@ -1574,7 +1593,7 @@
       this.displayedColor.value = this.settingsPageViewModel.color.value;
     };
     updateIndex = () => {
-      const index = this.chatListViewModel.indexManager.getIndex(this);
+      const index = this.chatListViewModel.chatIndexManager.getIndex(this);
       this.index.value = index;
     };
     // load
@@ -1619,12 +1638,13 @@
     chatListModel;
     storageModel;
     settingsViewModel;
+    // data
+    chatIndexManager = new IndexManager(
+      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
+    );
     // state
     newChatPrimaryChannel = new State("");
     chatViewModels = new ListState();
-    indexManager = new IndexManager(
-      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
-    );
     selectedChat = new State(void 0);
     // guards
     cannotCreateChat = createProxyState(
@@ -1657,7 +1677,7 @@
       );
     };
     updateIndices = () => {
-      this.indexManager.update([...this.chatViewModels.value.values()]);
+      this.chatIndexManager.update([...this.chatViewModels.value.values()]);
       for (const chatViewModel of this.chatViewModels.value) {
         chatViewModel.updateIndex();
       }
@@ -2087,6 +2107,9 @@
       /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
       /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
     );
+    boardViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
     return view;
   }
   var BoardInfoToEntry = (boardViewModel) => {

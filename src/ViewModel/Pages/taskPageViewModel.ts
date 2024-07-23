@@ -8,6 +8,7 @@ import TaskModel, {
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
 import { FileContent } from "../../Model/Files/fileModel";
+import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
@@ -16,6 +17,11 @@ export default class TaskPageViewModel {
   taskModel: TaskModel;
 
   chatViewModel: ChatViewModel;
+
+  // data
+  boardIndexManager: IndexManager<BoardViewModel> = new IndexManager(
+    (boardViewModel: BoardViewModel) => boardViewModel.name.value
+  );
 
   // state
   newBoardNameInput: React.State<string> = new React.State("");
@@ -51,10 +57,12 @@ export default class TaskPageViewModel {
     this.newBoardNameInput.value = "";
 
     this.showBoardInList(boardInfoFileContent);
+    this.updateIndices();
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     this.taskModel.updateBoard(boardInfoFileContent);
+    this.updateIndices();
   };
 
   // view
@@ -73,6 +81,13 @@ export default class TaskPageViewModel {
     this.chatViewModel.resetColor();
   };
 
+  updateIndices = (): void => {
+    this.boardIndexManager.update([...this.boardViewModels.value.values()]);
+    for (const boardViewModel of this.boardViewModels.value.values()) {
+      boardViewModel.updateIndex();
+    }
+  };
+
   // load
   loadData = (): void => {
     this.boardViewModels.clear();
@@ -85,6 +100,8 @@ export default class TaskPageViewModel {
 
       this.showBoardInList(boardInfo);
     }
+
+    this.updateIndices();
   };
 
   // init
@@ -102,6 +119,7 @@ export default class TaskPageViewModel {
     taskModel.boardHandlerManager.addHandler(
       (boardInfoFileContent: BoardInfoFileContent) => {
         this.showBoardInList(boardInfoFileContent);
+        this.updateIndices();
       }
     );
   }

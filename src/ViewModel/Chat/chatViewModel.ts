@@ -55,7 +55,7 @@ export default class ChatViewModel {
   };
 
   updateIndex = (): void => {
-    const index: number = this.chatListViewModel.indexManager.getIndex(this);
+    const index: number = this.chatListViewModel.chatIndexManager.getIndex(this);
     this.index.value = index;
   };
 

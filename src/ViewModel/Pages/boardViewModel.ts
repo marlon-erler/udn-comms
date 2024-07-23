@@ -17,6 +17,8 @@ export default class BoardViewModel {
   isSelected: React.State<boolean>;
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
 
+  index: React.State<number> = new React.State(0);
+
   // view
   select = (): void => {
     this.taskPageViewModel.selectBoard(this);
@@ -33,6 +35,12 @@ export default class BoardViewModel {
   hideSettings = (): void => {
     this.saveSettings();
     this.isPresentingSettingsModal.value = false;
+  };
+
+  updateIndex = (): void => {
+    const index: number =
+      this.taskPageViewModel.boardIndexManager.getIndex(this);
+    this.index.value = index;
   };
 
   // methods

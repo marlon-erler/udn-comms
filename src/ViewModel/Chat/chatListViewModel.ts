@@ -12,13 +12,15 @@ export default class ChatListViewModel {
   storageModel: StorageModel;
   settingsViewModel: SettingsViewModel;
 
-  // state
-  newChatPrimaryChannel: React.State<string> = new React.State("");
-  chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
-  indexManager: IndexManager<ChatViewModel> = new IndexManager(
+  // data
+  chatIndexManager: IndexManager<ChatViewModel> = new IndexManager(
     (chatViewModel: ChatViewModel) =>
       chatViewModel.settingsPageViewModel.primaryChannel.value
   );
+
+  // state
+  newChatPrimaryChannel: React.State<string> = new React.State("");
+  chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
 
   selectedChat: React.State<ChatViewModel | undefined> = new React.State<
     ChatViewModel | undefined
@@ -61,7 +63,7 @@ export default class ChatListViewModel {
   };
 
   updateIndices = (): void => {
-    this.indexManager.update([...this.chatViewModels.value.values()]);
+    this.chatIndexManager.update([...this.chatViewModels.value.values()]);
     for (const chatViewModel of this.chatViewModels.value) {
       chatViewModel.updateIndex();
     }

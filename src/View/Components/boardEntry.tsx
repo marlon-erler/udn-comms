@@ -16,6 +16,10 @@ export function BoardEntry(boardViewModel: BoardViewModel) {
     </button>
   );
 
+  boardViewModel.index.subscribe((newIndex) => {
+    view.style.order = newIndex;
+  });
+
   return view;
 }
 
