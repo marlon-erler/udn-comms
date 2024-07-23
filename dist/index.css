@@ -121,6 +121,15 @@ main {
 [color]:not([color=standard])[selected].fill-color {
   color: var(--primary);
 }
+[color]:not([color=standard]).background {
+  --luma: var(--subtle-luma);
+  background: hsl(var(--hue), 90%, var(--luma));
+}
+@media (prefers-color-scheme: dark) {
+  [color]:not([color=standard]).background {
+    --luma: var(--subtle-luma-dark);
+  }
+}
 [color]:not([color=standard]).subtle-background {
   --luma: var(--subtle-luma);
   background: hsl(var(--hue), 30%, var(--luma));

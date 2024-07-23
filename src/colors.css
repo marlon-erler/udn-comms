@@ -58,6 +58,18 @@
   color: var(--primary);
 }
 
+/* background */
+[color]:not([color="standard"]).background {
+  --luma: var(--subtle-luma);
+  background: hsl(var(--hue), 90%, var(--luma));
+}
+
+@media (prefers-color-scheme: dark) {
+  [color]:not([color="standard"]).background {
+    --luma: var(--subtle-luma-dark);
+  }
+}
+
 /* subtle */
 [color]:not([color="standard"]).subtle-background {
   --luma: var(--subtle-luma);
@@ -145,6 +157,7 @@
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
 
+  
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
