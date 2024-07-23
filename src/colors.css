@@ -59,21 +59,23 @@
 }
 
 /* background */
-[color]:not([color="standard"]).background {
-  --luma: var(--background-luma);
-  --sat: 80%;
-  background: hsl(var(--hue), var(--sat), var(--luma));
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 1024px) {
   [color]:not([color="standard"]).background {
-    --luma: var(--background-luma-dark);
-    --sat: 40%;
+    --luma: var(--background-luma);
+    --sat: 80%;
+    background: hsl(var(--hue), var(--sat), var(--luma));
   }
-}
 
-[color="standard"].background {
-  background: var(--surface);
+  @media (prefers-color-scheme: dark) {
+    [color]:not([color="standard"]).background {
+      --luma: var(--background-luma-dark);
+      --sat: 40%;
+    }
+  }
+
+  [color="standard"].background {
+    background: var(--surface);
+  }
 }
 
 /* subtle */

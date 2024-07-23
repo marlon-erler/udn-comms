@@ -121,19 +121,21 @@ main {
 [color]:not([color=standard])[selected].fill-color {
   color: var(--primary);
 }
-[color]:not([color=standard]).background {
-  --luma: var(--background-luma);
-  --sat: 80%;
-  background: hsl(var(--hue), var(--sat), var(--luma));
-}
-@media (prefers-color-scheme: dark) {
+@media (min-width: 1024px) {
   [color]:not([color=standard]).background {
-    --luma: var(--background-luma-dark);
-    --sat: 40%;
+    --luma: var(--background-luma);
+    --sat: 80%;
+    background: hsl(var(--hue), var(--sat), var(--luma));
   }
-}
-[color=standard].background {
-  background: var(--surface);
+  @media (prefers-color-scheme: dark) {
+    [color]:not([color=standard]).background {
+      --luma: var(--background-luma-dark);
+      --sat: 40%;
+    }
+  }
+  [color=standard].background {
+    background: var(--surface);
+  }
 }
 [color]:not([color=standard]).subtle-background {
   --luma: var(--subtle-luma);
@@ -360,6 +362,11 @@ body[showing-chat] #chat-page-wrapper {
   height: var(--ribbon-size);
   overflow-x: auto;
   padding: 0px;
+}
+@media (max-width: 1024px) {
+  #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar input {
+    border-left: 1px solid var(--surface-border);
+  }
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {
   padding-left: var(--content-padding);

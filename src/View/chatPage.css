@@ -189,6 +189,12 @@ body[showing-chat] #chat-page-wrapper {
   padding: 0px;
 }
 
+@media (max-width: 1024px) {
+  #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar input {
+    border-left: 1px solid var(--surface-border);
+  }
+}
+
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {
   padding-left: var(--content-padding);
 }
