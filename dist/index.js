@@ -1422,8 +1422,8 @@
       );
       this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
     };
-    applyColor = (newColor) => {
-      this.taskPageViewModel.chatViewModel.setDisplayedColor(newColor);
+    applyColor = () => {
+      this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
     };
     // load
     loadListRelevantData = () => {
@@ -1441,8 +1441,9 @@
         [this.taskPageViewModel.selectedBoardId],
         () => this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
       );
-      this.color.subscribeSilent((newColor) => {
-        this.applyColor(newColor);
+      this.color.subscribe(() => {
+        if (this.isSelected.value == false) return;
+        this.applyColor();
       });
     }
   };

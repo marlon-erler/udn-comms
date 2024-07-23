@@ -46,8 +46,8 @@ export default class BoardViewModel {
     this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
   };
 
-  applyColor = (newColor: Color): void => {
-    this.taskPageViewModel.chatViewModel.setDisplayedColor(newColor);
+  applyColor = (): void => {
+    this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
   };
 
   // load
@@ -74,8 +74,9 @@ export default class BoardViewModel {
         this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
     );
 
-    this.color.subscribeSilent((newColor) => {
-      this.applyColor(newColor);
+    this.color.subscribe(() => {
+      if (this.isSelected.value == false) return;
+      this.applyColor();
     });
   }
 }
