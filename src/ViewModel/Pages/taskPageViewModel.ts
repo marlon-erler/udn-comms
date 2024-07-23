@@ -25,7 +25,11 @@ export default class TaskPageViewModel {
 
   // paths
   getBasePath = (): string[] => {
-    return [...this.taskModel.getBasePath()];
+    return [...this.taskModel.getViewPath()];
+  };
+
+  getBoardViewPath = (boardId): string[] => {
+    return [...this.getBasePath(), boardId];
   };
 
   getLastUsedBoardPath = (): string[] => {
@@ -82,7 +86,11 @@ export default class TaskPageViewModel {
 
   // view
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
-    const boardViewModel: BoardViewModel = new BoardViewModel(this, boardInfo);
+    const boardViewModel: BoardViewModel = new BoardViewModel(
+      this,
+      boardInfo,
+      this.storageModel
+    );
     this.boardViewModels.set(boardInfo.fileId, boardViewModel);
   };
 

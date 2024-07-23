@@ -26,6 +26,10 @@ export default class TaskModel {
     return this.fileModel.getModelContainerPath(FileModelSubPath.ModelTask);
   };
 
+  getViewPath = (): string[] => {
+    return [...this.getBasePath(), FileModelSubPath.ModelView];
+  };
+
   getBoardFilePath = (boardId: string): string[] => {
     return [...this.fileModel.getFilePath(boardId)];
   };
@@ -222,7 +226,7 @@ export default class TaskModel {
 export enum TaskModelSubPaths {
   Boards = "boards",
   BoardTasks = "tasks",
-};
+}
 
 // types
 export interface BoardInfoFileContent extends FileContent<"board-info"> {

@@ -170,6 +170,7 @@ export default class FileModel {
 export enum FileModelSubPath {
   Data = "data",
   Model = "model",
+  ModelView = "view",
   ModelTask = "tasks",
 };
 

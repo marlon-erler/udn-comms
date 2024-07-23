@@ -579,6 +579,9 @@
     getBasePath = () => {
       return this.fileModel.getModelContainerPath("tasks" /* ModelTask */);
     };
+    getViewPath = () => {
+      return [...this.getBasePath(), "view" /* ModelView */];
+    };
     getBoardFilePath = (boardId) => {
       return [...this.fileModel.getFilePath(boardId)];
     };
@@ -1411,6 +1414,7 @@
 
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class {
+    storageModel;
     taskPageViewModel;
     // state
     boardInfo;
@@ -1424,6 +1428,13 @@
       "list" /* List */
     );
     index = new State(0);
+    // paths
+    getBasePath = () => {
+      return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
+    };
+    getLastUsedBoardPath = () => {
+      return [...this.getBasePath(), "last-used-view" /* LastUsedView */];
+    };
     // view
     select = () => {
       this.taskPageViewModel.selectBoard(this);
@@ -1470,15 +1481,29 @@
       this.taskPageViewModel.deleteBoard(this.boardInfo);
       this.close();
     };
+    // store
+    storeLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.selectedPage.value;
+      this.storageModel.write(path, lastUsedView);
+    };
+    restoreLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.storageModel.read(path);
+      if (lastUsedView == null) return;
+      this.selectedPage.value = lastUsedView;
+    };
     // load
     loadListRelevantData = () => {
       this.name.value = this.boardInfo.name;
       this.color.value = this.boardInfo.color;
     };
     loadData = () => {
+      this.restoreLastUsedView();
     };
     // init
-    constructor(taskPageViewModel, boardInfo) {
+    constructor(taskPageViewModel, boardInfo, storageModel2) {
+      this.storageModel = storageModel2;
       this.taskPageViewModel = taskPageViewModel;
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
@@ -1489,6 +1514,9 @@
       this.color.subscribe(() => {
         if (this.isSelected.value == false) return;
         this.applyColor();
+      });
+      this.selectedPage.subscribeSilent(() => {
+        this.storeLastUsedView();
       });
     }
   };
@@ -1504,7 +1532,10 @@
     );
     // paths
     getBasePath = () => {
-      return [...this.taskModel.getBasePath()];
+      return [...this.taskModel.getViewPath()];
+    };
+    getBoardViewPath = (boardId) => {
+      return [...this.getBasePath(), boardId];
     };
     getLastUsedBoardPath = () => {
       return [...this.getBasePath(), "last-used-board" /* LastUsedBoard */];
@@ -1543,7 +1574,11 @@
     };
     // view
     showBoardInList = (boardInfo) => {
-      const boardViewModel = new BoardViewModel(this, boardInfo);
+      const boardViewModel = new BoardViewModel(
+        this,
+        boardInfo,
+        this.storageModel
+      );
       this.boardViewModels.set(boardInfo.fileId, boardViewModel);
     };
     selectBoard = (boardViewModel) => {
@@ -2201,6 +2236,7 @@
 
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
+    boardViewModel.loadData();
     return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {

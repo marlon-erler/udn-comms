@@ -3,9 +3,11 @@ import * as React from "bloatless-react";
 import TaskModel, { BoardInfoFileContent } from "../../Model/Files/taskModel";
 
 import { Color } from "../../colors";
+import StorageModel from "../../Model/Global/storageModel";
 import TaskPageViewModel from "./taskPageViewModel";
 
 export default class BoardViewModel {
+  storageModel: StorageModel;
   taskPageViewModel: TaskPageViewModel;
 
   // state
@@ -24,6 +26,15 @@ export default class BoardViewModel {
   );
 
   index: React.State<number> = new React.State(0);
+
+  // paths
+  getBasePath = (): string[] => {
+    return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
+  };
+
+  getLastUsedBoardPath = (): string[] => {
+    return [...this.getBasePath(), BoardViewModelSubPaths.LastUsedView];
+  };
 
   // view
   select = (): void => {
@@ -85,19 +96,38 @@ export default class BoardViewModel {
     this.close();
   };
 
+  // store
+  storeLastUsedView = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedView: string = this.selectedPage.value;
+    this.storageModel.write(path, lastUsedView);
+  };
+
+  restoreLastUsedView = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedView: string | null = this.storageModel.read(path);
+    if (lastUsedView == null) return;
+
+    this.selectedPage.value = lastUsedView as BoardPageType;
+  };
+
   // load
   loadListRelevantData = (): void => {
     this.name.value = this.boardInfo.name;
     this.color.value = this.boardInfo.color;
   };
 
-  loadData = (): void => {};
+  loadData = (): void => {
+    this.restoreLastUsedView();
+  };
 
   // init
   constructor(
     taskPageViewModel: TaskPageViewModel,
-    boardInfo: BoardInfoFileContent
+    boardInfo: BoardInfoFileContent,
+    storageModel: StorageModel
   ) {
+    this.storageModel = storageModel;
     this.taskPageViewModel = taskPageViewModel;
     this.boardInfo = boardInfo;
 
@@ -113,7 +143,14 @@ export default class BoardViewModel {
       if (this.isSelected.value == false) return;
       this.applyColor();
     });
+    this.selectedPage.subscribeSilent(() => {
+      this.storeLastUsedView();
+    });
   }
+}
+
+export enum BoardViewModelSubPaths {
+  LastUsedView = "last-used-view",
 }
 
 // types

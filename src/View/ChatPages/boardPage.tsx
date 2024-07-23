@@ -9,6 +9,8 @@ import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
 import { translations } from "../translations";
 
 export function BoardPage(boardViewModel: BoardViewModel) {
+  boardViewModel.loadData();
+
   return (
     <div class="pane">
       <div class="toolbar">
