@@ -122,13 +122,18 @@ main {
   color: var(--primary);
 }
 [color]:not([color=standard]).background {
-  --luma: var(--subtle-luma);
-  background: hsl(var(--hue), 90%, var(--luma));
+  --luma: var(--background-luma);
+  --sat: 80%;
+  background: hsl(var(--hue), var(--sat), var(--luma));
 }
 @media (prefers-color-scheme: dark) {
   [color]:not([color=standard]).background {
-    --luma: var(--subtle-luma-dark);
+    --luma: var(--background-luma-dark);
+    --sat: 40%;
   }
+}
+[color=standard].background {
+  background: var(--surface);
 }
 [color]:not([color=standard]).subtle-background {
   --luma: var(--subtle-luma);
@@ -145,6 +150,8 @@ main {
   --accent-luma-dark: 70%;
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+  --background-luma: 90%;
+  --background-luma-dark: 10%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -154,6 +161,8 @@ main {
   --accent-luma-dark: 60%;
   --accent-text-luma: 0%;
   --accent-text-luma-dark: 0%;
+  --background-luma: 85%;
+  --background-luma-dark: 10%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -163,6 +172,8 @@ main {
   --accent-luma-dark: 60%;
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 0%;
+  --background-luma: 85%;
+  --background-luma-dark: 9%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -170,8 +181,10 @@ main {
   --hue: 180;
   --accent-luma: 40%;
   --accent-luma-dark: 60%;
-  --accent-text-luma: 100%;
-  --accent-text-luma-dark: 0%;
+  --accent-text-luma: 0%;
+  --accent-text-luma-dark: 100%;
+  --background-luma: 85%;
+  --background-luma-dark: 8%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -181,6 +194,8 @@ main {
   --accent-luma-dark: 70%;
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+  --background-luma: 90%;
+  --background-luma-dark: 10%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -190,6 +205,8 @@ main {
   --accent-luma-dark: 70%;
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
+  --background-luma: 90%;
+  --background-luma-dark: 12%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -281,9 +298,6 @@ body[showing-chat] #chat-page-wrapper {
     max-width: 18rem;
   }
 }
-#chat-page > div > #main > div > .pane-wrapper:not(:last-child) {
-  border-right: 1px solid var(--border);
-}
 #chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   flex-direction: column;
   overflow: auto;
@@ -298,9 +312,10 @@ body[showing-chat] #chat-page-wrapper {
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   align-items: center;
 }
-#chat-page #ribbon > span,
-#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span {
+#chat-page > div > #ribbon > span,
+#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.ribbon {
   gap: var(--gap-between-tiles);
+  padding: var(--gap-between-tiles);
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   justify-content: start;
@@ -308,7 +323,6 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #ribbon {
   width: var(--ribbon-size);
-  border-right: 1px solid var(--border);
   padding-bottom: var(--safe-area-bottom);
 }
 #chat-page > div > #ribbon > span {
@@ -317,7 +331,6 @@ body[showing-chat] #chat-page-wrapper {
   overflow-y: auto;
   flex-direction: column;
   justify-content: end;
-  padding: var(--gap-between-tiles);
 }
 #chat-page > div > #ribbon button,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button {
@@ -331,7 +344,8 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #ribbon button.ribbon-button,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button.ribbon-button {
-  width: 100%;
+  width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+  max-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
@@ -344,11 +358,9 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   height: var(--ribbon-size);
-  border-bottom: 1px solid var(--border);
-  overflow-y: hidden;
+  border-top: 1px solid var(--border);
   overflow-x: auto;
   padding: 0px;
-  border-top: 1px solid var(--border);
 }
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {
   padding-left: var(--content-padding);

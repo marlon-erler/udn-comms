@@ -38,7 +38,10 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   );
 
   const listPaneWrapper = (
-    <div class="pane-wrapper side">
+    <div
+      class="pane-wrapper side background"
+      set:color={taskPageViewModel.chatViewModel.displayedColor}
+    >
       <div class="pane">
         <div class="toolbar">
           <div class="flex-row width-input">

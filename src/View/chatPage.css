@@ -83,10 +83,6 @@ body[showing-chat] #chat-page-wrapper {
   }
 }
 
-#chat-page > div > #main > div > .pane-wrapper:not(:last-child) {
-  border-right: 1px solid var(--border);
-}
-
 #chat-page > div > #main > div > .pane-wrapper > .pane > .content {
   flex-direction: column;
   overflow: auto;
@@ -105,9 +101,17 @@ body[showing-chat] #chat-page-wrapper {
   align-items: center;
 }
 
-#chat-page #ribbon > span,
-#chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span {
+#chat-page > div > #ribbon > span,
+#chat-page
+  > div
+  > #main
+  > div
+  > .pane-wrapper
+  > .pane
+  > .toolbar
+  > span.ribbon {
   gap: var(--gap-between-tiles);
+  padding: var(--gap-between-tiles);
 }
 
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
@@ -117,7 +121,6 @@ body[showing-chat] #chat-page-wrapper {
 
 #chat-page > div > #ribbon {
   width: var(--ribbon-size);
-  border-right: 1px solid var(--border);
 
   padding-bottom: var(--safe-area-bottom);
 }
@@ -130,8 +133,6 @@ body[showing-chat] #chat-page-wrapper {
 
   flex-direction: column;
   justify-content: end;
-
-  padding: var(--gap-between-tiles);
 }
 
 #chat-page > div > #ribbon button,
@@ -156,7 +157,9 @@ body[showing-chat] #chat-page-wrapper {
   > .pane
   > .toolbar
   button.ribbon-button {
-  width: 100%;
+  width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+  max-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
+
   min-height: unset;
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 }
@@ -180,13 +183,12 @@ body[showing-chat] #chat-page-wrapper {
 
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar {
   height: var(--ribbon-size);
-  border-bottom: 1px solid var(--border);
 
-  overflow-y: hidden;
+  border-top: 1px solid var(--border);
+
   overflow-x: auto;
 
   padding: 0px;
-  border-top: 1px solid var(--border);
 }
 
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar > span.title {

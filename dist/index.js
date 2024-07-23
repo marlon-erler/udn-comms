@@ -1423,6 +1423,8 @@
     color = new State("standard" /* Standard */);
     isSelected;
     isPresentingSettingsModal = new State(false);
+    isPresentingFilterModal = new State(false);
+    isPresentingNewTaskModal = new State(false);
     index = new State(0);
     // view
     select = () => {
@@ -1437,6 +1439,18 @@
     hideSettings = () => {
       this.saveSettings();
       this.isPresentingSettingsModal.value = false;
+    };
+    showFilterModal = () => {
+      this.isPresentingFilterModal.value = true;
+    };
+    hideFilterModal = () => {
+      this.isPresentingFilterModal.value = false;
+    };
+    showNewTaskModal = () => {
+      this.isPresentingNewTaskModal.value = true;
+    };
+    hideNewTaskModal = () => {
+      this.isPresentingNewTaskModal.value = false;
     };
     updateIndex = () => {
       const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
@@ -1842,6 +1856,11 @@
         ///
         closeBoard: "close board",
         showBoardSettingsButtonAudioLabel: "show board settigns",
+        listViewButtonAudioLabel: "list view",
+        kanbanViewButtonAudioLabel: "kanban view",
+        statusViewButtonAudioLabel: "status grid view",
+        filterTasksButtonAudioLabel: "filter tasks",
+        createTaskButtonAudioLabel: "create new task",
         ///
         boardSettingsHeadline: "Board Settings",
         boardNameInputLabel: "Board name",
@@ -2159,7 +2178,47 @@
         "on:click": boardViewModel.showSettings
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "settings")
-    )), /* @__PURE__ */ createElement("span", null, "a"), /* @__PURE__ */ createElement("span", null, "b")), /* @__PURE__ */ createElement("div", { class: "content" }), BoardSettingsModal(boardViewModel));
+    )), /* @__PURE__ */ createElement("span", { class: "scroll-h ribbon" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost ribbon-button",
+        "aria-label": translations.chatPage.task.listViewButtonAudioLabel,
+        "on:click": boardViewModel.close
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "view_list")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost ribbon-button",
+        "aria-label": translations.chatPage.task.kanbanViewButtonAudioLabel,
+        "on:click": boardViewModel.showSettings
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "view_kanban")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost ribbon-button",
+        "aria-label": translations.chatPage.task.statusViewButtonAudioLabel,
+        "on:click": boardViewModel.showSettings
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "grid_view")
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.filterTasksButtonAudioLabel,
+        "on:click": boardViewModel.showFilterModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "filter_alt")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
+        "on:click": boardViewModel.showNewTaskModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ))), /* @__PURE__ */ createElement("div", { class: "content" }), BoardSettingsModal(boardViewModel));
   }
 
   // src/View/ChatPages/taskPage.tsx
@@ -2179,33 +2238,40 @@
         return BoardPage(selectedBoard);
       }
     );
-    const listPaneWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": taskPageViewModel.newBoardNameInput,
-        "on:enter": taskPageViewModel.createBoard,
-        placeholder: translations.chatPage.task.newBoardNamePlaceholder
-      }
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "aria-label": translations.chatPage.task.createBoardButtonAudioLabel,
-        "on:click": taskPageViewModel.createBoard,
-        "toggle:disabled": taskPageViewModel.cannotCreateBoard
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement(
+    const listPaneWrapper = /* @__PURE__ */ createElement(
       "div",
       {
-        class: "grid gap",
-        style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
-        "children:append": [
-          taskPageViewModel.boardViewModels,
-          BoardInfoToEntry
-        ]
-      }
-    ))));
+        class: "pane-wrapper side background",
+        "set:color": taskPageViewModel.chatViewModel.displayedColor
+      },
+      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+        "input",
+        {
+          "bind:value": taskPageViewModel.newBoardNameInput,
+          "on:enter": taskPageViewModel.createBoard,
+          placeholder: translations.chatPage.task.newBoardNamePlaceholder
+        }
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "primary",
+          "aria-label": translations.chatPage.task.createBoardButtonAudioLabel,
+          "on:click": taskPageViewModel.createBoard,
+          "toggle:disabled": taskPageViewModel.cannotCreateBoard
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+      ))), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap",
+          style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
+          "children:append": [
+            taskPageViewModel.boardViewModels,
+            BoardInfoToEntry
+          ]
+        }
+      )))
+    );
     const mainPageWrapper = /* @__PURE__ */ createElement("div", { class: "pane-wrapper", "children:set": paneContent });
     bulkSubscribe([taskPageViewModel.selectedBoardId], () => {
       const selectedBoard = taskPageViewModel.selectedBoardId.value;

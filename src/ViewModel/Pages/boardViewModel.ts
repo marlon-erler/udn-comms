@@ -16,6 +16,8 @@ export default class BoardViewModel {
 
   isSelected: React.State<boolean>;
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
+  isPresentingFilterModal: React.State<boolean> = new React.State(false);
+  isPresentingNewTaskModal: React.State<boolean> = new React.State(false);
 
   index: React.State<number> = new React.State(0);
 
@@ -35,6 +37,22 @@ export default class BoardViewModel {
   hideSettings = (): void => {
     this.saveSettings();
     this.isPresentingSettingsModal.value = false;
+  };
+
+  showFilterModal = (): void => {
+    this.isPresentingFilterModal.value = true;
+  };
+
+  hideFilterModal = (): void => {
+    this.isPresentingFilterModal.value = false;
+  };
+
+  showNewTaskModal = (): void => {
+    this.isPresentingNewTaskModal.value = true;
+  };
+
+  hideNewTaskModal = (): void => {
+    this.isPresentingNewTaskModal.value = false;
   };
 
   updateIndex = (): void => {

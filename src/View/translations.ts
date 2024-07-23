@@ -141,6 +141,13 @@ const englishTranslations = {
       closeBoard: "close board",
       showBoardSettingsButtonAudioLabel: "show board settigns",
 
+      listViewButtonAudioLabel: "list view",
+      kanbanViewButtonAudioLabel: "kanban view",
+      statusViewButtonAudioLabel: "status grid view",
+
+      filterTasksButtonAudioLabel: "filter tasks",
+      createTaskButtonAudioLabel: "create new task",
+
       ///
 
       boardSettingsHeadline: "Board Settings",
