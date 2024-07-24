@@ -6,6 +6,8 @@ import BoardViewModel, {
 
 import { BoardSettingsModal } from "../Modals/boardSettingsModal";
 import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
+import { TaskSettingsModal } from "../Modals/taskSettingsModal";
+import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
 
 export function BoardPage(boardViewModel: BoardViewModel) {
@@ -16,8 +18,28 @@ export function BoardPage(boardViewModel: BoardViewModel) {
     () => {
       switch (boardViewModel.selectedPage.value) {
         default: {
-          return <div></div>;
+          return (
+            <div
+              class="grid gap"
+              style="grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr))"
+              children:append={[
+                boardViewModel.taskViewModels,
+                TaskViewModelToEntry,
+              ]}
+            ></div>
+          );
         }
+      }
+    }
+  );
+
+  const taskSettingsModal = React.createProxyState(
+    [boardViewModel.selectedTaskViewModel],
+    () => {
+      if (boardViewModel.selectedTaskViewModel.value == undefined) {
+        return <div></div>;
+      } else {
+        return TaskSettingsModal(boardViewModel.selectedTaskViewModel.value);
       }
     }
   );
@@ -72,7 +94,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
           <button
             class="ghost"
             aria-label={translations.chatPage.task.createTaskButtonAudioLabel}
-            on:click={boardViewModel.showNewTaskModal}
+            on:click={boardViewModel.createTask}
           >
             <span class="icon">add</span>
           </button>
@@ -81,6 +103,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
       <div class="content" children:set={mainContent}></div>
 
       {BoardSettingsModal(boardViewModel)}
+      <div children:set={taskSettingsModal}></div>
     </div>
   );
 }

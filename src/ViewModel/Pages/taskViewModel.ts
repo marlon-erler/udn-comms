@@ -29,15 +29,13 @@ export default class TaskViewModel {
   date: React.State<string> = new React.State("");
   time: React.State<string> = new React.State("");
 
-  isPresentingSettingsModal: React.State<boolean> = new React.State(false);
-
   // view
   showSettings = (): void => {
-    this.isPresentingSettingsModal.value = true;
+    this.boardViewModel.selectTask(this);
   };
 
   hideSettings = (): void => {
-    this.isPresentingSettingsModal.value = false;
+    this.boardViewModel.closeTask();
   };
 
   hideSettingsAndSave = (): void => {

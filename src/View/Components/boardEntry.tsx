@@ -23,7 +23,7 @@ export function BoardEntry(boardViewModel: BoardViewModel) {
   return view;
 }
 
-export const BoardInfoToEntry: React.StateItemConverter<
+export const BoardViewModelToEntry: React.StateItemConverter<
   BoardViewModel
 > = (boardViewModel: BoardViewModel) => {
   return BoardEntry(boardViewModel);

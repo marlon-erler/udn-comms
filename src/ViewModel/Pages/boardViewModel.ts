@@ -23,18 +23,19 @@ export default class BoardViewModel {
   name: React.State<string> = new React.State("");
   color: React.State<Color> = new React.State<Color>(Color.Standard);
 
-  isSelected: React.State<boolean>;
-  isPresentingSettingsModal: React.State<boolean> = new React.State(false);
-  isPresentingFilterModal: React.State<boolean> = new React.State(false);
-  isPresentingNewTaskModal: React.State<boolean> = new React.State(false);
+  index: React.State<number> = new React.State(0);
+
+  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
 
   selectedPage: React.State<BoardPageType> = new React.State<BoardPageType>(
     BoardPageType.List
   );
+  selectedTaskViewModel: React.State<TaskViewModel | undefined> =
+    new React.State<TaskViewModel | undefined>(undefined);
 
-  index: React.State<number> = new React.State(0);
-
-  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
+  isSelected: React.State<boolean>;
+  isPresentingSettingsModal: React.State<boolean> = new React.State(false);
+  isPresentingFilterModal: React.State<boolean> = new React.State(false);
 
   // paths
   getBasePath = (): string[] => {
@@ -43,6 +44,58 @@ export default class BoardViewModel {
 
   getLastUsedBoardPath = (): string[] => {
     return [...this.getBasePath(), BoardViewModelSubPaths.LastUsedView];
+  };
+
+  // settings
+  saveSettings = (): void => {
+    const newBoardInfoFileContent: BoardInfoFileContent =
+      BoardModel.createBoardInfoFileContent(
+        this.boardInfo.fileId,
+        this.name.value,
+        this.color.value
+      );
+    this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
+  };
+
+  applyColor = (): void => {
+    this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
+  };
+
+  deleteBoard = (): void => {
+    this.taskPageViewModel.deleteBoard(this.boardInfo);
+    this.close();
+  };
+
+  // tasks
+  createTask = (): void => {
+    const taskFileContent: TaskFileContent = this.boardModel.createTask(
+      this.boardInfo.fileId
+    );
+    const taskViewModel: TaskViewModel = new TaskViewModel(
+      this.boardModel,
+      this,
+      taskFileContent
+    );
+    this.selectTask(taskViewModel);
+  };
+
+  trackTask = (taskViewModel: TaskViewModel): void => {
+    this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
+  };
+
+  // storage
+  storeLastUsedView = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedView: string = this.selectedPage.value;
+    this.storageModel.write(path, lastUsedView);
+  };
+
+  restoreLastUsedView = (): void => {
+    const path: string[] = this.getLastUsedBoardPath();
+    const lastUsedView: string | null = this.storageModel.read(path);
+    if (lastUsedView == null) return;
+
+    this.selectedPage.value = lastUsedView as BoardPageType;
   };
 
   // view
@@ -71,64 +124,18 @@ export default class BoardViewModel {
     this.isPresentingFilterModal.value = false;
   };
 
-  showNewTaskModal = (): void => {
-    this.isPresentingNewTaskModal.value = true;
+  selectTask = (selectedTask: TaskViewModel): void => {
+    this.selectedTaskViewModel.value = selectedTask;
   };
 
-  hideNewTaskModal = (): void => {
-    this.isPresentingNewTaskModal.value = false;
+  closeTask = () => {
+    this.selectedTaskViewModel.value = undefined;
   };
 
   updateIndex = (): void => {
     const index: number =
       this.taskPageViewModel.boardIndexManager.getIndex(this);
     this.index.value = index;
-  };
-
-  // settings
-  saveSettings = (): void => {
-    const newBoardInfoFileContent: BoardInfoFileContent =
-      BoardModel.createBoardInfoFileContent(
-        this.boardInfo.fileId,
-        this.name.value,
-        this.color.value
-      );
-    this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
-  };
-
-  applyColor = (): void => {
-    this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
-  };
-
-  deleteBoard = (): void => {
-    this.taskPageViewModel.deleteBoard(this.boardInfo);
-    this.close();
-  };
-
-  // tasks
-  createTask = (): TaskViewModel => {
-    const taskFileContent: TaskFileContent = this.boardModel.createTask(this.boardInfo.fileId);
-    const taskViewModel: TaskViewModel = new TaskViewModel(this.boardModel, this, taskFileContent);
-    return taskViewModel;
-  }
-
-  trackTask = (taskViewModel: TaskViewModel): void => {
-    this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
-  }
-
-  // storage
-  storeLastUsedView = (): void => {
-    const path: string[] = this.getLastUsedBoardPath();
-    const lastUsedView: string = this.selectedPage.value;
-    this.storageModel.write(path, lastUsedView);
-  };
-
-  restoreLastUsedView = (): void => {
-    const path: string[] = this.getLastUsedBoardPath();
-    const lastUsedView: string | null = this.storageModel.read(path);
-    if (lastUsedView == null) return;
-
-    this.selectedPage.value = lastUsedView as BoardPageType;
   };
 
   // load

@@ -1439,12 +1439,23 @@
     };
     // state
     name = new State("");
+    description = new State("");
     category = new State("");
     status = new State("");
-    description = new State("");
     priority = new State("");
     date = new State("");
     time = new State("");
+    // view
+    showSettings = () => {
+      this.boardViewModel.selectTask(this);
+    };
+    hideSettings = () => {
+      this.boardViewModel.closeTask();
+    };
+    hideSettingsAndSave = () => {
+      this.hideSettings();
+      this.save();
+    };
     // storage
     save = () => {
       const newTaskFileContent = BoardModel.createTaskFileContent(
@@ -1452,9 +1463,9 @@
         this.name.value,
         this.boardViewModel.boardInfo.fileId
       );
+      newTaskFileContent.description = this.description.value;
       newTaskFileContent.status = this.status.value;
       newTaskFileContent.category = this.category.value;
-      newTaskFileContent.description = this.description.value;
       newTaskFileContent.priority = this.priority.value;
       newTaskFileContent.date = this.date.value;
       newTaskFileContent.time = this.time.value;
@@ -1464,9 +1475,9 @@
     // load
     loadAllData = () => {
       this.name.value = this.task.name;
+      this.description.value = this.task.description ?? "";
       this.category.value = this.task.category ?? "";
       this.status.value = this.task.status ?? "";
-      this.description.value = this.task.description ?? "";
       this.priority.value = this.task.priority ?? "";
       this.date.value = this.task.date ?? "";
       this.time.value = this.task.time ?? "";
@@ -1490,21 +1501,64 @@
     // state
     name = new State("");
     color = new State("standard" /* Standard */);
-    isSelected;
-    isPresentingSettingsModal = new State(false);
-    isPresentingFilterModal = new State(false);
-    isPresentingNewTaskModal = new State(false);
+    index = new State(0);
+    taskViewModels = new MapState();
     selectedPage = new State(
       "list" /* List */
     );
-    index = new State(0);
-    taskViewModels = new MapState();
+    selectedTaskViewModel = new State(void 0);
+    isSelected;
+    isPresentingSettingsModal = new State(false);
+    isPresentingFilterModal = new State(false);
     // paths
     getBasePath = () => {
       return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
     };
     getLastUsedBoardPath = () => {
       return [...this.getBasePath(), "last-used-view" /* LastUsedView */];
+    };
+    // settings
+    saveSettings = () => {
+      const newBoardInfoFileContent = BoardModel.createBoardInfoFileContent(
+        this.boardInfo.fileId,
+        this.name.value,
+        this.color.value
+      );
+      this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
+    };
+    applyColor = () => {
+      this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
+    };
+    deleteBoard = () => {
+      this.taskPageViewModel.deleteBoard(this.boardInfo);
+      this.close();
+    };
+    // tasks
+    createTask = () => {
+      const taskFileContent = this.boardModel.createTask(
+        this.boardInfo.fileId
+      );
+      const taskViewModel = new TaskViewModel(
+        this.boardModel,
+        this,
+        taskFileContent
+      );
+      this.selectTask(taskViewModel);
+    };
+    trackTask = (taskViewModel) => {
+      this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
+    };
+    // storage
+    storeLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.selectedPage.value;
+      this.storageModel.write(path, lastUsedView);
+    };
+    restoreLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.storageModel.read(path);
+      if (lastUsedView == null) return;
+      this.selectedPage.value = lastUsedView;
     };
     // view
     select = () => {
@@ -1526,52 +1580,15 @@
     hideFilterModal = () => {
       this.isPresentingFilterModal.value = false;
     };
-    showNewTaskModal = () => {
-      this.isPresentingNewTaskModal.value = true;
+    selectTask = (selectedTask) => {
+      this.selectedTaskViewModel.value = selectedTask;
     };
-    hideNewTaskModal = () => {
-      this.isPresentingNewTaskModal.value = false;
+    closeTask = () => {
+      this.selectedTaskViewModel.value = void 0;
     };
     updateIndex = () => {
       const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
       this.index.value = index;
-    };
-    // settings
-    saveSettings = () => {
-      const newBoardInfoFileContent = BoardModel.createBoardInfoFileContent(
-        this.boardInfo.fileId,
-        this.name.value,
-        this.color.value
-      );
-      this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
-    };
-    applyColor = () => {
-      this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
-    };
-    deleteBoard = () => {
-      this.taskPageViewModel.deleteBoard(this.boardInfo);
-      this.close();
-    };
-    // tasks
-    createTask = () => {
-      const taskFileContent = this.boardModel.createTask(this.boardInfo.fileId);
-      const taskViewModel = new TaskViewModel(this.boardModel, this, taskFileContent);
-      return taskViewModel;
-    };
-    trackTask = (taskViewModel) => {
-      this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
-    };
-    // storage
-    storeLastUsedView = () => {
-      const path = this.getLastUsedBoardPath();
-      const lastUsedView = this.selectedPage.value;
-      this.storageModel.write(path, lastUsedView);
-    };
-    restoreLastUsedView = () => {
-      const path = this.getLastUsedBoardPath();
-      const lastUsedView = this.storageModel.read(path);
-      if (lastUsedView == null) return;
-      this.selectedPage.value = lastUsedView;
     };
     // load
     loadListRelevantData = () => {
@@ -1910,10 +1927,11 @@
   // src/View/translations.ts
   var englishTranslations = {
     general: {
-      closeButton: "Close",
       deleteItemButtonAudioLabel: "delete item",
       abortButton: "Abort",
+      closeButton: "Close",
       confirmButton: "Confirm",
+      saveButton: "Save",
       setButton: "Set"
     },
     regional: {
@@ -2020,7 +2038,15 @@
         ///
         boardSettingsHeadline: "Board Settings",
         boardNameInputLabel: "Board name",
-        deleteBoardButton: "Delete board and all tasks"
+        deleteBoardButton: "Delete board and all tasks",
+        ///
+        taskNameLabel: "Title",
+        taskCategoryLabel: "Category",
+        taskStatusLabel: "Status",
+        taskPriorityLabel: "Priority",
+        taskDescriptionLabel: "Description",
+        taskDateLabel: "Date",
+        taskTimeLabel: "Time"
       }
     }
   };
@@ -2279,28 +2305,6 @@
     ))))));
   }
 
-  // src/View/Components/boardEntry.tsx
-  function BoardEntry(boardViewModel) {
-    const view = /* @__PURE__ */ createElement(
-      "button",
-      {
-        "set:color": boardViewModel.color,
-        class: "tile colored-tile",
-        "toggle:selected": boardViewModel.isSelected,
-        "on:click": boardViewModel.select
-      },
-      /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
-      /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
-    );
-    boardViewModel.index.subscribe((newIndex) => {
-      view.style.order = newIndex;
-    });
-    return view;
-  }
-  var BoardInfoToEntry = (boardViewModel) => {
-    return BoardEntry(boardViewModel);
-  };
-
   // src/View/Modals/boardSettingsModal.tsx
   function BoardSettingsModal(boardViewModel) {
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement(
@@ -2328,6 +2332,20 @@
     return RibbonButton(label, icon, isSelected, select);
   }
 
+  // src/View/Modals/taskSettingsModal.tsx
+  function TaskSettingsModal(taskViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement("textarea", { rows: "10", "bind:value": taskViewModel.description }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time })))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.hideSettings }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.hideSettingsAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/View/Components/taskEntry.tsx
+  function TaskEntry(taskViewModel) {
+    const view = /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }));
+    return view;
+  }
+  var TaskViewModelToEntry = (taskViewModel) => {
+    return TaskEntry(taskViewModel);
+  };
+
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
     boardViewModel.loadData();
@@ -2336,8 +2354,28 @@
       () => {
         switch (boardViewModel.selectedPage.value) {
           default: {
-            return /* @__PURE__ */ createElement("div", null);
+            return /* @__PURE__ */ createElement(
+              "div",
+              {
+                class: "grid gap",
+                style: "grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr))",
+                "children:append": [
+                  boardViewModel.taskViewModels,
+                  TaskViewModelToEntry
+                ]
+              }
+            );
           }
+        }
+      }
+    );
+    const taskSettingsModal = createProxyState(
+      [boardViewModel.selectedTaskViewModel],
+      () => {
+        if (boardViewModel.selectedTaskViewModel.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return TaskSettingsModal(boardViewModel.selectedTaskViewModel.value);
         }
       }
     );
@@ -2385,11 +2423,33 @@
       {
         class: "ghost",
         "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
-        "on:click": boardViewModel.showNewTaskModal
+        "on:click": boardViewModel.createTask
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }), BoardSettingsModal(boardViewModel));
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }
+
+  // src/View/Components/boardEntry.tsx
+  function BoardEntry(boardViewModel) {
+    const view = /* @__PURE__ */ createElement(
+      "button",
+      {
+        "set:color": boardViewModel.color,
+        class: "tile colored-tile",
+        "toggle:selected": boardViewModel.isSelected,
+        "on:click": boardViewModel.select
+      },
+      /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
+      /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
+    );
+    boardViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  var BoardViewModelToEntry = (boardViewModel) => {
+    return BoardEntry(boardViewModel);
+  };
 
   // src/View/ChatPages/taskPage.tsx
   function TaskPage(taskPageViewModel) {
@@ -2442,7 +2502,7 @@
           style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
           "children:append": [
             taskPageViewModel.boardViewModels,
-            BoardInfoToEntry
+            BoardViewModelToEntry
           ]
         }
       )))

@@ -2,8 +2,8 @@ import "./taskPage.css";
 
 import * as React from "bloatless-react";
 
-import { BoardInfoToEntry } from "../Components/boardEntry";
 import { BoardPage } from "./boardPage";
+import { BoardViewModelToEntry } from "../Components/boardEntry";
 import TaskPageViewModel from "../../ViewModel/Pages/taskPageViewModel";
 import { translations } from "../translations";
 
@@ -77,7 +77,7 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
               style="grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))"
               children:append={[
                 taskPageViewModel.boardViewModels,
-                BoardInfoToEntry,
+                BoardViewModelToEntry,
               ]}
             ></div>
           </div>
