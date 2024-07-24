@@ -3,9 +3,37 @@ import * as React from "bloatless-react";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 
 export function TaskEntry(taskViewModel: TaskViewModel) {
+  const details: { [icon: string]: string } = {
+    description: taskViewModel.description.value || "---",
+    priority_high: taskViewModel.priority.value || "---",
+    category: taskViewModel.category.value || "---",
+    clock_loader_40: taskViewModel.status.value || "---",
+    calendar_month: taskViewModel.date.value || "---",
+    schedule: taskViewModel.time.value || "---",
+  };
+
   const view = (
     <button class="tile" on:click={taskViewModel.open}>
-      <b subscribe:innerText={taskViewModel.name}></b>
+      <div>
+        <b subscribe:innerText={taskViewModel.name}></b>
+        <hr></hr>
+        <div
+          class="grid secondary"
+          style="grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
+        >
+          {...Object.entries(details).map((entry) => (
+            <span
+              class="flex-row align-center width-100 flex-no clip"
+              style="gap: 1rem"
+            >
+              <span class="icon" style="font-size: 1.1rem">
+                {entry[0]}
+              </span>
+              <span class="ellipsis">{entry[1]}</span>
+            </span>
+          ))}
+        </div>
+      </div>
     </button>
   );
 

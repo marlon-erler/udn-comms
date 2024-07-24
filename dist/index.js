@@ -1452,7 +1452,6 @@
       const hour = padZero(splitTime[0], 2);
       const minute = padZero(splitTime[1], 2);
       const priorityNumber = parseInt(this.priority.value);
-      console.log(priorityNumber, this.priority.value);
       const invertedPriority = 100 - priorityNumber;
       return year + month + date + hour + minute + invertedPriority + this.name.value;
     }
@@ -1481,7 +1480,6 @@
       this.save();
     };
     updateIndex = () => {
-      console.log(this.sortingString);
       const index = this.boardViewModel.taskIndexManager.getIndex(this);
       this.index.value = index;
     };
@@ -2413,7 +2411,30 @@
 
   // src/View/Components/taskEntry.tsx
   function TaskEntry(taskViewModel) {
-    const view = /* @__PURE__ */ createElement("button", { class: "tile", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }));
+    const details = {
+      description: taskViewModel.description.value || "---",
+      priority_high: taskViewModel.priority.value || "---",
+      category: taskViewModel.category.value || "---",
+      clock_loader_40: taskViewModel.status.value || "---",
+      calendar_month: taskViewModel.date.value || "---",
+      schedule: taskViewModel.time.value || "---"
+    };
+    const view = /* @__PURE__ */ createElement("button", { class: "tile", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid secondary",
+        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .3rem"
+      },
+      ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
+        "span",
+        {
+          class: "flex-row align-center width-100 flex-no clip",
+          style: "gap: 1rem"
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
+        /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+      ))
+    )));
     taskViewModel.index.subscribe((newIndex) => {
       view.style.order = newIndex;
     });
