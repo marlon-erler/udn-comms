@@ -91,7 +91,7 @@ export default class ChatViewModel {
     // page viewModels
     this.taskPageViewModel = new TaskPageViewModel(
       this.storageModel,
-      this.chatModel.fileModel.taskModel,
+      this.chatModel.fileModel.boardsAndTasksModel,
       this
     );
     this.messagePageViewModel = new MessagePageViewModel(this);

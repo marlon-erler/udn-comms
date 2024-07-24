@@ -9,7 +9,7 @@ import {
 } from "../Utility/utility";
 import StorageModel, { filePaths } from "../Global/storageModel";
 
-import BoardModel from "./boardModel";
+import BoardsAndTasksModel from "./boardsAndTasksModel";
 import ChatModel from "../Chat/chatModel";
 import { v4 } from "uuid";
 
@@ -17,7 +17,7 @@ export default class FileModel {
   chatModel: ChatModel;
   storageModel: StorageModel;
 
-  taskModel: BoardModel;
+  boardsAndTasksModel: BoardsAndTasksModel;
 
   fileContentHandlerManager: HandlerManager<FileContent<string>> = new HandlerManager();
 
@@ -63,7 +63,7 @@ export default class FileModel {
     const didStore: boolean = this.storeFileContent(fileContent);
     if (didStore == false) return;
 
-    this.taskModel.handleFileContent(fileContent);
+    this.boardsAndTasksModel.handleFileContent(fileContent);
     this.fileContentHandlerManager.trigger(fileContent);
   };
 
@@ -140,7 +140,7 @@ export default class FileModel {
     this.chatModel = chatModel;
     this.storageModel = storageModel;
 
-    this.taskModel = new BoardModel(this.storageModel, chatModel, this);
+    this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
   }
 
   // utility

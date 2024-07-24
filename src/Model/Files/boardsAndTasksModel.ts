@@ -12,7 +12,7 @@ import { Color } from "../../colors";
 import { HandlerManager } from "../Utility/utility";
 import StorageModel from "../Global/storageModel";
 
-export default class BoardModel {
+export default class BoardsAndTasksModel {
   storageModel: StorageModel;
   chatModel: ChatModel;
   fileModel: FileModel;
@@ -83,7 +83,7 @@ export default class BoardModel {
   // boards
   createBoard = (name: string): BoardInfoFileContent => {
     const boardInfoFileContent: BoardInfoFileContent =
-      BoardModel.createBoardInfoFileContent(v4(), name, Color.Standard);
+      BoardsAndTasksModel.createBoardInfoFileContent(v4(), name, Color.Standard);
     return boardInfoFileContent;
   };
 
@@ -133,7 +133,7 @@ export default class BoardModel {
 
   //tasks
   createTask = (boardId: string): TaskFileContent => {
-    const taskFileContent: TaskFileContent = BoardModel.createTaskFileContent(
+    const taskFileContent: TaskFileContent = BoardsAndTasksModel.createTaskFileContent(
       v4(),
       "",
       boardId

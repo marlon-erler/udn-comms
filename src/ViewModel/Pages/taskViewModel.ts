@@ -1,12 +1,12 @@
 import * as React from "bloatless-react";
 
-import BoardModel, { TaskFileContent } from "../../Model/Files/boardModel";
+import BoardsAndTasksModel, { TaskFileContent } from "../../Model/Files/boardsAndTasksModel";
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
 
 export default class TaskViewModel {
-  boardModel: BoardModel;
+  boardModel: BoardsAndTasksModel;
 
   boardViewModel: BoardViewModel;
 
@@ -74,7 +74,7 @@ export default class TaskViewModel {
   // settings
   save = (): void => {
     const newTaskFileContent: TaskFileContent =
-      BoardModel.createTaskFileContent(
+      BoardsAndTasksModel.createTaskFileContent(
         this.task.fileId,
         this.name.value,
         this.task.boardId
@@ -138,7 +138,7 @@ export default class TaskViewModel {
 
   // init
   constructor(
-    boardModel: BoardModel,
+    boardModel: BoardsAndTasksModel,
     boardViewModel: BoardViewModel,
     taskFileContent: TaskFileContent
   ) {

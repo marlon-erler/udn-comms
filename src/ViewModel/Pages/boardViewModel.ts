@@ -1,9 +1,9 @@
 import * as React from "bloatless-react";
 
-import BoardModel, {
+import BoardsAndTasksModel, {
   BoardInfoFileContent,
   TaskFileContent,
-} from "../../Model/Files/boardModel";
+} from "../../Model/Files/boardsAndTasksModel";
 
 import { Color } from "../../colors";
 import { IndexManager } from "../../Model/Utility/utility";
@@ -13,7 +13,7 @@ import TaskViewModel from "./taskViewModel";
 
 export default class BoardViewModel {
   storageModel: StorageModel;
-  boardModel: BoardModel;
+  boardModel: BoardsAndTasksModel;
 
   taskPageViewModel: TaskPageViewModel;
 
@@ -54,7 +54,7 @@ export default class BoardViewModel {
   // settings
   saveSettings = (): void => {
     const newBoardInfoFileContent: BoardInfoFileContent =
-      BoardModel.createBoardInfoFileContent(
+      BoardsAndTasksModel.createBoardInfoFileContent(
         this.boardInfo.fileId,
         this.name.value,
         this.color.value
@@ -197,7 +197,7 @@ export default class BoardViewModel {
   // init
   constructor(
     storageModel: StorageModel,
-    boardModel: BoardModel,
+    boardModel: BoardsAndTasksModel,
     taskPageViewModel: TaskPageViewModel,
     boardInfo: BoardInfoFileContent
   ) {
