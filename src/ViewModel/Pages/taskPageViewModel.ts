@@ -56,18 +56,18 @@ export default class TaskPageViewModel {
 
     this.showBoardInList(boardInfoFileContent);
     this.boardModel.updateBoardAndSend(boardInfoFileContent);
-    this.updateIndices();
+    this.updateBoardIndices();
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     this.boardModel.updateBoardAndSend(boardInfoFileContent);
-    this.updateIndices();
+    this.updateBoardIndices();
   };
 
   deleteBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     this.boardModel.deleteBoard(boardInfoFileContent.fileId);
     this.boardViewModels.remove(boardInfoFileContent.fileId);
-    this.updateIndices();
+    this.updateBoardIndices();
   };
 
   // view
@@ -95,7 +95,7 @@ export default class TaskPageViewModel {
     this.storeLastUsedBoard();
   };
 
-  updateIndices = (): void => {
+  updateBoardIndices = (): void => {
     this.boardIndexManager.update([...this.boardViewModels.value.values()]);
     for (const boardViewModel of this.boardViewModels.value.values()) {
       boardViewModel.updateIndex();
@@ -134,7 +134,7 @@ export default class TaskPageViewModel {
       this.showBoardInList(boardInfo);
     }
 
-    this.updateIndices();
+    this.updateBoardIndices();
     this.openLastUsedBoard();
   };
 
@@ -153,7 +153,7 @@ export default class TaskPageViewModel {
     boardModel.boardHandlerManager.addHandler(
       (boardInfoFileContent: BoardInfoFileContent) => {
         this.showBoardInList(boardInfoFileContent);
-        this.updateIndices();
+        this.updateBoardIndices();
       }
     );
   }

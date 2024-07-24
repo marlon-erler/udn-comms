@@ -9,6 +9,10 @@ export function TaskEntry(taskViewModel: TaskViewModel) {
     </button>
   );
 
+  taskViewModel.index.subscribe((newIndex) => {
+    view.style.order = newIndex;
+  });
+
   return view;
 }
 

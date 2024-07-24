@@ -6,6 +6,7 @@ import BoardModel, {
 } from "../../Model/Files/boardModel";
 
 import { Color } from "../../colors";
+import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskPageViewModel from "./taskPageViewModel";
 import TaskViewModel from "./taskViewModel";
@@ -18,6 +19,10 @@ export default class BoardViewModel {
 
   // data
   boardInfo: BoardInfoFileContent;
+
+  taskIndexManager: IndexManager<TaskViewModel> = new IndexManager(
+    (taskViewModel: TaskViewModel) => taskViewModel.sortingString
+  );
 
   // state
   name: React.State<string> = new React.State("");
@@ -66,7 +71,7 @@ export default class BoardViewModel {
     this.close();
   };
 
-  // tasks
+  // methods
   createTask = (): void => {
     const taskFileContent: TaskFileContent = this.boardModel.createTask(
       this.boardInfo.fileId
@@ -77,6 +82,12 @@ export default class BoardViewModel {
       taskFileContent
     );
     this.selectTask(taskViewModel);
+    this.updateTaskIndices();
+  };
+
+  removeTaskFromList = (taskId: string): void => {
+    this.taskViewModels.remove(taskId);
+    this.updateIndex();
   };
 
   // storage
@@ -103,10 +114,6 @@ export default class BoardViewModel {
     );
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
   };
-
-  removeTaskFromList = (taskId: string): void => {
-    this.taskViewModels.remove(taskId);
-  }
 
   select = (): void => {
     this.taskPageViewModel.selectBoard(this);
@@ -147,6 +154,13 @@ export default class BoardViewModel {
     this.index.value = index;
   };
 
+  updateTaskIndices = (): void => {
+    this.taskIndexManager.update([...this.taskViewModels.value.values()]);
+    for (const boardViewModel of this.taskViewModels.value.values()) {
+      boardViewModel.updateIndex();
+    }
+  };
+
   // load
   loadListRelevantData = (): void => {
     this.name.value = this.boardInfo.name;
@@ -171,6 +185,8 @@ export default class BoardViewModel {
       );
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
     }
+
+    this.updateTaskIndices();
   };
 
   loadData = (): void => {
@@ -215,6 +231,7 @@ export default class BoardViewModel {
       (taskFileContent: TaskFileContent) => {
         if (taskFileContent.boardId != this.boardInfo.fileId) return;
         this.showTaskInList(taskFileContent);
+        this.updateTaskIndices();
       }
     );
   }

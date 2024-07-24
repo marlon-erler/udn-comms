@@ -64,6 +64,10 @@ export function stringify(data: any): string {
   return JSON.stringify(data, null, 4);
 }
 
+export function padZero(string: string | undefined, length: number): string {
+  return (string ?? "").padStart(length, "0");
+}
+
 export function parse(string: string): any {
   try {
     return JSON.parse(string);
