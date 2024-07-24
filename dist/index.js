@@ -330,17 +330,6 @@
       }
     };
   };
-  function collectObjectValuesForKey(key, converter, objects) {
-    const values = /* @__PURE__ */ new Set();
-    for (const object of objects) {
-      const stringEntryObject = converter(object);
-      const stringEntryObjectValue = stringEntryObject[key];
-      if (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")
-        continue;
-      values.add(stringEntryObjectValue);
-    }
-    return [...values.values()];
-  }
   var IndexManager = class {
     itemToString;
     sortedStrings = [];
@@ -3527,13 +3516,6 @@
   };
 
   // src/index.tsx
-  console.log(
-    collectObjectValuesForKey("test", (x) => x, [
-      { test: "hello" },
-      { test: "123" },
-      { test: "hello" }
-    ])
-  );
   var storageModel = new StorageModel();
   var settingsModel = new SettingsModel(storageModel);
   var connectionModel = new ConnectionModel(storageModel);
