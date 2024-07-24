@@ -9,7 +9,7 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
     <div class="modal" open>
       <div>
         <main>
-          <h2>{translations.chatPage.task.boardSettingsHeadline}</h2>
+          <h2>{translations.chatPage.task.taskSettingsHeadline}</h2>
 
           <label class="tile flex-no">
             <span class="icon">label</span>
@@ -23,7 +23,10 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
             <span class="icon">description</span>
             <div>
               <span>{translations.chatPage.task.taskDescriptionLabel}</span>
-              <textarea rows="10" bind:value={taskViewModel.description}></textarea>
+              <textarea
+                rows="10"
+                bind:value={taskViewModel.description}
+              ></textarea>
             </div>
           </label>
 

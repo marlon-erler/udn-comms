@@ -158,6 +158,8 @@ const englishTranslations = {
 
       ///
 
+      taskSettingsHeadline: "Edit Task",
+
       taskNameLabel: "Title",
 
       taskCategoryLabel: "Category",
