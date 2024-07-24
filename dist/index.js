@@ -2423,7 +2423,7 @@
       "div",
       {
         class: "grid secondary",
-        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .3rem"
+        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
       },
       ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
         "span",
@@ -2456,7 +2456,7 @@
               "div",
               {
                 class: "grid gap",
-                style: "grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr))",
+                style: "grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr))",
                 "children:append": [
                   boardViewModel.taskViewModels,
                   TaskViewModelToEntry

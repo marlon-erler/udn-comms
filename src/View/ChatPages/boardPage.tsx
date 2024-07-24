@@ -21,7 +21,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
           return (
             <div
               class="grid gap"
-              style="grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr))"
+              style="grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr))"
               children:append={[
                 boardViewModel.taskViewModels,
                 TaskViewModelToEntry,
