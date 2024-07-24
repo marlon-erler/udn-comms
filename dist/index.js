@@ -2404,6 +2404,11 @@
     ))))));
   }
 
+  // src/View/ChatPages/boardKanbanPage.tsx
+  function BoardKanbanPage(boardViewModel) {
+    return /* @__PURE__ */ createElement("div", null, "Kanban");
+  }
+
   // src/View/Modals/boardSettingsModal.tsx
   function BoardSettingsModal(boardViewModel) {
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement(
@@ -2508,6 +2513,9 @@
       [boardViewModel.selectedPage],
       () => {
         switch (boardViewModel.selectedPage.value) {
+          case "kanban" /* Kanban */: {
+            return BoardKanbanPage(boardViewModel);
+          }
           default: {
             return /* @__PURE__ */ createElement(
               "div",

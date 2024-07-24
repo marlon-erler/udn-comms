@@ -4,6 +4,7 @@ import BoardViewModel, {
   BoardPageType,
 } from "../../ViewModel/Pages/boardViewModel";
 
+import { BoardKanbanPage } from "./boardKanbanPage";
 import { BoardSettingsModal } from "../Modals/boardSettingsModal";
 import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
 import { TaskSettingsModal } from "../Modals/taskSettingsModal";
@@ -17,6 +18,9 @@ export function BoardPage(boardViewModel: BoardViewModel) {
     [boardViewModel.selectedPage],
     () => {
       switch (boardViewModel.selectedPage.value) {
+        case BoardPageType.Kanban: {
+          return BoardKanbanPage(boardViewModel);
+        }
         default: {
           return (
             <div
