@@ -29,7 +29,8 @@ export class HandlerManager<T> {
 }
 
 // objects
-export type StringEntryObject = { [key: string]: string };
+export type StringEntryObject = { [key: string]: string | undefined };
+
 export function filterObjectsByStringEntries<T>(
   reference: StringEntryObject,
   converter: (T) => StringEntryObject,
@@ -56,7 +57,10 @@ export function checkDoesObjectMatchReference<T>(
     reference
   )) {
     const [referenceKey, referenceValue] = referenceEntry;
-    const stringEntryObjectValue: string = stringEntryObject[referenceKey];
+    const stringEntryObjectValue: string | undefined =
+      stringEntryObject[referenceKey];
+
+    if (referenceValue == undefined) return false;
 
     if (referenceValue[0] == "-") {
       const strippedReferenceValue: string = referenceValue.substring(1);
@@ -102,7 +106,7 @@ export function collectObjectValuesForKey<T>(
 
   for (const object of objects) {
     const stringEntryObject: StringEntryObject = converter(object);
-    const stringEntryObjectValue: string = stringEntryObject[key];
+    const stringEntryObjectValue: string | undefined = stringEntryObject[key];
     if (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
       continue;
 

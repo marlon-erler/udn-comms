@@ -3,6 +3,7 @@
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
 import {
   HandlerManager,
+  StringEntryObject,
   createTimestamp,
   parseValidObject,
   stringify,
@@ -175,7 +176,7 @@ export enum FileModelSubPath {
 };
 
 // types
-export interface FileContent<T extends string> extends ValidObject {
+export interface FileContent<T extends string> extends ValidObject, StringEntryObject {
   fileId: string;
   fileContentId: string;
   creationDate: string;
