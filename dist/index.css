@@ -353,6 +353,7 @@ body[showing-chat] #chat-page-wrapper {
 }
 #chat-page > div > #ribbon button.ribbon-button,
 #chat-page > div > #main > div > .pane-wrapper > .pane > .toolbar button.ribbon-button {
+  min-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   max-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   min-height: unset;
@@ -565,6 +566,17 @@ body[showing-chat] #chat-page-wrapper {
 }
 
 /* src/View/ChatPages/taskPage.css */
+#task-page .task-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-between-tiles);
+}
+@media (min-width: 640px) {
+  #task-page .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  }
+}
 @media (max-width: 1024px) {
   #task-page #board-list {
     display: false;

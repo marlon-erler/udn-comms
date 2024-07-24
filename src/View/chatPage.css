@@ -157,6 +157,7 @@ body[showing-chat] #chat-page-wrapper {
   > .pane
   > .toolbar
   button.ribbon-button {
+  min-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   max-width: calc(var(--control-height) - 2 * var(--gap-between-tiles));
 

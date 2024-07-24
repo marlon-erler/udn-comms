@@ -1,17 +1,30 @@
+#task-page .task-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-between-tiles);
+}
+
+@media (min-width: 640px) {
+  #task-page .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  }
+}
+
 @media (max-width: 1024px) {
-    #task-page #board-list {
-        display: false;
-    }
+  #task-page #board-list {
+    display: false;
+  }
 
-    #task-page #board-content {
-        display: none;
-    }
+  #task-page #board-content {
+    display: none;
+  }
 
-    #task-page[isshowingboard] #board-list {
-        display: none;
-    }
+  #task-page[isshowingboard] #board-list {
+    display: none;
+  }
 
-    #task-page[isshowingboard] #board-content {
-        display: flex;
-    }
+  #task-page[isshowingboard] #board-content {
+    display: flex;
+  }
 }
