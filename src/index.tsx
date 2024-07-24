@@ -16,6 +16,7 @@ import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
 import { StorageModal } from "./View/Modals/storageModal";
 import StorageModel from "./Model/Global/storageModel";
 import StorageViewModel from "./ViewModel/Global/storageViewModel";
+import { filterObjectsByStringEntries } from "./Model/Utility/utility";
 
 // models
 const storageModel = new StorageModel();

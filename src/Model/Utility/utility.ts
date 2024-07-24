@@ -29,7 +29,7 @@ export class HandlerManager<T> {
 }
 
 // filters
-export type ComparableObject = {[key: string]: string};
+export type ComparableObject = { [key: string]: string };
 export function filterObjectsByStringEntries<T>(
   reference: ComparableObject,
   converter: (T) => ComparableObject,
@@ -41,11 +41,41 @@ export function filterObjectsByStringEntries<T>(
     reference_entry_loop: for (const referenceEntry of Object.entries(
       reference
     )) {
-      const [key, value] = referenceEntry;
-      if (value == "") continue reference_entry_loop;
-      
+      const [referenceKey, referenceValue] = referenceEntry;
       const comparableObject: ComparableObject = converter(object);
-      if (comparableObject[key] != value) continue object_loop;
+      const comparableObjectValue: string = comparableObject[referenceKey];
+
+      if (referenceValue[0] == "-") {
+        const strippedReferenceValue: string = referenceValue.substring(1);
+        // property may not exist
+        if (
+          strippedReferenceValue == "" &&
+          comparableObjectValue != undefined &&
+          comparableObjectValue != ""
+        ) {
+          continue object_loop;
+        }
+
+        // property may not match
+        if (comparableObjectValue == strippedReferenceValue) {
+          continue object_loop;
+        }
+      } else {
+        // property must exist but be anything
+        if (
+          referenceValue == "" &&
+          (comparableObjectValue == undefined || comparableObjectValue == "")
+        ) {
+          continue object_loop;
+        } else if (referenceValue == "") {
+          continue reference_entry_loop;
+        }
+
+        // property must match
+        if (comparableObjectValue != referenceValue) {
+          continue object_loop;
+        }
+      }
     }
     matches.push(object);
   }
