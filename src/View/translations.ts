@@ -170,6 +170,8 @@ const englishTranslations = {
 
       taskDateLabel: "Date",
       taskTimeLabel: "Time",
+
+      deleteTaskButton: "Delete task",
     },
   },
 };

@@ -104,6 +104,10 @@ export default class BoardViewModel {
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
   };
 
+  removeTaskFromList = (taskId: string): void => {
+    this.taskViewModels.remove(taskId);
+  }
+
   select = (): void => {
     this.taskPageViewModel.selectBoard(this);
   };

@@ -43,13 +43,13 @@ export default class TaskViewModel {
     this.save();
   };
 
-  // storage
+  // settings
   save = (): void => {
     const newTaskFileContent: TaskFileContent =
       BoardModel.createTaskFileContent(
         this.task.fileId,
         this.name.value,
-        this.boardViewModel.boardInfo.fileId
+        this.task.boardId
       );
 
     newTaskFileContent.description = this.description.value;
@@ -61,6 +61,12 @@ export default class TaskViewModel {
 
     this.boardModel.updateTaskAndSend(newTaskFileContent);
     this.boardViewModel.showTaskInList(newTaskFileContent);
+  };
+
+  deleteTask = (): void => {
+    this.close();
+    this.boardModel.deleteTask(this.task.boardId, this.task.fileId);
+    this.boardViewModel.removeTaskFromList(this.task.fileId);
   };
 
   // load

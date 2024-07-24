@@ -73,6 +73,16 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
               <input type="time" bind:value={taskViewModel.time}></input>
             </div>
           </label>
+
+          <hr></hr>
+
+          <div class="width-input">
+            {DangerousActionButton(
+              translations.chatPage.task.deleteTaskButton,
+              "delete_forever",
+              taskViewModel.deleteTask
+            )}
+          </div>
         </main>
         <div class="flex-row width-100">
           <button class="flex" on:click={taskViewModel.close}>
