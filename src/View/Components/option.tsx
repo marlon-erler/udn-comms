@@ -13,3 +13,12 @@ export const StringToOption: React.StateItemConverter<string> = (
 ) => {
   return Option(string, string, false);
 };
+
+export const VersionIdToOption: React.StateItemConverter<string> = (
+  versionId: string
+) => {
+  const [date, rest] = versionId.split("T");
+  const [time] = rest.split(".");
+  const readableName = `${date} ${time}`;
+  return Option(readableName, versionId, false);
+};

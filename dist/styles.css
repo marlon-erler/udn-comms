@@ -677,6 +677,10 @@ label.tile:has(> span.icon) :is(input, select, textarea) {
   padding-left: 0px;
 }
 
+select {
+  padding-right: 2.5rem;
+}
+
 .padding-right {
   padding-right: var(--control-padding) !important;
 }

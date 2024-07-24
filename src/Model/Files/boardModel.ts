@@ -5,12 +5,12 @@ import {
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
 import FileModel, { FileContent, FileModelSubPath } from "./fileModel";
+import { v4, version } from "uuid";
 
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../colors";
 import { HandlerManager } from "../Utility/utility";
 import StorageModel from "../Global/storageModel";
-import { v4 } from "uuid";
 
 export default class BoardModel {
   storageModel: StorageModel;
@@ -169,9 +169,27 @@ export default class BoardModel {
     return fileIds;
   };
 
-  getTaskFileContent = (taskId: string): TaskFileContent | null => {
+  listTaskVersionIds = (taskId: string): string[] => {
+    const versionIds: string[] = this.fileModel.listFileContentIds(taskId);
+    return versionIds;
+  };
+
+  getLatestTaskFileContent = (taskId: string): TaskFileContent | null => {
     const taskFileContentOrNull: TaskFileContent | null =
       this.fileModel.getLatestFileContent(taskId, TaskFileContentReference);
+    return taskFileContentOrNull;
+  };
+
+  getSpecificTaskFileContent = (
+    taskId: string,
+    versionId: string
+  ): TaskFileContent | null => {
+    const taskFileContentOrNull: TaskFileContent | null =
+      this.fileModel.getFileContent(
+        taskId,
+        versionId,
+        TaskFileContentReference
+      );
     return taskFileContentOrNull;
   };
 

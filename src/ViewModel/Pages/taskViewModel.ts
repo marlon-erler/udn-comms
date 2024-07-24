@@ -1,9 +1,9 @@
 import * as React from "bloatless-react";
 
 import BoardModel, { TaskFileContent } from "../../Model/Files/boardModel";
+import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
-import { padZero } from "../../Model/Utility/utility";
 
 export default class TaskViewModel {
   boardModel: BoardModel;
@@ -48,6 +48,9 @@ export default class TaskViewModel {
 
   date: React.State<string> = new React.State("");
   time: React.State<string> = new React.State("");
+
+  selectedVersionId: React.State<string> = new React.State("");
+  versionIds: React.ListState<string> = new React.ListState();
 
   // view
   open = (): void => {
@@ -96,7 +99,30 @@ export default class TaskViewModel {
   };
 
   // load
+  loadVersionIds = (): void => {
+    const versionIds: string[] = this.boardModel.listTaskVersionIds(
+      this.task.fileId
+    );
+    const sortedVersionIds = versionIds.sort(localeCompare).reverse();
+    this.versionIds.clear();
+    this.versionIds.add(...sortedVersionIds);
+  };
+
+  switchVersion = (versionId: string): void => {
+    const taskFileContent: TaskFileContent | null =
+      this.boardModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+    if (taskFileContent == null) return;
+
+    this.task = taskFileContent;
+    this.loadTaskData();
+  };
+
   loadAllData = (): void => {
+    this.loadTaskData();
+    this.loadVersionIds();
+  };
+
+  loadTaskData = (): void => {
     this.name.value = this.task.name;
     this.description.value = this.task.description ?? "";
 
@@ -106,6 +132,8 @@ export default class TaskViewModel {
 
     this.date.value = this.task.date ?? "";
     this.time.value = this.task.time ?? "";
+
+    this.selectedVersionId.value = this.task.fileContentId;
   };
 
   // init
@@ -119,6 +147,12 @@ export default class TaskViewModel {
 
     this.task = taskFileContent;
 
+    // load
     this.loadAllData();
+
+    // subscriptions
+    this.selectedVersionId.subscribeSilent((selectedVersionId) => {
+      this.switchVersion(selectedVersionId);
+    });
   }
 }

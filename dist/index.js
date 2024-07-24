@@ -686,8 +686,20 @@
       const fileIds = this.storageModel.list(taskContainerPath);
       return fileIds;
     };
-    getTaskFileContent = (taskId) => {
+    listTaskVersionIds = (taskId) => {
+      const versionIds = this.fileModel.listFileContentIds(taskId);
+      return versionIds;
+    };
+    getLatestTaskFileContent = (taskId) => {
       const taskFileContentOrNull = this.fileModel.getLatestFileContent(taskId, TaskFileContentReference);
+      return taskFileContentOrNull;
+    };
+    getSpecificTaskFileContent = (taskId, versionId) => {
+      const taskFileContentOrNull = this.fileModel.getFileContent(
+        taskId,
+        versionId,
+        TaskFileContentReference
+      );
       return taskFileContentOrNull;
     };
     deleteTask = (boardId, taskId) => {
@@ -1468,6 +1480,8 @@
     priority = new State("");
     date = new State("");
     time = new State("");
+    selectedVersionId = new State("");
+    versionIds = new ListState();
     // view
     open = () => {
       this.boardViewModel.selectTask(this);
@@ -1506,7 +1520,25 @@
       this.boardViewModel.removeTaskFromList(this.task.fileId);
     };
     // load
+    loadVersionIds = () => {
+      const versionIds = this.boardModel.listTaskVersionIds(
+        this.task.fileId
+      );
+      const sortedVersionIds = versionIds.sort(localeCompare).reverse();
+      this.versionIds.clear();
+      this.versionIds.add(...sortedVersionIds);
+    };
+    switchVersion = (versionId) => {
+      const taskFileContent = this.boardModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+      if (taskFileContent == null) return;
+      this.task = taskFileContent;
+      this.loadTaskData();
+    };
     loadAllData = () => {
+      this.loadTaskData();
+      this.loadVersionIds();
+    };
+    loadTaskData = () => {
       this.name.value = this.task.name;
       this.description.value = this.task.description ?? "";
       this.category.value = this.task.category ?? "";
@@ -1514,6 +1546,7 @@
       this.priority.value = this.task.priority ?? "";
       this.date.value = this.task.date ?? "";
       this.time.value = this.task.time ?? "";
+      this.selectedVersionId.value = this.task.fileContentId;
     };
     // init
     constructor(boardModel, boardViewModel, taskFileContent) {
@@ -1521,6 +1554,9 @@
       this.boardViewModel = boardViewModel;
       this.task = taskFileContent;
       this.loadAllData();
+      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
+        this.switchVersion(selectedVersionId);
+      });
     }
   };
 
@@ -1653,7 +1689,7 @@
         this.boardInfo.fileId
       );
       for (const taskId of taskIds) {
-        const taskFileContent = this.boardModel.getTaskFileContent(taskId);
+        const taskFileContent = this.boardModel.getLatestTaskFileContent(taskId);
         if (taskFileContent == null) continue;
         const taskViewModel = new TaskViewModel(
           this.boardModel,
@@ -1992,7 +2028,8 @@
       closeButton: "Close",
       confirmButton: "Confirm",
       saveButton: "Save",
-      setButton: "Set"
+      setButton: "Set",
+      fileVersionLabel: "Version"
     },
     regional: {
       weekdays: {
@@ -2394,9 +2431,29 @@
     return RibbonButton(label, icon, isSelected, select);
   }
 
+  // src/View/Components/option.tsx
+  function Option(text, value, selectedOnCreate) {
+    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
+  }
+  var StringToOption = (string) => {
+    return Option(string, string, false);
+  };
+  var VersionIdToOption = (versionId) => {
+    const [date, rest] = versionId.split("T");
+    const [time] = rest.split(".");
+    const readableName = `${date} ${time}`;
+    return Option(readableName, versionId, false);
+  };
+
   // src/View/Modals/taskSettingsModal.tsx
   function TaskSettingsModal(taskViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
+      "select",
+      {
+        "bind:value": taskViewModel.selectedVersionId,
+        "children:append": [taskViewModel.versionIds, VersionIdToOption]
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "10",
@@ -3102,14 +3159,6 @@
         this.connectionChangeHandler
       );
     }
-  };
-
-  // src/View/Components/option.tsx
-  function Option(text, value, selectedOnCreate) {
-    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
-  }
-  var StringToOption = (string) => {
-    return Option(string, string, false);
   };
 
   // src/View/Components/chatEntry.tsx

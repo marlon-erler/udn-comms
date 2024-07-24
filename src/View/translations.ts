@@ -1,13 +1,15 @@
 const englishTranslations = {
   general: {
     deleteItemButtonAudioLabel: "delete item",
-    
+
     abortButton: "Abort",
     closeButton: "Close",
-    
+
     confirmButton: "Confirm",
     saveButton: "Save",
     setButton: "Set",
+
+    fileVersionLabel: "Version",
   },
 
   regional: {
@@ -134,7 +136,7 @@ const englishTranslations = {
       createBoardButtonAudioLabel: "create board",
 
       ///
-      
+
       noBoardSelected: "No board selected",
       boardNotFound: "Board not found",
 

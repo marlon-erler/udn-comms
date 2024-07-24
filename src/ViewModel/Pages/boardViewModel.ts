@@ -175,7 +175,7 @@ export default class BoardViewModel {
     );
     for (const taskId of taskIds) {
       const taskFileContent: TaskFileContent | null =
-        this.boardModel.getTaskFileContent(taskId);
+        this.boardModel.getLatestTaskFileContent(taskId);
       if (taskFileContent == null) continue;
 
       const taskViewModel: TaskViewModel = new TaskViewModel(

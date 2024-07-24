@@ -1,5 +1,7 @@
 import * as React from "bloatless-react";
 
+import { StringToOption, VersionIdToOption } from "../Components/option";
+
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { translations } from "../translations";
@@ -10,6 +12,20 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
       <div>
         <main>
           <h2>{translations.chatPage.task.taskSettingsHeadline}</h2>
+
+          <label class="tile flex-no">
+            <span class="icon">history</span>
+            <div>
+              <span>{translations.general.fileVersionLabel}</span>
+              <select
+                bind:value={taskViewModel.selectedVersionId}
+                children:append={[taskViewModel.versionIds, VersionIdToOption]}
+              ></select>
+              <span class="icon">arrow_drop_down</span>
+            </div>
+          </label>
+
+          <hr></hr>
 
           <label class="tile flex-no">
             <span class="icon">label</span>
