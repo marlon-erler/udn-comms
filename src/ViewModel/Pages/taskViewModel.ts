@@ -2,7 +2,6 @@ import * as React from "bloatless-react";
 
 import BoardModel, {
   TaskFileContent,
-  TaskFileContentReference,
 } from "../../Model/Files/boardModel";
 
 import BoardViewModel from "./boardViewModel";

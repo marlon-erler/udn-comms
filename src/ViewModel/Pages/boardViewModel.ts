@@ -3,11 +3,9 @@ import * as React from "bloatless-react";
 import BoardModel, {
   BoardInfoFileContent,
   TaskFileContent,
-  TaskFileContentReference,
 } from "../../Model/Files/boardModel";
 
 import { Color } from "../../colors";
-import FileModel from "../../Model/Files/fileModel";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskPageViewModel from "./taskPageViewModel";
 import TaskViewModel from "./taskViewModel";

@@ -83,25 +83,27 @@ export default class BoardModel {
   createBoard = (name: string): BoardInfoFileContent => {
     const boardInfoFileContent: BoardInfoFileContent =
       BoardModel.createBoardInfoFileContent(v4(), name, Color.Standard);
-    this.updateBoard(boardInfoFileContent);
     return boardInfoFileContent;
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     this.storeBoard(boardInfoFileContent);
-    this.chatModel.sendMessage("", boardInfoFileContent);
     this.boardHandlerManager.trigger(boardInfoFileContent);
   };
 
   storeBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     // store info
-    this.fileModel.addFileContent(boardInfoFileContent);
+    this.fileModel.storeFileContent(boardInfoFileContent);
 
     // add to list
     const boardDirectoryPath: string[] = this.getBoardDirectoryPath(
       boardInfoFileContent.fileId
     );
     this.storageModel.write(boardDirectoryPath, "");
+  };
+
+  updateBoardAndSend = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.chatModel.sendMessage("", boardInfoFileContent);
   };
 
   deleteBoard = (boardId: string): void => {
@@ -139,25 +141,22 @@ export default class BoardModel {
 
   updateTask = (taskFileContent: TaskFileContent): void => {
     this.storeTask(taskFileContent);
-    this.chatModel.sendMessage("", taskFileContent);
   };
 
   storeTask = (taskFileContent: TaskFileContent): void => {
     // store info
-    this.fileModel.addFileContent(taskFileContent);
+    this.fileModel.storeFileContent(taskFileContent);
 
     // add to board
     const taskReferencePath: string[] = this.getTaskReferencePath(
       taskFileContent.boardId,
       taskFileContent.fileId
     );
-    console.log("storing", taskReferencePath);
     this.storageModel.write(taskReferencePath, "");
   };
 
   listTaskIds = (boardId: string): string[] => {
     const taskContainerPath: string[] = this.getTaskContainerPath(boardId);
-    console.log("listing", taskContainerPath);
     const fileIds: string[] = this.storageModel.list(taskContainerPath);
     return fileIds;
   };

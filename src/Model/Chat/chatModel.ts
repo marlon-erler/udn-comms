@@ -236,8 +236,6 @@ export default class ChatModel {
     this.loadColor();
     this.subscribe();
 
-    connectionModel.setMessageSentHandler(this.handleMessageSent);
-
     this.fileModel = new FileModel(this, this.storageModel);
   }
 

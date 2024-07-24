@@ -68,7 +68,7 @@ export default class FileModel {
   };
 
   // methods
-  addFileContent = (fileContent: FileContent<string>): void => {
+  addFileContentAndSend = (fileContent: FileContent<string>): void => {
     this.handleFileContent(fileContent);
     this.chatModel.sendMessage("", fileContent);
   };

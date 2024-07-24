@@ -1,16 +1,11 @@
 import * as React from "bloatless-react";
 
-import BoardModel, {
-  BoardInfoFileContent,
-  BoardInfoFileContentReference,
-} from "../../Model/Files/boardModel";
-import FileModel, { FileContent } from "../../Model/Files/fileModel";
+import BoardModel, { BoardInfoFileContent } from "../../Model/Files/boardModel";
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
-import { checkMatchesObjectStructure } from "../../Model/Utility/typeSafety";
 
 export default class TaskPageViewModel {
   storageModel: StorageModel;
@@ -51,17 +46,6 @@ export default class TaskPageViewModel {
     () => this.newBoardNameInput.value == ""
   );
 
-  // handlers
-  handleFileContent = (fileContent: FileContent<string>): void => {
-    if (
-      checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) ==
-      false
-    )
-      return;
-    const boardInfo: BoardInfoFileContent = fileContent as BoardInfoFileContent;
-    this.showBoardInList(boardInfo);
-  };
-
   // methods
   createBoard = (): void => {
     if (this.cannotCreateBoard.value == true) return;
@@ -71,11 +55,12 @@ export default class TaskPageViewModel {
     this.newBoardNameInput.value = "";
 
     this.showBoardInList(boardInfoFileContent);
+    this.boardModel.updateBoardAndSend(boardInfoFileContent);
     this.updateIndices();
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.boardModel.updateBoard(boardInfoFileContent);
+    this.boardModel.updateBoardAndSend(boardInfoFileContent);
     this.updateIndices();
   };
 

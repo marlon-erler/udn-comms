@@ -1,10 +1,9 @@
 // this file is responsible for managing UDN connections.
 
 import { ChatMessage, ChatMessageReference } from "../Chat/chatModel";
+import { Handler, HandlerManager, stringify } from "../Utility/utility";
 import StorageModel, { filePaths } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
-
-import { stringify } from "../Utility/utility";
 
 export default class ConnectionModel {
   udn: UDNFrontend;
@@ -19,20 +18,20 @@ export default class ConnectionModel {
     return this.udn.ws?.url;
   }
 
-  connectionChangeHandler: () => void = () => {};
-  messageHandler: (data: Message) => void = () => {};
-  messageSentHandler: (chatMessage: ChatMessage) => void = () => {};
+  connectionChangeHandlerManager: HandlerManager<void> = new HandlerManager();
+  messageHandlerManager: HandlerManager<Message> = new HandlerManager();
+  messageSentHandlerManager: HandlerManager<ChatMessage> = new HandlerManager();
 
   channelsToSubscribe: Set<string> = new Set();
 
   // handlers
   handleMessage = (data: Message): void => {
-    this.messageHandler(data);
+    this.messageHandlerManager.trigger(data);
   };
 
   handleConnectionChange = (): void => {
     console.log("connection status:", this.isConnected, this.address);
-    this.connectionChangeHandler();
+    this.connectionChangeHandlerManager.trigger();
 
     if (this.isConnected == false) return;
     if (!this.address) return;
@@ -70,7 +69,7 @@ export default class ConnectionModel {
   };
 
   requestNewMailbox = (): void => {
-    console.trace("requesting mailbox");
+    console.log("requesting mailbox");
     this.udn.requestMailbox();
   };
 
@@ -167,7 +166,7 @@ export default class ConnectionModel {
       chatMessage.channel,
       stringifiedBody
     );
-    if (isSent) this.messageSentHandler(chatMessage);
+    if (isSent) this.messageSentHandlerManager.trigger(chatMessage);
     return isSent;
   };
 
@@ -210,22 +209,7 @@ export default class ConnectionModel {
     const dirPath = this.getPreviousAddressPath();
     return this.storageModel.list(dirPath);
   }
-
-  // other
-  setConnectionChangeHandler = (handler: () => void): void => {
-    this.connectionChangeHandler = handler;
-  };
-
-  setMessageHandler = (handler: (data: Message) => void): void => {
-    this.messageHandler = handler;
-  };
-
-  setMessageSentHandler = (
-    handler: (chatMessage: ChatMessage) => void
-  ): void => {
-    this.messageSentHandler = handler;
-  };
-
+  
   // init
   constructor(storageModel: StorageModel) {
     // create frontend

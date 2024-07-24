@@ -617,20 +617,21 @@
     // boards
     createBoard = (name) => {
       const boardInfoFileContent = _BoardModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
-      this.updateBoard(boardInfoFileContent);
       return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
       this.storeBoard(boardInfoFileContent);
-      this.chatModel.sendMessage("", boardInfoFileContent);
       this.boardHandlerManager.trigger(boardInfoFileContent);
     };
     storeBoard = (boardInfoFileContent) => {
-      this.fileModel.addFileContent(boardInfoFileContent);
+      this.fileModel.storeFileContent(boardInfoFileContent);
       const boardDirectoryPath = this.getBoardDirectoryPath(
         boardInfoFileContent.fileId
       );
       this.storageModel.write(boardDirectoryPath, "");
+    };
+    updateBoardAndSend = (boardInfoFileContent) => {
+      this.chatModel.sendMessage("", boardInfoFileContent);
     };
     deleteBoard = (boardId) => {
       const boardFilePath = this.getBoardFilePath(boardId);
@@ -661,20 +662,17 @@
     };
     updateTask = (taskFileContent) => {
       this.storeTask(taskFileContent);
-      this.chatModel.sendMessage("", taskFileContent);
     };
     storeTask = (taskFileContent) => {
-      this.fileModel.addFileContent(taskFileContent);
+      this.fileModel.storeFileContent(taskFileContent);
       const taskReferencePath = this.getTaskReferencePath(
         taskFileContent.boardId,
         taskFileContent.fileId
       );
-      console.log("storing", taskReferencePath);
       this.storageModel.write(taskReferencePath, "");
     };
     listTaskIds = (boardId) => {
       const taskContainerPath = this.getTaskContainerPath(boardId);
-      console.log("listing", taskContainerPath);
       const fileIds = this.storageModel.list(taskContainerPath);
       return fileIds;
     };
@@ -783,7 +781,7 @@
       this.fileContentHandlerManager.trigger(fileContent);
     };
     // methods
-    addFileContent = (fileContent) => {
+    addFileContentAndSend = (fileContent) => {
       this.handleFileContent(fileContent);
       this.chatModel.sendMessage("", fileContent);
     };
@@ -1097,7 +1095,6 @@
       this.loadInfo();
       this.loadColor();
       this.subscribe();
-      connectionModel2.setMessageSentHandler(this.handleMessageSent);
       this.fileModel = new FileModel(this, this.storageModel);
     }
     // utility
@@ -1162,15 +1159,29 @@
     chatModels = /* @__PURE__ */ new Set();
     // handlers
     messageHandler = (data) => {
+      const channel = data.messageChannel;
+      const body = data.messageBody;
+      if (channel == void 0) return;
+      if (body == void 0) return;
+      this.routeMessageToCorrectChatModel(
+        channel,
+        (chatModel) => chatModel.handleMessage(body)
+      );
+    };
+    messageSentHandler = (chatMessage) => {
+      const channel = chatMessage.channel;
+      this.routeMessageToCorrectChatModel(
+        channel,
+        (chatModel) => chatModel.handleMessageSent(chatMessage)
+      );
+    };
+    // methods
+    routeMessageToCorrectChatModel = (channel, fn) => {
+      const allChannels = channel.split("/");
       for (const chatModel of this.chatModels) {
-        const channel = data.messageChannel;
-        const body = data.messageBody;
-        if (channel == void 0) return;
-        if (body == void 0) return;
-        const allChannels = channel.split("/");
         for (const channel2 of allChannels) {
           if (channel2 != chatModel.info.primaryChannel) continue;
-          chatModel.handleMessage(body);
+          fn(chatModel);
           break;
         }
       }
@@ -1216,7 +1227,10 @@
       this.settingsModel = settingsModel2;
       this.connectionModel = connectionModel2;
       this.loadChats();
-      connectionModel2.setMessageHandler(this.messageHandler);
+      connectionModel2.messageHandlerManager.addHandler(this.messageHandler);
+      connectionModel2.messageSentHandlerManager.addHandler(
+        this.messageSentHandler
+      );
     }
   };
 
@@ -1633,22 +1647,17 @@
       [this.newBoardNameInput],
       () => this.newBoardNameInput.value == ""
     );
-    // handlers
-    handleFileContent = (fileContent) => {
-      if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == false)
-        return;
-      this.showBoardInList(fileContent);
-    };
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
       const boardInfoFileContent = this.boardModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.showBoardInList(boardInfoFileContent);
+      this.boardModel.updateBoardAndSend(boardInfoFileContent);
       this.updateIndices();
     };
     updateBoard = (boardInfoFileContent) => {
-      this.boardModel.updateBoard(boardInfoFileContent);
+      this.boardModel.updateBoardAndSend(boardInfoFileContent);
       this.updateIndices();
     };
     deleteBoard = (boardInfoFileContent) => {
@@ -2033,7 +2042,7 @@
   }
 
   // src/View/Components/chatMessage.tsx
-  function ChatMessage(chatMessageViewModel) {
+  function ChatMessage2(chatMessageViewModel) {
     const statusIcon = createProxyState(
       [chatMessageViewModel.status],
       () => {
@@ -2073,7 +2082,7 @@
     );
   }
   var ChatMessageViewModelToView = (chatMessageViewModel) => {
-    return ChatMessage(chatMessageViewModel);
+    return ChatMessage2(chatMessageViewModel);
   };
 
   // src/View/ChatPages/messagePage.tsx
@@ -2689,20 +2698,17 @@
     get address() {
       return this.udn.ws?.url;
     }
-    connectionChangeHandler = () => {
-    };
-    messageHandler = () => {
-    };
-    messageSentHandler = () => {
-    };
+    connectionChangeHandlerManager = new HandlerManager();
+    messageHandlerManager = new HandlerManager();
+    messageSentHandlerManager = new HandlerManager();
     channelsToSubscribe = /* @__PURE__ */ new Set();
     // handlers
     handleMessage = (data) => {
-      this.messageHandler(data);
+      this.messageHandlerManager.trigger(data);
     };
     handleConnectionChange = () => {
       console.log("connection status:", this.isConnected, this.address);
-      this.connectionChangeHandler();
+      this.connectionChangeHandlerManager.trigger();
       if (this.isConnected == false) return;
       if (!this.address) return;
       this.connectMailbox();
@@ -2732,7 +2738,7 @@
       return mailboxFilePath;
     };
     requestNewMailbox = () => {
-      console.trace("requesting mailbox");
+      console.log("requesting mailbox");
       this.udn.requestMailbox();
     };
     connectMailbox = () => {
@@ -2807,7 +2813,7 @@
         chatMessage.channel,
         stringifiedBody
       );
-      if (isSent) this.messageSentHandler(chatMessage);
+      if (isSent) this.messageSentHandlerManager.trigger(chatMessage);
       return isSent;
     };
     // storage
@@ -2841,16 +2847,6 @@
       const dirPath = this.getPreviousAddressPath();
       return this.storageModel.list(dirPath);
     }
-    // other
-    setConnectionChangeHandler = (handler) => {
-      this.connectionChangeHandler = handler;
-    };
-    setMessageHandler = (handler) => {
-      this.messageHandler = handler;
-    };
-    setMessageSentHandler = (handler) => {
-      this.messageSentHandler = handler;
-    };
     // init
     constructor(storageModel2) {
       this.udn = new UDNFrontend();
@@ -2944,7 +2940,9 @@
     constructor(connectionModel2) {
       this.connectionModel = connectionModel2;
       this.updatePreviousAddresses();
-      connectionModel2.setConnectionChangeHandler(this.connectionChangeHandler);
+      connectionModel2.connectionChangeHandlerManager.addHandler(
+        this.connectionChangeHandler
+      );
     }
   };
 

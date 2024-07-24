@@ -81,6 +81,8 @@ export default class ConnectionViewModel {
     this.connectionModel = connectionModel;
     this.updatePreviousAddresses();
 
-    connectionModel.setConnectionChangeHandler(this.connectionChangeHandler);
+    connectionModel.connectionChangeHandlerManager.addHandler(
+      this.connectionChangeHandler
+    );
   }
 }

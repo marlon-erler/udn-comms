@@ -1,6 +1,6 @@
+import ChatModel, { ChatMessage } from "./chatModel";
 import StorageModel, { filePaths } from "../Global/storageModel";
 
-import ChatModel from "./chatModel";
 import ConnectionModel from "../Global/connectionModel";
 import { Message } from "udn-frontend";
 import SettingsModel from "../Global/settingsModel";
@@ -16,16 +16,35 @@ export default class ChatListModel {
 
   // handlers
   messageHandler = (data: Message): void => {
-    for (const chatModel of this.chatModels) {
-      const channel: string | undefined = data.messageChannel;
-      const body: string | undefined = data.messageBody;
-      if (channel == undefined) return;
-      if (body == undefined) return;
+    const channel: string | undefined = data.messageChannel;
+    const body: string | undefined = data.messageBody;
+    if (channel == undefined) return;
+    if (body == undefined) return;
 
-      const allChannels = channel.split("/");
+    this.routeMessageToCorrectChatModel(channel, (chatModel: ChatModel) =>
+      chatModel.handleMessage(body)
+    );
+  };
+
+  messageSentHandler = (chatMessage: ChatMessage): void => {
+    const channel: string = chatMessage.channel;
+
+    this.routeMessageToCorrectChatModel(channel, (chatModel: ChatModel) =>
+      chatModel.handleMessageSent(chatMessage)
+    );
+  };
+
+  // methods
+  routeMessageToCorrectChatModel = (
+    channel: string,
+    fn: (chatModel: ChatModel) => void
+  ): void => {
+    const allChannels = channel.split("/");
+
+    for (const chatModel of this.chatModels) {
       for (const channel of allChannels) {
         if (channel != chatModel.info.primaryChannel) continue;
-        chatModel.handleMessage(body);
+        fn(chatModel);
         break;
       }
     }
@@ -83,6 +102,9 @@ export default class ChatListModel {
     this.connectionModel = connectionModel;
     this.loadChats();
 
-    connectionModel.setMessageHandler(this.messageHandler);
+    connectionModel.messageHandlerManager.addHandler(this.messageHandler);
+    connectionModel.messageSentHandlerManager.addHandler(
+      this.messageSentHandler
+    );
   }
 }
