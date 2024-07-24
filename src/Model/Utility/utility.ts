@@ -28,6 +28,21 @@ export class HandlerManager<T> {
   };
 }
 
+// filters
+export function filterObjectsByStringEntries(reference: {[key: string]: string}, objects: any[]): any[] {
+  const matches: any[] = [];
+
+  object_loop: for (const object of objects) {
+    reference_entry_loop: for (const referenceEntry of Object.entries(reference)) {
+      const [key, value] = referenceEntry;
+      if (object[key] != value) continue object_loop
+    }
+    matches.push(object);
+  }
+
+  return matches;
+}
+
 // sorting
 export class IndexManager<T> {
   private itemToString: (item: T) => string;

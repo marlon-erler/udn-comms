@@ -330,6 +330,17 @@
       }
     };
   };
+  function filterObjectsByStringEntries(reference, objects) {
+    const matches = [];
+    object_loop: for (const object of objects) {
+      reference_entry_loop: for (const referenceEntry of Object.entries(reference)) {
+        const [key, value] = referenceEntry;
+        if (object[key] != value) continue object_loop;
+      }
+      matches.push(object);
+    }
+    return matches;
+  }
   var IndexManager = class {
     itemToString;
     sortedStrings = [];
@@ -568,8 +579,8 @@
     return Color2;
   })(Color || {});
 
-  // src/Model/Files/boardModel.ts
-  var BoardModel = class _BoardModel {
+  // src/Model/Files/boardsAndTasksModel.ts
+  var BoardsAndTasksModel = class _BoardsAndTasksModel {
     storageModel;
     chatModel;
     fileModel;
@@ -620,7 +631,7 @@
     };
     // boards
     createBoard = (name) => {
-      const boardInfoFileContent = _BoardModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
+      const boardInfoFileContent = _BoardsAndTasksModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
       return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
@@ -658,7 +669,7 @@
     };
     //tasks
     createTask = (boardId) => {
-      const taskFileContent = _BoardModel.createTaskFileContent(
+      const taskFileContent = _BoardsAndTasksModel.createTaskFileContent(
         v4_default(),
         "",
         boardId
@@ -765,7 +776,7 @@
   var FileModel = class _FileModel {
     chatModel;
     storageModel;
-    taskModel;
+    boardsAndTasksModel;
     fileContentHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
@@ -799,7 +810,7 @@
     handleFileContent = (fileContent) => {
       const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
-      this.taskModel.handleFileContent(fileContent);
+      this.boardsAndTasksModel.handleFileContent(fileContent);
       this.fileContentHandlerManager.trigger(fileContent);
     };
     // methods
@@ -852,7 +863,7 @@
     constructor(chatModel, storageModel2) {
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
-      this.taskModel = new BoardModel(this.storageModel, chatModel, this);
+      this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
     }
     // utility
     static generateFileContentId = (creationDate) => {
@@ -1499,7 +1510,7 @@
     };
     // settings
     save = () => {
-      const newTaskFileContent = BoardModel.createTaskFileContent(
+      const newTaskFileContent = BoardsAndTasksModel.createTaskFileContent(
         this.task.fileId,
         this.name.value,
         this.task.boardId
@@ -1591,7 +1602,7 @@
     };
     // settings
     saveSettings = () => {
-      const newBoardInfoFileContent = BoardModel.createBoardInfoFileContent(
+      const newBoardInfoFileContent = BoardsAndTasksModel.createBoardInfoFileContent(
         this.boardInfo.fileId,
         this.name.value,
         this.color.value
@@ -1905,7 +1916,7 @@
       this.chatListViewModel = chatListViewModel2;
       this.taskPageViewModel = new TaskPageViewModel(
         this.storageModel,
-        this.chatModel.fileModel.taskModel,
+        this.chatModel.fileModel.boardsAndTasksModel,
         this
       );
       this.messagePageViewModel = new MessagePageViewModel(this);
@@ -3516,6 +3527,15 @@
   };
 
   // src/index.tsx
+  console.log(
+    filterObjectsByStringEntries({ a: "hello", b: "test" }, [
+      { a: "hello", b: "test" },
+      { a: "hello", b: "test", c: "something" },
+      { a: "hello", b: "test 123" },
+      { a: "hello blabla", b: "test" },
+      { a: "hello" }
+    ])
+  );
   var storageModel = new StorageModel();
   var settingsModel = new SettingsModel(storageModel);
   var connectionModel = new ConnectionModel(storageModel);
