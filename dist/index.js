@@ -1647,6 +1647,7 @@
       });
       boardModel.taskHandlerManager.addHandler(
         (taskFileContent) => {
+          if (taskFileContent.boardId != this.boardInfo.fileId) return;
           this.showTaskInList(taskFileContent);
         }
       );

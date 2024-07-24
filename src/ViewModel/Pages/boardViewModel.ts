@@ -209,6 +209,7 @@ export default class BoardViewModel {
     // handlers
     boardModel.taskHandlerManager.addHandler(
       (taskFileContent: TaskFileContent) => {
+        if (taskFileContent.boardId != this.boardInfo.fileId) return;
         this.showTaskInList(taskFileContent);
       }
     );
