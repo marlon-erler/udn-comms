@@ -29,13 +29,23 @@ export class HandlerManager<T> {
 }
 
 // filters
-export function filterObjectsByStringEntries(reference: {[key: string]: string}, objects: any[]): any[] {
+export type ComparableObject = {[key: string]: string};
+export function filterObjectsByStringEntries<T>(
+  reference: ComparableObject,
+  converter: (T) => ComparableObject,
+  objects: T[]
+): any[] {
   const matches: any[] = [];
 
   object_loop: for (const object of objects) {
-    reference_entry_loop: for (const referenceEntry of Object.entries(reference)) {
+    reference_entry_loop: for (const referenceEntry of Object.entries(
+      reference
+    )) {
       const [key, value] = referenceEntry;
-      if (object[key] != value) continue object_loop
+      if (value == "") continue reference_entry_loop;
+      
+      const comparableObject: ComparableObject = converter(object);
+      if (comparableObject[key] != value) continue object_loop;
     }
     matches.push(object);
   }
