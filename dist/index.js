@@ -330,37 +330,16 @@
       }
     };
   };
-  function filterObjectsByStringEntries(reference, converter, objects) {
-    const matches = [];
-    object_loop: for (const object of objects) {
-      reference_entry_loop: for (const referenceEntry of Object.entries(
-        reference
-      )) {
-        const [referenceKey, referenceValue] = referenceEntry;
-        const comparableObject = converter(object);
-        const comparableObjectValue = comparableObject[referenceKey];
-        if (referenceValue[0] == "-") {
-          const strippedReferenceValue = referenceValue.substring(1);
-          if (strippedReferenceValue == "" && comparableObjectValue != void 0 && comparableObjectValue != "") {
-            continue object_loop;
-          }
-          if (comparableObjectValue == strippedReferenceValue) {
-            continue object_loop;
-          }
-        } else {
-          if (referenceValue == "" && (comparableObjectValue == void 0 || comparableObjectValue == "")) {
-            continue object_loop;
-          } else if (referenceValue == "") {
-            continue reference_entry_loop;
-          }
-          if (comparableObjectValue != referenceValue) {
-            continue object_loop;
-          }
-        }
-      }
-      matches.push(object);
+  function collectObjectValuesForKey(key, converter, objects) {
+    const values = /* @__PURE__ */ new Set();
+    for (const object of objects) {
+      const stringEntryObject = converter(object);
+      const stringEntryObjectValue = stringEntryObject[key];
+      if (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")
+        continue;
+      values.add(stringEntryObjectValue);
     }
-    return matches;
+    return [...values.values()];
   }
   var IndexManager = class {
     itemToString;
@@ -3549,32 +3528,11 @@
 
   // src/index.tsx
   console.log(
-    filterObjectsByStringEntries(
-      { a: "a", b: "b", c: "-c", d: "", e: "-" },
-      (a) => a.a,
-      [
-        { a: { a: "a", b: "b" } },
-        { a: { a: "a", b: "b1" } },
-        { a: { a: "a", b: "b", c: "c" } },
-        { a: { a: "a", b: "b", c: "c1" } },
-        { a: { a: "a", b: "b", d: "" } },
-        { a: { a: "a", b: "b1", d: "" } },
-        { a: { a: "a", b: "b", c: "c", d: "" } },
-        { a: { a: "a", b: "b", c: "c1", d: "" } },
-        { a: { a: "a", b: "b", d: "d" } },
-        { a: { a: "a", b: "b1", d: "d" } },
-        { a: { a: "a", b: "b", c: "c", d: "d" } },
-        { a: { a: "a", b: "b", c: "c1", d: "d" } },
-        { a: { a: "a", b: "b", d: "d", e: "" } },
-        { a: { a: "a", b: "b1", d: "d", e: "" } },
-        { a: { a: "a", b: "b", c: "c", d: "d", e: "" } },
-        { a: { a: "a", b: "b", c: "c1", d: "d", e: "" } },
-        { a: { a: "a", b: "b", d: "d", e: "e" } },
-        { a: { a: "a", b: "b1", d: "d", e: "e" } },
-        { a: { a: "a", b: "b", c: "c", d: "d", e: "e" } },
-        { a: { a: "a", b: "b", c: "c1", d: "d", e: "e" } }
-      ]
-    )
+    collectObjectValuesForKey("test", (x) => x, [
+      { test: "hello" },
+      { test: "123" },
+      { test: "hello" }
+    ])
   );
   var storageModel = new StorageModel();
   var settingsModel = new SettingsModel(storageModel);

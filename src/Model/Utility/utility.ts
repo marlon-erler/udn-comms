@@ -28,13 +28,13 @@ export class HandlerManager<T> {
   };
 }
 
-// filters
-export type ComparableObject = { [key: string]: string };
+// objects
+export type StringEntryObject = { [key: string]: string };
 export function filterObjectsByStringEntries<T>(
-  reference: ComparableObject,
-  converter: (T) => ComparableObject,
+  reference: StringEntryObject,
+  converter: (T) => StringEntryObject,
   objects: T[]
-): any[] {
+): T[] {
   const matches: any[] = [];
 
   object_loop: for (const object of objects) {
@@ -42,29 +42,29 @@ export function filterObjectsByStringEntries<T>(
       reference
     )) {
       const [referenceKey, referenceValue] = referenceEntry;
-      const comparableObject: ComparableObject = converter(object);
-      const comparableObjectValue: string = comparableObject[referenceKey];
+      const stringEntryObject: StringEntryObject = converter(object);
+      const stringEntryObjectValue: string = stringEntryObject[referenceKey];
 
       if (referenceValue[0] == "-") {
         const strippedReferenceValue: string = referenceValue.substring(1);
         // property may not exist
         if (
           strippedReferenceValue == "" &&
-          comparableObjectValue != undefined &&
-          comparableObjectValue != ""
+          stringEntryObjectValue != undefined &&
+          stringEntryObjectValue != ""
         ) {
           continue object_loop;
         }
 
         // property may not match
-        if (comparableObjectValue == strippedReferenceValue) {
+        if (stringEntryObjectValue == strippedReferenceValue) {
           continue object_loop;
         }
       } else {
         // property must exist but be anything
         if (
           referenceValue == "" &&
-          (comparableObjectValue == undefined || comparableObjectValue == "")
+          (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
         ) {
           continue object_loop;
         } else if (referenceValue == "") {
@@ -72,7 +72,7 @@ export function filterObjectsByStringEntries<T>(
         }
 
         // property must match
-        if (comparableObjectValue != referenceValue) {
+        if (stringEntryObjectValue != referenceValue) {
           continue object_loop;
         }
       }
@@ -81,6 +81,25 @@ export function filterObjectsByStringEntries<T>(
   }
 
   return matches;
+}
+
+export function collectObjectValuesForKey<T>(
+  key: string,
+  converter: (object: T) => StringEntryObject,
+  objects: T[]
+): string[] {
+  const values: Set<string> = new Set();
+
+  for (const object of objects) {
+    const stringEntryObject: StringEntryObject = converter(object);
+    const stringEntryObjectValue: string = stringEntryObject[key];
+    if (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
+      continue;
+
+    values.add(stringEntryObjectValue);
+  }
+
+  return [...values.values()];
 }
 
 // sorting
