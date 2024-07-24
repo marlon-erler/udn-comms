@@ -243,12 +243,12 @@ export interface TaskFileContent extends FileContent<"task"> {
   name: string;
   boardId: string;
 
-  category?: string;
-  status?: string;
-
   description?: string;
 
+  category?: string;
+  status?: string;
   priority?: string;
+
   date?: string;
   time?: string;
 }

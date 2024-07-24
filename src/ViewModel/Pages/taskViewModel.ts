@@ -1,8 +1,6 @@
 import * as React from "bloatless-react";
 
-import BoardModel, {
-  TaskFileContent,
-} from "../../Model/Files/boardModel";
+import BoardModel, { TaskFileContent } from "../../Model/Files/boardModel";
 
 import BoardViewModel from "./boardViewModel";
 
@@ -22,14 +20,30 @@ export default class TaskViewModel {
   // state
   name: React.State<string> = new React.State("");
 
-  category: React.State<string> = new React.State("");
-  status: React.State<string> = new React.State("");
-
   description: React.State<string> = new React.State("");
 
+  category: React.State<string> = new React.State("");
+  status: React.State<string> = new React.State("");
   priority: React.State<string> = new React.State("");
+
   date: React.State<string> = new React.State("");
   time: React.State<string> = new React.State("");
+
+  isPresentingSettingsModal: React.State<boolean> = new React.State(false);
+
+  // view
+  showSettings = (): void => {
+    this.isPresentingSettingsModal.value = true;
+  };
+
+  hideSettings = (): void => {
+    this.isPresentingSettingsModal.value = false;
+  };
+
+  hideSettingsAndSave = (): void => {
+    this.hideSettings();
+    this.save();
+  };
 
   // storage
   save = (): void => {
@@ -40,9 +54,9 @@ export default class TaskViewModel {
         this.boardViewModel.boardInfo.fileId
       );
 
+    newTaskFileContent.description = this.description.value;
     newTaskFileContent.status = this.status.value;
     newTaskFileContent.category = this.category.value;
-    newTaskFileContent.description = this.description.value;
     newTaskFileContent.priority = this.priority.value;
     newTaskFileContent.date = this.date.value;
     newTaskFileContent.time = this.time.value;
@@ -54,13 +68,12 @@ export default class TaskViewModel {
   // load
   loadAllData = (): void => {
     this.name.value = this.task.name;
+    this.description.value = this.task.description ?? "";
 
     this.category.value = this.task.category ?? "";
     this.status.value = this.task.status ?? "";
-
-    this.description.value = this.task.description ?? "";
-
     this.priority.value = this.task.priority ?? "";
+
     this.date.value = this.task.date ?? "";
     this.time.value = this.task.time ?? "";
   };

@@ -1,10 +1,12 @@
 const englishTranslations = {
   general: {
-    closeButton: "Close",
     deleteItemButtonAudioLabel: "delete item",
+    
     abortButton: "Abort",
+    closeButton: "Close",
+    
     confirmButton: "Confirm",
-
+    saveButton: "Save",
     setButton: "Set",
   },
 
@@ -151,10 +153,21 @@ const englishTranslations = {
       ///
 
       boardSettingsHeadline: "Board Settings",
-
       boardNameInputLabel: "Board name",
-
       deleteBoardButton: "Delete board and all tasks",
+
+      ///
+
+      taskNameLabel: "Title",
+
+      taskCategoryLabel: "Category",
+      taskStatusLabel: "Status",
+      taskPriorityLabel: "Priority",
+
+      taskDescriptionLabel: "Description",
+
+      taskDateLabel: "Date",
+      taskTimeLabel: "Time",
     },
   },
 };
