@@ -30,16 +30,16 @@ export default class TaskViewModel {
   time: React.State<string> = new React.State("");
 
   // view
-  showSettings = (): void => {
+  open = (): void => {
     this.boardViewModel.selectTask(this);
   };
 
-  hideSettings = (): void => {
+  close = (): void => {
     this.boardViewModel.closeTask();
   };
 
-  hideSettingsAndSave = (): void => {
-    this.hideSettings();
+  closeAndSave = (): void => {
+    this.close();
     this.save();
   };
 

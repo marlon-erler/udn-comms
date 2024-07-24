@@ -72,10 +72,10 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
           </label>
         </main>
         <div class="flex-row width-100">
-          <button class="flex" on:click={taskViewModel.hideSettings}>
+          <button class="flex" on:click={taskViewModel.close}>
             {translations.general.closeButton}
           </button>
-          <button class="flex primary" on:click={taskViewModel.hideSettingsAndSave}>
+          <button class="flex primary" on:click={taskViewModel.closeAndSave}>
             {translations.general.saveButton}
             <span class="icon">save</span>
           </button>

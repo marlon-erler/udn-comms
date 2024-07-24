@@ -1446,14 +1446,14 @@
     date = new State("");
     time = new State("");
     // view
-    showSettings = () => {
+    open = () => {
       this.boardViewModel.selectTask(this);
     };
-    hideSettings = () => {
+    close = () => {
       this.boardViewModel.closeTask();
     };
-    hideSettingsAndSave = () => {
-      this.hideSettings();
+    closeAndSave = () => {
+      this.close();
       this.save();
     };
     // storage
@@ -2334,12 +2334,12 @@
 
   // src/View/Modals/taskSettingsModal.tsx
   function TaskSettingsModal(taskViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement("textarea", { rows: "10", "bind:value": taskViewModel.description }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time })))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.hideSettings }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.hideSettingsAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement("textarea", { rows: "10", "bind:value": taskViewModel.description }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time })))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/View/Components/taskEntry.tsx
   function TaskEntry(taskViewModel) {
-    const view = /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }));
+    const view = /* @__PURE__ */ createElement("button", { class: "tile", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }));
     return view;
   }
   var TaskViewModelToEntry = (taskViewModel) => {
@@ -2358,7 +2358,7 @@
               "div",
               {
                 class: "grid gap",
-                style: "grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr))",
+                style: "grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr))",
                 "children:append": [
                   boardViewModel.taskViewModels,
                   TaskViewModelToEntry

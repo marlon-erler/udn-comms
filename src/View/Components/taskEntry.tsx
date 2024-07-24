@@ -4,7 +4,7 @@ import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 
 export function TaskEntry(taskViewModel: TaskViewModel) {
   const view = (
-    <button class="tile">
+    <button class="tile" on:click={taskViewModel.open}>
       <b subscribe:innerText={taskViewModel.name}></b>
     </button>
   );
