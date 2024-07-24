@@ -99,6 +99,15 @@ export default class BoardViewModel {
   };
 
   // view
+  showTaskInList = (taskFileContent: TaskFileContent): void => {
+    const taskViewModel: TaskViewModel = new TaskViewModel(
+      this.boardModel,
+      this,
+      taskFileContent
+    );
+    this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+  };
+
   select = (): void => {
     this.taskPageViewModel.selectBoard(this);
   };
@@ -176,13 +185,16 @@ export default class BoardViewModel {
     taskPageViewModel: TaskPageViewModel,
     boardInfo: BoardInfoFileContent
   ) {
+    // set
     this.storageModel = storageModel;
     this.boardModel = boardModel;
     this.taskPageViewModel = taskPageViewModel;
     this.boardInfo = boardInfo;
 
+    // load
     this.loadListRelevantData();
 
+    // subscriptions
     this.isSelected = React.createProxyState(
       [this.taskPageViewModel.selectedBoardId],
       () =>
@@ -193,9 +205,17 @@ export default class BoardViewModel {
       if (this.isSelected.value == false) return;
       this.applyColor();
     });
+
     this.selectedPage.subscribeSilent(() => {
       this.storeLastUsedView();
     });
+
+    // handlers
+    boardModel.taskHandlerManager.addHandler(
+      (taskFileContent: TaskFileContent) => {
+        this.showTaskInList(taskFileContent);
+      }
+    );
   }
 }
 

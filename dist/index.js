@@ -572,6 +572,7 @@
     fileModel;
     // data
     boardHandlerManager = new HandlerManager();
+    taskHandlerManager = new HandlerManager();
     // paths
     getBasePath = () => {
       return this.fileModel.getModelContainerPath("tasks" /* ModelTask */);
@@ -612,7 +613,7 @@
       this.updateBoard(boardInfoFileContent);
     };
     handleTask = (taskFileContent) => {
-      this.storeTask(taskFileContent);
+      this.updateTask(taskFileContent);
     };
     // boards
     createBoard = (name) => {
@@ -623,15 +624,16 @@
       this.storeBoard(boardInfoFileContent);
       this.boardHandlerManager.trigger(boardInfoFileContent);
     };
+    updateBoardAndSend = (boardInfoFileContent) => {
+      this.updateBoard(boardInfoFileContent);
+      this.chatModel.sendMessage("", boardInfoFileContent);
+    };
     storeBoard = (boardInfoFileContent) => {
       this.fileModel.storeFileContent(boardInfoFileContent);
       const boardDirectoryPath = this.getBoardDirectoryPath(
         boardInfoFileContent.fileId
       );
       this.storageModel.write(boardDirectoryPath, "");
-    };
-    updateBoardAndSend = (boardInfoFileContent) => {
-      this.chatModel.sendMessage("", boardInfoFileContent);
     };
     deleteBoard = (boardId) => {
       const boardFilePath = this.getBoardFilePath(boardId);
@@ -662,6 +664,11 @@
     };
     updateTask = (taskFileContent) => {
       this.storeTask(taskFileContent);
+      this.taskHandlerManager.trigger(taskFileContent);
+    };
+    updateTaskAndSend = (taskFileContent) => {
+      this.updateTask(taskFileContent);
+      this.chatModel.sendMessage("", taskFileContent);
     };
     storeTask = (taskFileContent) => {
       this.fileModel.storeFileContent(taskFileContent);
@@ -1469,7 +1476,7 @@
       newTaskFileContent.priority = this.priority.value;
       newTaskFileContent.date = this.date.value;
       newTaskFileContent.time = this.time.value;
-      this.boardModel.updateTask(newTaskFileContent);
+      this.boardModel.updateTaskAndSend(newTaskFileContent);
       this.boardViewModel.trackTask(this);
     };
     // load
@@ -1561,6 +1568,14 @@
       this.selectedPage.value = lastUsedView;
     };
     // view
+    showTaskInList = (taskFileContent) => {
+      const taskViewModel = new TaskViewModel(
+        this.boardModel,
+        this,
+        taskFileContent
+      );
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+    };
     select = () => {
       this.taskPageViewModel.selectBoard(this);
     };
@@ -1633,6 +1648,11 @@
       this.selectedPage.subscribeSilent(() => {
         this.storeLastUsedView();
       });
+      boardModel.taskHandlerManager.addHandler(
+        (taskFileContent) => {
+          this.showTaskInList(taskFileContent);
+        }
+      );
     }
   };
 

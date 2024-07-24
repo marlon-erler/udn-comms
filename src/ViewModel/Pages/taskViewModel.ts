@@ -59,7 +59,7 @@ export default class TaskViewModel {
     newTaskFileContent.date = this.date.value;
     newTaskFileContent.time = this.time.value;
 
-    this.boardModel.updateTask(newTaskFileContent);
+    this.boardModel.updateTaskAndSend(newTaskFileContent);
     this.boardViewModel.trackTask(this);
   };
 

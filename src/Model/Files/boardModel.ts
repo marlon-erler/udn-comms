@@ -20,6 +20,7 @@ export default class BoardModel {
   // data
   boardHandlerManager: HandlerManager<BoardInfoFileContent> =
     new HandlerManager();
+  taskHandlerManager: HandlerManager<TaskFileContent> = new HandlerManager();
 
   // paths
   getBasePath = (): string[] => {
@@ -76,7 +77,7 @@ export default class BoardModel {
   };
 
   handleTask = (taskFileContent: TaskFileContent) => {
-    this.storeTask(taskFileContent);
+    this.updateTask(taskFileContent);
   };
 
   // boards
@@ -91,6 +92,11 @@ export default class BoardModel {
     this.boardHandlerManager.trigger(boardInfoFileContent);
   };
 
+  updateBoardAndSend = (boardInfoFileContent: BoardInfoFileContent): void => {
+    this.updateBoard(boardInfoFileContent);
+    this.chatModel.sendMessage("", boardInfoFileContent);
+  };
+
   storeBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
     // store info
     this.fileModel.storeFileContent(boardInfoFileContent);
@@ -100,10 +106,6 @@ export default class BoardModel {
       boardInfoFileContent.fileId
     );
     this.storageModel.write(boardDirectoryPath, "");
-  };
-
-  updateBoardAndSend = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.chatModel.sendMessage("", boardInfoFileContent);
   };
 
   deleteBoard = (boardId: string): void => {
@@ -141,6 +143,12 @@ export default class BoardModel {
 
   updateTask = (taskFileContent: TaskFileContent): void => {
     this.storeTask(taskFileContent);
+    this.taskHandlerManager.trigger(taskFileContent);
+  };
+
+  updateTaskAndSend = (taskFileContent: TaskFileContent): void => {
+    this.updateTask(taskFileContent);
+    this.chatModel.sendMessage("", taskFileContent);
   };
 
   storeTask = (taskFileContent: TaskFileContent): void => {
