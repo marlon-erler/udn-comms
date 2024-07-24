@@ -34,8 +34,8 @@ export function filterObjectsByStringEntries<T>(
   reference: StringEntryObject,
   converter: (T) => StringEntryObject,
   objects: T[]
-): T[] {
-  const matches: any[] = [];
+): Set<T> {
+  const matches: Set<T> = new Set()
 
   object_loop: for (const object of objects) {
     reference_entry_loop: for (const referenceEntry of Object.entries(
@@ -77,7 +77,7 @@ export function filterObjectsByStringEntries<T>(
         }
       }
     }
-    matches.push(object);
+    matches.add(object);
   }
 
   return matches;
