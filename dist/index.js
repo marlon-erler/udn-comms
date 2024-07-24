@@ -1477,7 +1477,7 @@
       newTaskFileContent.date = this.date.value;
       newTaskFileContent.time = this.time.value;
       this.boardModel.updateTaskAndSend(newTaskFileContent);
-      this.boardViewModel.trackTask(this);
+      this.boardViewModel.showTaskInList(newTaskFileContent);
     };
     // load
     loadAllData = () => {
@@ -1551,9 +1551,6 @@
         taskFileContent
       );
       this.selectTask(taskViewModel);
-    };
-    trackTask = (taskViewModel) => {
-      this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
     };
     // storage
     storeLastUsedView = () => {

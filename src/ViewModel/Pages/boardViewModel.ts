@@ -79,10 +79,6 @@ export default class BoardViewModel {
     this.selectTask(taskViewModel);
   };
 
-  trackTask = (taskViewModel: TaskViewModel): void => {
-    this.taskViewModels.set(taskViewModel.task.fileId, taskViewModel);
-  };
-
   // storage
   storeLastUsedView = (): void => {
     const path: string[] = this.getLastUsedBoardPath();
