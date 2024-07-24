@@ -5,11 +5,11 @@ import {
   checkMatchesObjectStructure,
 } from "../Utility/typeSafety";
 import FileModel, { FileContent, FileModelSubPath } from "./fileModel";
+import { HandlerManager, StringEntryObject } from "../Utility/utility";
 import { v4, version } from "uuid";
 
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../colors";
-import { HandlerManager } from "../Utility/utility";
 import StorageModel from "../Global/storageModel";
 
 export default class BoardsAndTasksModel {
