@@ -35,52 +35,62 @@ export function filterObjectsByStringEntries<T>(
   converter: (T) => StringEntryObject,
   objects: T[]
 ): Set<T> {
-  const matches: Set<T> = new Set()
+  const matches: Set<T> = new Set();
 
   object_loop: for (const object of objects) {
-    reference_entry_loop: for (const referenceEntry of Object.entries(
-      reference
-    )) {
-      const [referenceKey, referenceValue] = referenceEntry;
-      const stringEntryObject: StringEntryObject = converter(object);
-      const stringEntryObjectValue: string = stringEntryObject[referenceKey];
-
-      if (referenceValue[0] == "-") {
-        const strippedReferenceValue: string = referenceValue.substring(1);
-        // property may not exist
-        if (
-          strippedReferenceValue == "" &&
-          stringEntryObjectValue != undefined &&
-          stringEntryObjectValue != ""
-        ) {
-          continue object_loop;
-        }
-
-        // property may not match
-        if (stringEntryObjectValue == strippedReferenceValue) {
-          continue object_loop;
-        }
-      } else {
-        // property must exist but be anything
-        if (
-          referenceValue == "" &&
-          (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
-        ) {
-          continue object_loop;
-        } else if (referenceValue == "") {
-          continue reference_entry_loop;
-        }
-
-        // property must match
-        if (stringEntryObjectValue != referenceValue) {
-          continue object_loop;
-        }
-      }
-    }
-    matches.add(object);
+    const doesMatch: boolean = checkDoesObjectMatchReference(
+      reference,
+      converter(object)
+    );
+    if (doesMatch) matches.add(object);
   }
 
   return matches;
+}
+
+export function checkDoesObjectMatchReference<T>(
+  reference: StringEntryObject,
+  stringEntryObject: StringEntryObject
+): boolean {
+  reference_entry_loop: for (const referenceEntry of Object.entries(
+    reference
+  )) {
+    const [referenceKey, referenceValue] = referenceEntry;
+    const stringEntryObjectValue: string = stringEntryObject[referenceKey];
+
+    if (referenceValue[0] == "-") {
+      const strippedReferenceValue: string = referenceValue.substring(1);
+      // property may not exist
+      if (
+        strippedReferenceValue == "" &&
+        stringEntryObjectValue != undefined &&
+        stringEntryObjectValue != ""
+      ) {
+        return false;
+      }
+
+      // property may not match
+      if (stringEntryObjectValue == strippedReferenceValue) {
+        return false;
+      }
+    } else {
+      // property must exist but be anything
+      if (
+        referenceValue == "" &&
+        (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
+      ) {
+        return false;
+      } else if (referenceValue == "") {
+        continue reference_entry_loop;
+      }
+
+      // property must match
+      if (stringEntryObjectValue != referenceValue) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 export function collectObjectValuesForKey<T>(
