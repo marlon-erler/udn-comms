@@ -49,7 +49,7 @@ export function filterObjectsByStringEntries<T>(
   return matches;
 }
 
-export function checkDoesObjectMatchReference<T>(
+export function checkDoesObjectMatchReference(
   reference: StringEntryObject,
   stringEntryObject: StringEntryObject
 ): boolean {
