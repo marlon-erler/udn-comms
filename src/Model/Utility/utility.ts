@@ -113,7 +113,7 @@ export function collectObjectValuesForKey<T>(
     values.add(stringEntryObjectValue);
   }
 
-  return [...values.values()];
+  return [...values.values()].sort(localeCompare);
 }
 
 // sorting
