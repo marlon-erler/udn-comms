@@ -40,7 +40,7 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
         new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
 
       return (
-        <div class="flex-column flex-no" style="width: 18rem; min-width: 18rem">
+        <div class="flex-column flex-no">
           <div class="flex-row width-input">
             <input
               placeholder={
@@ -61,7 +61,7 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
           <hr></hr>
 
           <div
-            class="flex-column gap"
+            class="kanban-column"
             children:append={[taskViewModels, TaskViewModelToEntry]}
           ></div>
         </div>

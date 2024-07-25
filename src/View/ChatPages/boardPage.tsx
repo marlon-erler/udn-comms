@@ -6,6 +6,7 @@ import BoardViewModel, {
 
 import { BoardKanbanPage } from "./boardKanbanPage";
 import { BoardSettingsModal } from "../Modals/boardSettingsModal";
+import { BoardStatusGridPage } from "./boardStatusGridPage";
 import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
 import { TaskSettingsModal } from "../Modals/taskSettingsModal";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
@@ -20,6 +21,9 @@ export function BoardPage(boardViewModel: BoardViewModel) {
       switch (boardViewModel.selectedPage.value) {
         case BoardPageType.Kanban: {
           return BoardKanbanPage(boardViewModel);
+        }
+        case BoardPageType.StatusGrid: {
+          return BoardStatusGridPage(boardViewModel);
         }
         default: {
           return (

@@ -54,3 +54,19 @@ export class TaskCategoryBulkChangeViewModel extends TaskPropertyBulkChangeViewM
     );
   }
 }
+
+export class TaskStatusBulkChangeViewModel extends TaskPropertyBulkChangeViewModel {
+  constructor(
+    taskViewModels: React.ListState<TaskViewModel>,
+    initialValue: string
+  ) {
+    super(
+      taskViewModels,
+      (newStatus: string, taskViewModel: TaskViewModel) => {
+        taskViewModel.status.value = newStatus;
+        taskViewModel.save();
+      },
+      initialValue
+    );
+  }
+}

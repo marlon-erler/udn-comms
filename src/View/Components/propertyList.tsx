@@ -9,7 +9,7 @@ export function PropertyValueList<T>(
   propertyKey: string,
   stringEntryObjectConverter: (object: T) => StringEntryObject,
   objects: React.ListState<T> | React.MapState<T>,
-  viewBuilder: (categories: React.ListState<string>) => HTMLElement
+  viewBuilder: (keys: React.ListState<string>) => HTMLElement
 ) {
   const propertyValues: React.ListState<string> = new React.ListState();
 

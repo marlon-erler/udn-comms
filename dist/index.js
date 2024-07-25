@@ -2519,6 +2519,18 @@
       );
     }
   };
+  var TaskStatusBulkChangeViewModel = class extends TaskPropertyBulkChangeViewModel {
+    constructor(taskViewModels, initialValue) {
+      super(
+        taskViewModels,
+        (newStatus, taskViewModel) => {
+          taskViewModel.status.value = newStatus;
+          taskViewModel.save();
+        },
+        initialValue
+      );
+    }
+  };
 
   // src/View/Components/taskEntry.tsx
   function TaskEntry(taskViewModel) {
@@ -2530,22 +2542,29 @@
       calendar_month: taskViewModel.date.value || "---",
       schedule: taskViewModel.time.value || "---"
     };
-    const view = /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-      "div",
+    const view = /* @__PURE__ */ createElement(
+      "button",
       {
-        class: "grid secondary",
-        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
+        class: "tile flex-no",
+        "on:click": taskViewModel.open
       },
-      ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
-        "span",
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+        "div",
         {
-          class: "flex-row align-center width-100 flex-no clip",
-          style: "gap: 1rem"
+          class: "grid secondary",
+          style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
         },
-        /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
-        /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+        ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "flex-row align-center width-100 flex-no clip",
+            style: "gap: 1rem"
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
+          /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+        ))
       ))
-    )));
+    );
     taskViewModel.index.subscribe((newIndex) => {
       view.style.order = newIndex;
     });
@@ -2582,7 +2601,7 @@
       boardViewModel.taskViewModels,
       (taskViewModels) => {
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
-        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", style: "width: 18rem; min-width: 18rem" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
           "input",
           {
             placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
@@ -2600,7 +2619,7 @@
         )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
           "div",
           {
-            class: "flex-column gap",
+            class: "kanban-column",
             "children:append": [taskViewModels, TaskViewModelToEntry]
           }
         ));
@@ -2621,6 +2640,132 @@
       "delete_forever",
       boardViewModel.deleteBoard
     ))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/View/ChatPages/boardStatusGridPage.tsx
+  function BoardStatusGridPage(boardViewModel) {
+    const categoryRowConverter = (categoryName) => {
+      return CategoryRow(categoryName, statuses, boardViewModel);
+    };
+    const statusNameCellConverter = (statusName) => {
+      return StatusNameCell(statusName, boardViewModel);
+    };
+    const statuses = new ListState();
+    boardViewModel.taskViewModels.subscribe(() => {
+      statuses.clear();
+      const statusArray = collectObjectValuesForKey(
+        "status",
+        (taskViewModel) => taskViewModel.task,
+        [...boardViewModel.taskViewModels.value.values()]
+      );
+      statuses.add(...statusArray);
+    });
+    return /* @__PURE__ */ createElement("div", { class: "status-page-content" }, /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "status-name-row",
+        "children:append": [statuses, statusNameCellConverter]
+      }
+    ), PropertyValueList(
+      "category",
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      (categories) => {
+        return /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "status-grid-wrapper",
+            "children:append": [categories, categoryRowConverter]
+          }
+        );
+      }
+    ));
+  }
+  function StatusNameCell(statusName, boardViewModel) {
+    const taskViewModelsWithMatchingStatus = new ListState();
+    boardViewModel.taskViewModels.handleAddition(
+      (taskViewModel) => {
+        const doesMatchStatus = taskViewModel.task.status == statusName;
+        if (doesMatchStatus == false) return;
+        taskViewModelsWithMatchingStatus.add(taskViewModel);
+        boardViewModel.taskViewModels.handleRemoval(taskViewModel, () => {
+          taskViewModelsWithMatchingStatus.remove(taskViewModel);
+        });
+      }
+    );
+    const viewModel = new TaskStatusBulkChangeViewModel(
+      taskViewModelsWithMatchingStatus,
+      statusName
+    );
+    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+        "bind:value": viewModel.inputValue,
+        "on:enter": viewModel.set
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": viewModel.set,
+        "toggle:disabled": viewModel.cannotSet
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )));
+  }
+  function CategoryRow(categoryName, allStatuses, boardViewModel) {
+    return FilteredList(
+      { category: categoryName },
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      (taskViewModels) => {
+        const statusNameConverter = (statusName) => {
+          return CategoryStatusColumn(statusName, taskViewModels);
+        };
+        const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
+        return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+          "input",
+          {
+            placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+            "bind:value": viewModel.inputValue,
+            "on:enter": viewModel.set
+          }
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": viewModel.set,
+            "toggle:disabled": viewModel.cannotSet
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+        )), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "flex-row large-gap padding-right",
+            "children:append": [allStatuses, statusNameConverter]
+          }
+        ));
+      }
+    );
+  }
+  function CategoryStatusColumn(statusName, taskViewModelsWithMatchingCategory) {
+    const taskViewModels = new ListState();
+    taskViewModelsWithMatchingCategory.handleAddition((taskViewModel) => {
+      const doesMatchStatus = taskViewModel.status.value == statusName;
+      if (doesMatchStatus == false) return;
+      taskViewModels.add(taskViewModel);
+      taskViewModelsWithMatchingCategory.handleRemoval(taskViewModel, () => {
+        taskViewModels.remove(taskViewModel);
+      });
+    });
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "status-column gap",
+        "children:append": [taskViewModels, TaskViewModelToEntry]
+      }
+    );
   }
 
   // src/View/Components/boardViewToggleButton.tsx
@@ -2679,6 +2824,9 @@
         switch (boardViewModel.selectedPage.value) {
           case "kanban" /* Kanban */: {
             return BoardKanbanPage(boardViewModel);
+          }
+          case "status-grid" /* StatusGrid */: {
+            return BoardStatusGridPage(boardViewModel);
           }
           default: {
             return /* @__PURE__ */ createElement(
