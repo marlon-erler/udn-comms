@@ -90,7 +90,7 @@ export function collectObjectValuesForKey<T>(
     values.add(stringEntryObjectValue);
   }
 
-  return [...values.values()].sort(localeCompare);
+  return [...values.values()];
 }
 
 export function filterObjectsByWords<T>(

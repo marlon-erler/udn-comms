@@ -7,20 +7,30 @@ import { TaskCategoryBulkChangeViewModel } from "../../ViewModel/Utility/taskPro
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { allowDrop } from "../utility";
+import { localeCompare } from "../../Model/Utility/utility";
 import { translations } from "../translations";
 
 export function BoardKanbanPage(boardViewModel: BoardViewModel) {
-  const categoryNameConverter: React.StateItemConverter<string> = (
-    categoryName: string
-  ) => {
-    return KanbanBoard(categoryName, boardViewModel);
-  };
-
   return PropertyValueList(
     "category",
     (taskViewModel: TaskViewModel) => taskViewModel.task,
     boardViewModel.taskViewModels,
     (categories: React.ListState<string>) => {
+      const sortedCategories: React.State<string[]> = React.createProxyState(
+        [categories],
+        () => [...categories.value.values()].sort(localeCompare)
+      );
+
+      const categoryNameConverter: React.StateItemConverter<string> = (
+        categoryName: string
+      ) => {
+        const index: React.State<number> = React.createProxyState(
+          [sortedCategories],
+          () => sortedCategories.value.indexOf(categoryName)
+        );
+        return KanbanBoard(categoryName, index, boardViewModel);
+      };
+
       return (
         <div
           class="kanban-board-wrapper"
@@ -31,7 +41,11 @@ export function BoardKanbanPage(boardViewModel: BoardViewModel) {
   );
 }
 
-function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
+function KanbanBoard(
+  categoryName: string,
+  index: React.State<number>,
+  boardViewModel: BoardViewModel
+) {
   return FilteredList(
     { category: categoryName },
     (taskViewModel: TaskViewModel) => taskViewModel.task,
@@ -44,7 +58,7 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
         boardViewModel.handleDropWithinBoard(categoryName);
       }
 
-      return (
+      const view = (
         <div class="flex-column flex-no" on:dragover={allowDrop} on:drop={drop}>
           <div class="flex-row width-input">
             <input
@@ -71,6 +85,11 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
           ></div>
         </div>
       );
+
+      index.subscribe((newIndex) => {
+        view.style.order = newIndex;
+      })
+      return view;
     }
   );
 }

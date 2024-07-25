@@ -351,7 +351,7 @@
         continue;
       values.add(stringEntryObjectValue);
     }
-    return [...values.values()].sort(localeCompare);
+    return [...values.values()];
   }
   function checkDoesObjectMatchSearch(query, getStringsOfObject, object) {
     if (query == "") return true;
@@ -2690,14 +2690,22 @@
 
   // src/View/ChatPages/boardKanbanPage.tsx
   function BoardKanbanPage(boardViewModel) {
-    const categoryNameConverter = (categoryName) => {
-      return KanbanBoard(categoryName, boardViewModel);
-    };
     return PropertyValueList(
       "category",
       (taskViewModel) => taskViewModel.task,
       boardViewModel.taskViewModels,
       (categories) => {
+        const sortedCategories = createProxyState(
+          [categories],
+          () => [...categories.value.values()].sort(localeCompare)
+        );
+        const categoryNameConverter = (categoryName) => {
+          const index = createProxyState(
+            [sortedCategories],
+            () => sortedCategories.value.indexOf(categoryName)
+          );
+          return KanbanBoard(categoryName, index, boardViewModel);
+        };
         return /* @__PURE__ */ createElement(
           "div",
           {
@@ -2708,7 +2716,7 @@
       }
     );
   }
-  function KanbanBoard(categoryName, boardViewModel) {
+  function KanbanBoard(categoryName, index, boardViewModel) {
     return FilteredList(
       { category: categoryName },
       (taskViewModel) => taskViewModel.task,
@@ -2718,7 +2726,7 @@
         function drop() {
           boardViewModel.handleDropWithinBoard(categoryName);
         }
-        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", "on:dragover": allowDrop, "on:drop": drop }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+        const view = /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", "on:dragover": allowDrop, "on:drop": drop }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
           "input",
           {
             placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
@@ -2740,6 +2748,10 @@
             "children:append": [taskViewModels, TaskViewModelToEntry]
           }
         ));
+        index.subscribe((newIndex) => {
+          view.style.order = newIndex;
+        });
+        return view;
       }
     );
   }
