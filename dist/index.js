@@ -777,7 +777,6 @@
       this.chatModel = chatModel;
       this.fileModel = fileModel;
       this.storageModel = storageModel2;
-      fileModel.fileContentHandlerManager.addHandler(this.handleFileContent);
     }
     // utility
     static createBoardInfoFileContent = (fileId, name, color) => {
@@ -822,12 +821,60 @@
     boardId: ""
   };
 
+  // src/Model/Files/calendarModel.ts
+  var CalendarModel = class _CalendarModel {
+    storageModel;
+    fileModel;
+    // paths
+    getBasePath = () => {
+      return this.fileModel.getModelContainerPath("calendar" /* ModelCalendar */);
+    };
+    getViewPath = () => {
+      return [...this.getBasePath(), "view" /* ModelView */];
+    };
+    getMonthContainerPath = () => {
+      return [...this.getBasePath(), "months" /* Months */];
+    };
+    getMonthPath = (monthString) => {
+      return [...this.getMonthContainerPath(), monthString];
+    };
+    // handlers
+    handleFileContent = (fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
+        return;
+    };
+    // main
+    storeTaskReference = (taskFileContent) => {
+      if (taskFileContent.date == void 0) return;
+      const monthString = _CalendarModel.isoToMonthString(
+        taskFileContent.date
+      );
+      const monthPath = this.getMonthPath(monthString);
+      const referencePath = [...monthPath, taskFileContent.fileId];
+      this.storageModel.write(referencePath, "");
+    };
+    listTaskIds = (monthString) => {
+      const monthPath = this.getMonthPath(monthString);
+      return this.storageModel.list(monthPath);
+    };
+    // init
+    constructor(storageModel2, fileModel) {
+      this.storageModel = storageModel2;
+      this.fileModel = fileModel;
+    }
+    // utility
+    static isoToMonthString = (dateISOString) => {
+      const [year, month, _] = dateISOString.split("-");
+      return `${year}-${month}`;
+    };
+  };
+
   // src/Model/Files/fileModel.ts
   var FileModel = class _FileModel {
     chatModel;
     storageModel;
     boardsAndTasksModel;
-    fileContentHandlerManager = new HandlerManager();
+    calendarModel;
     // paths
     getBasePath = () => {
       return StorageModel.getPath(
@@ -861,7 +908,7 @@
       const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
       this.boardsAndTasksModel.handleFileContent(fileContent);
-      this.fileContentHandlerManager.trigger(fileContent);
+      this.calendarModel.handleFileContent(fileContent);
     };
     // methods
     addFileContentAndSend = (fileContent) => {
@@ -914,6 +961,7 @@
       this.chatModel = chatModel;
       this.storageModel = storageModel2;
       this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
+      this.calendarModel = new CalendarModel(this.storageModel, this);
     }
     // utility
     static generateFileContentId = (creationDate) => {

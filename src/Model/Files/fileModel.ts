@@ -11,6 +11,7 @@ import {
 import StorageModel, { StorageModelSubPath, filePaths } from "../Global/storageModel";
 
 import BoardsAndTasksModel from "./boardsAndTasksModel";
+import CalendarModel from "./calendarModel";
 import ChatModel from "../Chat/chatModel";
 import { v4 } from "uuid";
 
@@ -19,8 +20,7 @@ export default class FileModel {
   storageModel: StorageModel;
 
   boardsAndTasksModel: BoardsAndTasksModel;
-
-  fileContentHandlerManager: HandlerManager<FileContent<string>> = new HandlerManager();
+  calendarModel: CalendarModel;
 
   // paths
   getBasePath = (): string[] => {
@@ -65,7 +65,7 @@ export default class FileModel {
     if (didStore == false) return;
 
     this.boardsAndTasksModel.handleFileContent(fileContent);
-    this.fileContentHandlerManager.trigger(fileContent);
+    this.calendarModel.handleFileContent(fileContent);
   };
 
   // methods
@@ -142,6 +142,7 @@ export default class FileModel {
     this.storageModel = storageModel;
 
     this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
+    this.calendarModel = new CalendarModel(this.storageModel, this);
   }
 
   // utility

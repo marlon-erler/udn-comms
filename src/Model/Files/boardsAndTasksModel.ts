@@ -220,9 +220,6 @@ export default class BoardsAndTasksModel {
     this.chatModel = chatModel;
     this.fileModel = fileModel;
     this.storageModel = storageModel;
-
-    // handlers
-    fileModel.fileContentHandlerManager.addHandler(this.handleFileContent);
   }
 
   // utility

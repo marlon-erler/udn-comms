@@ -14,8 +14,6 @@ export default class CalendarModel {
   storageModel: StorageModel;
   fileModel: FileModel;
 
-  boardsAndTasksModel: BoardsAndTasksModel;
-
   // paths
   getBasePath = (): string[] => {
     return this.fileModel.getModelContainerPath(FileModelSubPath.ModelCalendar);
@@ -63,12 +61,9 @@ export default class CalendarModel {
   // init
   constructor(
     storageModel: StorageModel,
-    fileModel: FileModel,
-    boardsAndTasksModel: BoardsAndTasksModel
-  ) {
+    fileModel: FileModel,  ) {
     this.storageModel = storageModel;
     this.fileModel = fileModel;
-    this.boardsAndTasksModel = boardsAndTasksModel;
   }
 
   // utility
