@@ -6,13 +6,15 @@ import BoardsAndTasksModel, {
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
+import CalendarPageViewModel from "./calendarPageViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import { allowDrag } from "../../View/utility";
 
 export default class TaskViewModel {
   boardsAndTasksModel: BoardsAndTasksModel;
 
-  boardViewModel: BoardViewModel;
+  boardViewModel: BoardViewModel | null;
+  calendarPageViewModel: CalendarPageViewModel | null;
 
   // data
   task: TaskFileContent;
@@ -77,11 +79,11 @@ export default class TaskViewModel {
 
   // view
   open = (): void => {
-    this.boardViewModel.selectTask(this);
+    this.boardViewModel?.selectTask(this);
   };
 
   close = (): void => {
-    this.boardViewModel.closeTask();
+    this.boardViewModel?.closeTask();
   };
 
   closeAndSave = (): void => {
@@ -90,6 +92,7 @@ export default class TaskViewModel {
   };
 
   updateIndex = (): void => {
+    if (this.boardViewModel == null) return;
     const index: number = this.boardViewModel.taskIndexManager.getIndex(this);
     this.index.value = index;
   };
@@ -112,14 +115,24 @@ export default class TaskViewModel {
     newTaskFileContent.time = this.time.value;
 
     this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
-    this.boardViewModel.showTaskInList(newTaskFileContent);
-    this.boardViewModel.updateTaskIndices();
+
+    if (this.boardViewModel != null) {
+      this.boardViewModel.showTaskInList(newTaskFileContent);
+      this.boardViewModel.updateTaskIndices();
+    }
+    if (this.calendarPageViewModel != null) {
+    }
   };
 
   deleteTask = (): void => {
     this.close();
     this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
-    this.boardViewModel.removeTaskFromList(this.task.fileId);
+
+    if (this.boardViewModel != null) {
+      this.boardViewModel.removeTaskFromList(this.task.fileId);
+    }
+    if (this.calendarPageViewModel != null) {
+    }
   };
 
   // load
@@ -168,12 +181,14 @@ export default class TaskViewModel {
   // init
   constructor(
     public coreViewModel: CoreViewModel,
-    boardModel: BoardsAndTasksModel,
-    boardViewModel: BoardViewModel,
+    boardsAndTasksModel: BoardsAndTasksModel,
+    boardViewModel: BoardViewModel | null,
+    calendarPageViewModel: CalendarPageViewModel | null,
     taskFileContent: TaskFileContent
   ) {
-    this.boardsAndTasksModel = boardModel;
+    this.boardsAndTasksModel = boardsAndTasksModel;
     this.boardViewModel = boardViewModel;
+    this.calendarPageViewModel = calendarPageViewModel;
 
     this.task = taskFileContent;
 

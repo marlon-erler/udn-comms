@@ -4,6 +4,7 @@ import * as React from "bloatless-react";
 
 import ChatViewModel, { ChatPageType } from "../ViewModel/Chat/chatViewModel";
 
+import { CalendarPage } from "./ChatPages/calendarPage";
 import { ChatViewToggleButton } from "./Components/chatViewToggleButton";
 import { MessagePage } from "./ChatPages/messagePage";
 import { SettingsPage } from "./ChatPages/settingsPage";
@@ -22,6 +23,9 @@ export function ChatPage(chatViewModel: ChatViewModel) {
         }
         case ChatPageType.Tasks: {
           return TaskPage(chatViewModel.taskPageViewModel);
+        }
+        case ChatPageType.Calendar: {
+          return CalendarPage(chatViewModel.calendarViewModel)
         }
         default: {
           return MessagePage(chatViewModel.messagePageViewModel);

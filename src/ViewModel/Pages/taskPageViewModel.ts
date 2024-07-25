@@ -9,11 +9,10 @@ import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
-import TaskViewModel from "./taskViewModel";
 
 export default class TaskPageViewModel {
   storageModel: StorageModel;
-  boardModel: BoardsAndTasksModel;
+  boardsAndTasksModel: BoardsAndTasksModel;
 
   chatViewModel: ChatViewModel;
 
@@ -24,7 +23,7 @@ export default class TaskPageViewModel {
 
   // paths
   getBasePath = (): string[] => {
-    return [...this.boardModel.getViewPath()];
+    return [...this.boardsAndTasksModel.getViewPath()];
   };
 
   getBoardViewPath = (boardId): string[] => {
@@ -55,21 +54,21 @@ export default class TaskPageViewModel {
     if (this.cannotCreateBoard.value == true) return;
 
     const boardInfoFileContent: BoardInfoFileContent =
-      this.boardModel.createBoard(this.newBoardNameInput.value);
+      this.boardsAndTasksModel.createBoard(this.newBoardNameInput.value);
     this.newBoardNameInput.value = "";
 
     this.showBoardInList(boardInfoFileContent);
-    this.boardModel.updateBoardAndSend(boardInfoFileContent);
+    this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
     this.updateBoardIndices();
   };
 
   updateBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.boardModel.updateBoardAndSend(boardInfoFileContent);
+    this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
     this.updateBoardIndices();
   };
 
   deleteBoard = (boardInfoFileContent: BoardInfoFileContent): void => {
-    this.boardModel.deleteBoard(boardInfoFileContent.fileId);
+    this.boardsAndTasksModel.deleteBoard(boardInfoFileContent.fileId);
     this.boardViewModels.remove(boardInfoFileContent.fileId);
     this.updateBoardIndices();
   };
@@ -79,7 +78,7 @@ export default class TaskPageViewModel {
     const boardViewModel: BoardViewModel = new BoardViewModel(
       this.coreViewModel,
       this.storageModel,
-      this.boardModel,
+      this.boardsAndTasksModel,
       this,
       boardInfo
     );
@@ -130,10 +129,10 @@ export default class TaskPageViewModel {
   loadData = (): void => {
     this.boardViewModels.clear();
 
-    const boardIds: string[] = this.boardModel.listBoardIds();
+    const boardIds: string[] = this.boardsAndTasksModel.listBoardIds();
     for (const boardId of boardIds) {
       const boardInfo: BoardInfoFileContent | null =
-        this.boardModel.getBoardInfo(boardId);
+        this.boardsAndTasksModel.getBoardInfo(boardId);
       if (boardInfo == null) continue;
 
       this.showBoardInList(boardInfo);
@@ -151,7 +150,7 @@ export default class TaskPageViewModel {
     chatViewModel: ChatViewModel
   ) {
     this.storageModel = storageModel;
-    this.boardModel = boardModel;
+    this.boardsAndTasksModel = boardModel;
 
     this.chatViewModel = chatViewModel;
 

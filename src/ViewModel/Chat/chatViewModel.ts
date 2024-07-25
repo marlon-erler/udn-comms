@@ -1,8 +1,12 @@
 import * as React from "bloatless-react";
 
 import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
-import StorageModel, { StorageModelSubPath, filePaths } from "../../Model/Global/storageModel";
+import StorageModel, {
+  StorageModelSubPath,
+  filePaths,
+} from "../../Model/Global/storageModel";
 
+import CalendarPageViewModel from "../Pages/calendarPageViewModel";
 import ChatListViewModel from "./chatListViewModel";
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
@@ -17,6 +21,7 @@ export default class ChatViewModel {
   settingsViewModel: SettingsViewModel;
   chatListViewModel: ChatListViewModel;
 
+  calendarViewModel: CalendarPageViewModel;
   taskPageViewModel: TaskPageViewModel;
   messagePageViewModel: MessagePageViewModel;
   settingsPageViewModel: SettingsPageViewModel;
@@ -91,6 +96,12 @@ export default class ChatViewModel {
     this.chatListViewModel = chatListViewModel;
 
     // page viewModels
+    this.calendarViewModel = new CalendarPageViewModel(
+      coreViewModel,
+      this.storageModel,
+      this.chatModel.fileModel.calendarModel,
+      this.chatModel.fileModel.boardsAndTasksModel
+    );
     this.taskPageViewModel = new TaskPageViewModel(
       this.coreViewModel,
       this.storageModel,

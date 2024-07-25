@@ -1365,6 +1365,192 @@
     }
   };
 
+  // src/View/utility.ts
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+  function allowDrag(event) {
+    event.dataTransfer?.setData("text", "");
+  }
+
+  // src/ViewModel/Pages/taskViewModel.ts
+  var TaskViewModel = class {
+    // init
+    constructor(coreViewModel, boardsAndTasksModel, boardViewModel, calendarPageViewModel, taskFileContent) {
+      this.coreViewModel = coreViewModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+      this.boardViewModel = boardViewModel;
+      this.calendarPageViewModel = calendarPageViewModel;
+      this.task = taskFileContent;
+      this.loadAllData();
+      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
+        this.switchVersion(selectedVersionId);
+      });
+    }
+    boardsAndTasksModel;
+    boardViewModel;
+    calendarPageViewModel;
+    // data
+    task;
+    get sortingString() {
+      const splitDate = this.date.value.split("-");
+      const year = padZero(splitDate[0], 4);
+      const month = padZero(splitDate[1], 2);
+      const date = padZero(splitDate[2], 2);
+      const splitTime = this.time.value.split(":");
+      const hour = padZero(splitTime[0], 2);
+      const minute = padZero(splitTime[1], 2);
+      const priorityNumber = parseInt(this.priority.value);
+      const invertedPriority = 100 - priorityNumber;
+      return year + month + date + hour + minute + invertedPriority + this.name.value;
+    }
+    // paths
+    getFilePath = () => {
+      return this.boardsAndTasksModel.getTaskFilePath(this.task.fileId);
+    };
+    // state
+    index = new State(0);
+    boardId = new State("");
+    name = new State("");
+    description = new State("");
+    category = new State("");
+    status = new State("");
+    priority = new State("");
+    date = new State("");
+    time = new State("");
+    selectedVersionId = new State("");
+    versionIds = new ListState();
+    // methods
+    dragStart = (event) => {
+      allowDrag(event);
+      this.coreViewModel.draggedObject.value = this;
+    };
+    setCategoryAndStatus = (category, status) => {
+      if (category != void 0) this.category.value = category;
+      if (status != void 0) this.status.value = status;
+      this.save();
+    };
+    setBoardId = (boardId) => {
+      this.boardId.value = boardId;
+      this.save();
+    };
+    // view
+    open = () => {
+      this.boardViewModel?.selectTask(this);
+    };
+    close = () => {
+      this.boardViewModel?.closeTask();
+    };
+    closeAndSave = () => {
+      this.close();
+      this.save();
+    };
+    updateIndex = () => {
+      if (this.boardViewModel == null) return;
+      const index = this.boardViewModel.taskIndexManager.getIndex(this);
+      this.index.value = index;
+    };
+    // settings
+    save = () => {
+      const newTaskFileContent = BoardsAndTasksModel.createTaskFileContent(
+        this.task.fileId,
+        this.name.value,
+        this.task.boardId
+      );
+      newTaskFileContent.boardId = this.boardId.value;
+      newTaskFileContent.description = this.description.value;
+      newTaskFileContent.status = this.status.value;
+      newTaskFileContent.category = this.category.value;
+      newTaskFileContent.priority = this.priority.value;
+      newTaskFileContent.date = this.date.value;
+      newTaskFileContent.time = this.time.value;
+      this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
+      if (this.boardViewModel != null) {
+        this.boardViewModel.showTaskInList(newTaskFileContent);
+        this.boardViewModel.updateTaskIndices();
+      }
+      if (this.calendarPageViewModel != null) {
+      }
+    };
+    deleteTask = () => {
+      this.close();
+      this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
+      if (this.boardViewModel != null) {
+        this.boardViewModel.removeTaskFromList(this.task.fileId);
+      }
+      if (this.calendarPageViewModel != null) {
+      }
+    };
+    // load
+    loadVersionIds = () => {
+      const versionIds = this.boardsAndTasksModel.listTaskVersionIds(
+        this.task.fileId
+      );
+      const sortedVersionIds = versionIds.sort(localeCompare).reverse();
+      this.versionIds.clear();
+      this.versionIds.add(...sortedVersionIds);
+    };
+    switchVersion = (versionId) => {
+      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(
+        this.task.fileId,
+        versionId
+      );
+      if (taskFileContent == null) return;
+      this.task = taskFileContent;
+      this.loadTaskData();
+    };
+    loadAllData = () => {
+      this.loadTaskData();
+      this.loadVersionIds();
+    };
+    loadTaskData = () => {
+      this.boardId.value = this.task.boardId;
+      this.name.value = this.task.name;
+      this.description.value = this.task.description ?? "";
+      this.category.value = this.task.category ?? "";
+      this.status.value = this.task.status ?? "";
+      this.priority.value = this.task.priority ?? "";
+      this.date.value = this.task.date ?? "";
+      this.time.value = this.task.time ?? "";
+      this.selectedVersionId.value = this.task.fileContentId;
+    };
+  };
+
+  // src/ViewModel/Pages/calendarPageViewModel.ts
+  var CalendarPageViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, calendarModel, boardAndTasksModel) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.calendarModel = calendarModel;
+      this.boardAndTasksModel = boardAndTasksModel;
+    }
+    storageModel;
+    calendarModel;
+    boardAndTasksModel;
+    // paths
+    getBasePath = () => {
+      return [...this.calendarModel.getViewPath()];
+    };
+    // state
+    taskViewModels = new MapState();
+    // view
+    showTask = (taskFileContent) => {
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardAndTasksModel,
+        null,
+        this,
+        taskFileContent
+      );
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+    };
+    // storage
+    // load
+    loadData = () => {
+    };
+  };
+
   // src/ViewModel/Chat/chatMessageViewModel.ts
   var ChatMessageViewModel = class {
     // init
@@ -1562,146 +1748,6 @@
     };
   };
 
-  // src/View/utility.ts
-  function allowDrop(event) {
-    event.preventDefault();
-  }
-  function allowDrag(event) {
-    event.dataTransfer?.setData("text", "");
-  }
-
-  // src/ViewModel/Pages/taskViewModel.ts
-  var TaskViewModel = class {
-    // init
-    constructor(coreViewModel, boardModel, boardViewModel, taskFileContent) {
-      this.coreViewModel = coreViewModel;
-      this.boardsAndTasksModel = boardModel;
-      this.boardViewModel = boardViewModel;
-      this.task = taskFileContent;
-      this.loadAllData();
-      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
-        this.switchVersion(selectedVersionId);
-      });
-    }
-    boardsAndTasksModel;
-    boardViewModel;
-    // data
-    task;
-    get sortingString() {
-      const splitDate = this.date.value.split("-");
-      const year = padZero(splitDate[0], 4);
-      const month = padZero(splitDate[1], 2);
-      const date = padZero(splitDate[2], 2);
-      const splitTime = this.time.value.split(":");
-      const hour = padZero(splitTime[0], 2);
-      const minute = padZero(splitTime[1], 2);
-      const priorityNumber = parseInt(this.priority.value);
-      const invertedPriority = 100 - priorityNumber;
-      return year + month + date + hour + minute + invertedPriority + this.name.value;
-    }
-    // paths
-    getFilePath = () => {
-      return this.boardsAndTasksModel.getTaskFilePath(this.task.fileId);
-    };
-    // state
-    index = new State(0);
-    boardId = new State("");
-    name = new State("");
-    description = new State("");
-    category = new State("");
-    status = new State("");
-    priority = new State("");
-    date = new State("");
-    time = new State("");
-    selectedVersionId = new State("");
-    versionIds = new ListState();
-    // methods
-    dragStart = (event) => {
-      allowDrag(event);
-      this.coreViewModel.draggedObject.value = this;
-    };
-    setCategoryAndStatus = (category, status) => {
-      if (category != void 0) this.category.value = category;
-      if (status != void 0) this.status.value = status;
-      this.save();
-    };
-    setBoardId = (boardId) => {
-      this.boardId.value = boardId;
-      this.save();
-    };
-    // view
-    open = () => {
-      this.boardViewModel.selectTask(this);
-    };
-    close = () => {
-      this.boardViewModel.closeTask();
-    };
-    closeAndSave = () => {
-      this.close();
-      this.save();
-    };
-    updateIndex = () => {
-      const index = this.boardViewModel.taskIndexManager.getIndex(this);
-      this.index.value = index;
-    };
-    // settings
-    save = () => {
-      const newTaskFileContent = BoardsAndTasksModel.createTaskFileContent(
-        this.task.fileId,
-        this.name.value,
-        this.task.boardId
-      );
-      newTaskFileContent.boardId = this.boardId.value;
-      newTaskFileContent.description = this.description.value;
-      newTaskFileContent.status = this.status.value;
-      newTaskFileContent.category = this.category.value;
-      newTaskFileContent.priority = this.priority.value;
-      newTaskFileContent.date = this.date.value;
-      newTaskFileContent.time = this.time.value;
-      this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
-      this.boardViewModel.showTaskInList(newTaskFileContent);
-      this.boardViewModel.updateTaskIndices();
-    };
-    deleteTask = () => {
-      this.close();
-      this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
-      this.boardViewModel.removeTaskFromList(this.task.fileId);
-    };
-    // load
-    loadVersionIds = () => {
-      const versionIds = this.boardsAndTasksModel.listTaskVersionIds(
-        this.task.fileId
-      );
-      const sortedVersionIds = versionIds.sort(localeCompare).reverse();
-      this.versionIds.clear();
-      this.versionIds.add(...sortedVersionIds);
-    };
-    switchVersion = (versionId) => {
-      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(
-        this.task.fileId,
-        versionId
-      );
-      if (taskFileContent == null) return;
-      this.task = taskFileContent;
-      this.loadTaskData();
-    };
-    loadAllData = () => {
-      this.loadTaskData();
-      this.loadVersionIds();
-    };
-    loadTaskData = () => {
-      this.boardId.value = this.task.boardId;
-      this.name.value = this.task.name;
-      this.description.value = this.task.description ?? "";
-      this.category.value = this.task.category ?? "";
-      this.status.value = this.task.status ?? "";
-      this.priority.value = this.task.priority ?? "";
-      this.date.value = this.task.date ?? "";
-      this.time.value = this.task.time ?? "";
-      this.selectedVersionId.value = this.task.fileContentId;
-    };
-  };
-
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class {
     // init
@@ -1782,6 +1828,7 @@
         this.coreViewModel,
         this.boardsAndTasksModel,
         this,
+        null,
         taskFileContent
       );
       this.selectTask(taskViewModel);
@@ -1827,6 +1874,7 @@
         this.coreViewModel,
         this.boardsAndTasksModel,
         this,
+        null,
         taskFileContent
       );
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
@@ -1896,6 +1944,7 @@
           this.coreViewModel,
           this.boardsAndTasksModel,
           this,
+          null,
           taskFileContent
         );
         this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
@@ -1914,7 +1963,7 @@
     constructor(coreViewModel, storageModel2, boardModel, chatViewModel) {
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
-      this.boardModel = boardModel;
+      this.boardsAndTasksModel = boardModel;
       this.chatViewModel = chatViewModel;
       boardModel.boardHandlerManager.addHandler(
         (boardInfoFileContent) => {
@@ -1924,7 +1973,7 @@
       );
     }
     storageModel;
-    boardModel;
+    boardsAndTasksModel;
     chatViewModel;
     // data
     boardIndexManager = new IndexManager(
@@ -1932,7 +1981,7 @@
     );
     // paths
     getBasePath = () => {
-      return [...this.boardModel.getViewPath()];
+      return [...this.boardsAndTasksModel.getViewPath()];
     };
     getBoardViewPath = (boardId) => {
       return [...this.getBasePath(), boardId];
@@ -1952,18 +2001,18 @@
     // methods
     createBoard = () => {
       if (this.cannotCreateBoard.value == true) return;
-      const boardInfoFileContent = this.boardModel.createBoard(this.newBoardNameInput.value);
+      const boardInfoFileContent = this.boardsAndTasksModel.createBoard(this.newBoardNameInput.value);
       this.newBoardNameInput.value = "";
       this.showBoardInList(boardInfoFileContent);
-      this.boardModel.updateBoardAndSend(boardInfoFileContent);
+      this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
       this.updateBoardIndices();
     };
     updateBoard = (boardInfoFileContent) => {
-      this.boardModel.updateBoardAndSend(boardInfoFileContent);
+      this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
       this.updateBoardIndices();
     };
     deleteBoard = (boardInfoFileContent) => {
-      this.boardModel.deleteBoard(boardInfoFileContent.fileId);
+      this.boardsAndTasksModel.deleteBoard(boardInfoFileContent.fileId);
       this.boardViewModels.remove(boardInfoFileContent.fileId);
       this.updateBoardIndices();
     };
@@ -1972,7 +2021,7 @@
       const boardViewModel = new BoardViewModel(
         this.coreViewModel,
         this.storageModel,
-        this.boardModel,
+        this.boardsAndTasksModel,
         this,
         boardInfo
       );
@@ -2011,9 +2060,9 @@
     // load
     loadData = () => {
       this.boardViewModels.clear();
-      const boardIds = this.boardModel.listBoardIds();
+      const boardIds = this.boardsAndTasksModel.listBoardIds();
       for (const boardId of boardIds) {
-        const boardInfo = this.boardModel.getBoardInfo(boardId);
+        const boardInfo = this.boardsAndTasksModel.getBoardInfo(boardId);
         if (boardInfo == null) continue;
         this.showBoardInList(boardInfo);
       }
@@ -2031,6 +2080,12 @@
       this.chatModel = chatModel;
       this.settingsViewModel = settingsViewModel2;
       this.chatListViewModel = chatListViewModel2;
+      this.calendarViewModel = new CalendarPageViewModel(
+        coreViewModel,
+        this.storageModel,
+        this.chatModel.fileModel.calendarModel,
+        this.chatModel.fileModel.boardsAndTasksModel
+      );
       this.taskPageViewModel = new TaskPageViewModel(
         this.coreViewModel,
         this.storageModel,
@@ -2057,6 +2112,7 @@
     storageModel;
     settingsViewModel;
     chatListViewModel;
+    calendarViewModel;
     taskPageViewModel;
     messagePageViewModel;
     settingsPageViewModel;
@@ -2181,6 +2237,12 @@
       this.updateIndices();
     };
   };
+
+  // src/View/ChatPages/calendarPage.tsx
+  function CalendarPage(calendarPageViewModel) {
+    calendarPageViewModel.loadData();
+    return /* @__PURE__ */ createElement("div", { id: "calendar-page" });
+  }
 
   // src/View/Components/ribbonButton.tsx
   function RibbonButton(label, icon, isSelected, select) {
@@ -3318,6 +3380,9 @@
           }
           case "tasks" /* Tasks */: {
             return TaskPage(chatViewModel.taskPageViewModel);
+          }
+          case "calendar" /* Calendar */: {
+            return CalendarPage(chatViewModel.calendarViewModel);
           }
           default: {
             return MessagePage(chatViewModel.messagePageViewModel);

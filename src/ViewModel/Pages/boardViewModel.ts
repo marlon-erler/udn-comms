@@ -82,6 +82,7 @@ export default class BoardViewModel {
       this.coreViewModel,
       this.boardsAndTasksModel,
       this,
+      null,
       taskFileContent
     );
     this.selectTask(taskViewModel);
@@ -136,6 +137,7 @@ export default class BoardViewModel {
       this.coreViewModel,
       this.boardsAndTasksModel,
       this,
+      null,
       taskFileContent
     );
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
@@ -222,6 +224,7 @@ export default class BoardViewModel {
         this.coreViewModel,
         this.boardsAndTasksModel,
         this,
+        null,
         taskFileContent
       );
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
