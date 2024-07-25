@@ -16,6 +16,7 @@ export function TaskEntry(taskViewModel: TaskViewModel) {
     <button
       draggable="true"
       class="tile flex-no"
+      style="user-select: none; -webkit-user-select: none"
       on:click={taskViewModel.open}
       on:dragstart={taskViewModel.dragStart}
     >

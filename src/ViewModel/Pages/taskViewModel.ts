@@ -7,6 +7,7 @@ import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
 import CoreViewModel from "../Global/coreViewModel";
+import { allowDrag } from "../../View/utility";
 
 export default class TaskViewModel {
   boardsAndTasksModel: BoardsAndTasksModel;
@@ -58,7 +59,8 @@ export default class TaskViewModel {
   versionIds: React.ListState<string> = new React.ListState();
 
   // methods
-  dragStart = (): void => {
+  dragStart = (event: DragEvent): void => {
+    allowDrag(event);
     this.coreViewModel.draggedObject.value = this;
   };
 
@@ -71,7 +73,7 @@ export default class TaskViewModel {
   setBoardId = (boardId: string): void => {
     this.boardId.value = boardId;
     this.save();
-  }
+  };
 
   // view
   open = (): void => {
@@ -132,7 +134,10 @@ export default class TaskViewModel {
 
   switchVersion = (versionId: string): void => {
     const taskFileContent: TaskFileContent | null =
-      this.boardsAndTasksModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+      this.boardsAndTasksModel.getSpecificTaskFileContent(
+        this.task.fileId,
+        versionId
+      );
     if (taskFileContent == null) return;
 
     this.task = taskFileContent;

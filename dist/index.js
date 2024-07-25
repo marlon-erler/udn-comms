@@ -1514,6 +1514,14 @@
     };
   };
 
+  // src/View/utility.ts
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+  function allowDrag(event) {
+    event.dataTransfer?.setData("text", "");
+  }
+
   // src/ViewModel/Pages/taskViewModel.ts
   var TaskViewModel = class {
     // init
@@ -1560,7 +1568,8 @@
     selectedVersionId = new State("");
     versionIds = new ListState();
     // methods
-    dragStart = () => {
+    dragStart = (event) => {
+      allowDrag(event);
       this.coreViewModel.draggedObject.value = this;
     };
     setCategoryAndStatus = (category, status) => {
@@ -1620,7 +1629,10 @@
       this.versionIds.add(...sortedVersionIds);
     };
     switchVersion = (versionId) => {
-      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(
+        this.task.fileId,
+        versionId
+      );
       if (taskFileContent == null) return;
       this.task = taskFileContent;
       this.loadTaskData();
@@ -2646,6 +2658,7 @@
       {
         draggable: "true",
         class: "tile flex-no",
+        style: "user-select: none; -webkit-user-select: none",
         "on:click": taskViewModel.open,
         "on:dragstart": taskViewModel.dragStart
       },
@@ -2674,11 +2687,6 @@
   var TaskViewModelToEntry = (taskViewModel) => {
     return TaskEntry(taskViewModel);
   };
-
-  // src/View/utility.ts
-  function allowDrop(event) {
-    event.preventDefault();
-  }
 
   // src/View/ChatPages/boardKanbanPage.tsx
   function BoardKanbanPage(boardViewModel) {
