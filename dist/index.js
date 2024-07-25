@@ -3430,7 +3430,6 @@
       this.connectionChangeHandlerManager.trigger();
       if (this.isConnected == false) return;
       if (this.address == void 0) return;
-      this.connectMailbox();
       this.storeAddress(this.address);
       this.sendSubscriptionRequest();
       this.sendMessagesInOutbox();

@@ -36,7 +36,6 @@ export default class ConnectionModel {
     if (this.isConnected == false) return;
     if (this.address == undefined) return;
 
-    this.connectMailbox();
     this.storeAddress(this.address);
     this.sendSubscriptionRequest();
     this.sendMessagesInOutbox();
