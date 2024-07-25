@@ -30,8 +30,6 @@ export default class BoardViewModel {
 
   index: React.State<number> = new React.State(0);
 
-  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
-
   selectedPage: React.State<BoardPageType> = new React.State<BoardPageType>(
     BoardPageType.List
   );
@@ -41,6 +39,10 @@ export default class BoardViewModel {
   isSelected: React.State<boolean>;
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
   isPresentingFilterModal: React.State<boolean> = new React.State(false);
+
+  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
+  filteredTaskViewModels: React.ListState<TaskViewModel> =
+    new React.ListState();
 
   // paths
   getBasePath = (): string[] => {
@@ -162,6 +164,19 @@ export default class BoardViewModel {
     }
   };
 
+  // filter
+  getStringsFromTaskViewModel = (taskViewModel: TaskViewModel): string[] => {
+    return [
+      taskViewModel.task.name,
+      taskViewModel.task.description ?? "",
+      taskViewModel.task.category ?? "",
+      taskViewModel.task.status ?? "",
+      taskViewModel.task.priority ?? "",
+      taskViewModel.task.date ?? "",
+      taskViewModel.task.time ?? "",
+    ];
+  };
+
   // load
   loadListRelevantData = (): void => {
     this.name.value = this.boardInfo.name;
@@ -174,7 +189,7 @@ export default class BoardViewModel {
     );
     for (const taskId of taskIds) {
       if (this.taskViewModels.value.has(taskId)) return;
-      
+
       const taskFileContent: TaskFileContent | null =
         this.boardModel.getLatestTaskFileContent(taskId);
       if (taskFileContent == null) continue;

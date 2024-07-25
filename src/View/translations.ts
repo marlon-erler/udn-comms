@@ -1,6 +1,7 @@
 const englishTranslations = {
   general: {
     deleteItemButtonAudioLabel: "delete item",
+    searchButtonAudioLabel: "search",
 
     abortButton: "Abort",
     closeButton: "Close",
@@ -10,6 +11,7 @@ const englishTranslations = {
     setButton: "Set",
 
     fileVersionLabel: "Version",
+    searchLabel: "Search",
   },
 
   regional: {
@@ -174,6 +176,10 @@ const englishTranslations = {
       taskTimeLabel: "Time",
 
       deleteTaskButton: "Delete task",
+
+      ///
+
+      filterTasksHeadline: "Filter Tasks",
 
       ///
 

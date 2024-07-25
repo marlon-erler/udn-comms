@@ -8,13 +8,16 @@ import { BoardKanbanPage } from "./boardKanbanPage";
 import { BoardSettingsModal } from "../Modals/boardSettingsModal";
 import { BoardStatusGridPage } from "./boardStatusGridPage";
 import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
+import { SearchModal } from "../Modals/searchModal";
 import { TaskSettingsModal } from "../Modals/taskSettingsModal";
+import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
 
 export function BoardPage(boardViewModel: BoardViewModel) {
   boardViewModel.loadData();
 
+  // main content
   const mainContent = React.createProxyState(
     [boardViewModel.selectedPage],
     () => {
@@ -30,7 +33,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
             <div
               class="task-grid"
               children:append={[
-                boardViewModel.taskViewModels,
+                boardViewModel.filteredTaskViewModels,
                 TaskViewModelToEntry,
               ]}
             ></div>
@@ -40,6 +43,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
     }
   );
 
+  // task modal
   const taskSettingsModal = React.createProxyState(
     [boardViewModel.selectedTaskViewModel],
     () => {
@@ -110,6 +114,14 @@ export function BoardPage(boardViewModel: BoardViewModel) {
       <div class="content main-content" children:set={mainContent}></div>
 
       {BoardSettingsModal(boardViewModel)}
+      {SearchModal(
+        translations.chatPage.task.filterTasksHeadline,
+        boardViewModel.taskViewModels,
+        boardViewModel.filteredTaskViewModels,
+        TaskViewModelToEntry,
+        boardViewModel.getStringsFromTaskViewModel,
+        boardViewModel.isPresentingFilterModal
+      )}
       <div children:set={taskSettingsModal}></div>
     </div>
   );

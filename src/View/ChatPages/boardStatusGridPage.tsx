@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import {
   TaskCategoryBulkChangeViewModel,
   TaskStatusBulkChangeViewModel,
-} from "../../ViewModel/Pages/taskPropertyBulkChangeViewModel";
+} from "../../ViewModel/Utility/taskPropertyBulkChangeViewModel";
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { FilteredList } from "../Components/filteredList";
@@ -46,7 +46,7 @@ export function BoardStatusGridPage(boardViewModel: BoardViewModel) {
       {PropertyValueList(
         "category",
         (taskViewModel: TaskViewModel) => taskViewModel.task,
-        boardViewModel.taskViewModels,
+        boardViewModel.filteredTaskViewModels,
         (categories: React.ListState<string>) => {
           return (
             <div

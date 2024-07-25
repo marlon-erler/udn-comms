@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { FilteredList } from "../Components/filteredList";
 import { PropertyValueList } from "../Components/propertyList";
-import { TaskCategoryBulkChangeViewModel } from "../../ViewModel/Pages/taskPropertyBulkChangeViewModel";
+import { TaskCategoryBulkChangeViewModel } from "../../ViewModel/Utility/taskPropertyBulkChangeViewModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
@@ -34,7 +34,7 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
   return FilteredList(
     { category: categoryName },
     (taskViewModel: TaskViewModel) => taskViewModel.task,
-    boardViewModel.taskViewModels,
+    boardViewModel.filteredTaskViewModels,
     (taskViewModels: React.ListState<TaskViewModel>) => {
       const viewModel: TaskCategoryBulkChangeViewModel =
         new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);

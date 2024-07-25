@@ -353,6 +353,29 @@
     }
     return [...values.values()].sort(localeCompare);
   }
+  function checkDoesObjectMatchSearch(query, getStringsOfObject, object) {
+    if (query == "") return true;
+    const stringsInObject = getStringsOfObject(object);
+    const wordsInObject = [];
+    for (const string of stringsInObject) {
+      const lowercaseWordsInString = string.toLocaleLowerCase().split(" ").filter((word) => word != "");
+      wordsInObject.push(...lowercaseWordsInString);
+    }
+    const lowercaseWordsInQuery = query.toLowerCase().split(" ").filter((word) => word != "");
+    for (const queryWord of lowercaseWordsInQuery) {
+      if (queryWord[0] == "-") {
+        const wordContent = queryWord.substring(1);
+        if (wordsInObject.includes(wordContent)) {
+          return false;
+        }
+      } else {
+        if (wordsInObject.includes(queryWord) == false) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
   var HandlerManager = class {
     handlers = /* @__PURE__ */ new Set();
     // manage
@@ -1613,7 +1636,6 @@
     name = new State("");
     color = new State("standard" /* Standard */);
     index = new State(0);
-    taskViewModels = new MapState();
     selectedPage = new State(
       "list" /* List */
     );
@@ -1621,6 +1643,8 @@
     isSelected;
     isPresentingSettingsModal = new State(false);
     isPresentingFilterModal = new State(false);
+    taskViewModels = new MapState();
+    filteredTaskViewModels = new ListState();
     // paths
     getBasePath = () => {
       return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
@@ -1717,6 +1741,18 @@
       for (const boardViewModel of this.taskViewModels.value.values()) {
         boardViewModel.updateIndex();
       }
+    };
+    // filter
+    getStringsFromTaskViewModel = (taskViewModel) => {
+      return [
+        taskViewModel.task.name,
+        taskViewModel.task.description ?? "",
+        taskViewModel.task.category ?? "",
+        taskViewModel.task.status ?? "",
+        taskViewModel.task.priority ?? "",
+        taskViewModel.task.date ?? "",
+        taskViewModel.task.time ?? ""
+      ];
     };
     // load
     loadListRelevantData = () => {
@@ -2064,12 +2100,14 @@
   var englishTranslations = {
     general: {
       deleteItemButtonAudioLabel: "delete item",
+      searchButtonAudioLabel: "search",
       abortButton: "Abort",
       closeButton: "Close",
       confirmButton: "Confirm",
       saveButton: "Save",
       setButton: "Set",
-      fileVersionLabel: "Version"
+      fileVersionLabel: "Version",
+      searchLabel: "Search"
     },
     regional: {
       weekdays: {
@@ -2186,6 +2224,8 @@
         taskDateLabel: "Date",
         taskTimeLabel: "Time",
         deleteTaskButton: "Delete task",
+        ///
+        filterTasksHeadline: "Filter Tasks",
         ///
         renameCategoryInputPlaceholder: "Rename category,"
       }
@@ -2481,7 +2521,7 @@
     return viewBuilder(propertyValues);
   }
 
-  // src/ViewModel/Pages/taskPropertyBulkChangeViewModel.ts
+  // src/ViewModel/Utility/taskPropertyBulkChangeViewModel.ts
   var TaskPropertyBulkChangeViewModel = class {
     taskViewModels;
     // state
@@ -2598,7 +2638,7 @@
     return FilteredList(
       { category: categoryName },
       (taskViewModel) => taskViewModel.task,
-      boardViewModel.taskViewModels,
+      boardViewModel.filteredTaskViewModels,
       (taskViewModels) => {
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
         return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
@@ -2669,7 +2709,7 @@
     ), PropertyValueList(
       "category",
       (taskViewModel) => taskViewModel.task,
-      boardViewModel.taskViewModels,
+      boardViewModel.filteredTaskViewModels,
       (categories) => {
         return /* @__PURE__ */ createElement(
           "div",
@@ -2780,6 +2820,94 @@
     return RibbonButton(label, icon, isSelected, select);
   }
 
+  // src/ViewModel/Utility/searchViewModel.ts
+  var SearchViewModel = class {
+    // data
+    allObjects;
+    getStringsOfObject;
+    // state
+    appliedQuery = new State("");
+    searchInput = new State("");
+    matchingObjects;
+    // guards
+    cannotApplySearch = createProxyState(
+      [this.searchInput, this.appliedQuery],
+      () => this.searchInput.value == this.appliedQuery.value
+    );
+    // methods
+    applySearch = () => {
+      this.appliedQuery.value = this.searchInput.value;
+      console.log("applying search");
+      this.matchingObjects.clear();
+      for (const object of this.allObjects.value.values()) {
+        const doesMatch = this.checkDoesMatchSearch(object);
+        if (doesMatch == false) continue;
+        this.matchingObjects.add(object);
+      }
+    };
+    // init
+    constructor(allObjects, matchingObjects, getStringsOfObject) {
+      this.allObjects = allObjects;
+      this.matchingObjects = matchingObjects;
+      this.getStringsOfObject = getStringsOfObject;
+      this.allObjects.handleAddition((newObject) => {
+        const doesMatch = this.checkDoesMatchSearch(newObject);
+        if (doesMatch == false) {
+          this.matchingObjects.remove(newObject);
+        } else {
+          if (this.matchingObjects.value.has(newObject)) return;
+          this.matchingObjects.add(newObject);
+          this.allObjects.handleRemoval(newObject, () => {
+            this.matchingObjects.remove(newObject);
+          });
+        }
+      });
+    }
+    // utility
+    checkDoesMatchSearch = (object) => {
+      return checkDoesObjectMatchSearch(
+        this.appliedQuery.value,
+        this.getStringsOfObject,
+        object
+      );
+    };
+  };
+
+  // src/View/Modals/searchModal.tsx
+  function SearchModal(headline, allObjects, filteredObjects, converter, getStringsOfObject, isOpen) {
+    const viewModel = new SearchViewModel(
+      allObjects,
+      filteredObjects,
+      getStringsOfObject
+    );
+    function close() {
+      isOpen.value = false;
+    }
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isOpen }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, headline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.general.searchLabel,
+        "bind:value": viewModel.searchInput,
+        "on:enter": viewModel.applySearch
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.general.searchButtonAudioLabel,
+        "on:click": viewModel.applySearch,
+        "toggle:disabled": viewModel.cannotApplySearch
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "search")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        "children:append": [filteredObjects, converter]
+      }
+    )), /* @__PURE__ */ createElement("button", { "on:click": close }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
   // src/View/Components/option.tsx
   function Option(text, value, selectedOnCreate) {
     return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
@@ -2834,7 +2962,7 @@
               {
                 class: "task-grid",
                 "children:append": [
-                  boardViewModel.taskViewModels,
+                  boardViewModel.filteredTaskViewModels,
                   TaskViewModelToEntry
                 ]
               }
@@ -2900,7 +3028,14 @@
         "on:click": boardViewModel.createTask
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content main-content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
+    ))), /* @__PURE__ */ createElement("div", { class: "content main-content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), SearchModal(
+      translations.chatPage.task.filterTasksHeadline,
+      boardViewModel.taskViewModels,
+      boardViewModel.filteredTaskViewModels,
+      TaskViewModelToEntry,
+      boardViewModel.getStringsFromTaskViewModel,
+      boardViewModel.isPresentingFilterModal
+    ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }
 
   // src/View/Components/boardEntry.tsx

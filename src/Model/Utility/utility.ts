@@ -101,7 +101,7 @@ export function filterObjectsByWords<T>(
   const matches: Set<T> = new Set();
 
   object_loop: for (const object of objects) {
-    const doesMatch: boolean = checkIfMatchesFilter(
+    const doesMatch: boolean = checkDoesObjectMatchSearch(
       query,
       getStringsOfObject,
       object
@@ -112,7 +112,7 @@ export function filterObjectsByWords<T>(
   return matches;
 }
 
-export function checkIfMatchesFilter<T>(
+export function checkDoesObjectMatchSearch<T>(
   query: string,
   getStringsOfObject: (object: T) => string[],
   object: T
@@ -122,11 +122,17 @@ export function checkIfMatchesFilter<T>(
   const stringsInObject: string[] = getStringsOfObject(object);
   const wordsInObject: string[] = [];
   for (const string of stringsInObject) {
-    const lowercaseWordsInString = string.toLocaleLowerCase().split(" ");
+    const lowercaseWordsInString = string
+      .toLocaleLowerCase()
+      .split(" ")
+      .filter((word) => word != "");
     wordsInObject.push(...lowercaseWordsInString);
   }
 
-  const lowercaseWordsInQuery = query.toLowerCase().split(" ");
+  const lowercaseWordsInQuery = query
+    .toLowerCase()
+    .split(" ")
+    .filter((word) => word != "");
   for (const queryWord of lowercaseWordsInQuery) {
     if (queryWord[0] == "-") {
       // exclusion

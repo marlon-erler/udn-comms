@@ -1,6 +1,6 @@
 import * as React from "bloatless-react";
 
-import TaskViewModel from "./taskViewModel";
+import TaskViewModel from "../Pages/taskViewModel";
 
 export default class TaskPropertyBulkChangeViewModel {
   taskViewModels: React.ListState<TaskViewModel>;
