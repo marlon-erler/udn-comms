@@ -121,6 +121,7 @@ export default class BoardViewModel {
 
   close = (): void => {
     this.taskPageViewModel.closeBoard();
+    this.taskViewModels.clear();
   };
 
   showSettings = (): void => {
@@ -168,12 +169,12 @@ export default class BoardViewModel {
   };
 
   loadTasks = (): void => {
-    this.taskViewModels.clear();
-
     const taskIds: string[] = this.boardModel.listTaskIds(
       this.boardInfo.fileId
     );
     for (const taskId of taskIds) {
+      if (this.taskViewModels.value.has(taskId)) return;
+      
       const taskFileContent: TaskFileContent | null =
         this.boardModel.getLatestTaskFileContent(taskId);
       if (taskFileContent == null) continue;

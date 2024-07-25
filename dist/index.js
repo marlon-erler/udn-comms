@@ -1687,6 +1687,7 @@
     };
     close = () => {
       this.taskPageViewModel.closeBoard();
+      this.taskViewModels.clear();
     };
     showSettings = () => {
       this.isPresentingSettingsModal.value = true;
@@ -1723,11 +1724,11 @@
       this.color.value = this.boardInfo.color;
     };
     loadTasks = () => {
-      this.taskViewModels.clear();
       const taskIds = this.boardModel.listTaskIds(
         this.boardInfo.fileId
       );
       for (const taskId of taskIds) {
+        if (this.taskViewModels.value.has(taskId)) return;
         const taskFileContent = this.boardModel.getLatestTaskFileContent(taskId);
         if (taskFileContent == null) continue;
         const taskViewModel = new TaskViewModel(
