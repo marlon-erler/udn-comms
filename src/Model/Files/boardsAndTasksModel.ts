@@ -1,4 +1,4 @@
-// thile file is responsible for managing boards within chats and tasks within boards.
+// this file is responsible for managing boards within chats and tasks within boards.
 
 import {
   DATA_VERSION,

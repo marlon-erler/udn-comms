@@ -173,6 +173,7 @@ export enum FileModelSubPath {
   Model = "model",
   ModelView = "view",
   ModelTask = "tasks",
+  ModelCalendar = "calendar",
 };
 
 // types
