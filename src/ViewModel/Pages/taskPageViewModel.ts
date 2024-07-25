@@ -29,7 +29,7 @@ export default class TaskPageViewModel {
   };
 
   getLastUsedBoardPath = (): string[] => {
-    return [...this.getBasePath(), TaskPageViewModelSubPaths.LastUsedBoard];
+    return [...this.getBasePath(), TaskPageViewModelSubPath.LastUsedBoard];
   };
 
   // state
@@ -162,6 +162,6 @@ export default class TaskPageViewModel {
   }
 }
 
-export enum TaskPageViewModelSubPaths {
+export enum TaskPageViewModelSubPath {
   LastUsedBoard = "last-used-board",
 }

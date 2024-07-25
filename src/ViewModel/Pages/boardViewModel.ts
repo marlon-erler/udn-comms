@@ -51,7 +51,7 @@ export default class BoardViewModel {
   };
 
   getLastUsedBoardPath = (): string[] => {
-    return [...this.getBasePath(), BoardViewModelSubPaths.LastUsedView];
+    return [...this.getBasePath(), BoardViewModelSubPath.LastUsedView];
   };
 
   // settings
@@ -264,7 +264,7 @@ export default class BoardViewModel {
   }
 }
 
-export enum BoardViewModelSubPaths {
+export enum BoardViewModelSubPath {
   LastUsedView = "last-used-view",
 }
 

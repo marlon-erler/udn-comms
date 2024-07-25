@@ -2,7 +2,7 @@
 
 import { ChatMessage, ChatMessageReference } from "../Chat/chatModel";
 import { Handler, HandlerManager, stringify } from "../Utility/utility";
-import StorageModel, { filePaths } from "./storageModel";
+import StorageModel, { StorageModelSubPath, filePaths } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 
 export default class ConnectionModel {
@@ -34,7 +34,7 @@ export default class ConnectionModel {
     this.connectionChangeHandlerManager.trigger();
 
     if (this.isConnected == false) return;
-    if (!this.address) return;
+    if (this.address == undefined) return;
 
     this.connectMailbox();
     this.storeAddress(this.address);
@@ -52,7 +52,7 @@ export default class ConnectionModel {
 
     // do not reconnect
     const reconnectAddressPath: string[] = StorageModel.getPath(
-      "connectionModel",
+      StorageModelSubPath.ConnectionModel,
       filePaths.connectionModel.reconnectAddress
     );
     this.storageModel.remove(reconnectAddressPath);
@@ -61,7 +61,7 @@ export default class ConnectionModel {
   // mailbox
   getMailboxPath = (address: string): string[] => {
     const mailboxDirPath = StorageModel.getPath(
-      "connectionModel",
+      StorageModelSubPath.ConnectionModel,
       filePaths.connectionModel.mailboxes
     );
     const mailboxFilePath = [...mailboxDirPath, address];
@@ -69,7 +69,7 @@ export default class ConnectionModel {
   };
 
   requestNewMailbox = (): void => {
-    console.log("requesting mailbox");
+    console.log("requesting new mailbox");
     this.udn.requestMailbox();
   };
 
@@ -107,7 +107,7 @@ export default class ConnectionModel {
   // outbox
   getOutboxPath = (): string[] => {
     return StorageModel.getPath(
-      "connectionModel",
+      StorageModelSubPath.ConnectionModel,
       filePaths.connectionModel.outbox
     );
   };
@@ -173,7 +173,7 @@ export default class ConnectionModel {
   // storage
   getPreviousAddressPath = (): string[] => {
     return StorageModel.getPath(
-      "connectionModel",
+      StorageModelSubPath.ConnectionModel,
       filePaths.connectionModel.previousAddresses
     );
   };
@@ -185,7 +185,7 @@ export default class ConnectionModel {
 
   getReconnectAddressPath = (): string[] => {
     return StorageModel.getPath(
-      "connectionModel",
+      StorageModelSubPath.ConnectionModel,
       filePaths.connectionModel.reconnectAddress
     );
   };
@@ -209,7 +209,7 @@ export default class ConnectionModel {
     const dirPath = this.getPreviousAddressPath();
     return this.storageModel.list(dirPath);
   }
-  
+
   // init
   constructor(storageModel: StorageModel) {
     // create frontend

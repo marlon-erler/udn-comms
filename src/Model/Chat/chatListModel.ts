@@ -1,5 +1,5 @@
 import ChatModel, { ChatMessage } from "./chatModel";
-import StorageModel, { filePaths } from "../Global/storageModel";
+import StorageModel, { StorageModelSubPath, filePaths } from "../Global/storageModel";
 
 import ConnectionModel from "../Global/connectionModel";
 import { Message } from "udn-frontend";
@@ -77,7 +77,7 @@ export default class ChatListModel {
 
   // load
   loadChats = (): void => {
-    const chatDir = StorageModel.getPath("chat", filePaths.chat.base);
+    const chatDir = StorageModel.getPath(StorageModelSubPath.Chat, filePaths.chat.base);
     const chatIds = this.storageModel.list(chatDir);
     for (const chatId of chatIds) {
       const chatModel = new ChatModel(

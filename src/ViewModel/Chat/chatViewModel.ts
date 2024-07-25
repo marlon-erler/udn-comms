@@ -1,7 +1,7 @@
 import * as React from "bloatless-react";
 
 import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
-import StorageModel, { filePaths } from "../../Model/Global/storageModel";
+import StorageModel, { StorageModelSubPath, filePaths } from "../../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import { Color } from "../../colors";
@@ -62,7 +62,7 @@ export default class ChatViewModel {
   // load
   loadPageSelection = (): void => {
     const path: string[] = StorageModel.getPath(
-      "chat",
+      StorageModelSubPath.Chat,
       filePaths.chat.lastUsedPage(this.chatModel.id)
     );
     const lastUsedPage: string | null = this.storageModel.read(path);

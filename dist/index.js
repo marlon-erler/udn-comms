@@ -584,13 +584,8 @@
       return _StorageModel.pathComponentsToString(...allComponents);
     };
     static getPath(locationName, filePath) {
-      return [DATA_VERSION, storageLocations[locationName], ...filePath];
+      return [DATA_VERSION, locationName, ...filePath];
     }
-  };
-  var storageLocations = {
-    connectionModel: "connection",
-    chat: "chat",
-    settingsModel: "settings"
   };
   var filePaths = {
     connectionModel: {
@@ -832,7 +827,7 @@
     // paths
     getBasePath = () => {
       return StorageModel.getPath(
-        "chat",
+        "chat" /* Chat */,
         filePaths.chat.files(this.chatModel.id)
       );
     };
@@ -1030,16 +1025,16 @@
     }
     // paths
     getBasePath = () => {
-      return StorageModel.getPath("chat", filePaths.chat.chatBase(this.id));
+      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.chatBase(this.id));
     };
     getInfoPath = () => {
-      return StorageModel.getPath("chat", filePaths.chat.info(this.id));
+      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.info(this.id));
     };
     getColorPath = () => {
-      return StorageModel.getPath("chat", filePaths.chat.color(this.id));
+      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.color(this.id));
     };
     getMessageDirPath = () => {
-      return StorageModel.getPath("chat", filePaths.chat.messages(this.id));
+      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.messages(this.id));
     };
     getMessagePath = (id) => {
       return [...this.getMessageDirPath(), id];
@@ -1292,7 +1287,7 @@
     };
     // load
     loadChats = () => {
-      const chatDir = StorageModel.getPath("chat", filePaths.chat.base);
+      const chatDir = StorageModel.getPath("chat" /* Chat */, filePaths.chat.base);
       const chatIds = this.storageModel.list(chatDir);
       for (const chatId of chatIds) {
         const chatModel = new ChatModel(
@@ -2015,7 +2010,7 @@
     // load
     loadPageSelection = () => {
       const path = StorageModel.getPath(
-        "chat",
+        "chat" /* Chat */,
         filePaths.chat.lastUsedPage(this.chatModel.id)
       );
       const lastUsedPage = this.storageModel.read(path);
@@ -3434,7 +3429,7 @@
       console.log("connection status:", this.isConnected, this.address);
       this.connectionChangeHandlerManager.trigger();
       if (this.isConnected == false) return;
-      if (!this.address) return;
+      if (this.address == void 0) return;
       this.connectMailbox();
       this.storeAddress(this.address);
       this.sendSubscriptionRequest();
@@ -3447,7 +3442,7 @@
     disconnect = () => {
       this.udn.disconnect();
       const reconnectAddressPath = StorageModel.getPath(
-        "connectionModel",
+        "connection" /* ConnectionModel */,
         filePaths.connectionModel.reconnectAddress
       );
       this.storageModel.remove(reconnectAddressPath);
@@ -3455,14 +3450,14 @@
     // mailbox
     getMailboxPath = (address) => {
       const mailboxDirPath = StorageModel.getPath(
-        "connectionModel",
+        "connection" /* ConnectionModel */,
         filePaths.connectionModel.mailboxes
       );
       const mailboxFilePath = [...mailboxDirPath, address];
       return mailboxFilePath;
     };
     requestNewMailbox = () => {
-      console.log("requesting mailbox");
+      console.log("requesting new mailbox");
       this.udn.requestMailbox();
     };
     connectMailbox = () => {
@@ -3491,7 +3486,7 @@
     // outbox
     getOutboxPath = () => {
       return StorageModel.getPath(
-        "connectionModel",
+        "connection" /* ConnectionModel */,
         filePaths.connectionModel.outbox
       );
     };
@@ -3543,7 +3538,7 @@
     // storage
     getPreviousAddressPath = () => {
       return StorageModel.getPath(
-        "connectionModel",
+        "connection" /* ConnectionModel */,
         filePaths.connectionModel.previousAddresses
       );
     };
@@ -3553,7 +3548,7 @@
     };
     getReconnectAddressPath = () => {
       return StorageModel.getPath(
-        "connectionModel",
+        "connection" /* ConnectionModel */,
         filePaths.connectionModel.reconnectAddress
       );
     };
@@ -3823,7 +3818,7 @@
     setName(newValue) {
       this.username = newValue;
       const path = StorageModel.getPath(
-        "settingsModel",
+        "settings" /* SettingsModel */,
         filePaths.settingsModel.username
       );
       this.storageModel.write(path, newValue);
@@ -3831,7 +3826,7 @@
     setFirstDayOfWeek(newValue) {
       this.firstDayOfWeek = newValue;
       const path = StorageModel.getPath(
-        "settingsModel",
+        "settings" /* SettingsModel */,
         filePaths.settingsModel.firstDayOfWeek
       );
       this.storageModel.write(path, newValue);
@@ -3839,7 +3834,7 @@
     // load
     loadUsernam() {
       const path = StorageModel.getPath(
-        "settingsModel",
+        "settings" /* SettingsModel */,
         filePaths.settingsModel.username
       );
       const content = this.storageModel.read(path);
@@ -3847,7 +3842,7 @@
     }
     loadFirstDayofWeek() {
       const path = StorageModel.getPath(
-        "settingsModel",
+        "settings" /* SettingsModel */,
         filePaths.settingsModel.firstDayOfWeek
       );
       const content = this.storageModel.read(path);

@@ -8,7 +8,7 @@ import {
   parseValidObject,
   stringify,
 } from "../Utility/utility";
-import StorageModel, { filePaths } from "../Global/storageModel";
+import StorageModel, { StorageModelSubPath, filePaths } from "../Global/storageModel";
 
 import BoardsAndTasksModel from "./boardsAndTasksModel";
 import ChatModel from "../Chat/chatModel";
@@ -25,7 +25,7 @@ export default class FileModel {
   // paths
   getBasePath = (): string[] => {
     return StorageModel.getPath(
-      "chat",
+      StorageModelSubPath.Chat,
       filePaths.chat.files(this.chatModel.id)
     );
   };

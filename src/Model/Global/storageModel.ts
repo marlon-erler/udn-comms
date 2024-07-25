@@ -1,9 +1,6 @@
 // this file is responsible for reading and writing persistent data.
 
-import {
-  DATA_VERSION,
-  ValidObject,
-} from "../Utility/typeSafety";
+import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
 import { localeCompare, parseValidObject, stringify } from "../Utility/utility";
 
 export const PATH_COMPONENT_SEPARATOR = "\\";
@@ -83,7 +80,6 @@ export default class StorageModel {
   ): boolean => {
     const content: string | null = this.read(sourcePathComponents);
     if (content == null) return false;
-
 
     this.write(destinationPathComponents, content);
     this.remove(sourcePathComponents);
@@ -212,10 +208,10 @@ export default class StorageModel {
   };
 
   static getPath(
-    locationName: keyof typeof storageLocations,
+    locationName: StorageModelSubPath,
     filePath: string[]
   ): string[] {
-    return [DATA_VERSION, storageLocations[locationName], ...filePath];
+    return [DATA_VERSION, locationName, ...filePath];
   }
 }
 
@@ -223,13 +219,12 @@ export default class StorageModel {
 export type StorageEntry = { [key: string]: StorageEntry };
 
 // locations
-const storageLocations = {
-  connectionModel: "connection",
-
-  chat: "chat",
-
-  settingsModel: "settings",
-};
+export enum StorageModelSubPath {
+  Chat = "chat",
+  
+  ConnectionModel = "connection",
+  SettingsModel = "settings",
+}
 
 export const filePaths = {
   connectionModel: {
