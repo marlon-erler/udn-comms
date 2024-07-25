@@ -2806,7 +2806,12 @@
       boardViewModel.taskViewModels,
       (taskViewModels) => {
         const statusNameConverter = (statusName) => {
-          return CategoryStatusColumn(statusName, taskViewModels);
+          return CategoryStatusColumn(
+            categoryName,
+            statusName,
+            boardViewModel,
+            taskViewModels
+          );
         };
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
         return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
@@ -2834,7 +2839,7 @@
       }
     );
   }
-  function CategoryStatusColumn(statusName, taskViewModelsWithMatchingCategory) {
+  function CategoryStatusColumn(categoryName, statusName, boardViewModel, taskViewModelsWithMatchingCategory) {
     const taskViewModels = new ListState();
     taskViewModelsWithMatchingCategory.handleAddition((taskViewModel) => {
       const doesMatchStatus = taskViewModel.status.value == statusName;
@@ -2844,10 +2849,15 @@
         taskViewModels.remove(taskViewModel);
       });
     });
+    function drop() {
+      boardViewModel.handleDrop(categoryName, statusName);
+    }
     return /* @__PURE__ */ createElement(
       "div",
       {
         class: "status-column gap",
+        "on:dragover": allowDrop,
+        "on:drop": drop,
         "children:append": [taskViewModels, TaskViewModelToEntry]
       }
     );

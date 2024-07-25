@@ -10,6 +10,7 @@ import { FilteredList } from "../Components/filteredList";
 import { PropertyValueList } from "../Components/propertyList";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
+import { allowDrop } from "../utility";
 import { collectObjectValuesForKey } from "../../Model/Utility/utility";
 import { translations } from "../translations";
 
@@ -117,7 +118,12 @@ function CategoryRow(
       const statusNameConverter: React.StateItemConverter<string> = (
         statusName: string
       ) => {
-        return CategoryStatusColumn(statusName, taskViewModels);
+        return CategoryStatusColumn(
+          categoryName,
+          statusName,
+          boardViewModel,
+          taskViewModels
+        );
       };
 
       const viewModel: TaskCategoryBulkChangeViewModel =
@@ -153,7 +159,9 @@ function CategoryRow(
 }
 
 function CategoryStatusColumn(
+  categoryName: string,
   statusName: string,
+  boardViewModel: BoardViewModel,
   taskViewModelsWithMatchingCategory: React.ListState<TaskViewModel>
 ) {
   const taskViewModels: React.ListState<TaskViewModel> = new React.ListState();
@@ -168,9 +176,15 @@ function CategoryStatusColumn(
     });
   });
 
+  function drop() {
+    boardViewModel.handleDrop(categoryName, statusName);
+  }
+
   return (
     <div
       class="status-column gap"
+      on:dragover={allowDrop}
+      on:drop={drop}
       children:append={[taskViewModels, TaskViewModelToEntry]}
     ></div>
   );
