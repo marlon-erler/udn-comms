@@ -2550,6 +2550,49 @@
     ))))));
   }
 
+  // src/View/Components/propertyValueList.tsx
+  function PropertyValueList(propertyKey, stringEntryObjectConverter, objects, viewBuilder) {
+    const propertyValues = new ListState();
+    const sortedPropertyValues = createSortedPropertyValueState(propertyValues);
+    objects.subscribe(() => {
+      collectPropertyValuesToState(
+        propertyKey,
+        stringEntryObjectConverter,
+        objects,
+        propertyValues
+      );
+    });
+    return viewBuilder(propertyValues, sortedPropertyValues);
+  }
+  function collectPropertyValuesToState(propertyKey, stringEntryObjectConverter, objects, propertyValues) {
+    const values = collectObjectValuesForKey(
+      propertyKey,
+      stringEntryObjectConverter,
+      [...objects.value.values()]
+    );
+    for (const existingValue of values) {
+      if (propertyValues.value.has(existingValue)) continue;
+      propertyValues.add(existingValue);
+    }
+    for (const displayedValue of propertyValues.value.values()) {
+      if (values.includes(displayedValue) == false) {
+        propertyValues.remove(displayedValue);
+      }
+    }
+  }
+  function createSortedPropertyValueState(propertyValues) {
+    return createProxyState(
+      [propertyValues],
+      () => [...propertyValues.value.values()].sort(localeCompare)
+    );
+  }
+  function createPropertyValueIndexState(sortedKeys, key) {
+    return createProxyState(
+      [sortedKeys],
+      () => sortedKeys.value.indexOf(key)
+    );
+  }
+
   // src/View/Components/filteredList.tsx
   function FilteredList(reference, stringEntryObjectConverter, objects, viewBuilder) {
     const matchingObjects = new ListState();
@@ -2565,31 +2608,6 @@
       });
     });
     return viewBuilder(matchingObjects);
-  }
-
-  // src/View/Components/propertyValueList.tsx
-  function PropertyValueList(propertyKey, stringEntryObjectConverter, objects, viewBuilder) {
-    const propertyValues = new ListState();
-    function collectValues() {
-      const values = collectObjectValuesForKey(
-        propertyKey,
-        stringEntryObjectConverter,
-        [...objects.value.values()]
-      );
-      for (const existingValue of values) {
-        if (propertyValues.value.has(existingValue)) continue;
-        propertyValues.add(existingValue);
-      }
-      for (const displayedValue of propertyValues.value.values()) {
-        if (values.includes(displayedValue) == false) {
-          propertyValues.remove(displayedValue);
-        }
-      }
-    }
-    objects.subscribe(() => {
-      collectValues();
-    });
-    return viewBuilder(propertyValues);
   }
 
   // src/ViewModel/Utility/taskPropertyBulkChangeViewModel.ts
@@ -2694,15 +2712,11 @@
       "category",
       (taskViewModel) => taskViewModel.task,
       boardViewModel.taskViewModels,
-      (categories) => {
-        const sortedCategories = createProxyState(
-          [categories],
-          () => [...categories.value.values()].sort(localeCompare)
-        );
+      (categories, sortedCategories) => {
         const categoryNameConverter = (categoryName) => {
-          const index = createProxyState(
-            [sortedCategories],
-            () => sortedCategories.value.indexOf(categoryName)
+          const index = createPropertyValueIndexState(
+            sortedCategories,
+            categoryName
           );
           return KanbanBoard(categoryName, index, boardViewModel);
         };
@@ -2773,22 +2787,20 @@
 
   // src/View/ChatPages/boardStatusGridPage.tsx
   function BoardStatusGridPage(boardViewModel) {
-    const categoryRowConverter = (categoryName) => {
-      return CategoryRow(categoryName, statuses, boardViewModel);
-    };
-    const statusNameCellConverter = (statusName) => {
-      return StatusNameCell(statusName, boardViewModel);
-    };
     const statuses = new ListState();
+    const sortedStatuses = createSortedPropertyValueState(statuses);
     boardViewModel.taskViewModels.subscribe(() => {
-      statuses.clear();
-      const statusArray = collectObjectValuesForKey(
+      collectPropertyValuesToState(
         "status",
         (taskViewModel) => taskViewModel.task,
-        [...boardViewModel.taskViewModels.value.values()]
+        boardViewModel.taskViewModels,
+        statuses
       );
-      statuses.add(...statusArray);
     });
+    const statusNameCellConverter = (statusName) => {
+      const index = createPropertyValueIndexState(sortedStatuses, statusName);
+      return StatusNameCell(statusName, index, boardViewModel);
+    };
     return /* @__PURE__ */ createElement("div", { class: "status-page-content" }, /* @__PURE__ */ createElement(
       "div",
       {
@@ -2799,7 +2811,20 @@
       "category",
       (taskViewModel) => taskViewModel.task,
       boardViewModel.filteredTaskViewModels,
-      (categories) => {
+      (categories, sortedCategories) => {
+        const categoryRowConverter = (categoryName) => {
+          const index = createPropertyValueIndexState(
+            sortedCategories,
+            categoryName
+          );
+          return CategoryRow(
+            categoryName,
+            index,
+            statuses,
+            sortedStatuses,
+            boardViewModel
+          );
+        };
         return /* @__PURE__ */ createElement(
           "div",
           {
@@ -2810,7 +2835,7 @@
       }
     ));
   }
-  function StatusNameCell(statusName, boardViewModel) {
+  function StatusNameCell(statusName, index, boardViewModel) {
     const taskViewModelsWithMatchingStatus = new ListState();
     boardViewModel.taskViewModels.handleAddition(
       (taskViewModel) => {
@@ -2826,7 +2851,7 @@
       taskViewModelsWithMatchingStatus,
       statusName
     );
-    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
@@ -2842,23 +2867,29 @@
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
     )));
+    index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
   }
-  function CategoryRow(categoryName, allStatuses, boardViewModel) {
+  function CategoryRow(categoryName, index, allStatuses, sortedStatuses, boardViewModel) {
     return FilteredList(
       { category: categoryName },
       (taskViewModel) => taskViewModel.task,
       boardViewModel.taskViewModels,
       (taskViewModels) => {
         const statusNameConverter = (statusName) => {
+          const index2 = createPropertyValueIndexState(sortedStatuses, statusName);
           return CategoryStatusColumn(
             categoryName,
             statusName,
+            index2,
             boardViewModel,
             taskViewModels
           );
         };
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
-        return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+        const view = /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
           "input",
           {
             placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
@@ -2880,10 +2911,14 @@
             "children:append": [allStatuses, statusNameConverter]
           }
         ));
+        index.subscribe((newIndex) => {
+          view.style.order = newIndex;
+        });
+        return view;
       }
     );
   }
-  function CategoryStatusColumn(categoryName, statusName, boardViewModel, taskViewModelsWithMatchingCategory) {
+  function CategoryStatusColumn(categoryName, statusName, index, boardViewModel, taskViewModelsWithMatchingCategory) {
     const taskViewModels = new ListState();
     taskViewModelsWithMatchingCategory.handleAddition((taskViewModel) => {
       const doesMatchStatus = taskViewModel.status.value == statusName;
@@ -2896,7 +2931,7 @@
     function drop() {
       boardViewModel.handleDropWithinBoard(categoryName, statusName);
     }
-    return /* @__PURE__ */ createElement(
+    const view = /* @__PURE__ */ createElement(
       "div",
       {
         class: "status-column gap",
@@ -2905,6 +2940,10 @@
         "children:append": [taskViewModels, TaskViewModelToEntry]
       }
     );
+    index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
   }
 
   // src/View/Components/boardViewToggleButton.tsx

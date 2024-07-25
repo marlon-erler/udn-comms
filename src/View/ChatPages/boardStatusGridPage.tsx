@@ -1,42 +1,43 @@
 import * as React from "bloatless-react";
 
 import {
+  PropertyValueList,
+  collectPropertyValuesToState,
+  createPropertyValueIndexState,
+  createSortedPropertyValueState,
+} from "../Components/propertyValueList";
+import {
   TaskCategoryBulkChangeViewModel,
   TaskStatusBulkChangeViewModel,
 } from "../../ViewModel/Utility/taskPropertyBulkChangeViewModel";
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { FilteredList } from "../Components/filteredList";
-import { PropertyValueList } from "../Components/propertyValueList";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { allowDrop } from "../utility";
-import { collectObjectValuesForKey } from "../../Model/Utility/utility";
 import { translations } from "../translations";
 
 export function BoardStatusGridPage(boardViewModel: BoardViewModel) {
-  const categoryRowConverter: React.StateItemConverter<string> = (
-    categoryName: string
-  ) => {
-    return CategoryRow(categoryName, statuses, boardViewModel);
-  };
+  const statuses: React.ListState<string> = new React.ListState();
+  const sortedStatuses: React.State<string[]> =
+    createSortedPropertyValueState(statuses);
+
+  boardViewModel.taskViewModels.subscribe(() => {
+    collectPropertyValuesToState(
+      "status",
+      (taskViewModel: TaskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      statuses
+    );
+  });
 
   const statusNameCellConverter: React.StateItemConverter<string> = (
     statusName: string
   ) => {
-    return StatusNameCell(statusName, boardViewModel);
+    const index = createPropertyValueIndexState(sortedStatuses, statusName);
+    return StatusNameCell(statusName, index, boardViewModel);
   };
-
-  const statuses: React.ListState<string> = new React.ListState();
-  boardViewModel.taskViewModels.subscribe(() => {
-    statuses.clear();
-    const statusArray: string[] = collectObjectValuesForKey(
-      "status",
-      (taskViewModel: TaskViewModel) => taskViewModel.task,
-      [...boardViewModel.taskViewModels.value.values()]
-    );
-    statuses.add(...statusArray);
-  });
 
   return (
     <div class="status-page-content">
@@ -48,7 +49,27 @@ export function BoardStatusGridPage(boardViewModel: BoardViewModel) {
         "category",
         (taskViewModel: TaskViewModel) => taskViewModel.task,
         boardViewModel.filteredTaskViewModels,
-        (categories: React.ListState<string>) => {
+        (
+          categories: React.ListState<string>,
+          sortedCategories: React.State<string[]>
+        ) => {
+          const categoryRowConverter: React.StateItemConverter<string> = (
+            categoryName: string
+          ) => {
+            const index: React.State<number> = createPropertyValueIndexState(
+              sortedCategories,
+              categoryName
+            );
+
+            return CategoryRow(
+              categoryName,
+              index,
+              statuses,
+              sortedStatuses,
+              boardViewModel
+            );
+          };
+
           return (
             <div
               class="status-grid-wrapper"
@@ -61,7 +82,11 @@ export function BoardStatusGridPage(boardViewModel: BoardViewModel) {
   );
 }
 
-function StatusNameCell(statusName: string, boardViewModel: BoardViewModel) {
+function StatusNameCell(
+  statusName: string,
+  index: React.State<number>,
+  boardViewModel: BoardViewModel
+) {
   const taskViewModelsWithMatchingStatus: React.ListState<TaskViewModel> =
     new React.ListState();
 
@@ -83,7 +108,7 @@ function StatusNameCell(statusName: string, boardViewModel: BoardViewModel) {
       statusName
     );
 
-  return (
+  const view = (
     <div class="flex-row">
       <div class="property-input-wrapper">
         <input
@@ -103,11 +128,19 @@ function StatusNameCell(statusName: string, boardViewModel: BoardViewModel) {
       </div>
     </div>
   );
+
+  index.subscribe((newIndex) => {
+    view.style.order = newIndex;
+  });
+
+  return view;
 }
 
 function CategoryRow(
   categoryName: string,
+  index: React.State<number>,
   allStatuses: React.ListState<string>,
+  sortedStatuses: React.State<string[]>,
   boardViewModel: BoardViewModel
 ) {
   return FilteredList(
@@ -118,9 +151,11 @@ function CategoryRow(
       const statusNameConverter: React.StateItemConverter<string> = (
         statusName: string
       ) => {
+        const index = createPropertyValueIndexState(sortedStatuses, statusName);
         return CategoryStatusColumn(
           categoryName,
           statusName,
+          index,
           boardViewModel,
           taskViewModels
         );
@@ -129,7 +164,7 @@ function CategoryRow(
       const viewModel: TaskCategoryBulkChangeViewModel =
         new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
 
-      return (
+      const view = (
         <div class="flex-row flex-no large-gap">
           <div class="property-input-wrapper">
             <input
@@ -154,6 +189,12 @@ function CategoryRow(
           ></div>
         </div>
       );
+
+      index.subscribe((newIndex) => {
+        view.style.order = newIndex;
+      });
+
+      return view;
     }
   );
 }
@@ -161,6 +202,7 @@ function CategoryRow(
 function CategoryStatusColumn(
   categoryName: string,
   statusName: string,
+  index: React.State<number>,
   boardViewModel: BoardViewModel,
   taskViewModelsWithMatchingCategory: React.ListState<TaskViewModel>
 ) {
@@ -180,7 +222,7 @@ function CategoryStatusColumn(
     boardViewModel.handleDropWithinBoard(categoryName, statusName);
   }
 
-  return (
+  const view = (
     <div
       class="status-column gap"
       on:dragover={allowDrop}
@@ -188,4 +230,10 @@ function CategoryStatusColumn(
       children:append={[taskViewModels, TaskViewModelToEntry]}
     ></div>
   );
+
+  index.subscribe((newIndex) => {
+    view.style.order = newIndex;
+  });
+
+  return view;
 }
