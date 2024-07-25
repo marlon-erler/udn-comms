@@ -574,6 +574,9 @@ body[showing-chat] #chat-page-wrapper {
   max-width: 100%;
   padding: 0px;
 }
+#chat-page > div > #main > #task-page > .pane-wrapper > .pane > .main-content > div {
+  animation: slide-up var(--animation-duration);
+}
 #chat-page > div > #main > #task-page .task-grid {
   display: flex;
   flex-direction: column;
