@@ -1,12 +1,15 @@
 import * as React from "bloatless-react";
 
-import BoardsAndTasksModel, { BoardInfoFileContent } from "../../Model/Files/boardsAndTasksModel";
+import BoardsAndTasksModel, {
+  BoardInfoFileContent,
+} from "../../Model/Files/boardsAndTasksModel";
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
+import TaskViewModel from "./taskViewModel";
 
 export default class TaskPageViewModel {
   storageModel: StorageModel;

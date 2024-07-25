@@ -177,7 +177,7 @@ function CategoryStatusColumn(
   });
 
   function drop() {
-    boardViewModel.handleDrop(categoryName, statusName);
+    boardViewModel.handleDropWithinBoard(categoryName, statusName);
   }
 
   return (

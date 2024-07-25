@@ -83,7 +83,11 @@ export default class BoardsAndTasksModel {
   // boards
   createBoard = (name: string): BoardInfoFileContent => {
     const boardInfoFileContent: BoardInfoFileContent =
-      BoardsAndTasksModel.createBoardInfoFileContent(v4(), name, Color.Standard);
+      BoardsAndTasksModel.createBoardInfoFileContent(
+        v4(),
+        name,
+        Color.Standard
+      );
     return boardInfoFileContent;
   };
 
@@ -133,11 +137,8 @@ export default class BoardsAndTasksModel {
 
   //tasks
   createTask = (boardId: string): TaskFileContent => {
-    const taskFileContent: TaskFileContent = BoardsAndTasksModel.createTaskFileContent(
-      v4(),
-      "",
-      boardId
-    );
+    const taskFileContent: TaskFileContent =
+      BoardsAndTasksModel.createTaskFileContent(v4(), "", boardId);
     return taskFileContent;
   };
 
@@ -152,6 +153,8 @@ export default class BoardsAndTasksModel {
   };
 
   storeTask = (taskFileContent: TaskFileContent): void => {
+    console.log(taskFileContent);
+
     // store info
     this.fileModel.storeFileContent(taskFileContent);
 
@@ -195,12 +198,16 @@ export default class BoardsAndTasksModel {
 
   deleteTask = (boardId: string, taskId: string): void => {
     const taskFilePath: string[] = this.getTaskFilePath(taskId);
+    this.storageModel.removeRecursively(taskFilePath);
+
+    this.deleteTaskReference(boardId, taskId);
+  };
+
+  deleteTaskReference = (boardId: string, taskId: string): void => {
     const taskReferencePath: string[] = this.getTaskReferencePath(
       boardId,
       taskId
     );
-
-    this.storageModel.removeRecursively(taskFilePath);
     this.storageModel.removeRecursively(taskReferencePath);
   };
 

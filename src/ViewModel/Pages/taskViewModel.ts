@@ -9,7 +9,7 @@ import BoardViewModel from "./boardViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 
 export default class TaskViewModel {
-  boardModel: BoardsAndTasksModel;
+  boardsAndTasksModel: BoardsAndTasksModel;
 
   boardViewModel: BoardViewModel;
 
@@ -36,11 +36,13 @@ export default class TaskViewModel {
 
   // paths
   getFilePath = (): string[] => {
-    return this.boardModel.getTaskFilePath(this.task.fileId);
+    return this.boardsAndTasksModel.getTaskFilePath(this.task.fileId);
   };
 
   // state
   index: React.State<number> = new React.State(0);
+
+  boardId: React.State<string> = new React.State("");
 
   name: React.State<string> = new React.State("");
   description: React.State<string> = new React.State("");
@@ -60,9 +62,14 @@ export default class TaskViewModel {
     this.coreViewModel.draggedObject.value = this;
   };
 
-  setCategoryAndStatus = (category?: string, status?: string) => {
+  setCategoryAndStatus = (category?: string, status?: string): void => {
     if (category != undefined) this.category.value = category;
     if (status != undefined) this.status.value = status;
+    this.save();
+  };
+
+  setBoardId = (boardId: string): void => {
+    this.boardId.value = boardId;
     this.save();
   }
 
@@ -94,6 +101,7 @@ export default class TaskViewModel {
         this.task.boardId
       );
 
+    newTaskFileContent.boardId = this.boardId.value;
     newTaskFileContent.description = this.description.value;
     newTaskFileContent.status = this.status.value;
     newTaskFileContent.category = this.category.value;
@@ -101,20 +109,20 @@ export default class TaskViewModel {
     newTaskFileContent.date = this.date.value;
     newTaskFileContent.time = this.time.value;
 
-    this.boardModel.updateTaskAndSend(newTaskFileContent);
+    this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
     this.boardViewModel.showTaskInList(newTaskFileContent);
     this.boardViewModel.updateTaskIndices();
   };
 
   deleteTask = (): void => {
     this.close();
-    this.boardModel.deleteTask(this.task.boardId, this.task.fileId);
+    this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
     this.boardViewModel.removeTaskFromList(this.task.fileId);
   };
 
   // load
   loadVersionIds = (): void => {
-    const versionIds: string[] = this.boardModel.listTaskVersionIds(
+    const versionIds: string[] = this.boardsAndTasksModel.listTaskVersionIds(
       this.task.fileId
     );
     const sortedVersionIds = versionIds.sort(localeCompare).reverse();
@@ -124,7 +132,7 @@ export default class TaskViewModel {
 
   switchVersion = (versionId: string): void => {
     const taskFileContent: TaskFileContent | null =
-      this.boardModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+      this.boardsAndTasksModel.getSpecificTaskFileContent(this.task.fileId, versionId);
     if (taskFileContent == null) return;
 
     this.task = taskFileContent;
@@ -137,6 +145,8 @@ export default class TaskViewModel {
   };
 
   loadTaskData = (): void => {
+    this.boardId.value = this.task.boardId;
+
     this.name.value = this.task.name;
     this.description.value = this.task.description ?? "";
 
@@ -157,7 +167,7 @@ export default class TaskViewModel {
     boardViewModel: BoardViewModel,
     taskFileContent: TaskFileContent
   ) {
-    this.boardModel = boardModel;
+    this.boardsAndTasksModel = boardModel;
     this.boardViewModel = boardViewModel;
 
     this.task = taskFileContent;

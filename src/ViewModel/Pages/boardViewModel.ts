@@ -14,7 +14,7 @@ import TaskViewModel from "./taskViewModel";
 
 export default class BoardViewModel {
   storageModel: StorageModel;
-  boardModel: BoardsAndTasksModel;
+  boardsAndTasksModel: BoardsAndTasksModel;
 
   taskPageViewModel: TaskPageViewModel;
 
@@ -76,12 +76,11 @@ export default class BoardViewModel {
 
   // methods
   createTask = (): void => {
-    const taskFileContent: TaskFileContent = this.boardModel.createTask(
-      this.boardInfo.fileId
-    );
+    const taskFileContent: TaskFileContent =
+      this.boardsAndTasksModel.createTask(this.boardInfo.fileId);
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
-      this.boardModel,
+      this.boardsAndTasksModel,
       this,
       taskFileContent
     );
@@ -94,10 +93,16 @@ export default class BoardViewModel {
     this.updateIndex();
   };
 
-  handleDrop = (category?: string, status?: string): void => {
+  handleDropWithinBoard = (category?: string, status?: string): void => {
     const draggedObject: any = this.coreViewModel.draggedObject.value;
     if (draggedObject instanceof TaskViewModel == false) return;
     draggedObject.setCategoryAndStatus(category, status);
+  };
+
+  handleDropBetweenBoards = (): void => {
+    const draggedObject: any = this.coreViewModel.draggedObject.value;
+    if (draggedObject instanceof TaskViewModel == false) return;
+    draggedObject.setBoardId(this.boardInfo.fileId);
   };
 
   // storage
@@ -117,9 +122,19 @@ export default class BoardViewModel {
 
   // view
   showTaskInList = (taskFileContent: TaskFileContent): void => {
+    if (taskFileContent.boardId != this.boardInfo.fileId) {
+      // remove task that was moved to different board
+      this.boardsAndTasksModel.deleteTaskReference(
+        this.boardInfo.fileId,
+        taskFileContent.fileId
+      );
+      this.removeTaskFromList(taskFileContent.fileId);
+      return;
+    }
+
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
-      this.boardModel,
+      this.boardsAndTasksModel,
       this,
       taskFileContent
     );
@@ -193,19 +208,19 @@ export default class BoardViewModel {
   };
 
   loadTasks = (): void => {
-    const taskIds: string[] = this.boardModel.listTaskIds(
+    const taskIds: string[] = this.boardsAndTasksModel.listTaskIds(
       this.boardInfo.fileId
     );
     for (const taskId of taskIds) {
       if (this.taskViewModels.value.has(taskId)) return;
 
       const taskFileContent: TaskFileContent | null =
-        this.boardModel.getLatestTaskFileContent(taskId);
+        this.boardsAndTasksModel.getLatestTaskFileContent(taskId);
       if (taskFileContent == null) continue;
 
       const taskViewModel: TaskViewModel = new TaskViewModel(
         this.coreViewModel,
-        this.boardModel,
+        this.boardsAndTasksModel,
         this,
         taskFileContent
       );
@@ -230,7 +245,7 @@ export default class BoardViewModel {
   ) {
     // set
     this.storageModel = storageModel;
-    this.boardModel = boardModel;
+    this.boardsAndTasksModel = boardModel;
     this.taskPageViewModel = taskPageViewModel;
     this.boardInfo = boardInfo;
 

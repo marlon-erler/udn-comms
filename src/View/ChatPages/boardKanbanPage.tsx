@@ -41,7 +41,7 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
         new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
 
       function drop() {
-        boardViewModel.handleDrop(categoryName);
+        boardViewModel.handleDropWithinBoard(categoryName);
       }
 
       return (

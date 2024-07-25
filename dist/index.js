@@ -677,7 +677,11 @@
     };
     // boards
     createBoard = (name) => {
-      const boardInfoFileContent = _BoardsAndTasksModel.createBoardInfoFileContent(v4_default(), name, "standard" /* Standard */);
+      const boardInfoFileContent = _BoardsAndTasksModel.createBoardInfoFileContent(
+        v4_default(),
+        name,
+        "standard" /* Standard */
+      );
       return boardInfoFileContent;
     };
     updateBoard = (boardInfoFileContent) => {
@@ -715,11 +719,7 @@
     };
     //tasks
     createTask = (boardId) => {
-      const taskFileContent = _BoardsAndTasksModel.createTaskFileContent(
-        v4_default(),
-        "",
-        boardId
-      );
+      const taskFileContent = _BoardsAndTasksModel.createTaskFileContent(v4_default(), "", boardId);
       return taskFileContent;
     };
     updateTask = (taskFileContent) => {
@@ -731,6 +731,7 @@
       this.chatModel.sendMessage("", taskFileContent);
     };
     storeTask = (taskFileContent) => {
+      console.log(taskFileContent);
       this.fileModel.storeFileContent(taskFileContent);
       const taskReferencePath = this.getTaskReferencePath(
         taskFileContent.boardId,
@@ -761,11 +762,14 @@
     };
     deleteTask = (boardId, taskId) => {
       const taskFilePath = this.getTaskFilePath(taskId);
+      this.storageModel.removeRecursively(taskFilePath);
+      this.deleteTaskReference(boardId, taskId);
+    };
+    deleteTaskReference = (boardId, taskId) => {
       const taskReferencePath = this.getTaskReferencePath(
         boardId,
         taskId
       );
-      this.storageModel.removeRecursively(taskFilePath);
       this.storageModel.removeRecursively(taskReferencePath);
     };
     // init
@@ -1515,7 +1519,7 @@
     // init
     constructor(coreViewModel, boardModel, boardViewModel, taskFileContent) {
       this.coreViewModel = coreViewModel;
-      this.boardModel = boardModel;
+      this.boardsAndTasksModel = boardModel;
       this.boardViewModel = boardViewModel;
       this.task = taskFileContent;
       this.loadAllData();
@@ -1523,7 +1527,7 @@
         this.switchVersion(selectedVersionId);
       });
     }
-    boardModel;
+    boardsAndTasksModel;
     boardViewModel;
     // data
     task;
@@ -1541,10 +1545,11 @@
     }
     // paths
     getFilePath = () => {
-      return this.boardModel.getTaskFilePath(this.task.fileId);
+      return this.boardsAndTasksModel.getTaskFilePath(this.task.fileId);
     };
     // state
     index = new State(0);
+    boardId = new State("");
     name = new State("");
     description = new State("");
     category = new State("");
@@ -1561,6 +1566,10 @@
     setCategoryAndStatus = (category, status) => {
       if (category != void 0) this.category.value = category;
       if (status != void 0) this.status.value = status;
+      this.save();
+    };
+    setBoardId = (boardId) => {
+      this.boardId.value = boardId;
       this.save();
     };
     // view
@@ -1585,24 +1594,25 @@
         this.name.value,
         this.task.boardId
       );
+      newTaskFileContent.boardId = this.boardId.value;
       newTaskFileContent.description = this.description.value;
       newTaskFileContent.status = this.status.value;
       newTaskFileContent.category = this.category.value;
       newTaskFileContent.priority = this.priority.value;
       newTaskFileContent.date = this.date.value;
       newTaskFileContent.time = this.time.value;
-      this.boardModel.updateTaskAndSend(newTaskFileContent);
+      this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
       this.boardViewModel.showTaskInList(newTaskFileContent);
       this.boardViewModel.updateTaskIndices();
     };
     deleteTask = () => {
       this.close();
-      this.boardModel.deleteTask(this.task.boardId, this.task.fileId);
+      this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
       this.boardViewModel.removeTaskFromList(this.task.fileId);
     };
     // load
     loadVersionIds = () => {
-      const versionIds = this.boardModel.listTaskVersionIds(
+      const versionIds = this.boardsAndTasksModel.listTaskVersionIds(
         this.task.fileId
       );
       const sortedVersionIds = versionIds.sort(localeCompare).reverse();
@@ -1610,7 +1620,7 @@
       this.versionIds.add(...sortedVersionIds);
     };
     switchVersion = (versionId) => {
-      const taskFileContent = this.boardModel.getSpecificTaskFileContent(this.task.fileId, versionId);
+      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(this.task.fileId, versionId);
       if (taskFileContent == null) return;
       this.task = taskFileContent;
       this.loadTaskData();
@@ -1620,6 +1630,7 @@
       this.loadVersionIds();
     };
     loadTaskData = () => {
+      this.boardId.value = this.task.boardId;
       this.name.value = this.task.name;
       this.description.value = this.task.description ?? "";
       this.category.value = this.task.category ?? "";
@@ -1637,7 +1648,7 @@
     constructor(coreViewModel, storageModel2, boardModel, taskPageViewModel, boardInfo) {
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
-      this.boardModel = boardModel;
+      this.boardsAndTasksModel = boardModel;
       this.taskPageViewModel = taskPageViewModel;
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
@@ -1661,7 +1672,7 @@
       );
     }
     storageModel;
-    boardModel;
+    boardsAndTasksModel;
     taskPageViewModel;
     // data
     boardInfo;
@@ -1706,12 +1717,10 @@
     };
     // methods
     createTask = () => {
-      const taskFileContent = this.boardModel.createTask(
-        this.boardInfo.fileId
-      );
+      const taskFileContent = this.boardsAndTasksModel.createTask(this.boardInfo.fileId);
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
-        this.boardModel,
+        this.boardsAndTasksModel,
         this,
         taskFileContent
       );
@@ -1722,10 +1731,15 @@
       this.taskViewModels.remove(taskId);
       this.updateIndex();
     };
-    handleDrop = (category, status) => {
+    handleDropWithinBoard = (category, status) => {
       const draggedObject = this.coreViewModel.draggedObject.value;
       if (draggedObject instanceof TaskViewModel == false) return;
       draggedObject.setCategoryAndStatus(category, status);
+    };
+    handleDropBetweenBoards = () => {
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setBoardId(this.boardInfo.fileId);
     };
     // storage
     storeLastUsedView = () => {
@@ -1741,9 +1755,17 @@
     };
     // view
     showTaskInList = (taskFileContent) => {
+      if (taskFileContent.boardId != this.boardInfo.fileId) {
+        this.boardsAndTasksModel.deleteTaskReference(
+          this.boardInfo.fileId,
+          taskFileContent.fileId
+        );
+        this.removeTaskFromList(taskFileContent.fileId);
+        return;
+      }
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
-        this.boardModel,
+        this.boardsAndTasksModel,
         this,
         taskFileContent
       );
@@ -1803,16 +1825,16 @@
       this.color.value = this.boardInfo.color;
     };
     loadTasks = () => {
-      const taskIds = this.boardModel.listTaskIds(
+      const taskIds = this.boardsAndTasksModel.listTaskIds(
         this.boardInfo.fileId
       );
       for (const taskId of taskIds) {
         if (this.taskViewModels.value.has(taskId)) return;
-        const taskFileContent = this.boardModel.getLatestTaskFileContent(taskId);
+        const taskFileContent = this.boardsAndTasksModel.getLatestTaskFileContent(taskId);
         if (taskFileContent == null) continue;
         const taskViewModel = new TaskViewModel(
           this.coreViewModel,
-          this.boardModel,
+          this.boardsAndTasksModel,
           this,
           taskFileContent
         );
@@ -2686,7 +2708,7 @@
       (taskViewModels) => {
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
         function drop() {
-          boardViewModel.handleDrop(categoryName);
+          boardViewModel.handleDropWithinBoard(categoryName);
         }
         return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", "on:dragover": allowDrop, "on:drop": drop }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
           "input",
@@ -2852,7 +2874,7 @@
       });
     });
     function drop() {
-      boardViewModel.handleDrop(categoryName, statusName);
+      boardViewModel.handleDropWithinBoard(categoryName, statusName);
     }
     return /* @__PURE__ */ createElement(
       "div",
@@ -3103,7 +3125,9 @@
         "set:color": boardViewModel.color,
         class: "tile colored-tile",
         "toggle:selected": boardViewModel.isSelected,
-        "on:click": boardViewModel.select
+        "on:click": boardViewModel.select,
+        "on:dragover": allowDrop,
+        "on:drop": boardViewModel.handleDropBetweenBoards
       },
       /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
       /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
