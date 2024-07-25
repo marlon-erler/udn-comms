@@ -5,35 +5,12 @@ export function createTimestamp(): string {
   return new Date().toISOString();
 }
 
-// handlers
-export type Handler<T> = (item: T) => void;
-
-export class HandlerManager<T> {
-  handlers: Set<Handler<T>> = new Set();
-
-  // manage
-  addHandler = (handler: Handler<T>): void => {
-    this.handlers.add(handler);
-  };
-
-  deleteHandler = (handler: Handler<T>): void => {
-    this.handlers.delete(handler);
-  };
-
-  // trigger
-  trigger = (item: T): void => {
-    for (const handler of this.handlers) {
-      handler(item);
-    }
-  };
-}
-
-// objects
+// filters etc
 export type StringEntryObject = { [key: string]: string | undefined };
 
 export function filterObjectsByStringEntries<T>(
   reference: StringEntryObject,
-  converter: (T) => StringEntryObject,
+  converter: (object: T) => StringEntryObject,
   objects: T[]
 ): Set<T> {
   const matches: Set<T> = new Set();
@@ -114,6 +91,80 @@ export function collectObjectValuesForKey<T>(
   }
 
   return [...values.values()].sort(localeCompare);
+}
+
+export function filterObjectsByWords<T>(
+  query: string,
+  getStringsOfObject: (object: T) => string[],
+  objects: T[]
+): Set<T> {
+  const matches: Set<T> = new Set();
+
+  object_loop: for (const object of objects) {
+    const doesMatch: boolean = checkIfMatchesFilter(
+      query,
+      getStringsOfObject,
+      object
+    );
+    if (doesMatch) matches.add(object);
+  }
+
+  return matches;
+}
+
+export function checkIfMatchesFilter<T>(
+  query: string,
+  getStringsOfObject: (object: T) => string[],
+  object: T
+): boolean {
+  if (query == "") return true;
+
+  const stringsInObject: string[] = getStringsOfObject(object);
+  const wordsInObject: string[] = [];
+  for (const string of stringsInObject) {
+    const lowercaseWordsInString = string.toLocaleLowerCase().split(" ");
+    wordsInObject.push(...lowercaseWordsInString);
+  }
+
+  const lowercaseWordsInQuery = query.toLowerCase().split(" ");
+  for (const queryWord of lowercaseWordsInQuery) {
+    if (queryWord[0] == "-") {
+      // exclusion
+      const wordContent = queryWord.substring(1);
+      if (wordsInObject.includes(wordContent)) {
+        return false;
+      }
+    } else {
+      if (wordsInObject.includes(queryWord) == false) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// handlers
+export type Handler<T> = (item: T) => void;
+
+export class HandlerManager<T> {
+  handlers: Set<Handler<T>> = new Set();
+
+  // manage
+  addHandler = (handler: Handler<T>): void => {
+    this.handlers.add(handler);
+  };
+
+  deleteHandler = (handler: Handler<T>): void => {
+    this.handlers.delete(handler);
+  };
+
+  // trigger
+  trigger = (item: T): void => {
+    for (const handler of this.handlers) {
+      handler(item);
+    }
+  };
 }
 
 // sorting

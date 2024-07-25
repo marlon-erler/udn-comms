@@ -314,22 +314,6 @@
   function createTimestamp() {
     return (/* @__PURE__ */ new Date()).toISOString();
   }
-  var HandlerManager = class {
-    handlers = /* @__PURE__ */ new Set();
-    // manage
-    addHandler = (handler) => {
-      this.handlers.add(handler);
-    };
-    deleteHandler = (handler) => {
-      this.handlers.delete(handler);
-    };
-    // trigger
-    trigger = (item) => {
-      for (const handler of this.handlers) {
-        handler(item);
-      }
-    };
-  };
   function checkDoesObjectMatchReference(reference, stringEntryObject) {
     reference_entry_loop: for (const referenceEntry of Object.entries(
       reference
@@ -369,6 +353,22 @@
     }
     return [...values.values()].sort(localeCompare);
   }
+  var HandlerManager = class {
+    handlers = /* @__PURE__ */ new Set();
+    // manage
+    addHandler = (handler) => {
+      this.handlers.add(handler);
+    };
+    deleteHandler = (handler) => {
+      this.handlers.delete(handler);
+    };
+    // trigger
+    trigger = (item) => {
+      for (const handler of this.handlers) {
+        handler(item);
+      }
+    };
+  };
   var IndexManager = class {
     itemToString;
     sortedStrings = [];
