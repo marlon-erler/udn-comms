@@ -174,6 +174,10 @@ const englishTranslations = {
       taskTimeLabel: "Time",
 
       deleteTaskButton: "Delete task",
+
+      ///
+
+      renameCategoryInputPlaceholder: "Rename category,"
     },
   },
 };

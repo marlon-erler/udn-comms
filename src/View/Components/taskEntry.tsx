@@ -13,7 +13,7 @@ export function TaskEntry(taskViewModel: TaskViewModel) {
   };
 
   const view = (
-    <button class="tile" on:click={taskViewModel.open}>
+    <button class="tile flex-no" on:click={taskViewModel.open}>
       <div>
         <b subscribe:innerText={taskViewModel.name}></b>
         <hr></hr>

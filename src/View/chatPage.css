@@ -66,6 +66,7 @@ body[showing-chat] #chat-page-wrapper {
   scroll-snap-align: center;
 
   min-width: 100%;
+  overflow: hidden;
 }
 
 #chat-page > div > #main > div > .pane-wrapper > .pane:not(.side),
@@ -79,6 +80,8 @@ body[showing-chat] #chat-page-wrapper {
   }
 
   #chat-page > div > #main > div > .pane-wrapper.side {
+    width: 18rem;
+    min-width: 18rem;
     max-width: 18rem;
   }
 }

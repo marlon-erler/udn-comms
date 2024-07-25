@@ -1,30 +1,51 @@
-#task-page .task-grid {
+#chat-page > div > #main > #task-page > .pane-wrapper > .pane > .main-content {
+  width: 100%;
+  max-width: 100%;
+
+  padding: 0px;
+}
+
+#chat-page > div > #main > #task-page .task-grid {
   display: flex;
   flex-direction: column;
   gap: var(--gap-between-tiles);
+
+  padding: var(--content-padding);
+}
+
+#chat-page > div > #main > #task-page .kanban-board-wrapper {
+  display: flex;
+  gap: var(--large-gap);
+
+  width: 100%;
+  height: 100%;
+
+  overflow: auto;
+
+  padding: var(--content-padding);
 }
 
 @media (min-width: 640px) {
-  #task-page .task-grid {
+  #chat-page > div > #main > #task-page .task-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   }
 }
 
 @media (max-width: 1024px) {
-  #task-page #board-list {
+  #chat-page > div > #main > #task-page #board-list {
     display: false;
   }
 
-  #task-page #board-content {
+  #chat-page > div > #main > #task-page #board-content {
     display: none;
   }
 
-  #task-page[isshowingboard] #board-list {
+  #chat-page > div > #main > #task-page[isshowingboard] #board-list {
     display: none;
   }
 
-  #task-page[isshowingboard] #board-content {
+  #chat-page > div > #main > #task-page[isshowingboard] #board-content {
     display: flex;
   }
 }

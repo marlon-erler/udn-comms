@@ -103,7 +103,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
           </button>
         </span>
       </div>
-      <div class="content" children:set={mainContent}></div>
+      <div class="content main-content" children:set={mainContent}></div>
 
       {BoardSettingsModal(boardViewModel)}
       <div children:set={taskSettingsModal}></div>

@@ -330,6 +330,45 @@
       }
     };
   };
+  function checkDoesObjectMatchReference(reference, stringEntryObject) {
+    reference_entry_loop: for (const referenceEntry of Object.entries(
+      reference
+    )) {
+      const [referenceKey, referenceValue] = referenceEntry;
+      const stringEntryObjectValue = stringEntryObject[referenceKey];
+      if (referenceValue == void 0) return false;
+      if (referenceValue[0] == "-") {
+        const strippedReferenceValue = referenceValue.substring(1);
+        if (strippedReferenceValue == "" && stringEntryObjectValue != void 0 && stringEntryObjectValue != "") {
+          return false;
+        }
+        if (stringEntryObjectValue == strippedReferenceValue) {
+          return false;
+        }
+      } else {
+        if (referenceValue == "" && (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")) {
+          return false;
+        } else if (referenceValue == "") {
+          continue reference_entry_loop;
+        }
+        if (stringEntryObjectValue != referenceValue) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  function collectObjectValuesForKey(key, converter, objects) {
+    const values = /* @__PURE__ */ new Set();
+    for (const object of objects) {
+      const stringEntryObject = converter(object);
+      const stringEntryObjectValue = stringEntryObject[key];
+      if (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")
+        continue;
+      values.add(stringEntryObjectValue);
+    }
+    return [...values.values()].sort(localeCompare);
+  }
   var IndexManager = class {
     itemToString;
     sortedStrings = [];
@@ -2145,7 +2184,9 @@
         taskDescriptionLabel: "Description",
         taskDateLabel: "Date",
         taskTimeLabel: "Time",
-        deleteTaskButton: "Delete task"
+        deleteTaskButton: "Delete task",
+        ///
+        renameCategoryInputPlaceholder: "Rename category,"
       }
     }
   };
@@ -2404,9 +2445,166 @@
     ))))));
   }
 
+  // src/View/Components/filteredList.tsx
+  function FilteredList(reference, stringEntryObjectConverter, objects, viewBuilder) {
+    const matchingObjects = new ListState();
+    objects.handleAddition((newObject) => {
+      const doesMatch = checkDoesObjectMatchReference(
+        reference,
+        stringEntryObjectConverter(newObject)
+      );
+      if (doesMatch == false) return;
+      matchingObjects.add(newObject);
+      objects.handleRemoval(newObject, () => {
+        matchingObjects.remove(newObject);
+      });
+    });
+    return viewBuilder(matchingObjects);
+  }
+
+  // src/View/Components/propertyList.tsx
+  function PropertyValueList(propertyKey, stringEntryObjectConverter, objects, viewBuilder) {
+    const propertyValues = new ListState();
+    function collectValues() {
+      propertyValues.clear();
+      const values = collectObjectValuesForKey(
+        propertyKey,
+        stringEntryObjectConverter,
+        [...objects.value.values()]
+      );
+      propertyValues.add(...values);
+    }
+    objects.subscribe(() => {
+      collectValues();
+    });
+    return viewBuilder(propertyValues);
+  }
+
+  // src/ViewModel/Pages/taskPropertyBulkChangeViewModel.ts
+  var TaskPropertyBulkChangeViewModel = class {
+    taskViewModels;
+    // state
+    inputValue = new State("");
+    // guards
+    cannotSet;
+    // methods
+    set = () => {
+      if (this.cannotSet.value == true) return;
+      this.taskViewModels.value.forEach((taskViewModel) => {
+        this.setValue(this.inputValue.value, taskViewModel);
+      });
+    };
+    setValue;
+    // init
+    constructor(taskViewModels, valueSetter, initialValue) {
+      this.taskViewModels = taskViewModels;
+      this.inputValue.value = initialValue;
+      this.setValue = valueSetter;
+      this.cannotSet = createProxyState(
+        [this.inputValue],
+        () => this.inputValue.value == "" || this.inputValue.value == initialValue
+      );
+    }
+  };
+  var TaskCategoryBulkChangeViewModel = class extends TaskPropertyBulkChangeViewModel {
+    constructor(taskViewModels, initialValue) {
+      super(
+        taskViewModels,
+        (newCategory, taskViewModel) => {
+          taskViewModel.category.value = newCategory;
+          taskViewModel.save();
+        },
+        initialValue
+      );
+    }
+  };
+
+  // src/View/Components/taskEntry.tsx
+  function TaskEntry(taskViewModel) {
+    const details = {
+      description: taskViewModel.description.value || "---",
+      priority_high: taskViewModel.priority.value || "---",
+      category: taskViewModel.category.value || "---",
+      clock_loader_40: taskViewModel.status.value || "---",
+      calendar_month: taskViewModel.date.value || "---",
+      schedule: taskViewModel.time.value || "---"
+    };
+    const view = /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid secondary",
+        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
+      },
+      ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
+        "span",
+        {
+          class: "flex-row align-center width-100 flex-no clip",
+          style: "gap: 1rem"
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
+        /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+      ))
+    )));
+    taskViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  var TaskViewModelToEntry = (taskViewModel) => {
+    return TaskEntry(taskViewModel);
+  };
+
   // src/View/ChatPages/boardKanbanPage.tsx
   function BoardKanbanPage(boardViewModel) {
-    return /* @__PURE__ */ createElement("div", null, "Kanban");
+    const categoryNameConverter = (categoryName) => {
+      return KanbanBoard(categoryName, boardViewModel);
+    };
+    return PropertyValueList(
+      "category",
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      (categories) => {
+        return /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "kanban-board-wrapper",
+            "children:append": [categories, categoryNameConverter]
+          }
+        );
+      }
+    );
+  }
+  function KanbanBoard(categoryName, boardViewModel) {
+    return FilteredList(
+      { category: categoryName },
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      (taskViewModels) => {
+        const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
+        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", style: "width: 18rem; min-width: 18rem" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+          "input",
+          {
+            placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+            "bind:value": viewModel.inputValue,
+            "on:enter": viewModel.set
+          }
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": viewModel.set,
+            "toggle:disabled": viewModel.cannotSet
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+        )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "flex-column gap",
+            "children:append": [taskViewModels, TaskViewModelToEntry]
+          }
+        ));
+      }
+    );
   }
 
   // src/View/Modals/boardSettingsModal.tsx
@@ -2470,41 +2668,6 @@
       taskViewModel.deleteTask
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
-
-  // src/View/Components/taskEntry.tsx
-  function TaskEntry(taskViewModel) {
-    const details = {
-      description: taskViewModel.description.value || "---",
-      priority_high: taskViewModel.priority.value || "---",
-      category: taskViewModel.category.value || "---",
-      clock_loader_40: taskViewModel.status.value || "---",
-      calendar_month: taskViewModel.date.value || "---",
-      schedule: taskViewModel.time.value || "---"
-    };
-    const view = /* @__PURE__ */ createElement("button", { class: "tile", "on:click": taskViewModel.open }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "grid secondary",
-        style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
-      },
-      ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
-        "span",
-        {
-          class: "flex-row align-center width-100 flex-no clip",
-          style: "gap: 1rem"
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
-        /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
-      ))
-    )));
-    taskViewModel.index.subscribe((newIndex) => {
-      view.style.order = newIndex;
-    });
-    return view;
-  }
-  var TaskViewModelToEntry = (taskViewModel) => {
-    return TaskEntry(taskViewModel);
-  };
 
   // src/View/ChatPages/boardPage.tsx
   function BoardPage(boardViewModel) {
@@ -2588,7 +2751,7 @@
         "on:click": boardViewModel.createTask
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
+    ))), /* @__PURE__ */ createElement("div", { class: "content main-content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }
 
   // src/View/Components/boardEntry.tsx
