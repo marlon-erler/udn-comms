@@ -1,6 +1,8 @@
 import * as React from "bloatless-react";
 
-import BoardsAndTasksModel, { TaskFileContent } from "../../Model/Files/boardsAndTasksModel";
+import BoardsAndTasksModel, {
+  TaskFileContent,
+} from "../../Model/Files/boardsAndTasksModel";
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
@@ -52,6 +54,17 @@ export default class TaskViewModel {
 
   selectedVersionId: React.State<string> = new React.State("");
   versionIds: React.ListState<string> = new React.ListState();
+
+  // methods
+  dragStart = (): void => {
+    this.coreViewModel.draggedObject.value = this;
+  };
+
+  setCategoryAndStatus = (category?: string, status?: string) => {
+    if (category != undefined) this.category.value = category;
+    if (status != undefined) this.status.value = status;
+    this.save();
+  }
 
   // view
   open = (): void => {

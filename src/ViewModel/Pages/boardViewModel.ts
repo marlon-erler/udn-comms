@@ -94,6 +94,12 @@ export default class BoardViewModel {
     this.updateIndex();
   };
 
+  handleDrop = (category?: string, status?: string): void => {
+    const draggedObject: any = this.coreViewModel.draggedObject.value;
+    if (draggedObject instanceof TaskViewModel == false) return;
+    draggedObject.setCategoryAndStatus(category, status);
+  };
+
   // storage
   storeLastUsedView = (): void => {
     const path: string[] = this.getLastUsedBoardPath();

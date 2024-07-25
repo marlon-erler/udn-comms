@@ -6,6 +6,7 @@ import { PropertyValueList } from "../Components/propertyList";
 import { TaskCategoryBulkChangeViewModel } from "../../ViewModel/Utility/taskPropertyBulkChangeViewModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
+import { allowDrop } from "../utility";
 import { translations } from "../translations";
 
 export function BoardKanbanPage(boardViewModel: BoardViewModel) {
@@ -39,8 +40,12 @@ function KanbanBoard(categoryName: string, boardViewModel: BoardViewModel) {
       const viewModel: TaskCategoryBulkChangeViewModel =
         new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
 
+      function drop() {
+        boardViewModel.handleDrop(categoryName);
+      }
+
       return (
-        <div class="flex-column flex-no">
+        <div class="flex-column flex-no" on:dragover={allowDrop} on:drop={drop}>
           <div class="flex-row width-input">
             <input
               placeholder={

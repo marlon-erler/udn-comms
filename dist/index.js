@@ -1320,6 +1320,14 @@
 
   // src/ViewModel/Chat/chatMessageViewModel.ts
   var ChatMessageViewModel = class {
+    // init
+    constructor(coreViewModel, messagePageViewModel, chatMessage, sentByUser) {
+      this.coreViewModel = coreViewModel;
+      this.messagePageViewModel = messagePageViewModel;
+      this.chatMessage = chatMessage;
+      this.sentByUser = sentByUser;
+      this.loadData();
+    }
     messagePageViewModel;
     // data
     chatMessage;
@@ -1356,17 +1364,19 @@
       this.body.value = this.chatMessage.body;
       this.status.value = this.chatMessage.status;
     };
-    // init
-    constructor(messagePageViewModel, chatMessage, sentByUser) {
-      this.messagePageViewModel = messagePageViewModel;
-      this.chatMessage = chatMessage;
-      this.sentByUser = sentByUser;
-      this.loadData();
-    }
   };
 
   // src/ViewModel/Pages/messagePageViewModel.ts
   var MessagePageViewModel = class {
+    // init
+    constructor(coreViewModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
+      this.cannotSendMessage = createProxyState(
+        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
+        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
+      );
+    }
     chatViewModel;
     // state
     chatMessageViewModels = new MapState();
@@ -1391,6 +1401,7 @@
     // view
     showChatMessage = (chatMessage) => {
       const chatMessageModel = new ChatMessageViewModel(
+        this.coreViewModel,
         this,
         chatMessage,
         chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
@@ -1409,18 +1420,23 @@
         this.showChatMessage(chatMessage);
       }
     };
-    // init
-    constructor(chatViewModel) {
-      this.chatViewModel = chatViewModel;
-      this.cannotSendMessage = createProxyState(
-        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
-        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
-      );
-    }
   };
 
   // src/ViewModel/Pages/settingsPageViewModel.ts
   var SettingsPageViewModel = class {
+    // init
+    constructor(coreViewModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
+      this.loadListRelevantData();
+      this.cannotSetEncryptionKey = createProxyState(
+        [this.encryptionKeyInput],
+        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
+      );
+      this.color.subscribe((newColor) => {
+        this.applyColor(newColor);
+      });
+    }
     chatViewModel;
     // state
     primaryChannel = new State("");
@@ -1497,22 +1513,21 @@
         this.secondaryChannels.add(secondaryChannel);
       }
     };
-    // init
-    constructor(chatViewModel) {
-      this.chatViewModel = chatViewModel;
-      this.loadListRelevantData();
-      this.cannotSetEncryptionKey = createProxyState(
-        [this.encryptionKeyInput],
-        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
-      );
-      this.color.subscribe((newColor) => {
-        this.applyColor(newColor);
-      });
-    }
   };
 
   // src/ViewModel/Pages/taskViewModel.ts
   var TaskViewModel = class {
+    // init
+    constructor(coreViewModel, boardModel, boardViewModel, taskFileContent) {
+      this.coreViewModel = coreViewModel;
+      this.boardModel = boardModel;
+      this.boardViewModel = boardViewModel;
+      this.task = taskFileContent;
+      this.loadAllData();
+      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
+        this.switchVersion(selectedVersionId);
+      });
+    }
     boardModel;
     boardViewModel;
     // data
@@ -1544,6 +1559,15 @@
     time = new State("");
     selectedVersionId = new State("");
     versionIds = new ListState();
+    // methods
+    dragStart = () => {
+      this.coreViewModel.draggedObject.value = this;
+    };
+    setCategoryAndStatus = (category, status) => {
+      if (category != void 0) this.category.value = category;
+      if (status != void 0) this.status.value = status;
+      this.save();
+    };
     // view
     open = () => {
       this.boardViewModel.selectTask(this);
@@ -1610,20 +1634,37 @@
       this.time.value = this.task.time ?? "";
       this.selectedVersionId.value = this.task.fileContentId;
     };
-    // init
-    constructor(boardModel, boardViewModel, taskFileContent) {
-      this.boardModel = boardModel;
-      this.boardViewModel = boardViewModel;
-      this.task = taskFileContent;
-      this.loadAllData();
-      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
-        this.switchVersion(selectedVersionId);
-      });
-    }
   };
 
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, boardModel, taskPageViewModel, boardInfo) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.boardModel = boardModel;
+      this.taskPageViewModel = taskPageViewModel;
+      this.boardInfo = boardInfo;
+      this.loadListRelevantData();
+      this.isSelected = createProxyState(
+        [this.taskPageViewModel.selectedBoardId],
+        () => this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
+      );
+      this.color.subscribe(() => {
+        if (this.isSelected.value == false) return;
+        this.applyColor();
+      });
+      this.selectedPage.subscribeSilent(() => {
+        this.storeLastUsedView();
+      });
+      boardModel.taskHandlerManager.addHandler(
+        (taskFileContent) => {
+          if (taskFileContent.boardId != this.boardInfo.fileId) return;
+          this.showTaskInList(taskFileContent);
+          this.updateTaskIndices();
+        }
+      );
+    }
     storageModel;
     boardModel;
     taskPageViewModel;
@@ -1674,6 +1715,7 @@
         this.boardInfo.fileId
       );
       const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
         this.boardModel,
         this,
         taskFileContent
@@ -1684,6 +1726,11 @@
     removeTaskFromList = (taskId) => {
       this.taskViewModels.remove(taskId);
       this.updateIndex();
+    };
+    handleDrop = (category, status) => {
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setCategoryAndStatus(category, status);
     };
     // storage
     storeLastUsedView = () => {
@@ -1700,6 +1747,7 @@
     // view
     showTaskInList = (taskFileContent) => {
       const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
         this.boardModel,
         this,
         taskFileContent
@@ -1768,6 +1816,7 @@
         const taskFileContent = this.boardModel.getLatestTaskFileContent(taskId);
         if (taskFileContent == null) continue;
         const taskViewModel = new TaskViewModel(
+          this.coreViewModel,
           this.boardModel,
           this,
           taskFileContent
@@ -1780,36 +1829,23 @@
       this.restoreLastUsedView();
       this.loadTasks();
     };
-    // init
-    constructor(storageModel2, boardModel, taskPageViewModel, boardInfo) {
-      this.storageModel = storageModel2;
-      this.boardModel = boardModel;
-      this.taskPageViewModel = taskPageViewModel;
-      this.boardInfo = boardInfo;
-      this.loadListRelevantData();
-      this.isSelected = createProxyState(
-        [this.taskPageViewModel.selectedBoardId],
-        () => this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
-      );
-      this.color.subscribe(() => {
-        if (this.isSelected.value == false) return;
-        this.applyColor();
-      });
-      this.selectedPage.subscribeSilent(() => {
-        this.storeLastUsedView();
-      });
-      boardModel.taskHandlerManager.addHandler(
-        (taskFileContent) => {
-          if (taskFileContent.boardId != this.boardInfo.fileId) return;
-          this.showTaskInList(taskFileContent);
-          this.updateTaskIndices();
-        }
-      );
-    }
   };
 
   // src/ViewModel/Pages/taskPageViewModel.ts
   var TaskPageViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, boardModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.boardModel = boardModel;
+      this.chatViewModel = chatViewModel;
+      boardModel.boardHandlerManager.addHandler(
+        (boardInfoFileContent) => {
+          this.showBoardInList(boardInfoFileContent);
+          this.updateBoardIndices();
+        }
+      );
+    }
     storageModel;
     boardModel;
     chatViewModel;
@@ -1857,6 +1893,7 @@
     // view
     showBoardInList = (boardInfo) => {
       const boardViewModel = new BoardViewModel(
+        this.coreViewModel,
         this.storageModel,
         this.boardModel,
         this,
@@ -1906,22 +1943,39 @@
       this.updateBoardIndices();
       this.openLastUsedBoard();
     };
-    // init
-    constructor(storageModel2, boardModel, chatViewModel) {
-      this.storageModel = storageModel2;
-      this.boardModel = boardModel;
-      this.chatViewModel = chatViewModel;
-      boardModel.boardHandlerManager.addHandler(
-        (boardInfoFileContent) => {
-          this.showBoardInList(boardInfoFileContent);
-          this.updateBoardIndices();
-        }
-      );
-    }
   };
 
   // src/ViewModel/Chat/chatViewModel.ts
   var ChatViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatModel = chatModel;
+      this.settingsViewModel = settingsViewModel2;
+      this.chatListViewModel = chatListViewModel2;
+      this.taskPageViewModel = new TaskPageViewModel(
+        this.coreViewModel,
+        this.storageModel,
+        this.chatModel.fileModel.boardsAndTasksModel,
+        this
+      );
+      this.messagePageViewModel = new MessagePageViewModel(
+        this.coreViewModel,
+        this
+      );
+      this.settingsPageViewModel = new SettingsPageViewModel(
+        this.coreViewModel,
+        this
+      );
+      chatModel.chatMessageHandlerManager.addHandler(
+        (chatMessage) => {
+          this.messagePageViewModel.showChatMessage(chatMessage);
+        }
+      );
+      this.loadPageSelection();
+      this.resetColor();
+    }
     chatModel;
     storageModel;
     settingsViewModel;
@@ -1973,31 +2027,18 @@
         this.resetColor();
       });
     };
-    // init
-    constructor(storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
-      this.storageModel = storageModel2;
-      this.chatModel = chatModel;
-      this.settingsViewModel = settingsViewModel2;
-      this.chatListViewModel = chatListViewModel2;
-      this.taskPageViewModel = new TaskPageViewModel(
-        this.storageModel,
-        this.chatModel.fileModel.boardsAndTasksModel,
-        this
-      );
-      this.messagePageViewModel = new MessagePageViewModel(this);
-      this.settingsPageViewModel = new SettingsPageViewModel(this);
-      chatModel.chatMessageHandlerManager.addHandler(
-        (chatMessage) => {
-          this.messagePageViewModel.showChatMessage(chatMessage);
-        }
-      );
-      this.loadPageSelection();
-      this.resetColor();
-    }
   };
 
   // src/ViewModel/Chat/chatListViewModel.ts
   var ChatListViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatListModel2, settingsViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
+      this.settingsViewModel = settingsViewModel2;
+      this.loadChats();
+    }
     storageModel;
     chatListModel;
     settingsViewModel;
@@ -2033,6 +2074,7 @@
     };
     createChatViewModel = (chatModel) => {
       return new ChatViewModel(
+        this.coreViewModel,
         this.storageModel,
         chatModel,
         this.settingsViewModel,
@@ -2061,13 +2103,6 @@
       }
       this.updateIndices();
     };
-    // init
-    constructor(storageModel2, chatListModel2, settingsViewModel2) {
-      this.storageModel = storageModel2;
-      this.chatListModel = chatListModel2;
-      this.settingsViewModel = settingsViewModel2;
-      this.loadChats();
-    }
   };
 
   // src/View/Components/ribbonButton.tsx
@@ -2585,8 +2620,10 @@
     const view = /* @__PURE__ */ createElement(
       "button",
       {
+        draggable: "true",
         class: "tile flex-no",
-        "on:click": taskViewModel.open
+        "on:click": taskViewModel.open,
+        "on:dragstart": taskViewModel.dragStart
       },
       /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
         "div",
@@ -2613,6 +2650,11 @@
   var TaskViewModelToEntry = (taskViewModel) => {
     return TaskEntry(taskViewModel);
   };
+
+  // src/View/utility.ts
+  function allowDrop(event) {
+    event.preventDefault();
+  }
 
   // src/View/ChatPages/boardKanbanPage.tsx
   function BoardKanbanPage(boardViewModel) {
@@ -2641,7 +2683,10 @@
       boardViewModel.filteredTaskViewModels,
       (taskViewModels) => {
         const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
-        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+        function drop() {
+          boardViewModel.handleDrop(categoryName);
+        }
+        return /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", "on:dragover": allowDrop, "on:drop": drop }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
           "input",
           {
             placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
@@ -3551,6 +3596,15 @@
 
   // src/ViewModel/Global/connectionViewModel.ts
   var ConnectionViewModel = class {
+    // init
+    constructor(coreViewModel, connectionModel2) {
+      this.coreViewModel = coreViewModel;
+      this.connectionModel = connectionModel2;
+      this.updatePreviousAddresses();
+      connectionModel2.connectionChangeHandlerManager.addHandler(
+        this.connectionChangeHandler
+      );
+    }
     connectionModel;
     // state
     serverAddressInput = new State("");
@@ -3605,14 +3659,11 @@
       this.previousAddresses.clear();
       this.previousAddresses.add(...this.connectionModel.addresses);
     };
-    // init
-    constructor(connectionModel2) {
-      this.connectionModel = connectionModel2;
-      this.updatePreviousAddresses();
-      connectionModel2.connectionChangeHandlerManager.addHandler(
-        this.connectionChangeHandler
-      );
-    }
+  };
+
+  // src/ViewModel/Global/coreViewModel.ts
+  var CoreViewModel = class {
+    draggedObject = new State(void 0);
   };
 
   // src/View/Components/chatEntry.tsx
@@ -3620,8 +3671,8 @@
     const view = /* @__PURE__ */ createElement(
       "button",
       {
-        "set:color": chatViewModel.settingsPageViewModel.color,
         class: "tile colored-tile",
+        "set:color": chatViewModel.settingsPageViewModel.color,
         style: "height: 8rem",
         "on:click": chatViewModel.open
       },
@@ -3802,6 +3853,15 @@
 
   // src/ViewModel/Global/settingsViewModel.ts
   var SettingsViewModel = class {
+    // init
+    constructor(coreViewModel, settingsModel2) {
+      this.coreViewModel = coreViewModel;
+      this.settingsModel = settingsModel2;
+      this.username.value = settingsModel2.username;
+      this.usernameInput.value = settingsModel2.username;
+      this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
+      this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
+    }
     settingsModel;
     // state
     username = new State("");
@@ -3821,14 +3881,6 @@
     setFirstDayofWeek = () => {
       this.settingsModel.setFirstDayOfWeek(this.firstDayOfWeekInput.value);
     };
-    // init
-    constructor(settingsModel2) {
-      this.settingsModel = settingsModel2;
-      this.username.value = settingsModel2.username;
-      this.usernameInput.value = settingsModel2.username;
-      this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
-      this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
-    }
   };
 
   // src/View/Components/directoryItemList.tsx
@@ -3925,6 +3977,19 @@
 
   // src/ViewModel/Global/storageViewModel.ts
   var StorageViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.selectedFileName = createProxyState(
+        [this.selectedPath],
+        () => StorageModel.getFileNameFromString(this.selectedPath.value)
+      );
+      this.selectedFileContent = createProxyState(
+        [this.selectedPath],
+        () => this.getSelectedItemContent()
+      );
+    }
     storageModel;
     // state
     isShowingStorageModal = new State(false);
@@ -3956,18 +4021,6 @@
       }
       this.isShowingStorageModal.value = false;
     };
-    // init
-    constructor(storageModel2) {
-      this.storageModel = storageModel2;
-      this.selectedFileName = createProxyState(
-        [this.selectedPath],
-        () => StorageModel.getFileNameFromString(this.selectedPath.value)
-      );
-      this.selectedFileContent = createProxyState(
-        [this.selectedPath],
-        () => this.getSelectedItemContent()
-      );
-    }
   };
 
   // src/index.tsx
@@ -3979,10 +4032,15 @@
     settingsModel,
     connectionModel
   );
-  var storageViewModel = new StorageViewModel(storageModel);
-  var settingsViewModel = new SettingsViewModel(settingsModel);
-  var connectionViewModel = new ConnectionViewModel(connectionModel);
+  var coreVieWModel = new CoreViewModel();
+  var storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
+  var settingsViewModel = new SettingsViewModel(coreVieWModel, settingsModel);
+  var connectionViewModel = new ConnectionViewModel(
+    coreVieWModel,
+    connectionModel
+  );
   var chatListViewModel = new ChatListViewModel(
+    coreVieWModel,
     storageModel,
     chatListModel,
     settingsViewModel

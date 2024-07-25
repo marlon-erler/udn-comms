@@ -14,8 +14,10 @@ export function TaskEntry(taskViewModel: TaskViewModel) {
 
   const view = (
     <button
+      draggable="true"
       class="tile flex-no"
       on:click={taskViewModel.open}
+      on:dragstart={taskViewModel.dragStart}
     >
       <div>
         <b subscribe:innerText={taskViewModel.name}></b>

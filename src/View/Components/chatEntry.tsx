@@ -5,8 +5,8 @@ import ChatViewModel from "../../ViewModel/Chat/chatViewModel";
 export function ChatEntry(chatViewModel: ChatViewModel) {
   const view = (
     <button
-      set:color={chatViewModel.settingsPageViewModel.color}
       class="tile colored-tile"
+      set:color={chatViewModel.settingsPageViewModel.color}
       style="height: 8rem"
       on:click={chatViewModel.open}
     >
