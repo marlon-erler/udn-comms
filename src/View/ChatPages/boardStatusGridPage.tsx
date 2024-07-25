@@ -7,7 +7,7 @@ import {
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { FilteredList } from "../Components/filteredList";
-import { PropertyValueList } from "../Components/propertyList";
+import { PropertyValueList } from "../Components/propertyValueList";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { allowDrop } from "../utility";

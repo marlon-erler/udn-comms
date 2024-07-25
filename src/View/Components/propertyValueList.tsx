@@ -14,13 +14,21 @@ export function PropertyValueList<T>(
   const propertyValues: React.ListState<string> = new React.ListState();
 
   function collectValues() {
-    propertyValues.clear();
     const values: string[] = collectObjectValuesForKey(
       propertyKey,
       stringEntryObjectConverter,
       [...objects.value.values()]
     );
-    propertyValues.add(...values);
+    for (const existingValue of values) {
+      if (propertyValues.value.has(existingValue)) continue;
+      propertyValues.add(existingValue);
+    }
+
+    for (const displayedValue of propertyValues.value.values()) {
+      if (values.includes(displayedValue) == false) {
+        propertyValues.remove(displayedValue);
+      }
+    }
   }
 
   objects.subscribe(() => {

@@ -2,7 +2,7 @@ import * as React from "bloatless-react";
 
 import BoardViewModel from "../../ViewModel/Pages/boardViewModel";
 import { FilteredList } from "../Components/filteredList";
-import { PropertyValueList } from "../Components/propertyList";
+import { PropertyValueList } from "../Components/propertyValueList";
 import { TaskCategoryBulkChangeViewModel } from "../../ViewModel/Utility/taskPropertyBulkChangeViewModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";

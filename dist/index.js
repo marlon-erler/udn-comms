@@ -2533,17 +2533,24 @@
     return viewBuilder(matchingObjects);
   }
 
-  // src/View/Components/propertyList.tsx
+  // src/View/Components/propertyValueList.tsx
   function PropertyValueList(propertyKey, stringEntryObjectConverter, objects, viewBuilder) {
     const propertyValues = new ListState();
     function collectValues() {
-      propertyValues.clear();
       const values = collectObjectValuesForKey(
         propertyKey,
         stringEntryObjectConverter,
         [...objects.value.values()]
       );
-      propertyValues.add(...values);
+      for (const existingValue of values) {
+        if (propertyValues.value.has(existingValue)) continue;
+        propertyValues.add(existingValue);
+      }
+      for (const displayedValue of propertyValues.value.values()) {
+        if (values.includes(displayedValue) == false) {
+          propertyValues.remove(displayedValue);
+        }
+      }
     }
     objects.subscribe(() => {
       collectValues();
