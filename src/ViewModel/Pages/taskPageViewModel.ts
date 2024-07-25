@@ -4,6 +4,7 @@ import BoardsAndTasksModel, { BoardInfoFileContent } from "../../Model/Files/boa
 
 import BoardViewModel from "./boardViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
+import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 
@@ -73,6 +74,7 @@ export default class TaskPageViewModel {
   // view
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(
+      this.coreViewModel,
       this.storageModel,
       this.boardModel,
       this,
@@ -140,6 +142,7 @@ export default class TaskPageViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     boardModel: BoardsAndTasksModel,
     chatViewModel: ChatViewModel

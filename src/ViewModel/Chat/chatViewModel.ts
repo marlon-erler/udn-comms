@@ -5,6 +5,7 @@ import StorageModel, { filePaths } from "../../Model/Global/storageModel";
 
 import ChatListViewModel from "./chatListViewModel";
 import { Color } from "../../colors";
+import CoreViewModel from "../Global/coreViewModel";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 import SettingsPageViewModel from "../Pages/settingsPageViewModel";
 import SettingsViewModel from "../Global/settingsViewModel";
@@ -77,6 +78,7 @@ export default class ChatViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     chatModel: ChatModel,
     settingsViewModel: SettingsViewModel,
@@ -90,12 +92,19 @@ export default class ChatViewModel {
 
     // page viewModels
     this.taskPageViewModel = new TaskPageViewModel(
+      this.coreViewModel,
       this.storageModel,
       this.chatModel.fileModel.boardsAndTasksModel,
       this
     );
-    this.messagePageViewModel = new MessagePageViewModel(this);
-    this.settingsPageViewModel = new SettingsPageViewModel(this);
+    this.messagePageViewModel = new MessagePageViewModel(
+      this.coreViewModel,
+      this
+    );
+    this.settingsPageViewModel = new SettingsPageViewModel(
+      this.coreViewModel,
+      this
+    );
 
     // handlers
     chatModel.chatMessageHandlerManager.addHandler(

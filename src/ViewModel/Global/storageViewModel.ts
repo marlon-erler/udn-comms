@@ -1,7 +1,10 @@
 import * as React from "bloatless-react";
 
-import StorageModel, { PATH_COMPONENT_SEPARATOR } from "../../Model/Global/storageModel";
+import StorageModel, {
+  PATH_COMPONENT_SEPARATOR,
+} from "../../Model/Global/storageModel";
 
+import CoreViewModel from "./coreViewModel";
 import { translations } from "../../View/translations";
 
 export default class StorageViewModel {
@@ -30,7 +33,7 @@ export default class StorageViewModel {
   deleteSelectedItem = (): void => {
     const path = StorageModel.stringToPathComponents(this.selectedPath.value);
     this.lastDeletedItemPath.value = this.selectedPath.value;
-    
+
     this.storageModel.removeRecursively(path);
     this.didMakeChanges.value = true;
   };
@@ -49,7 +52,7 @@ export default class StorageViewModel {
   };
 
   // init
-  constructor(storageModel: StorageModel) {
+  constructor(public coreViewModel: CoreViewModel, storageModel: StorageModel) {
     this.storageModel = storageModel;
 
     this.selectedFileName = React.createProxyState([this.selectedPath], () =>

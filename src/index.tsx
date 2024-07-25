@@ -10,6 +10,7 @@ import { ChatPageWrapper } from "./View/chatPageWrapper";
 import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionModel from "./Model/Global/connectionModel";
 import ConnectionViewModel from "./ViewModel/Global/connectionViewModel";
+import CoreViewModel from "./ViewModel/Global/coreViewModel";
 import { HomePage } from "./View/homePage";
 import SettingsModel from "./Model/Global/settingsModel";
 import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
@@ -28,10 +29,16 @@ const chatListModel = new ChatListModel(
 );
 
 // viewModels
-const storageViewModel = new StorageViewModel(storageModel);
-const settingsViewModel = new SettingsViewModel(settingsModel);
-const connectionViewModel = new ConnectionViewModel(connectionModel);
+const coreVieWModel = new CoreViewModel();
+
+const storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
+const settingsViewModel = new SettingsViewModel(coreVieWModel, settingsModel);
+const connectionViewModel = new ConnectionViewModel(
+  coreVieWModel,
+  connectionModel
+);
 const chatListViewModel = new ChatListViewModel(
+  coreVieWModel,
   storageModel,
   chatListModel,
   settingsViewModel

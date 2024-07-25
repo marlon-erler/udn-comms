@@ -3,7 +3,7 @@ import * as React from "bloatless-react";
 import ChatListModel from "../../Model/Chat/chatListModel";
 import ChatModel from "../../Model/Chat/chatModel";
 import ChatViewModel from "./chatViewModel";
-import FileModel from "../../Model/Files/fileModel";
+import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import SettingsViewModel from "../Global/settingsViewModel";
 import StorageModel from "../../Model/Global/storageModel";
@@ -56,6 +56,7 @@ export default class ChatListViewModel {
 
   createChatViewModel = (chatModel: ChatModel): ChatViewModel => {
     return new ChatViewModel(
+      this.coreViewModel,
       this.storageModel,
       chatModel,
       this.settingsViewModel,
@@ -91,6 +92,7 @@ export default class ChatListViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     chatListModel: ChatListModel,
     settingsViewModel: SettingsViewModel

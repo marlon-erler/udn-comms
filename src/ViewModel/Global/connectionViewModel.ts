@@ -1,6 +1,7 @@
 import * as React from "bloatless-react";
 
 import ConnectionModel from "../../Model/Global/connectionModel";
+import CoreViewModel from "./coreViewModel";
 
 export default class ConnectionViewModel {
   connectionModel: ConnectionModel;
@@ -77,7 +78,10 @@ export default class ConnectionViewModel {
   };
 
   // init
-  constructor(connectionModel: ConnectionModel) {
+  constructor(
+    public coreViewModel: CoreViewModel,
+    connectionModel: ConnectionModel
+  ) {
     this.connectionModel = connectionModel;
     this.updatePreviousAddresses();
 

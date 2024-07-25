@@ -4,6 +4,7 @@ import BoardsAndTasksModel, { TaskFileContent } from "../../Model/Files/boardsAn
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
 import BoardViewModel from "./boardViewModel";
+import CoreViewModel from "../Global/coreViewModel";
 
 export default class TaskViewModel {
   boardModel: BoardsAndTasksModel;
@@ -138,6 +139,7 @@ export default class TaskViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     boardModel: BoardsAndTasksModel,
     boardViewModel: BoardViewModel,
     taskFileContent: TaskFileContent

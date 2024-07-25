@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import { ChatMessage, ChatMessageStatus } from "../../Model/Chat/chatModel";
 
+import CoreViewModel from "../Global/coreViewModel";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 
 export default class ChatMessageViewModel {
@@ -52,6 +53,7 @@ export default class ChatMessageViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     messagePageViewModel: MessagePageViewModel,
     chatMessage: ChatMessage,
     sentByUser: boolean

@@ -3,6 +3,7 @@ import * as React from "bloatless-react";
 import { ChatMessage } from "../../Model/Chat/chatModel";
 import ChatMessageViewModel from "../Chat/chatMessageViewModel";
 import ChatViewModel from "../Chat/chatViewModel";
+import CoreViewModel from "../Global/coreViewModel";
 
 export default class MessagePageViewModel {
   chatViewModel: ChatViewModel;
@@ -39,6 +40,7 @@ export default class MessagePageViewModel {
   // view
   showChatMessage = (chatMessage: ChatMessage): void => {
     const chatMessageModel = new ChatMessageViewModel(
+      this.coreViewModel,
       this,
       chatMessage,
       chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
@@ -62,9 +64,12 @@ export default class MessagePageViewModel {
   };
 
   // init
-  constructor(chatViewModel: ChatViewModel) {
+  constructor(
+    public coreViewModel: CoreViewModel,
+    chatViewModel: ChatViewModel
+  ) {
     this.chatViewModel = chatViewModel;
-    
+
     this.cannotSendMessage = React.createProxyState(
       [this.chatViewModel.settingsViewModel.username, this.composingMessage],
       () =>

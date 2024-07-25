@@ -1,5 +1,6 @@
 import * as React from "bloatless-react";
 
+import CoreViewModel from "./coreViewModel";
 import SettingsModel from "../../Model/Global/settingsModel";
 
 export default class SettingsViewModel {
@@ -30,7 +31,10 @@ export default class SettingsViewModel {
   };
 
   // init
-  constructor(settingsModel: SettingsModel) {
+  constructor(
+    public coreViewModel: CoreViewModel,
+    settingsModel: SettingsModel
+  ) {
     this.settingsModel = settingsModel;
 
     this.username.value = settingsModel.username;

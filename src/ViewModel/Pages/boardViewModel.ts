@@ -6,6 +6,7 @@ import BoardsAndTasksModel, {
 } from "../../Model/Files/boardsAndTasksModel";
 
 import { Color } from "../../colors";
+import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskPageViewModel from "./taskPageViewModel";
@@ -79,6 +80,7 @@ export default class BoardViewModel {
       this.boardInfo.fileId
     );
     const taskViewModel: TaskViewModel = new TaskViewModel(
+      this.coreViewModel,
       this.boardModel,
       this,
       taskFileContent
@@ -110,6 +112,7 @@ export default class BoardViewModel {
   // view
   showTaskInList = (taskFileContent: TaskFileContent): void => {
     const taskViewModel: TaskViewModel = new TaskViewModel(
+      this.coreViewModel,
       this.boardModel,
       this,
       taskFileContent
@@ -195,6 +198,7 @@ export default class BoardViewModel {
       if (taskFileContent == null) continue;
 
       const taskViewModel: TaskViewModel = new TaskViewModel(
+        this.coreViewModel,
         this.boardModel,
         this,
         taskFileContent
@@ -212,6 +216,7 @@ export default class BoardViewModel {
 
   // init
   constructor(
+    public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     boardModel: BoardsAndTasksModel,
     taskPageViewModel: TaskPageViewModel,

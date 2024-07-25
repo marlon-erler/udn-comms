@@ -2,6 +2,7 @@ import * as React from "bloatless-react";
 
 import ChatViewModel from "../Chat/chatViewModel";
 import { Color } from "../../colors";
+import CoreViewModel from "../Global/coreViewModel";
 
 export default class SettingsPageViewModel {
   chatViewModel: ChatViewModel;
@@ -110,7 +111,10 @@ export default class SettingsPageViewModel {
   };
 
   // init
-  constructor(chatViewModel: ChatViewModel) {
+  constructor(
+    public coreViewModel: CoreViewModel,
+    chatViewModel: ChatViewModel
+  ) {
     this.chatViewModel = chatViewModel;
     this.loadListRelevantData();
 
