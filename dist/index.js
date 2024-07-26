@@ -3400,12 +3400,12 @@
   }
   function StatusNameCell(statusName, index, boardViewModel) {
     const taskViewModelsWithMatchingStatus = new ListState();
-    boardViewModel.taskViewModels.handleAddition(
+    boardViewModel.filteredTaskViewModels.handleAddition(
       (taskViewModel) => {
         const doesMatchStatus = taskViewModel.task.status == statusName;
         if (doesMatchStatus == false) return;
         taskViewModelsWithMatchingStatus.add(taskViewModel);
-        boardViewModel.taskViewModels.handleRemoval(taskViewModel, () => {
+        boardViewModel.filteredTaskViewModels.handleRemoval(taskViewModel, () => {
           taskViewModelsWithMatchingStatus.remove(taskViewModel);
         });
       }
@@ -3439,7 +3439,7 @@
     return FilteredList(
       { category: categoryName },
       (taskViewModel) => taskViewModel.task,
-      boardViewModel.taskViewModels,
+      boardViewModel.filteredTaskViewModels,
       (taskViewModels) => {
         const statusNameConverter = (statusName) => {
           const index2 = createPropertyValueIndexState(sortedStatuses, statusName);

@@ -90,13 +90,13 @@ function StatusNameCell(
   const taskViewModelsWithMatchingStatus: React.ListState<TaskViewModel> =
     new React.ListState();
 
-  boardViewModel.taskViewModels.handleAddition(
+  boardViewModel.filteredTaskViewModels.handleAddition(
     (taskViewModel: TaskViewModel) => {
       const doesMatchStatus: boolean = taskViewModel.task.status == statusName;
       if (doesMatchStatus == false) return;
 
       taskViewModelsWithMatchingStatus.add(taskViewModel);
-      boardViewModel.taskViewModels.handleRemoval(taskViewModel, () => {
+      boardViewModel.filteredTaskViewModels.handleRemoval(taskViewModel, () => {
         taskViewModelsWithMatchingStatus.remove(taskViewModel);
       });
     }
@@ -146,7 +146,7 @@ function CategoryRow(
   return FilteredList(
     { category: categoryName },
     (taskViewModel: TaskViewModel) => taskViewModel.task,
-    boardViewModel.taskViewModels,
+    boardViewModel.filteredTaskViewModels,
     (taskViewModels: React.ListState<TaskViewModel>) => {
       const statusNameConverter: React.StateItemConverter<string> = (
         statusName: string
