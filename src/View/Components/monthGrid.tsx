@@ -45,12 +45,21 @@ export function MonthGrid<T>(
             () => selectedDate.value == parseInt(date)
           );
 
+          const isToday: boolean =
+            monthGrid.isCurrentMonth == true &&
+            parseInt(date) == new Date().getDate();
+
           function select() {
             selectedDate.value = parseInt(date);
           }
 
           return (
-            <button class="tile" on:click={select} toggle:selected={isSelected}>
+            <button
+              class="tile"
+              on:click={select}
+              toggle:selected={isSelected}
+              toggle:today={isToday}
+            >
               <div>
                 <b>{date}</b>
                 <div

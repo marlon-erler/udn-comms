@@ -27,6 +27,10 @@
   animation: slide-up var(--animation-duration);
 }
 
+.month-grid .tile[today] b {
+    color: var(--primary)
+}
+
 .month-grid .tile > div {
   display: flex;
   flex-direction: column;

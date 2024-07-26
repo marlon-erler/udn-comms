@@ -97,6 +97,9 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
           <div class="content" children:set={mainContent}></div>
         </div>
       </div>
+      <div class="pane-wrapper side">
+        <div class="pane">hello</div>
+      </div>
     </div>
   );
 }

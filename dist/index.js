@@ -650,6 +650,7 @@
     };
     generateMonthGrid = (year, month, defaultValueCreator) => {
       const date = /* @__PURE__ */ new Date();
+      const isCurrentMonth = year == date.getFullYear() && month == date.getMonth() + 1;
       date.setFullYear(year);
       date.setMonth(month - 1);
       date.setDate(1);
@@ -660,6 +661,7 @@
       const grid = {
         offset,
         firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
+        isCurrentMonth,
         days: {}
       };
       for (let i = 0; i < daysInMonth; i++) {
@@ -1618,6 +1620,7 @@
     selectedMonth = new State(0);
     selectedDate = new State(0);
     monthGrid = new State(void 0);
+    selectedTaskViewModel = new State(void 0);
     // view
     getTaskMapState = (taskFileContent) => {
       if (this.monthGrid.value == null) return null;
@@ -2546,16 +2549,26 @@
         [selectedDate],
         () => selectedDate.value == parseInt(date)
       );
+      const isToday = monthGrid.isCurrentMonth == true && parseInt(date) == (/* @__PURE__ */ new Date()).getDate();
       function select() {
         selectedDate.value = parseInt(date);
       }
-      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
-        "div",
+      return /* @__PURE__ */ createElement(
+        "button",
         {
-          class: "flex-column gap clip",
-          "children:append": [mapState, converter]
-        }
-      )));
+          class: "tile",
+          "on:click": select,
+          "toggle:selected": isSelected,
+          "toggle:today": isToday
+        },
+        /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "flex-column gap clip",
+            "children:append": [mapState, converter]
+          }
+        ))
+      );
     })));
   }
 
@@ -2624,7 +2637,7 @@
         "aria-label": translations.chatPage.task.createTaskButtonAudioLabel
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))));
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, "hello")));
   }
 
   // src/View/Components/ribbonButton.tsx

@@ -35,6 +35,9 @@ export default class CalendarPageViewModel {
   monthGrid: React.State<MonthGrid<React.MapState<TaskViewModel>> | undefined> =
     new React.State<any>(undefined);
 
+  selectedTaskViewModel: React.State<TaskViewModel | undefined> =
+    new React.State<any>(undefined);
+
   // view
   getTaskMapState = (
     taskFileContent: TaskFileContent

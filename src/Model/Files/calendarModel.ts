@@ -52,8 +52,12 @@ export default class CalendarModel {
     month: number,
     defaultValueCreator: () => T
   ): MonthGrid<T> => {
-    // get first day of month
+    // get today
     const date: Date = new Date();
+    const isCurrentMonth: boolean =
+      year == date.getFullYear() && month == date.getMonth() + 1;
+
+    // get first day of month
     date.setFullYear(year);
     date.setMonth(month - 1);
     date.setDate(1);
@@ -70,6 +74,7 @@ export default class CalendarModel {
     const grid: MonthGrid<T> = {
       offset,
       firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
+      isCurrentMonth,
       days: {},
     };
 
@@ -117,5 +122,6 @@ export enum CalendarModelSubPaths {
 export interface MonthGrid<T> {
   offset: number;
   firstDayOfWeek: number;
+  isCurrentMonth: boolean;
   days: { [date: string]: T };
 }
