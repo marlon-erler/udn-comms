@@ -83,7 +83,11 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
           </div>
         </div>
       </div>
-      <div id="board-content" class="pane-wrapper" children:set={paneContent}></div>
+      <div
+        id="board-content"
+        class="pane-wrapper"
+        children:set={paneContent}
+      ></div>
     </div>
   );
 }

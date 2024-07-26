@@ -4,6 +4,7 @@ import * as React from "bloatless-react";
 
 import CalendarPageViewModel from "../../ViewModel/Pages/calendarPageViewModel";
 import { MonthGrid } from "../Components/monthGrid";
+import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
 
 export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
@@ -18,6 +19,31 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
         return MonthGrid(
           calendarPageViewModel.monthGrid.value,
           calendarPageViewModel.selectedDate
+        );
+      }
+    }
+  );
+
+  const sidePaneContent = React.createProxyState(
+    [
+      calendarPageViewModel.selectedYear,
+      calendarPageViewModel.selectedMonth,
+      calendarPageViewModel.selectedDate,
+    ],
+    () => {
+      const listState =
+        calendarPageViewModel.monthGrid.value?.days[
+          calendarPageViewModel.selectedDate.toString()
+        ];
+
+      if (listState == undefined) {
+        return <div></div>;
+      } else {
+        return (
+          <div
+            class="flex-column gap"
+            children:append={[listState, TaskViewModelToEntry]}
+          ></div>
         );
       }
     }
@@ -97,8 +123,13 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
           <div class="content" children:set={mainContent}></div>
         </div>
       </div>
-      <div class="pane-wrapper side">
-        <div class="pane">hello</div>
+      <div
+        class="pane-wrapper side background"
+        set:color={calendarPageViewModel.chatViewModel.displayedColor}
+      >
+        <div class="pane">
+          <div class="content" children:set={sidePaneContent}></div>
+        </div>
       </div>
     </div>
   );

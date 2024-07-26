@@ -1587,13 +1587,14 @@
   // src/ViewModel/Pages/calendarPageViewModel.ts
   var CalendarPageViewModel = class {
     // init
-    constructor(coreViewModel, storageModel2, calendarModel, boardAndTasksModel) {
+    constructor(coreViewModel, storageModel2, calendarModel, boardAndTasksModel, chatViewModel) {
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
       this.calendarModel = calendarModel;
       this.boardsAndTasksModel = boardAndTasksModel;
+      this.chatViewModel = chatViewModel;
       bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
-        this.loadTasks();
+        this.loadMonthTasks();
       });
       boardAndTasksModel.taskHandlerManager.addHandler(
         (taskFileContent) => {
@@ -1604,6 +1605,7 @@
     storageModel;
     calendarModel;
     boardsAndTasksModel;
+    chatViewModel;
     // data
     get monthString() {
       return CalendarModel.getMonthString(
@@ -1620,7 +1622,7 @@
     selectedMonth = new State(0);
     selectedDate = new State(0);
     monthGrid = new State(void 0);
-    selectedTaskViewModel = new State(void 0);
+    taskViewModelsToShow = new ListState();
     // view
     getTaskMapState = (taskFileContent) => {
       if (this.monthGrid.value == null) return null;
@@ -1673,7 +1675,7 @@
     };
     // storage
     // load
-    loadTasks = () => {
+    loadMonthTasks = () => {
       this.monthGrid.value = this.calendarModel.generateMonthGrid(
         this.selectedYear.value,
         this.selectedMonth.value,
@@ -1687,7 +1689,7 @@
       }
     };
     loadData = () => {
-      this.loadTasks();
+      this.loadMonthTasks();
       this.showToday();
     };
   };
@@ -2217,7 +2219,8 @@
         coreViewModel,
         this.storageModel,
         this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
-        this.chatModel.fileModel.boardsAndTasksModel
+        this.chatModel.fileModel.boardsAndTasksModel,
+        this
       );
       this.taskPageViewModel = new TaskPageViewModel(
         this.coreViewModel,
@@ -2572,6 +2575,51 @@
     })));
   }
 
+  // src/View/Components/taskEntry.tsx
+  function TaskEntry(taskViewModel) {
+    const details = {
+      description: taskViewModel.description.value || "---",
+      priority_high: taskViewModel.priority.value || "---",
+      category: taskViewModel.category.value || "---",
+      clock_loader_40: taskViewModel.status.value || "---",
+      calendar_month: taskViewModel.date.value || "---",
+      schedule: taskViewModel.time.value || "---"
+    };
+    const view = /* @__PURE__ */ createElement(
+      "button",
+      {
+        draggable: "true",
+        class: "tile flex-no",
+        style: "user-select: none; -webkit-user-select: none",
+        "on:click": taskViewModel.open,
+        "on:dragstart": taskViewModel.dragStart
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid secondary",
+          style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
+        },
+        ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "flex-row align-center width-100 flex-no clip",
+            style: "gap: 1rem"
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
+          /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+        ))
+      ))
+    );
+    taskViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  var TaskViewModelToEntry = (taskViewModel) => {
+    return TaskEntry(taskViewModel);
+  };
+
   // src/View/ChatPages/calendarPage.tsx
   function CalendarPage(calendarPageViewModel) {
     calendarPageViewModel.loadData();
@@ -2584,6 +2632,27 @@
           return MonthGrid2(
             calendarPageViewModel.monthGrid.value,
             calendarPageViewModel.selectedDate
+          );
+        }
+      }
+    );
+    const sidePaneContent = createProxyState(
+      [
+        calendarPageViewModel.selectedYear,
+        calendarPageViewModel.selectedMonth,
+        calendarPageViewModel.selectedDate
+      ],
+      () => {
+        const listState = calendarPageViewModel.monthGrid.value?.days[calendarPageViewModel.selectedDate.toString()];
+        if (listState == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return /* @__PURE__ */ createElement(
+            "div",
+            {
+              class: "flex-column gap",
+              "children:append": [listState, TaskViewModelToEntry]
+            }
           );
         }
       }
@@ -2637,7 +2706,14 @@
         "aria-label": translations.chatPage.task.createTaskButtonAudioLabel
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement("div", { class: "pane-wrapper side" }, /* @__PURE__ */ createElement("div", { class: "pane" }, "hello")));
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "pane-wrapper side background",
+        "set:color": calendarPageViewModel.chatViewModel.displayedColor
+      },
+      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "content", "children:set": sidePaneContent }))
+    ));
   }
 
   // src/View/Components/ribbonButton.tsx
@@ -3024,51 +3100,6 @@
         initialValue
       );
     }
-  };
-
-  // src/View/Components/taskEntry.tsx
-  function TaskEntry(taskViewModel) {
-    const details = {
-      description: taskViewModel.description.value || "---",
-      priority_high: taskViewModel.priority.value || "---",
-      category: taskViewModel.category.value || "---",
-      clock_loader_40: taskViewModel.status.value || "---",
-      calendar_month: taskViewModel.date.value || "---",
-      schedule: taskViewModel.time.value || "---"
-    };
-    const view = /* @__PURE__ */ createElement(
-      "button",
-      {
-        draggable: "true",
-        class: "tile flex-no",
-        style: "user-select: none; -webkit-user-select: none",
-        "on:click": taskViewModel.open,
-        "on:dragstart": taskViewModel.dragStart
-      },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "grid secondary",
-          style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
-        },
-        ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
-          "span",
-          {
-            class: "flex-row align-center width-100 flex-no clip",
-            style: "gap: 1rem"
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
-          /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
-        ))
-      ))
-    );
-    taskViewModel.index.subscribe((newIndex) => {
-      view.style.order = newIndex;
-    });
-    return view;
-  }
-  var TaskViewModelToEntry = (taskViewModel) => {
-    return TaskEntry(taskViewModel);
   };
 
   // src/View/ChatPages/boardKanbanPage.tsx
@@ -3620,7 +3651,14 @@
           ]
         }
       )))
-    ), /* @__PURE__ */ createElement("div", { id: "board-content", class: "pane-wrapper", "children:set": paneContent }));
+    ), /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "board-content",
+        class: "pane-wrapper",
+        "children:set": paneContent
+      }
+    ));
   }
 
   // src/View/chatPage.tsx

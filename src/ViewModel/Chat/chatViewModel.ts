@@ -100,7 +100,8 @@ export default class ChatViewModel {
       coreViewModel,
       this.storageModel,
       this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
-      this.chatModel.fileModel.boardsAndTasksModel
+      this.chatModel.fileModel.boardsAndTasksModel,
+      this
     );
     this.taskPageViewModel = new TaskPageViewModel(
       this.coreViewModel,

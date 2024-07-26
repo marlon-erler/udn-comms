@@ -5,6 +5,7 @@ import BoardsAndTasksModel, {
 } from "../../Model/Files/boardsAndTasksModel";
 import CalendarModel, { MonthGrid } from "../../Model/Files/calendarModel";
 
+import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskViewModel from "./taskViewModel";
@@ -13,6 +14,8 @@ export default class CalendarPageViewModel {
   storageModel: StorageModel;
   calendarModel: CalendarModel;
   boardsAndTasksModel: BoardsAndTasksModel;
+
+  chatViewModel: ChatViewModel;
 
   // data
   get monthString(): string {
@@ -35,8 +38,7 @@ export default class CalendarPageViewModel {
   monthGrid: React.State<MonthGrid<React.MapState<TaskViewModel>> | undefined> =
     new React.State<any>(undefined);
 
-  selectedTaskViewModel: React.State<TaskViewModel | undefined> =
-    new React.State<any>(undefined);
+  taskViewModelsToShow: React.ListState<TaskViewModel> = new React.ListState();
 
   // view
   getTaskMapState = (
@@ -106,7 +108,7 @@ export default class CalendarPageViewModel {
   // storage
 
   // load
-  loadTasks = (): void => {
+  loadMonthTasks = (): void => {
     this.monthGrid.value = this.calendarModel.generateMonthGrid(
       this.selectedYear.value,
       this.selectedMonth.value,
@@ -123,7 +125,7 @@ export default class CalendarPageViewModel {
   };
 
   loadData = (): void => {
-    this.loadTasks();
+    this.loadMonthTasks();
     this.showToday();
   };
 
@@ -132,14 +134,17 @@ export default class CalendarPageViewModel {
     public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
-    boardAndTasksModel: BoardsAndTasksModel
+    boardAndTasksModel: BoardsAndTasksModel,
+    chatViewModel: ChatViewModel
   ) {
     this.storageModel = storageModel;
     this.calendarModel = calendarModel;
     this.boardsAndTasksModel = boardAndTasksModel;
 
+    this.chatViewModel = chatViewModel;
+
     React.bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
-      this.loadTasks();
+      this.loadMonthTasks();
     });
 
     // handlers
