@@ -30,6 +30,7 @@ export default class CalendarPageViewModel {
   // state
   selectedYear: React.State<number> = new React.State(0);
   selectedMonth: React.State<number> = new React.State(0);
+  selectedDate: React.State<number> = new React.State(0);
 
   monthGrid: React.State<MonthGrid<React.MapState<TaskViewModel>> | undefined> =
     new React.State<any>(undefined);
@@ -70,6 +71,7 @@ export default class CalendarPageViewModel {
     const today: Date = new Date();
     this.selectedYear.value = today.getFullYear();
     this.selectedMonth.value = today.getMonth() + 1;
+    this.selectedDate.value = today.getDate();
   };
 
   showPreviousMonth = (): void => {
@@ -119,7 +121,7 @@ export default class CalendarPageViewModel {
     public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
-    boardAndTasksModel: BoardsAndTasksModel
+    boardAndTasksModel: BoardsAndTasksModel,
   ) {
     this.storageModel = storageModel;
     this.calendarModel = calendarModel;

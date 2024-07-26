@@ -1609,6 +1609,7 @@
     // state
     selectedYear = new State(0);
     selectedMonth = new State(0);
+    selectedDate = new State(0);
     monthGrid = new State(void 0);
     // view
     getTaskMapState = (taskFileContent) => {
@@ -1638,6 +1639,7 @@
       const today = /* @__PURE__ */ new Date();
       this.selectedYear.value = today.getFullYear();
       this.selectedMonth.value = today.getMonth() + 1;
+      this.selectedDate.value = today.getDate();
     };
     showPreviousMonth = () => {
       this.selectedMonth.value -= 1;
@@ -2495,7 +2497,9 @@
         yearInputAudioLabel: "year",
         monthInputAudioLabel: "month",
         yearInputPlaceholder: "2000",
-        monthInputPlaceholder: "01"
+        monthInputPlaceholder: "01",
+        ///
+        searchEventsHeadline: "Search Events"
       }
     }
   };
@@ -2506,7 +2510,7 @@
   var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/Components/monthGrid.tsx
-  function MonthGrid2(monthGrid) {
+  function MonthGrid2(monthGrid, selectedDate) {
     const dayLabels = [];
     let currentWeekday = monthGrid.firstDayOfWeek;
     while (dayLabels.length < 7) {
@@ -2525,7 +2529,14 @@
     };
     return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
       const [date, mapState] = entry;
-      return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+      const isSelected = createProxyState(
+        [selectedDate],
+        () => selectedDate.value == parseInt(date)
+      );
+      function select() {
+        selectedDate.value = parseInt(date);
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
         "div",
         {
           class: "flex-column gap clip",
@@ -2544,7 +2555,10 @@
         if (calendarPageViewModel.monthGrid.value == void 0) {
           return /* @__PURE__ */ createElement("div", null);
         } else {
-          return MonthGrid2(calendarPageViewModel.monthGrid.value);
+          return MonthGrid2(
+            calendarPageViewModel.monthGrid.value,
+            calendarPageViewModel.selectedDate
+          );
         }
       }
     );

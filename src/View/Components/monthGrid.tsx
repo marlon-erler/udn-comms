@@ -5,7 +5,10 @@ import { MonthGrid } from "../../Model/Files/calendarModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { translations } from "../translations";
 
-export function MonthGrid<T>(monthGrid: MonthGrid<React.MapState<T>>) {
+export function MonthGrid<T>(
+  monthGrid: MonthGrid<React.MapState<T>>,
+  selectedDate: React.State<number>
+) {
   const dayLabels: HTMLElement[] = [];
   let currentWeekday = monthGrid.firstDayOfWeek;
   while (dayLabels.length < 7) {
@@ -37,8 +40,17 @@ export function MonthGrid<T>(monthGrid: MonthGrid<React.MapState<T>>) {
         {...Object.entries(monthGrid.days).map((entry) => {
           const [date, mapState] = entry;
 
+          const isSelected = React.createProxyState(
+            [selectedDate],
+            () => selectedDate.value == parseInt(date)
+          );
+
+          function select() {
+            selectedDate.value = parseInt(date);
+          }
+
           return (
-            <button class="tile">
+            <button class="tile" on:click={select} toggle:selected={isSelected}>
               <div>
                 <b>{date}</b>
                 <div

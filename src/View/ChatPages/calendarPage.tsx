@@ -4,8 +4,6 @@ import * as React from "bloatless-react";
 
 import CalendarPageViewModel from "../../ViewModel/Pages/calendarPageViewModel";
 import { MonthGrid } from "../Components/monthGrid";
-import { TaskViewModelToEntry } from "../Components/taskEntry";
-import { createPropertyValueIndexState } from "../Components/propertyValueList";
 import { translations } from "../translations";
 
 export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
@@ -17,7 +15,10 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
       if (calendarPageViewModel.monthGrid.value == undefined) {
         return <div></div>;
       } else {
-        return MonthGrid(calendarPageViewModel.monthGrid.value);
+        return MonthGrid(
+          calendarPageViewModel.monthGrid.value,
+          calendarPageViewModel.selectedDate
+        );
       }
     }
   );

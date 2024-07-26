@@ -197,6 +197,10 @@ const englishTranslations = {
 
       yearInputPlaceholder: "2000",
       monthInputPlaceholder: "01",
+
+      ///
+
+      searchEventsHeadline: "Search Events"
     },
   },
 };
