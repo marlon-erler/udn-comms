@@ -49,6 +49,14 @@ export default class CalendarPageViewModel {
   };
 
   showTask = (taskFileContent: TaskFileContent): void => {
+    const monthString: string | undefined = CalendarModel.isoToMonthString(
+      taskFileContent.date ?? ""
+    );
+    if (monthString == undefined || monthString != this.monthString) {
+      // TODO remove
+      return;
+    }
+
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
       this.boardsAndTasksModel,
@@ -61,7 +69,7 @@ export default class CalendarPageViewModel {
     mapState?.set(taskFileContent.fileId, taskViewModel);
   };
 
-  removeTaskFromList = (taskFileContent: TaskFileContent): void => {
+  removeTaskFromView = (taskFileContent: TaskFileContent): void => {
     const mapState: React.MapState<TaskViewModel> | null =
       this.getTaskMapState(taskFileContent);
     mapState?.remove(taskFileContent.fileId);
@@ -121,7 +129,7 @@ export default class CalendarPageViewModel {
     public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
-    boardAndTasksModel: BoardsAndTasksModel,
+    boardAndTasksModel: BoardsAndTasksModel
   ) {
     this.storageModel = storageModel;
     this.calendarModel = calendarModel;
@@ -130,6 +138,13 @@ export default class CalendarPageViewModel {
     React.bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
       this.loadTasks();
     });
+
+    // handlers
+    boardAndTasksModel.taskHandlerManager.addHandler(
+      (taskFileContent: TaskFileContent) => {
+        this.showTask(taskFileContent);
+      }
+    );
   }
 }
 

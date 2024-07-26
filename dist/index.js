@@ -1522,6 +1522,7 @@
         this.boardViewModel.updateTaskIndices();
       }
       if (this.calendarPageViewModel != null) {
+        this.calendarPageViewModel.showTask(newTaskFileContent);
       }
     };
     deleteTask = () => {
@@ -1531,6 +1532,7 @@
         this.boardViewModel.removeTaskFromList(this.task.fileId);
       }
       if (this.calendarPageViewModel != null) {
+        this.calendarPageViewModel.removeTaskFromView(this.task);
       }
     };
     // load
@@ -1591,6 +1593,11 @@
       bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
         this.loadTasks();
       });
+      boardAndTasksModel.taskHandlerManager.addHandler(
+        (taskFileContent) => {
+          this.showTask(taskFileContent);
+        }
+      );
     }
     storageModel;
     calendarModel;
@@ -1621,6 +1628,12 @@
       return this.monthGrid.value.days[dateString];
     };
     showTask = (taskFileContent) => {
+      const monthString = CalendarModel.isoToMonthString(
+        taskFileContent.date ?? ""
+      );
+      if (monthString == void 0 || monthString != this.monthString) {
+        return;
+      }
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
         this.boardsAndTasksModel,
@@ -1631,7 +1644,7 @@
       const mapState = this.getTaskMapState(taskFileContent);
       mapState?.set(taskFileContent.fileId, taskViewModel);
     };
-    removeTaskFromList = (taskFileContent) => {
+    removeTaskFromView = (taskFileContent) => {
       const mapState = this.getTaskMapState(taskFileContent);
       mapState?.remove(taskFileContent.fileId);
     };

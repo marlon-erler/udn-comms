@@ -121,6 +121,7 @@ export default class TaskViewModel {
       this.boardViewModel.updateTaskIndices();
     }
     if (this.calendarPageViewModel != null) {
+      this.calendarPageViewModel.showTask(newTaskFileContent);
     }
   };
 
@@ -132,6 +133,7 @@ export default class TaskViewModel {
       this.boardViewModel.removeTaskFromList(this.task.fileId);
     }
     if (this.calendarPageViewModel != null) {
+      this.calendarPageViewModel.removeTaskFromView(this.task);
     }
   };
 
