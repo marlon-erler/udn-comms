@@ -1,4 +1,8 @@
 const englishTranslations = {
+  updater: {
+    migrated: "Migrated",
+  },
+
   general: {
     deleteItemButtonAudioLabel: "delete item",
     searchButtonAudioLabel: "search",

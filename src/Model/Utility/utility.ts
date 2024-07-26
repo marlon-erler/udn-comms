@@ -1,12 +1,16 @@
 import { checkIsValidObject, checkMatchesObjectStructure } from "./typeSafety";
 
+export interface Stringifiable {
+  toString(): string;
+}
+
 // date
 export function createTimestamp(): string {
   return new Date().toISOString();
 }
 
 // filters etc
-export type StringEntryObject = { [key: string]: string | undefined };
+export type StringEntryObject = { [key: string]: Stringifiable | undefined };
 
 export function filterObjectsByStringEntries<T>(
   reference: StringEntryObject,
@@ -34,13 +38,15 @@ export function checkDoesObjectMatchReference(
     reference
   )) {
     const [referenceKey, referenceValue] = referenceEntry;
-    const stringEntryObjectValue: string | undefined =
+    const stringEntryObjectValue: Stringifiable | undefined =
       stringEntryObject[referenceKey];
 
     if (referenceValue == undefined) return false;
 
     if (referenceValue[0] == "-") {
-      const strippedReferenceValue: string = referenceValue.substring(1);
+      const strippedReferenceValue: string = referenceValue
+        .toString()
+        .substring(1);
       // property may not exist
       if (
         strippedReferenceValue == "" &&
@@ -83,11 +89,12 @@ export function collectObjectValuesForKey<T>(
 
   for (const object of objects) {
     const stringEntryObject: StringEntryObject = converter(object);
-    const stringEntryObjectValue: string | undefined = stringEntryObject[key];
+    const stringEntryObjectValue: Stringifiable | undefined =
+      stringEntryObject[key];
     if (stringEntryObjectValue == undefined || stringEntryObjectValue == "")
       continue;
 
-    values.add(stringEntryObjectValue);
+    values.add(stringEntryObjectValue.toString());
   }
 
   return [...values.values()];
@@ -123,7 +130,8 @@ export function checkDoesObjectMatchSearch<T>(
   const wordsInObject: string[] = [];
   for (const string of stringsInObject) {
     const lowercaseWordsInString = string
-      .toLocaleLowerCase()
+      .toString()
+      .toLowerCase()
       .split(" ")
       .filter((word) => word != "");
     wordsInObject.push(...lowercaseWordsInString);
@@ -204,7 +212,15 @@ export class IndexManager<T> {
   }
 }
 
-// string
+// storage
+export function getLocalStorageItemAndClear(key: string): string | null {
+  const value: string | null = localStorage.getItem(key);
+  localStorage.removeItem(key);
+  console.log(localStorage.getItem(key));
+  return value;
+}
+
+// string & parsing
 export function stringify(data: any): string {
   return JSON.stringify(data, null, 4);
 }
@@ -231,6 +247,20 @@ export function parseValidObject<T>(string: string, reference: T): T | null {
   );
   if (doesMatchReference == false) return null;
 
+  return parsed;
+}
+
+export function parseOrFallback(inputString: string): any {
+  try {
+    return JSON.parse(inputString);
+  } catch {
+    return inputString;
+  }
+}
+
+export function parseArray(inputString: string): any[] {
+  const parsed: any = parseOrFallback(inputString);
+  if (Array.isArray(parsed) == false) return [];
   return parsed;
 }
 

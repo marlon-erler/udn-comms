@@ -316,6 +316,7 @@ export enum ChatMessageStatus {
   Outbox = "outbox",
   Sent = "sent",
   Received = "received",
+  Other = "other",
 }
 
 export interface ChatMessage extends ValidObject {

@@ -1,7 +1,7 @@
 // this file is responsible for managing UDN connections.
 
 import { ChatMessage, ChatMessageReference } from "../Chat/chatModel";
-import { Handler, HandlerManager, stringify } from "../Utility/utility";
+import { HandlerManager, stringify } from "../Utility/utility";
 import StorageModel, { StorageModelSubPath, filePaths } from "./storageModel";
 import UDNFrontend, { Message } from "udn-frontend";
 

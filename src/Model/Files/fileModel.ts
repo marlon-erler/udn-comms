@@ -154,7 +154,7 @@ export default class FileModel {
   }
 
   // utility
-  static generateFileContentId = (creationDate): string => {
+  static generateFileContentId = (creationDate: string): string => {
     return creationDate + v4();
   };
 

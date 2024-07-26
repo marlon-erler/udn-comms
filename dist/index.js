@@ -325,7 +325,7 @@
       const stringEntryObjectValue = stringEntryObject[referenceKey];
       if (referenceValue == void 0) return false;
       if (referenceValue[0] == "-") {
-        const strippedReferenceValue = referenceValue.substring(1);
+        const strippedReferenceValue = referenceValue.toString().substring(1);
         if (strippedReferenceValue == "" && stringEntryObjectValue != void 0 && stringEntryObjectValue != "") {
           return false;
         }
@@ -352,7 +352,7 @@
       const stringEntryObjectValue = stringEntryObject[key];
       if (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")
         continue;
-      values.add(stringEntryObjectValue);
+      values.add(stringEntryObjectValue.toString());
     }
     return [...values.values()];
   }
@@ -361,7 +361,7 @@
     const stringsInObject = getStringsOfObject(object);
     const wordsInObject = [];
     for (const string of stringsInObject) {
-      const lowercaseWordsInString = string.toLocaleLowerCase().split(" ").filter((word) => word != "");
+      const lowercaseWordsInString = string.toString().toLowerCase().split(" ").filter((word) => word != "");
       wordsInObject.push(...lowercaseWordsInString);
     }
     const lowercaseWordsInQuery = query.toLowerCase().split(" ").filter((word) => word != "");
@@ -418,6 +418,12 @@
       this.itemToString = itemToString;
     }
   };
+  function getLocalStorageItemAndClear(key) {
+    const value = localStorage.getItem(key);
+    localStorage.removeItem(key);
+    console.log(localStorage.getItem(key));
+    return value;
+  }
   function stringify(data) {
     return JSON.stringify(data, null, 4);
   }
@@ -439,6 +445,18 @@
       reference
     );
     if (doesMatchReference == false) return null;
+    return parsed;
+  }
+  function parseOrFallback(inputString) {
+    try {
+      return JSON.parse(inputString);
+    } catch {
+      return inputString;
+    }
+  }
+  function parseArray(inputString) {
+    const parsed = parseOrFallback(inputString);
+    if (Array.isArray(parsed) == false) return [];
     return parsed;
   }
   function localeCompare(a, b) {
@@ -2446,6 +2464,9 @@
 
   // src/View/translations.ts
   var englishTranslations = {
+    updater: {
+      migrated: "Migrated"
+    },
     general: {
       deleteItemButtonAudioLabel: "delete item",
       searchButtonAudioLabel: "search",
@@ -4634,6 +4655,203 @@
     };
   };
 
+  // src/Upgrader/v1.ts
+  var v1Upgrader = class {
+    // init
+    constructor(settingsModel2, connectionModel2, chatListModel2) {
+      this.settingsModel = settingsModel2;
+      this.connectionModel = connectionModel2;
+      this.chatListModel = chatListModel2;
+      this.migrateSettings();
+      this.migrateConnections();
+      this.migrateChats();
+    }
+    // general
+    migrateSettings = () => {
+      const name = getLocalStorageItemAndClear("sender-name");
+      if (name != null) {
+        const parsedName = parseOrFallback(name);
+        this.settingsModel.setName(parsedName);
+      }
+      const firstDayOfWeek = getLocalStorageItemAndClear("first-day-of-week");
+      if (firstDayOfWeek != null) {
+        const parsedFirstDayOfWeek = parseOrFallback(firstDayOfWeek);
+        this.settingsModel.setFirstDayOfWeek(parsedFirstDayOfWeek);
+      }
+    };
+    migrateConnections = () => {
+      const previousAddressString = getLocalStorageItemAndClear("previous-addresses");
+      if (previousAddressString == null) return;
+      const previousAddresses = parseArray(previousAddressString);
+      for (const address of previousAddresses) {
+        if (typeof address != "string") continue;
+        this.connectionModel.storeAddress(address);
+      }
+    };
+    // chats
+    migrateChats = () => {
+      const chatIdString = getLocalStorageItemAndClear("chat-ids");
+      if (chatIdString == null) return;
+      const chatIds = parseArray(chatIdString);
+      for (const chatId of chatIds) {
+        if (typeof chatId != "string") continue;
+        this.migrateChatById(chatId);
+      }
+    };
+    migrateChatById = (id) => {
+      const primaryChannel = getLocalStorageItemAndClear(
+        storageKeys.primaryChannel(id)
+      );
+      if (primaryChannel == null) return;
+      const parsedPriamryChannel = parseOrFallback(primaryChannel);
+      const chatModel = this.chatListModel.createChat(parsedPriamryChannel);
+      const secondaryChannelString = getLocalStorageItemAndClear(
+        storageKeys.secondaryChannels(id)
+      );
+      if (secondaryChannelString != null) {
+        const potentialSecondaryChannels = parseArray(
+          secondaryChannelString
+        );
+        const confirmedSecondaryChannels = [];
+        for (const secondaryChannel of potentialSecondaryChannels) {
+          if (typeof secondaryChannel != "string") continue;
+          confirmedSecondaryChannels.push(secondaryChannel);
+        }
+        chatModel.setSecondaryChannels(confirmedSecondaryChannels);
+      }
+      const encryptionKey = getLocalStorageItemAndClear(
+        storageKeys.encyptionKey(id)
+      );
+      if (encryptionKey != null) {
+        const parsedEncryptionKey = parseOrFallback(encryptionKey);
+        chatModel.setEncryptionKey(parsedEncryptionKey);
+      }
+      const messagesString = getLocalStorageItemAndClear(storageKeys.messages(id)) ?? "";
+      const messageOutboxString = getLocalStorageItemAndClear(storageKeys.outbox(id)) ?? "";
+      const potentialMessages = parseArray(messagesString);
+      const potentialMessagesInOutbox = parseArray(messageOutboxString);
+      const addMessages = (potentialMessages2, status) => {
+        for (const potentialMessage of potentialMessages2) {
+          const isV1ChatMessage = checkMatchesObjectStructure(
+            potentialMessage,
+            V1ChatMessageReference
+          );
+          if (isV1ChatMessage == false) continue;
+          const v1ChatMessage = potentialMessage;
+          const convertedChatMessage = {
+            dataVersion: "v2",
+            id: v4_default(),
+            channel: v1ChatMessage.channel,
+            sender: v1ChatMessage.sender,
+            body: v1ChatMessage.body,
+            dateSent: v1ChatMessage.isoDate,
+            status,
+            stringifiedFile: ""
+          };
+          chatModel.addMessage(convertedChatMessage);
+          if (status == "outbox" /* Outbox */) {
+            this.connectionModel.sendMessageOrStore(convertedChatMessage);
+          }
+        }
+      };
+      addMessages(potentialMessages, "received" /* Received */);
+      addMessages(potentialMessagesInOutbox, "outbox" /* Outbox */);
+      const objectsString = getLocalStorageItemAndClear(storageKeys.objects(id)) ?? "";
+      const objectOutboxString = getLocalStorageItemAndClear(storageKeys.itemOutbox(id)) ?? "";
+      const potentialObjects = parseArray(objectsString);
+      const potentialObjectsInOutbox = parseArray(objectOutboxString);
+      const addObjects = (potentialObjects2) => {
+        const board = chatModel.fileModel.boardsAndTasksModel.createBoard(
+          translations.updater.migrated
+        );
+        chatModel.fileModel.boardsAndTasksModel.updateBoard(board);
+        for (const potentialObjectEntry of potentialObjects2) {
+          const potentialObject = potentialObjectEntry[1];
+          const isV1MessageObject = checkIsV1MessageObject(potentialObject);
+          if (isV1MessageObject == false) continue;
+          const objectId = potentialObject.id;
+          const objectName = potentialObject.title;
+          const contentVersions = Object.values(
+            potentialObject.contentVersions
+          );
+          for (const potentialVersion of contentVersions) {
+            const isV1MessageObjectContent = checkIsV1MessageObjectContent(potentialVersion);
+            if (isV1MessageObjectContent == false) continue;
+            const convertedTaskFileContent = {
+              dataVersion: "v2",
+              fileId: objectId,
+              fileContentId: FileModel2.generateFileContentId(
+                potentialVersion.isoDateVersionCreated
+              ),
+              creationDate: potentialVersion.isoDateVersionCreated,
+              type: "task",
+              name: objectName ?? "",
+              boardId: board.fileId ?? "",
+              description: potentialVersion.noteContent ?? "",
+              category: potentialVersion.categoryName ?? "",
+              status: potentialVersion.status ?? "",
+              priority: potentialVersion.priority ?? "",
+              date: potentialVersion.date ?? "",
+              time: potentialVersion.time ?? ""
+            };
+            console.log(convertedTaskFileContent);
+            chatModel.fileModel.handleFileContent(convertedTaskFileContent);
+          }
+        }
+      };
+      addObjects([...potentialObjects, ...potentialObjectsInOutbox]);
+    };
+  };
+  var storageKeys = {
+    viewType(id) {
+      return id + "view-type";
+    },
+    hasUnread(id) {
+      return id + "has-unread-messages";
+    },
+    primaryChannel(id) {
+      return id + "primary-channel";
+    },
+    secondaryChannels(id) {
+      return id + "secondary-channels";
+    },
+    encyptionKey(id) {
+      return id + "encryption-key";
+    },
+    messages(id) {
+      return id + "messages";
+    },
+    objects(id) {
+      return id + "items";
+    },
+    outbox(id) {
+      return id + "outbox";
+    },
+    itemOutbox(id) {
+      return id + "item-outbox";
+    },
+    composingMessage(id) {
+      return id + "composing-message";
+    }
+  };
+  var V1ChatMessageReference = {
+    channel: "",
+    sender: "",
+    body: "",
+    isoDate: ""
+  };
+  function checkIsV1MessageObject(object) {
+    if (object.id == void 0) return false;
+    if (object.title == void 0) return false;
+    if (object.contentVersions == void 0) return false;
+    return true;
+  }
+  function checkIsV1MessageObjectContent(object) {
+    if (object.id == void 0) return false;
+    if (object.isoDateVersionCreated == void 0) return false;
+    return true;
+  }
+
   // src/index.tsx
   var storageModel = new StorageModel();
   var settingsModel = new SettingsModel(storageModel);
@@ -4643,6 +4861,7 @@
     settingsModel,
     connectionModel
   );
+  new v1Upgrader(settingsModel, connectionModel, chatListModel);
   var coreVieWModel = new CoreViewModel();
   var storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
   var settingsViewModel = new SettingsViewModel(coreVieWModel, settingsModel);
