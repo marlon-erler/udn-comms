@@ -20,12 +20,12 @@ ANIMATION
 @keyframes slide-up {
   0% {
     opacity: 0;
-    transform: translateY(1rem);
+    transform: translateY(2rem);
   }
 }
 
 :root {
-  --animation-duration: 0.4s;
+  --animation-duration: 0.5s;
 }
 
 .slide-up {

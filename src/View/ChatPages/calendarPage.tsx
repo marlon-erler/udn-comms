@@ -42,7 +42,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
       } else {
         return (
           <div
-            class="flex-column gap"
+            class="flex-column gap slide-up"
             children:append={[listState, TaskViewModelToEntry]}
           ></div>
         );
@@ -65,7 +65,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
 
   return (
     <div id="calendar-page">
-      <div class="pane-wrapper">
+      <div class="pane-wrapper grid-pane-wrapper">
         <div class="pane">
           <div class="toolbar">
             <span>

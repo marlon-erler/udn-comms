@@ -2727,7 +2727,7 @@
           return /* @__PURE__ */ createElement(
             "div",
             {
-              class: "flex-column gap",
+              class: "flex-column gap slide-up",
               "children:append": [listState, TaskViewModelToEntry]
             }
           );
@@ -2746,7 +2746,7 @@
         }
       }
     );
-    return /* @__PURE__ */ createElement("div", { id: "calendar-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "calendar-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper grid-pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
         class: "ghost",
