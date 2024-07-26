@@ -69,6 +69,7 @@ export default class CalendarModel {
 
     const grid: MonthGrid<T> = {
       offset,
+      firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
       days: {},
     };
 
@@ -115,5 +116,6 @@ export enum CalendarModelSubPaths {
 // types
 export interface MonthGrid<T> {
   offset: number;
+  firstDayOfWeek: number;
   days: { [date: string]: T };
 }

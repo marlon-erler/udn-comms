@@ -659,6 +659,7 @@
       const daysInMonth = date.getDate() + 1;
       const grid = {
         offset,
+        firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
         days: {}
       };
       for (let i = 0; i < daysInMonth; i++) {
@@ -2354,27 +2355,6 @@
     };
   };
 
-  // src/View/Components/monthGrid.tsx
-  function MonthGrid2(monthGrid) {
-    const offsetElements = [];
-    for (let i = 0; i < monthGrid.offset; i++) {
-      offsetElements.push(/* @__PURE__ */ createElement("div", null));
-    }
-    const converter = (taskViewModel) => {
-      return /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
-    };
-    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
-      const [date, mapState] = entry;
-      return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap clip",
-          "children:append": [mapState, converter]
-        }
-      )));
-    }));
-  }
-
   // src/View/translations.ts
   var englishTranslations = {
     general: {
@@ -2524,6 +2504,36 @@
   };
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/Components/monthGrid.tsx
+  function MonthGrid2(monthGrid) {
+    const dayLabels = [];
+    let currentWeekday = monthGrid.firstDayOfWeek;
+    while (dayLabels.length < 7) {
+      dayLabels.push(
+        /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.regional.weekdays.abbreviated[currentWeekday])
+      );
+      currentWeekday++;
+      if (currentWeekday == 7) currentWeekday = 0;
+    }
+    const offsetElements = [];
+    for (let i = 0; i < monthGrid.offset; i++) {
+      offsetElements.push(/* @__PURE__ */ createElement("div", null));
+    }
+    const converter = (taskViewModel) => {
+      return /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
+      const [date, mapState] = entry;
+      return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap clip",
+          "children:append": [mapState, converter]
+        }
+      )));
+    })));
+  }
 
   // src/View/ChatPages/calendarPage.tsx
   function CalendarPage(calendarPageViewModel) {

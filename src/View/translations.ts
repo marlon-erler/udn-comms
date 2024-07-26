@@ -183,7 +183,7 @@ const englishTranslations = {
 
       ///
 
-      renameCategoryInputPlaceholder: "Rename category,"
+      renameCategoryInputPlaceholder: "Rename category,",
     },
 
     calendar: {
@@ -197,7 +197,7 @@ const englishTranslations = {
 
       yearInputPlaceholder: "2000",
       monthInputPlaceholder: "01",
-    }
+    },
   },
 };
 

@@ -478,6 +478,15 @@ body[showing-chat] #chat-page-wrapper {
 
 /* src/View/Components/monthGrid.css */
 .month-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-between-tiles);
+  height: 100%;
+}
+.month-grid-wrapper .day-labels {
+  flex: 0;
+}
+.month-grid-wrapper > div {
   display: grid;
   gap: var(--gap-between-tiles);
   height: 100%;
@@ -485,14 +494,20 @@ body[showing-chat] #chat-page-wrapper {
   grid-template-columns: repeat(7, minmax(0px, 1fr));
   grid-auto-rows: 1fr;
 }
-.month-grid-wrapper .tile > div {
+.month-grid .tile {
+  animation: slide-up var(--animation-duration);
+}
+.month-grid .tile > div {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
 }
+.month-grid .tile > div span {
+  animation: slide-up var(--animation-duration);
+}
 @media (max-width: 640px) {
-  .month-grid-wrapper .tile {
+  .month-grid .tile {
     padding: 4px;
   }
 }
