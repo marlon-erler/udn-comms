@@ -28,6 +28,10 @@ ANIMATION
   --animation-duration: 0.4s;
 }
 
+.slide-up {
+  animation: slide-up var(--animation-duration)
+}
+
 /*
 COLORS
  */

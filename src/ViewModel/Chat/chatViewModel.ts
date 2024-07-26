@@ -27,8 +27,8 @@ export default class ChatViewModel {
   settingsPageViewModel: SettingsPageViewModel;
 
   // state
-  displayedColor: React.State<Color> = new React.State<Color>(Color.Standard);
-  selectedPage: React.State<ChatPageType> = new React.State<ChatPageType>(
+  displayedColor: React.State<Color> = new React.State<any>(Color.Standard);
+  selectedPage: React.State<ChatPageType> = new React.State<any>(
     ChatPageType.Messages
   );
 
@@ -99,7 +99,7 @@ export default class ChatViewModel {
     this.calendarViewModel = new CalendarPageViewModel(
       coreViewModel,
       this.storageModel,
-      this.chatModel.fileModel.calendarModel,
+      this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
       this.chatModel.fileModel.boardsAndTasksModel
     );
     this.taskPageViewModel = new TaskPageViewModel(

@@ -1,26 +1,28 @@
 // this file is responsible for managing files within chats.
 
 import { DATA_VERSION, ValidObject } from "../Utility/typeSafety";
+import StorageModel, {
+  StorageModelSubPath,
+  filePaths,
+} from "../Global/storageModel";
 import {
-  HandlerManager,
   StringEntryObject,
   createTimestamp,
   parseValidObject,
   stringify,
 } from "../Utility/utility";
-import StorageModel, { StorageModelSubPath, filePaths } from "../Global/storageModel";
 
 import BoardsAndTasksModel from "./boardsAndTasksModel";
-import CalendarModel from "./calendarModel";
 import ChatModel from "../Chat/chatModel";
+import SettingsModel from "../Global/settingsModel";
 import { v4 } from "uuid";
 
 export default class FileModel {
-  chatModel: ChatModel;
   storageModel: StorageModel;
+  settingsModel: SettingsModel;
 
+  chatModel: ChatModel;
   boardsAndTasksModel: BoardsAndTasksModel;
-  calendarModel: CalendarModel;
 
   // paths
   getBasePath = (): string[] => {
@@ -34,9 +36,7 @@ export default class FileModel {
     return [...this.getBasePath(), FileModelSubPath.Data];
   };
 
-  getModelContainerPath = (
-    modelName: FileModelSubPath
-  ): string[] => {
+  getModelContainerPath = (modelName: FileModelSubPath): string[] => {
     return [...this.getBasePath(), FileModelSubPath.Model, modelName];
   };
 
@@ -65,7 +65,6 @@ export default class FileModel {
     if (didStore == false) return;
 
     this.boardsAndTasksModel.handleFileContent(fileContent);
-    this.calendarModel.handleFileContent(fileContent);
   };
 
   // methods
@@ -135,14 +134,23 @@ export default class FileModel {
     );
     return fileContent;
   };
-  
+
   // init
-  constructor(chatModel: ChatModel, storageModel: StorageModel) {
+  constructor(
+    storageModel: StorageModel,
+    settingsModel: SettingsModel,
+    chatModel: ChatModel
+  ) {
     this.chatModel = chatModel;
+    this.settingsModel = settingsModel;
     this.storageModel = storageModel;
 
-    this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
-    this.calendarModel = new CalendarModel(this.storageModel, this);
+    this.boardsAndTasksModel = new BoardsAndTasksModel(
+      this.storageModel,
+      this.settingsModel,
+      chatModel,
+      this
+    );
   }
 
   // utility
@@ -175,10 +183,12 @@ export enum FileModelSubPath {
   ModelView = "view",
   ModelTask = "tasks",
   ModelCalendar = "calendar",
-};
+}
 
 // types
-export interface FileContent<T extends string> extends ValidObject, StringEntryObject {
+export interface FileContent<T extends string>
+  extends ValidObject,
+    StringEntryObject {
   fileId: string;
   fileContentId: string;
   creationDate: string;

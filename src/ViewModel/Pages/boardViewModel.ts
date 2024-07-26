@@ -27,15 +27,15 @@ export default class BoardViewModel {
 
   // state
   name: React.State<string> = new React.State("");
-  color: React.State<Color> = new React.State<Color>(Color.Standard);
+  color: React.State<Color> = new React.State<any>(Color.Standard);
 
   index: React.State<number> = new React.State(0);
 
-  selectedPage: React.State<BoardPageType> = new React.State<BoardPageType>(
+  selectedPage: React.State<BoardPageType> = new React.State<any>(
     BoardPageType.List
   );
   selectedTaskViewModel: React.State<TaskViewModel | undefined> =
-    new React.State<TaskViewModel | undefined>(undefined);
+    new React.State<any>(undefined);
 
   isSelected: React.State<boolean>;
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
@@ -188,19 +188,6 @@ export default class BoardViewModel {
     for (const boardViewModel of this.taskViewModels.value.values()) {
       boardViewModel.updateIndex();
     }
-  };
-
-  // filter
-  getStringsFromTaskViewModel = (taskViewModel: TaskViewModel): string[] => {
-    return [
-      taskViewModel.task.name,
-      taskViewModel.task.description ?? "",
-      taskViewModel.task.category ?? "",
-      taskViewModel.task.status ?? "",
-      taskViewModel.task.priority ?? "",
-      taskViewModel.task.date ?? "",
-      taskViewModel.task.time ?? "",
-    ];
   };
 
   // load

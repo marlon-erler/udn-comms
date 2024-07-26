@@ -119,7 +119,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
         boardViewModel.taskViewModels,
         boardViewModel.filteredTaskViewModels,
         TaskViewModelToEntry,
-        boardViewModel.getStringsFromTaskViewModel,
+        TaskViewModel.getStringsForFilter,
         boardViewModel.isPresentingFilterModal
       )}
       <div children:set={taskSettingsModal}></div>

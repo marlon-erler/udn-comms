@@ -14,11 +14,11 @@ export default class ChatMessageViewModel {
   sender: string;
   dateSent: string;
   body: React.State<string> = new React.State("");
-  status: React.State<ChatMessageStatus | any> = new React.State<
-    ChatMessageStatus | undefined
-  >(undefined);
+  status: React.State<ChatMessageStatus | any> = new React.State<any>(
+    undefined
+  );
   sentByUser: boolean;
-  
+
   // state
   isPresentingInfoModal: React.State<boolean> = new React.State(false);
 
@@ -36,11 +36,11 @@ export default class ChatMessageViewModel {
   // view
   showInfoModal = (): void => {
     this.isPresentingInfoModal.value = true;
-  }
+  };
 
   hideInfoModal = (): void => {
     this.isPresentingInfoModal.value = false;
-  }
+  };
 
   // load
   loadData = (): void => {

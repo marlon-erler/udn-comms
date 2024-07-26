@@ -39,9 +39,9 @@ export default class TaskPageViewModel {
 
   boardViewModels: React.MapState<BoardViewModel> = new React.MapState();
 
-  selectedBoardId: React.State<string | undefined> = new React.State<
-    string | undefined
-  >(undefined);
+  selectedBoardId: React.State<string | undefined> = new React.State<any>(
+    undefined
+  );
 
   // guards
   cannotCreateBoard: React.State<boolean> = React.createProxyState(

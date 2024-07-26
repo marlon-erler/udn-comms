@@ -1,18 +1,15 @@
-// this file extends the BoardsAndTasksModel regarding calendar features.
 // it is responsible for managing calendar-realted reference files for tasks.
 
-import BoardsAndTasksModel, {
-  TaskFileContent,
-  TaskFileContentReference,
-} from "./boardsAndTasksModel";
-import FileModel, { FileContent, FileModelSubPath } from "./fileModel";
+import FileModel, { FileModelSubPath } from "./fileModel";
 
+import SettingsModel from "../Global/settingsModel";
 import StorageModel from "../Global/storageModel";
-import { checkMatchesObjectStructure } from "../Utility/typeSafety";
+import { TaskFileContent } from "./boardsAndTasksModel";
 
 export default class CalendarModel {
   storageModel: StorageModel;
   fileModel: FileModel;
+  settingsModel: SettingsModel;
 
   // paths
   getBasePath = (): string[] => {
@@ -31,18 +28,10 @@ export default class CalendarModel {
     return [...this.getMonthContainerPath(), monthString];
   };
 
-  // handlers
-  handleFileContent = (fileContent: FileContent<string>): void => {
-    if (
-      checkMatchesObjectStructure(fileContent, TaskFileContentReference) ==
-      false
-    )
-      return;
-  };
-
   // main
   storeTaskReference = (taskFileContent: TaskFileContent): void => {
     if (taskFileContent.date == undefined) return;
+
     const monthString: string = CalendarModel.isoToMonthString(
       taskFileContent.date
     );
@@ -58,21 +47,73 @@ export default class CalendarModel {
     return this.storageModel.list(monthPath);
   };
 
+  generateMonthGrid = <T>(
+    year: number,
+    month: number,
+    defaultValueCreator: () => T
+  ): MonthGrid<T> => {
+    // get first day of month
+    const date: Date = new Date();
+    date.setFullYear(year);
+    date.setMonth(month - 1);
+    date.setDate(1);
+
+    // get offset
+    const offset: number =
+      date.getDay() - parseInt(this.settingsModel.firstDayOfWeek);
+
+    // get total day count
+    date.setMonth(month);
+    date.setDate(-1);
+    const daysInMonth: number = date.getDate() + 1;
+
+    const grid: MonthGrid<T> = {
+      offset,
+      days: {},
+    };
+
+    for (let i = 0; i < daysInMonth; i++) {
+      grid.days[i + 1] = defaultValueCreator();
+    }
+
+    return grid;
+  };
+
   // init
   constructor(
     storageModel: StorageModel,
-    fileModel: FileModel,  ) {
+    settingsModel: SettingsModel,
+    fileModel: FileModel
+  ) {
     this.storageModel = storageModel;
+    this.settingsModel = settingsModel;
     this.fileModel = fileModel;
   }
 
   // utility
   static isoToMonthString = (dateISOString: string): string => {
     const [year, month, _] = dateISOString.split("-");
-    return `${year}-${month}`;
+    return CalendarModel.getMonthString(year, month);
+  };
+
+  static isoToDateString = (dateISOString: string): string | undefined => {
+    const [year, month, date, _] = dateISOString.split("-");
+    return date;
+  };
+
+  static getMonthString = (year: string = "", month: string = ""): string => {
+    const paddedYear: string = year.padStart(4, "0");
+    const paddedMonth: string = month.padStart(2, "0");
+    return `${paddedYear}-${paddedMonth}`;
   };
 }
 
 export enum CalendarModelSubPaths {
   Months = "months",
+}
+
+// types
+export interface MonthGrid<T> {
+  offset: number;
+  days: { [date: string]: T };
 }

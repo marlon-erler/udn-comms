@@ -9,7 +9,10 @@ import {
   parseValidObject,
   stringify,
 } from "../Utility/utility";
-import StorageModel, { StorageModelSubPath, filePaths } from "../Global/storageModel";
+import StorageModel, {
+  StorageModelSubPath,
+  filePaths,
+} from "../Global/storageModel";
 import { decryptString, encryptString } from "../Utility/crypto";
 
 import ChatListModel from "./chatListModel";
@@ -39,19 +42,31 @@ export default class ChatModel {
 
   // paths
   getBasePath = (): string[] => {
-    return StorageModel.getPath(StorageModelSubPath.Chat, filePaths.chat.chatBase(this.id));
+    return StorageModel.getPath(
+      StorageModelSubPath.Chat,
+      filePaths.chat.chatBase(this.id)
+    );
   };
 
   getInfoPath = (): string[] => {
-    return StorageModel.getPath(StorageModelSubPath.Chat, filePaths.chat.info(this.id));
+    return StorageModel.getPath(
+      StorageModelSubPath.Chat,
+      filePaths.chat.info(this.id)
+    );
   };
 
   getColorPath = (): string[] => {
-    return StorageModel.getPath(StorageModelSubPath.Chat, filePaths.chat.color(this.id));
+    return StorageModel.getPath(
+      StorageModelSubPath.Chat,
+      filePaths.chat.color(this.id)
+    );
   };
 
   getMessageDirPath = (): string[] => {
-    return StorageModel.getPath(StorageModelSubPath.Chat, filePaths.chat.messages(this.id));
+    return StorageModel.getPath(
+      StorageModelSubPath.Chat,
+      filePaths.chat.messages(this.id)
+    );
   };
 
   getMessagePath = (id: string): string[] => {
@@ -236,7 +251,7 @@ export default class ChatModel {
     this.loadColor();
     this.subscribe();
 
-    this.fileModel = new FileModel(this, this.storageModel);
+    this.fileModel = new FileModel(this.storageModel, this.settingsModel, this);
   }
 
   // utility

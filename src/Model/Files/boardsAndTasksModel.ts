@@ -6,16 +6,21 @@ import {
 } from "../Utility/typeSafety";
 import FileModel, { FileContent, FileModelSubPath } from "./fileModel";
 
+import CalendarModel from "./calendarModel";
 import ChatModel from "../Chat/chatModel";
 import { Color } from "../../colors";
 import { HandlerManager } from "../Utility/utility";
+import SettingsModel from "../Global/settingsModel";
 import StorageModel from "../Global/storageModel";
 import { v4 } from "uuid";
 
 export default class BoardsAndTasksModel {
   storageModel: StorageModel;
+  settingsModel: SettingsModel;
   chatModel: ChatModel;
   fileModel: FileModel;
+
+  calendarModel: CalendarModel;
 
   // data
   boardHandlerManager: HandlerManager<BoardInfoFileContent> =
@@ -153,8 +158,6 @@ export default class BoardsAndTasksModel {
   };
 
   storeTask = (taskFileContent: TaskFileContent): void => {
-    console.log(taskFileContent);
-
     // store info
     this.fileModel.storeFileContent(taskFileContent);
 
@@ -164,6 +167,9 @@ export default class BoardsAndTasksModel {
       taskFileContent.fileId
     );
     this.storageModel.write(taskReferencePath, "");
+
+    // add to calendar
+    this.calendarModel.storeTaskReference(taskFileContent);
   };
 
   listTaskIds = (boardId: string): string[] => {
@@ -214,12 +220,20 @@ export default class BoardsAndTasksModel {
   // init
   constructor(
     storageModel: StorageModel,
+    settingsModel: SettingsModel,
     chatModel: ChatModel,
     fileModel: FileModel
   ) {
+    this.storageModel = storageModel;
+    this.settingsModel = settingsModel;
     this.chatModel = chatModel;
     this.fileModel = fileModel;
-    this.storageModel = storageModel;
+
+    this.calendarModel = new CalendarModel(
+      this.storageModel,
+      this.settingsModel,
+      this.fileModel
+    );
   }
 
   // utility

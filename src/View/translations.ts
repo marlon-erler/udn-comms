@@ -185,6 +185,19 @@ const englishTranslations = {
 
       renameCategoryInputPlaceholder: "Rename category,"
     },
+
+    calendar: {
+      todayButtonAudioLabel: "go to today",
+
+      previousMonthButtonAudioLabel: "previous month",
+      nextMonthButtonAudioLabel: "next month",
+
+      yearInputAudioLabel: "year",
+      monthInputAudioLabel: "month",
+
+      yearInputPlaceholder: "2000",
+      monthInputPlaceholder: "01",
+    }
   },
 };
 

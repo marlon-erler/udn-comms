@@ -175,6 +175,9 @@
     );
     return proxyState;
   }
+  function bulkSubscribe(statesToSubscibe, fn) {
+    statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
+  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -613,6 +616,78 @@
     }
   };
 
+  // src/Model/Files/calendarModel.ts
+  var CalendarModel = class _CalendarModel {
+    storageModel;
+    fileModel;
+    settingsModel;
+    // paths
+    getBasePath = () => {
+      return this.fileModel.getModelContainerPath("calendar" /* ModelCalendar */);
+    };
+    getViewPath = () => {
+      return [...this.getBasePath(), "view" /* ModelView */];
+    };
+    getMonthContainerPath = () => {
+      return [...this.getBasePath(), "months" /* Months */];
+    };
+    getMonthPath = (monthString) => {
+      return [...this.getMonthContainerPath(), monthString];
+    };
+    // main
+    storeTaskReference = (taskFileContent) => {
+      if (taskFileContent.date == void 0) return;
+      const monthString = _CalendarModel.isoToMonthString(
+        taskFileContent.date
+      );
+      const monthPath = this.getMonthPath(monthString);
+      const referencePath = [...monthPath, taskFileContent.fileId];
+      this.storageModel.write(referencePath, "");
+    };
+    listTaskIds = (monthString) => {
+      const monthPath = this.getMonthPath(monthString);
+      return this.storageModel.list(monthPath);
+    };
+    generateMonthGrid = (year, month, defaultValueCreator) => {
+      const date = /* @__PURE__ */ new Date();
+      date.setFullYear(year);
+      date.setMonth(month - 1);
+      date.setDate(1);
+      const offset = date.getDay() - parseInt(this.settingsModel.firstDayOfWeek);
+      date.setMonth(month);
+      date.setDate(-1);
+      const daysInMonth = date.getDate() + 1;
+      const grid = {
+        offset,
+        days: {}
+      };
+      for (let i = 0; i < daysInMonth; i++) {
+        grid.days[i + 1] = defaultValueCreator();
+      }
+      return grid;
+    };
+    // init
+    constructor(storageModel2, settingsModel2, fileModel) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
+      this.fileModel = fileModel;
+    }
+    // utility
+    static isoToMonthString = (dateISOString) => {
+      const [year, month, _] = dateISOString.split("-");
+      return _CalendarModel.getMonthString(year, month);
+    };
+    static isoToDateString = (dateISOString) => {
+      const [year, month, date, _] = dateISOString.split("-");
+      return date;
+    };
+    static getMonthString = (year = "", month = "") => {
+      const paddedYear = year.padStart(4, "0");
+      const paddedMonth = month.padStart(2, "0");
+      return `${paddedYear}-${paddedMonth}`;
+    };
+  };
+
   // src/colors.ts
   var Color = /* @__PURE__ */ ((Color2) => {
     Color2["Standard"] = "standard";
@@ -628,8 +703,10 @@
   // src/Model/Files/boardsAndTasksModel.ts
   var BoardsAndTasksModel = class _BoardsAndTasksModel {
     storageModel;
+    settingsModel;
     chatModel;
     fileModel;
+    calendarModel;
     // data
     boardHandlerManager = new HandlerManager();
     taskHandlerManager = new HandlerManager();
@@ -731,13 +808,13 @@
       this.chatModel.sendMessage("", taskFileContent);
     };
     storeTask = (taskFileContent) => {
-      console.log(taskFileContent);
       this.fileModel.storeFileContent(taskFileContent);
       const taskReferencePath = this.getTaskReferencePath(
         taskFileContent.boardId,
         taskFileContent.fileId
       );
       this.storageModel.write(taskReferencePath, "");
+      this.calendarModel.storeTaskReference(taskFileContent);
     };
     listTaskIds = (boardId) => {
       const taskContainerPath = this.getTaskContainerPath(boardId);
@@ -773,14 +850,20 @@
       this.storageModel.removeRecursively(taskReferencePath);
     };
     // init
-    constructor(storageModel2, chatModel, fileModel) {
+    constructor(storageModel2, settingsModel2, chatModel, fileModel) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
       this.chatModel = chatModel;
       this.fileModel = fileModel;
-      this.storageModel = storageModel2;
+      this.calendarModel = new CalendarModel(
+        this.storageModel,
+        this.settingsModel,
+        this.fileModel
+      );
     }
     // utility
     static createBoardInfoFileContent = (fileId, name, color) => {
-      const fileContent = FileModel.createFileContent(
+      const fileContent = FileModel2.createFileContent(
         fileId,
         "board-info"
       );
@@ -791,7 +874,7 @@
       };
     };
     static createTaskFileContent = (fileId, name, boardId) => {
-      const fileContent = FileModel.createFileContent(
+      const fileContent = FileModel2.createFileContent(
         fileId,
         "task"
       );
@@ -821,60 +904,12 @@
     boardId: ""
   };
 
-  // src/Model/Files/calendarModel.ts
-  var CalendarModel = class _CalendarModel {
-    storageModel;
-    fileModel;
-    // paths
-    getBasePath = () => {
-      return this.fileModel.getModelContainerPath("calendar" /* ModelCalendar */);
-    };
-    getViewPath = () => {
-      return [...this.getBasePath(), "view" /* ModelView */];
-    };
-    getMonthContainerPath = () => {
-      return [...this.getBasePath(), "months" /* Months */];
-    };
-    getMonthPath = (monthString) => {
-      return [...this.getMonthContainerPath(), monthString];
-    };
-    // handlers
-    handleFileContent = (fileContent) => {
-      if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == false)
-        return;
-    };
-    // main
-    storeTaskReference = (taskFileContent) => {
-      if (taskFileContent.date == void 0) return;
-      const monthString = _CalendarModel.isoToMonthString(
-        taskFileContent.date
-      );
-      const monthPath = this.getMonthPath(monthString);
-      const referencePath = [...monthPath, taskFileContent.fileId];
-      this.storageModel.write(referencePath, "");
-    };
-    listTaskIds = (monthString) => {
-      const monthPath = this.getMonthPath(monthString);
-      return this.storageModel.list(monthPath);
-    };
-    // init
-    constructor(storageModel2, fileModel) {
-      this.storageModel = storageModel2;
-      this.fileModel = fileModel;
-    }
-    // utility
-    static isoToMonthString = (dateISOString) => {
-      const [year, month, _] = dateISOString.split("-");
-      return `${year}-${month}`;
-    };
-  };
-
   // src/Model/Files/fileModel.ts
-  var FileModel = class _FileModel {
-    chatModel;
+  var FileModel2 = class _FileModel {
     storageModel;
+    settingsModel;
+    chatModel;
     boardsAndTasksModel;
-    calendarModel;
     // paths
     getBasePath = () => {
       return StorageModel.getPath(
@@ -908,7 +943,6 @@
       const didStore = this.storeFileContent(fileContent);
       if (didStore == false) return;
       this.boardsAndTasksModel.handleFileContent(fileContent);
-      this.calendarModel.handleFileContent(fileContent);
     };
     // methods
     addFileContentAndSend = (fileContent) => {
@@ -957,11 +991,16 @@
       return fileContent;
     };
     // init
-    constructor(chatModel, storageModel2) {
+    constructor(storageModel2, settingsModel2, chatModel) {
       this.chatModel = chatModel;
+      this.settingsModel = settingsModel2;
       this.storageModel = storageModel2;
-      this.boardsAndTasksModel = new BoardsAndTasksModel(this.storageModel, chatModel, this);
-      this.calendarModel = new CalendarModel(this.storageModel, this);
+      this.boardsAndTasksModel = new BoardsAndTasksModel(
+        this.storageModel,
+        this.settingsModel,
+        chatModel,
+        this
+      );
     }
     // utility
     static generateFileContentId = (creationDate) => {
@@ -1077,16 +1116,28 @@
     }
     // paths
     getBasePath = () => {
-      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.chatBase(this.id));
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.chatBase(this.id)
+      );
     };
     getInfoPath = () => {
-      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.info(this.id));
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.info(this.id)
+      );
     };
     getColorPath = () => {
-      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.color(this.id));
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.color(this.id)
+      );
     };
     getMessageDirPath = () => {
-      return StorageModel.getPath("chat" /* Chat */, filePaths.chat.messages(this.id));
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.messages(this.id)
+      );
     };
     getMessagePath = (id) => {
       return [...this.getMessageDirPath(), id];
@@ -1226,7 +1277,7 @@
       this.loadInfo();
       this.loadColor();
       this.subscribe();
-      this.fileModel = new FileModel(this, this.storageModel);
+      this.fileModel = new FileModel2(this.storageModel, this.settingsModel, this);
     }
     // utility
     static generateChatInfo = (primaryChannel) => {
@@ -1514,6 +1565,18 @@
       this.time.value = this.task.time ?? "";
       this.selectedVersionId.value = this.task.fileContentId;
     };
+    // utility
+    static getStringsForFilter = (taskViewModel) => {
+      return [
+        taskViewModel.task.name,
+        taskViewModel.task.description ?? "",
+        taskViewModel.task.category ?? "",
+        taskViewModel.task.status ?? "",
+        taskViewModel.task.priority ?? "",
+        taskViewModel.task.date ?? "",
+        taskViewModel.task.time ?? ""
+      ];
+    };
   };
 
   // src/ViewModel/Pages/calendarPageViewModel.ts
@@ -1523,31 +1586,90 @@
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
       this.calendarModel = calendarModel;
-      this.boardAndTasksModel = boardAndTasksModel;
+      this.boardsAndTasksModel = boardAndTasksModel;
+      bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
+        this.loadTasks();
+      });
     }
     storageModel;
     calendarModel;
-    boardAndTasksModel;
+    boardsAndTasksModel;
+    // data
+    get monthString() {
+      return CalendarModel.getMonthString(
+        this.selectedYear.value.toString(),
+        this.selectedMonth.value.toString()
+      );
+    }
     // paths
     getBasePath = () => {
       return [...this.calendarModel.getViewPath()];
     };
     // state
-    taskViewModels = new MapState();
+    selectedYear = new State(0);
+    selectedMonth = new State(0);
+    monthGrid = new State(void 0);
     // view
+    getTaskMapState = (taskFileContent) => {
+      if (this.monthGrid.value == null) return null;
+      const dateString = CalendarModel.isoToDateString(
+        taskFileContent.date ?? ""
+      );
+      if (dateString == void 0) return null;
+      return this.monthGrid.value.days[dateString];
+    };
     showTask = (taskFileContent) => {
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
-        this.boardAndTasksModel,
+        this.boardsAndTasksModel,
         null,
         this,
         taskFileContent
       );
-      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+      const mapState = this.getTaskMapState(taskFileContent);
+      mapState?.set(taskFileContent.fileId, taskViewModel);
+    };
+    removeTaskFromList = (taskFileContent) => {
+      const mapState = this.getTaskMapState(taskFileContent);
+      mapState?.remove(taskFileContent.fileId);
+    };
+    showToday = () => {
+      const today = /* @__PURE__ */ new Date();
+      this.selectedYear.value = today.getFullYear();
+      this.selectedMonth.value = today.getMonth() + 1;
+    };
+    showPreviousMonth = () => {
+      this.selectedMonth.value -= 1;
+      if (this.selectedMonth.value <= 0) {
+        this.selectedYear.value -= 1;
+        this.selectedMonth.value = 12;
+      }
+    };
+    showNextMonth = () => {
+      this.selectedMonth.value += 1;
+      if (this.selectedMonth.value >= 13) {
+        this.selectedYear.value += 1;
+        this.selectedMonth.value = 1;
+      }
     };
     // storage
     // load
+    loadTasks = () => {
+      this.monthGrid.value = this.calendarModel.generateMonthGrid(
+        this.selectedYear.value,
+        this.selectedMonth.value,
+        () => new MapState()
+      );
+      const taskIds = this.calendarModel.listTaskIds(this.monthString);
+      for (const taskId of taskIds) {
+        const taskFileContent = this.boardsAndTasksModel.getLatestTaskFileContent(taskId);
+        if (taskFileContent == null) continue;
+        this.showTask(taskFileContent);
+      }
+    };
     loadData = () => {
+      this.loadTasks();
+      this.showToday();
     };
   };
 
@@ -1568,7 +1690,9 @@
     sender;
     dateSent;
     body = new State("");
-    status = new State(void 0);
+    status = new State(
+      void 0
+    );
     sentByUser;
     // state
     isPresentingInfoModal = new State(false);
@@ -1915,18 +2039,6 @@
         boardViewModel.updateIndex();
       }
     };
-    // filter
-    getStringsFromTaskViewModel = (taskViewModel) => {
-      return [
-        taskViewModel.task.name,
-        taskViewModel.task.description ?? "",
-        taskViewModel.task.category ?? "",
-        taskViewModel.task.status ?? "",
-        taskViewModel.task.priority ?? "",
-        taskViewModel.task.date ?? "",
-        taskViewModel.task.time ?? ""
-      ];
-    };
     // load
     loadListRelevantData = () => {
       this.name.value = this.boardInfo.name;
@@ -1992,7 +2104,9 @@
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
-    selectedBoardId = new State(void 0);
+    selectedBoardId = new State(
+      void 0
+    );
     // guards
     cannotCreateBoard = createProxyState(
       [this.newBoardNameInput],
@@ -2083,7 +2197,7 @@
       this.calendarViewModel = new CalendarPageViewModel(
         coreViewModel,
         this.storageModel,
-        this.chatModel.fileModel.calendarModel,
+        this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
         this.chatModel.fileModel.boardsAndTasksModel
       );
       this.taskPageViewModel = new TaskPageViewModel(
@@ -2182,7 +2296,9 @@
     // state
     newChatPrimaryChannel = new State("");
     chatViewModels = new ListState();
-    selectedChat = new State(void 0);
+    selectedChat = new State(
+      void 0
+    );
     // guards
     cannotCreateChat = createProxyState(
       [this.newChatPrimaryChannel],
@@ -2238,36 +2354,25 @@
     };
   };
 
-  // src/View/ChatPages/calendarPage.tsx
-  function CalendarPage(calendarPageViewModel) {
-    calendarPageViewModel.loadData();
-    return /* @__PURE__ */ createElement("div", { id: "calendar-page" });
-  }
-
-  // src/View/Components/ribbonButton.tsx
-  function RibbonButton(label, icon, isSelected, select) {
-    return /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "ribbon-button",
-        "aria-label": label,
-        "toggle:selected": isSelected,
-        "on:click": select
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
-    );
-  }
-
-  // src/View/Components/chatViewToggleButton.tsx
-  function ChatViewToggleButton(label, icon, page, chatViewModel) {
-    function select() {
-      chatViewModel.selectedPage.value = page;
+  // src/View/Components/monthGrid.tsx
+  function MonthGrid2(monthGrid) {
+    const offsetElements = [];
+    for (let i = 0; i < monthGrid.offset; i++) {
+      offsetElements.push(/* @__PURE__ */ createElement("div", null));
     }
-    const isSelected = createProxyState(
-      [chatViewModel.selectedPage],
-      () => chatViewModel.selectedPage.value == page
-    );
-    return RibbonButton(label, icon, isSelected, select);
+    const converter = (taskViewModel) => {
+      return /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
+      const [date, mapState] = entry;
+      return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap clip",
+          "children:append": [mapState, converter]
+        }
+      )));
+    }));
   }
 
   // src/View/translations.ts
@@ -2402,6 +2507,15 @@
         filterTasksHeadline: "Filter Tasks",
         ///
         renameCategoryInputPlaceholder: "Rename category,"
+      },
+      calendar: {
+        todayButtonAudioLabel: "go to today",
+        previousMonthButtonAudioLabel: "previous month",
+        nextMonthButtonAudioLabel: "next month",
+        yearInputAudioLabel: "year",
+        monthInputAudioLabel: "month",
+        yearInputPlaceholder: "2000",
+        monthInputPlaceholder: "01"
       }
     }
   };
@@ -2410,6 +2524,97 @@
   };
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/ChatPages/calendarPage.tsx
+  function CalendarPage(calendarPageViewModel) {
+    calendarPageViewModel.loadData();
+    const mainContent = createProxyState(
+      [calendarPageViewModel.monthGrid],
+      () => {
+        if (calendarPageViewModel.monthGrid.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return MonthGrid2(calendarPageViewModel.monthGrid.value);
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement("div", { id: "calendar-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.todayButtonAudioLabel,
+        "on:click": calendarPageViewModel.showToday
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "today")
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.previousMonthButtonAudioLabel,
+        "on:click": calendarPageViewModel.showPreviousMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement("span", { class: "input-wrapper" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "year-input",
+        type: "number",
+        "aria-label": translations.chatPage.calendar.yearInputAudioLabel,
+        placeholder: translations.chatPage.calendar.yearInputPlaceholder,
+        "bind:value": calendarPageViewModel.selectedYear
+      }
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "month-input",
+        type: "number",
+        "aria-label": translations.chatPage.calendar.monthInputAudioLabel,
+        placeholder: translations.chatPage.calendar.monthInputPlaceholder,
+        "bind:value": calendarPageViewModel.selectedMonth
+      }
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.nextMonthButtonAudioLabel,
+        "on:click": calendarPageViewModel.showNextMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))));
+  }
+
+  // src/View/Components/ribbonButton.tsx
+  function RibbonButton(label, icon, isSelected, select) {
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ribbon-button",
+        "aria-label": label,
+        "toggle:selected": isSelected,
+        "on:click": select
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    );
+  }
+
+  // src/View/Components/chatViewToggleButton.tsx
+  function ChatViewToggleButton(label, icon, page, chatViewModel) {
+    function select() {
+      chatViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [chatViewModel.selectedPage],
+      () => chatViewModel.selectedPage.value == page
+    );
+    return RibbonButton(label, icon, isSelected, select);
+  }
 
   // src/View/Modals/chatMessageInfoModal.tsx
   function ChatMessageInfoModal(chatMessageViewModel) {
@@ -3281,7 +3486,7 @@
       boardViewModel.taskViewModels,
       boardViewModel.filteredTaskViewModels,
       TaskViewModelToEntry,
-      boardViewModel.getStringsFromTaskViewModel,
+      TaskViewModel.getStringsForFilter,
       boardViewModel.isPresentingFilterModal
     ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }

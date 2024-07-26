@@ -200,4 +200,17 @@ export default class TaskViewModel {
       this.switchVersion(selectedVersionId);
     });
   }
+  
+  // utility
+  static getStringsForFilter = (taskViewModel: TaskViewModel): string[] => {
+    return [
+      taskViewModel.task.name,
+      taskViewModel.task.description ?? "",
+      taskViewModel.task.category ?? "",
+      taskViewModel.task.status ?? "",
+      taskViewModel.task.priority ?? "",
+      taskViewModel.task.date ?? "",
+      taskViewModel.task.time ?? "",
+    ];
+  };
 }

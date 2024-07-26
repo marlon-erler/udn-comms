@@ -23,9 +23,9 @@ export default class ChatListViewModel {
   newChatPrimaryChannel: React.State<string> = new React.State("");
   chatViewModels: React.ListState<ChatViewModel> = new React.ListState();
 
-  selectedChat: React.State<ChatViewModel | undefined> = new React.State<
-    ChatViewModel | undefined
-  >(undefined);
+  selectedChat: React.State<ChatViewModel | undefined> = new React.State<any>(
+    undefined
+  );
 
   // guards
   cannotCreateChat = React.createProxyState(

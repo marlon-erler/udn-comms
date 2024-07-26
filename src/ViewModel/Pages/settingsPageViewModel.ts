@@ -21,7 +21,7 @@ export default class SettingsPageViewModel {
       this.shouldShowEncryptionKey.value == true ? "text" : "password"
     );
 
-  color: React.State<Color> = new React.State<Color>(Color.Standard);
+  color: React.State<Color> = new React.State<any>(Color.Standard);
 
   // guards
   cannotSetPrimaryChannel: React.State<boolean> = React.createProxyState(
