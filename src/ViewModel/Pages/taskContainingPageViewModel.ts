@@ -25,7 +25,7 @@ export default class TaskContainingPageViewModel {
   taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
 
   // methods
-  createTask = (boardId: string): void => {
+  createTaskFromBoardId = (boardId: string): void => {
     const taskFileContent: TaskFileContent =
       this.boardsAndTasksModel.createTask(boardId);
     const taskViewModel: TaskViewModel = new TaskViewModel(

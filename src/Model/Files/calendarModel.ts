@@ -112,6 +112,12 @@ export default class CalendarModel {
     const paddedMonth: string = month.padStart(2, "0");
     return `${paddedYear}-${paddedMonth}`;
   };
+
+  static getISODateString = (year: string, month: string, date: string): string => {
+    const monthString: string = CalendarModel.getMonthString(year, month);
+    const paddedDate: string = date.padStart(2, "0");
+    return `${monthString}-${paddedDate}`;
+  };
 }
 
 export enum CalendarModelSubPaths {

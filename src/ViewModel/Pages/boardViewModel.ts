@@ -7,7 +7,6 @@ import BoardsAndTasksModel, {
 
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
-import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import TaskPageViewModel from "./taskPageViewModel";
@@ -69,6 +68,10 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   };
 
   // methods
+  createTask = (): void => {
+    this.createTaskFromBoardId(this.boardInfo.fileId);
+  }
+
   handleDropWithinBoard = (category?: string, status?: string): void => {
     const draggedObject: any = this.coreViewModel.draggedObject.value;
     if (draggedObject instanceof TaskViewModel == false) return;

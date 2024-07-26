@@ -689,6 +689,11 @@
       const paddedMonth = month.padStart(2, "0");
       return `${paddedYear}-${paddedMonth}`;
     };
+    static getISODateString = (year, month, date) => {
+      const monthString = _CalendarModel.getMonthString(year, month);
+      const paddedDate = date.padStart(2, "0");
+      return `${monthString}-${paddedDate}`;
+    };
   };
 
   // src/colors.ts
@@ -1582,7 +1587,7 @@
     selectedTaskViewModel = new State(void 0);
     taskViewModels = new MapState();
     // methods
-    createTask = (boardId) => {
+    createTaskFromBoardId = (boardId) => {
       const taskFileContent = this.boardsAndTasksModel.createTask(boardId);
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
@@ -1656,6 +1661,23 @@
     selectedMonth = new State(0);
     selectedDate = new State(0);
     monthGrid = new State(void 0);
+    // methods
+    createEvent = () => {
+      const taskFileContent = this.boardsAndTasksModel.createTask("events");
+      taskFileContent.date = CalendarModel.getISODateString(
+        this.selectedYear.value.toString(),
+        this.selectedMonth.value.toString(),
+        this.selectedDate.value.toString()
+      );
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      this.selectTask(taskViewModel);
+      this.updateTaskIndices();
+    };
     // view
     getTaskMapState = (taskFileContent) => {
       if (this.monthGrid.value == null) return null;
@@ -1997,6 +2019,9 @@
       this.close();
     };
     // methods
+    createTask = () => {
+      this.createTaskFromBoardId(this.boardInfo.fileId);
+    };
     handleDropWithinBoard = (category, status) => {
       const draggedObject = this.coreViewModel.draggedObject.value;
       if (draggedObject instanceof TaskViewModel == false) return;
@@ -2522,7 +2547,9 @@
         yearInputPlaceholder: "2000",
         monthInputPlaceholder: "01",
         ///
-        searchEventsHeadline: "Search Events"
+        searchEventsHeadline: "Search Events",
+        ///
+        events: "Events"
       }
     }
   };
@@ -2792,7 +2819,8 @@
       "button",
       {
         class: "ghost",
-        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel
+        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
+        "on:click": calendarPageViewModel.createEvent
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement(

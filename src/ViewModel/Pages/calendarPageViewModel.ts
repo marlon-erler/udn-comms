@@ -39,6 +39,27 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   monthGrid: React.State<MonthGrid<React.MapState<TaskViewModel>> | undefined> =
     new React.State<any>(undefined);
 
+  // methods
+  createEvent = (): void => {
+    const taskFileContent: TaskFileContent =
+      this.boardsAndTasksModel.createTask("events");
+    taskFileContent.date = CalendarModel.getISODateString(
+      this.selectedYear.value.toString(),
+      this.selectedMonth.value.toString(),
+      this.selectedDate.value.toString()
+    );
+
+    const taskViewModel: TaskViewModel = new TaskViewModel(
+      this.coreViewModel,
+      this.boardsAndTasksModel,
+      this,
+      taskFileContent
+    );
+
+    this.selectTask(taskViewModel);
+    this.updateTaskIndices();
+  };
+
   // view
   getTaskMapState = (
     taskFileContent: TaskFileContent
@@ -70,7 +91,7 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
     const mapState: React.MapState<TaskViewModel> | null =
       this.getTaskMapState(taskFileContent);
     mapState?.set(taskFileContent.fileId, taskViewModel);
-    
+
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
   };
 

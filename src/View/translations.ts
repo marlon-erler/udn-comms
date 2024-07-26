@@ -200,7 +200,11 @@ const englishTranslations = {
 
       ///
 
-      searchEventsHeadline: "Search Events"
+      searchEventsHeadline: "Search Events",
+
+      ///
+
+      events: "Events",
     },
   },
 };

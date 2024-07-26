@@ -129,6 +129,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
                 aria-label={
                   translations.chatPage.task.createTaskButtonAudioLabel
                 }
+                on:click={calendarPageViewModel.createEvent}
               >
                 <span class="icon">add</span>
               </button>
