@@ -1430,11 +1430,10 @@
   // src/ViewModel/Pages/taskViewModel.ts
   var TaskViewModel = class {
     // init
-    constructor(coreViewModel, boardsAndTasksModel, boardViewModel, calendarPageViewModel, taskFileContent) {
+    constructor(coreViewModel, boardsAndTasksModel, containingModel, taskFileContent) {
       this.coreViewModel = coreViewModel;
       this.boardsAndTasksModel = boardsAndTasksModel;
-      this.boardViewModel = boardViewModel;
-      this.calendarPageViewModel = calendarPageViewModel;
+      this.containingModel = containingModel;
       this.task = taskFileContent;
       this.loadAllData();
       this.selectedVersionId.subscribeSilent((selectedVersionId) => {
@@ -1442,8 +1441,7 @@
       });
     }
     boardsAndTasksModel;
-    boardViewModel;
-    calendarPageViewModel;
+    containingModel;
     // data
     task;
     get sortingString() {
@@ -1490,18 +1488,17 @@
     };
     // view
     open = () => {
-      this.boardViewModel?.selectTask(this);
+      this.containingModel.selectTask(this);
     };
     close = () => {
-      this.boardViewModel?.closeTask();
+      this.containingModel.closeTask();
     };
     closeAndSave = () => {
       this.close();
       this.save();
     };
     updateIndex = () => {
-      if (this.boardViewModel == null) return;
-      const index = this.boardViewModel.taskIndexManager.getIndex(this);
+      const index = this.containingModel.taskIndexManager.getIndex(this);
       this.index.value = index;
     };
     // settings
@@ -1519,23 +1516,13 @@
       newTaskFileContent.date = this.date.value;
       newTaskFileContent.time = this.time.value;
       this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
-      if (this.boardViewModel != null) {
-        this.boardViewModel.showTaskInList(newTaskFileContent);
-        this.boardViewModel.updateTaskIndices();
-      }
-      if (this.calendarPageViewModel != null) {
-        this.calendarPageViewModel.showTask(newTaskFileContent);
-      }
+      this.containingModel.showTask(newTaskFileContent);
+      this.containingModel.updateTaskIndices();
     };
     deleteTask = () => {
       this.close();
       this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
-      if (this.boardViewModel != null) {
-        this.boardViewModel.removeTaskFromList(this.task.fileId);
-      }
-      if (this.calendarPageViewModel != null) {
-        this.calendarPageViewModel.removeTaskFromView(this.task);
-      }
+      this.containingModel.removeTaskFromView(this.task);
     };
     // load
     loadVersionIds = () => {
@@ -1584,19 +1571,66 @@
     };
   };
 
-  // src/ViewModel/Pages/calendarPageViewModel.ts
-  var CalendarPageViewModel = class {
+  // src/ViewModel/Pages/taskContainingPageViewModel.ts
+  var TaskContainingPageViewModel = class {
+    coreViewModel;
+    boardsAndTasksModel;
+    // state
+    taskIndexManager = new IndexManager(
+      (taskViewModel) => taskViewModel.sortingString
+    );
+    selectedTaskViewModel = new State(void 0);
+    taskViewModels = new MapState();
+    // methods
+    createTask = (boardId) => {
+      const taskFileContent = this.boardsAndTasksModel.createTask(boardId);
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      this.selectTask(taskViewModel);
+      this.updateTaskIndices();
+    };
+    // view
+    showTask = (taskFileContent) => {
+    };
+    removeTaskFromView = (taskFileContent) => {
+    };
+    selectTask = (selectedTask) => {
+      this.selectedTaskViewModel.value = selectedTask;
+    };
+    closeTask = () => {
+      this.selectedTaskViewModel.value = void 0;
+    };
+    updateTaskIndices = () => {
+      this.taskIndexManager.update([...this.taskViewModels.value.values()]);
+      for (const boardViewModel of this.taskViewModels.value.values()) {
+        boardViewModel.updateIndex();
+      }
+    };
     // init
-    constructor(coreViewModel, storageModel2, calendarModel, boardAndTasksModel, chatViewModel) {
+    constructor(coreViewModel, boardsAndTasksModel) {
+      this.coreViewModel = coreViewModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+    }
+  };
+
+  // src/ViewModel/Pages/calendarPageViewModel.ts
+  var CalendarPageViewModel = class extends TaskContainingPageViewModel {
+    // init
+    constructor(coreViewModel, storageModel2, calendarModel, boardsAndTasksModel, chatViewModel) {
+      super(coreViewModel, boardsAndTasksModel);
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
       this.calendarModel = calendarModel;
-      this.boardsAndTasksModel = boardAndTasksModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
       this.chatViewModel = chatViewModel;
       bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
         this.loadMonthTasks();
       });
-      boardAndTasksModel.taskHandlerManager.addHandler(
+      boardsAndTasksModel.taskHandlerManager.addHandler(
         (taskFileContent) => {
           this.showTask(taskFileContent);
         }
@@ -1622,7 +1656,6 @@
     selectedMonth = new State(0);
     selectedDate = new State(0);
     monthGrid = new State(void 0);
-    taskViewModelsToShow = new ListState();
     // view
     getTaskMapState = (taskFileContent) => {
       if (this.monthGrid.value == null) return null;
@@ -1642,16 +1675,17 @@
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
         this.boardsAndTasksModel,
-        null,
         this,
         taskFileContent
       );
       const mapState = this.getTaskMapState(taskFileContent);
       mapState?.set(taskFileContent.fileId, taskViewModel);
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
     };
     removeTaskFromView = (taskFileContent) => {
       const mapState = this.getTaskMapState(taskFileContent);
       mapState?.remove(taskFileContent.fileId);
+      this.taskViewModels.remove(taskFileContent.fileId);
     };
     showToday = () => {
       const today = /* @__PURE__ */ new Date();
@@ -1673,7 +1707,6 @@
         this.selectedMonth.value = 1;
       }
     };
-    // storage
     // load
     loadMonthTasks = () => {
       this.monthGrid.value = this.calendarModel.generateMonthGrid(
@@ -1687,6 +1720,7 @@
         if (taskFileContent == null) continue;
         this.showTask(taskFileContent);
       }
+      this.updateTaskIndices();
     };
     loadData = () => {
       this.loadMonthTasks();
@@ -1894,12 +1928,13 @@
   };
 
   // src/ViewModel/Pages/boardViewModel.ts
-  var BoardViewModel = class {
+  var BoardViewModel = class extends TaskContainingPageViewModel {
     // init
-    constructor(coreViewModel, storageModel2, boardModel, taskPageViewModel, boardInfo) {
+    constructor(coreViewModel, storageModel2, boardsAndTasksModel, taskPageViewModel, boardInfo) {
+      super(coreViewModel, boardsAndTasksModel);
       this.coreViewModel = coreViewModel;
       this.storageModel = storageModel2;
-      this.boardsAndTasksModel = boardModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
       this.taskPageViewModel = taskPageViewModel;
       this.boardInfo = boardInfo;
       this.loadListRelevantData();
@@ -1914,10 +1949,10 @@
       this.selectedPage.subscribeSilent(() => {
         this.storeLastUsedView();
       });
-      boardModel.taskHandlerManager.addHandler(
+      boardsAndTasksModel.taskHandlerManager.addHandler(
         (taskFileContent) => {
           if (taskFileContent.boardId != this.boardInfo.fileId) return;
-          this.showTaskInList(taskFileContent);
+          this.showTask(taskFileContent);
           this.updateTaskIndices();
         }
       );
@@ -1927,9 +1962,6 @@
     taskPageViewModel;
     // data
     boardInfo;
-    taskIndexManager = new IndexManager(
-      (taskViewModel) => taskViewModel.sortingString
-    );
     // state
     name = new State("");
     color = new State("standard" /* Standard */);
@@ -1937,11 +1969,9 @@
     selectedPage = new State(
       "list" /* List */
     );
-    selectedTaskViewModel = new State(void 0);
     isSelected;
     isPresentingSettingsModal = new State(false);
     isPresentingFilterModal = new State(false);
-    taskViewModels = new MapState();
     filteredTaskViewModels = new ListState();
     // paths
     getBasePath = () => {
@@ -1967,22 +1997,6 @@
       this.close();
     };
     // methods
-    createTask = () => {
-      const taskFileContent = this.boardsAndTasksModel.createTask(this.boardInfo.fileId);
-      const taskViewModel = new TaskViewModel(
-        this.coreViewModel,
-        this.boardsAndTasksModel,
-        this,
-        null,
-        taskFileContent
-      );
-      this.selectTask(taskViewModel);
-      this.updateTaskIndices();
-    };
-    removeTaskFromList = (taskId) => {
-      this.taskViewModels.remove(taskId);
-      this.updateIndex();
-    };
     handleDropWithinBoard = (category, status) => {
       const draggedObject = this.coreViewModel.draggedObject.value;
       if (draggedObject instanceof TaskViewModel == false) return;
@@ -2006,23 +2020,26 @@
       this.selectedPage.value = lastUsedView;
     };
     // view
-    showTaskInList = (taskFileContent) => {
+    showTask = (taskFileContent) => {
       if (taskFileContent.boardId != this.boardInfo.fileId) {
         this.boardsAndTasksModel.deleteTaskReference(
           this.boardInfo.fileId,
           taskFileContent.fileId
         );
-        this.removeTaskFromList(taskFileContent.fileId);
+        this.removeTaskFromView(taskFileContent);
         return;
       }
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
         this.boardsAndTasksModel,
         this,
-        null,
         taskFileContent
       );
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+    };
+    removeTaskFromView = (taskFileContent) => {
+      this.taskViewModels.remove(taskFileContent.fileId);
+      this.updateIndex();
     };
     select = () => {
       this.taskPageViewModel.selectBoard(this);
@@ -2044,21 +2061,9 @@
     hideFilterModal = () => {
       this.isPresentingFilterModal.value = false;
     };
-    selectTask = (selectedTask) => {
-      this.selectedTaskViewModel.value = selectedTask;
-    };
-    closeTask = () => {
-      this.selectedTaskViewModel.value = void 0;
-    };
     updateIndex = () => {
       const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
       this.index.value = index;
-    };
-    updateTaskIndices = () => {
-      this.taskIndexManager.update([...this.taskViewModels.value.values()]);
-      for (const boardViewModel of this.taskViewModels.value.values()) {
-        boardViewModel.updateIndex();
-      }
     };
     // load
     loadListRelevantData = () => {
@@ -2077,7 +2082,6 @@
           this.coreViewModel,
           this.boardsAndTasksModel,
           this,
-          null,
           taskFileContent
         );
         this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
@@ -2544,7 +2548,11 @@
       offsetElements.push(/* @__PURE__ */ createElement("div", null));
     }
     const converter = (taskViewModel) => {
-      return /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
+      const view = /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
+      taskViewModel.index.subscribe((newIndex) => {
+        view.style.order = newIndex;
+      });
+      return view;
     };
     return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
       const [date, mapState] = entry;
@@ -2573,6 +2581,75 @@
         ))
       );
     })));
+  }
+
+  // src/View/Components/option.tsx
+  function Option(text, value, selectedOnCreate) {
+    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
+  }
+  var StringToOption = (string) => {
+    return Option(string, string, false);
+  };
+  var VersionIdToOption = (versionId) => {
+    const [date, rest] = versionId.split("T");
+    const [time] = rest.split(".");
+    const readableName = `${date} ${time}`;
+    return Option(readableName, versionId, false);
+  };
+
+  // src/View/Components/dangerousActionButton.tsx
+  function DangerousActionButton(label, icon, action) {
+    const isActionRequested = new State(false);
+    const cannotConfirm = createProxyState(
+      [isActionRequested],
+      () => isActionRequested.value == false
+    );
+    function requestAction() {
+      isActionRequested.value = true;
+    }
+    function abort() {
+      isActionRequested.value = false;
+    }
+    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": abort, "toggle:hidden": cannotConfirm }, translations.general.abortButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": requestAction,
+        "toggle:hidden": isActionRequested
+      },
+      label,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": action,
+        "toggle:hidden": cannotConfirm
+      },
+      translations.general.confirmButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning")
+    ));
+  }
+
+  // src/View/Modals/taskSettingsModal.tsx
+  function TaskSettingsModal(taskViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
+      "select",
+      {
+        "bind:value": taskViewModel.selectedVersionId,
+        "children:append": [taskViewModel.versionIds, VersionIdToOption]
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
+      "textarea",
+      {
+        rows: "10",
+        "bind:value": taskViewModel.description
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+      translations.chatPage.task.deleteTaskButton,
+      "delete_forever",
+      taskViewModel.deleteTask
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/View/Components/taskEntry.tsx
@@ -2657,6 +2734,18 @@
         }
       }
     );
+    const taskSettingsModal = createProxyState(
+      [calendarPageViewModel.selectedTaskViewModel],
+      () => {
+        if (calendarPageViewModel.selectedTaskViewModel.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return TaskSettingsModal(
+            calendarPageViewModel.selectedTaskViewModel.value
+          );
+        }
+      }
+    );
     return /* @__PURE__ */ createElement("div", { id: "calendar-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
@@ -2713,7 +2802,7 @@
         "set:color": calendarPageViewModel.chatViewModel.displayedColor
       },
       /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "content", "children:set": sidePaneContent }))
-    ));
+    ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }
 
   // src/View/Components/ribbonButton.tsx
@@ -2862,40 +2951,6 @@
         }
       );
     }));
-  }
-
-  // src/View/Components/dangerousActionButton.tsx
-  function DangerousActionButton(label, icon, action) {
-    const isActionRequested = new State(false);
-    const cannotConfirm = createProxyState(
-      [isActionRequested],
-      () => isActionRequested.value == false
-    );
-    function requestAction() {
-      isActionRequested.value = true;
-    }
-    function abort() {
-      isActionRequested.value = false;
-    }
-    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": abort, "toggle:hidden": cannotConfirm }, translations.general.abortButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger flex",
-        "on:click": requestAction,
-        "toggle:hidden": isActionRequested
-      },
-      label,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger flex",
-        "on:click": action,
-        "toggle:hidden": cannotConfirm
-      },
-      translations.general.confirmButton,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning")
-    ));
   }
 
   // src/View/Components/deletableListItem.tsx
@@ -3440,41 +3495,6 @@
         "children:append": [filteredObjects, converter]
       }
     )), /* @__PURE__ */ createElement("button", { "on:click": close }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-  }
-
-  // src/View/Components/option.tsx
-  function Option(text, value, selectedOnCreate) {
-    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
-  }
-  var StringToOption = (string) => {
-    return Option(string, string, false);
-  };
-  var VersionIdToOption = (versionId) => {
-    const [date, rest] = versionId.split("T");
-    const [time] = rest.split(".");
-    const readableName = `${date} ${time}`;
-    return Option(readableName, versionId, false);
-  };
-
-  // src/View/Modals/taskSettingsModal.tsx
-  function TaskSettingsModal(taskViewModel) {
-    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
-      "select",
-      {
-        "bind:value": taskViewModel.selectedVersionId,
-        "children:append": [taskViewModel.versionIds, VersionIdToOption]
-      }
-    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
-      "textarea",
-      {
-        rows: "10",
-        "bind:value": taskViewModel.description
-      }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
-      translations.chatPage.task.deleteTaskButton,
-      "delete_forever",
-      taskViewModel.deleteTask
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/View/ChatPages/boardPage.tsx

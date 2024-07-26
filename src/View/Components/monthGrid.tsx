@@ -29,7 +29,15 @@ export function MonthGrid<T>(
   const converter: React.StateItemConverter<TaskViewModel> = (
     taskViewModel
   ) => {
-    return <span class="ellipsis secondary">{taskViewModel.task.name}</span>;
+    const view = (
+      <span class="ellipsis secondary">{taskViewModel.task.name}</span>
+    );
+
+    taskViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+
+    return view;
   };
 
   return (

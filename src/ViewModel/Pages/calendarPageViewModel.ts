@@ -8,9 +8,10 @@ import CalendarModel, { MonthGrid } from "../../Model/Files/calendarModel";
 import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import StorageModel from "../../Model/Global/storageModel";
+import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import TaskViewModel from "./taskViewModel";
 
-export default class CalendarPageViewModel {
+export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   storageModel: StorageModel;
   calendarModel: CalendarModel;
   boardsAndTasksModel: BoardsAndTasksModel;
@@ -38,8 +39,6 @@ export default class CalendarPageViewModel {
   monthGrid: React.State<MonthGrid<React.MapState<TaskViewModel>> | undefined> =
     new React.State<any>(undefined);
 
-  taskViewModelsToShow: React.ListState<TaskViewModel> = new React.ListState();
-
   // view
   getTaskMapState = (
     taskFileContent: TaskFileContent
@@ -65,19 +64,22 @@ export default class CalendarPageViewModel {
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
       this.boardsAndTasksModel,
-      null,
       this,
       taskFileContent
     );
     const mapState: React.MapState<TaskViewModel> | null =
       this.getTaskMapState(taskFileContent);
     mapState?.set(taskFileContent.fileId, taskViewModel);
+    
+    this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
   };
 
   removeTaskFromView = (taskFileContent: TaskFileContent): void => {
     const mapState: React.MapState<TaskViewModel> | null =
       this.getTaskMapState(taskFileContent);
     mapState?.remove(taskFileContent.fileId);
+
+    this.taskViewModels.remove(taskFileContent.fileId);
   };
 
   showToday = (): void => {
@@ -105,8 +107,6 @@ export default class CalendarPageViewModel {
     }
   };
 
-  // storage
-
   // load
   loadMonthTasks = (): void => {
     this.monthGrid.value = this.calendarModel.generateMonthGrid(
@@ -122,6 +122,8 @@ export default class CalendarPageViewModel {
       if (taskFileContent == null) continue;
       this.showTask(taskFileContent);
     }
+
+    this.updateTaskIndices();
   };
 
   loadData = (): void => {
@@ -134,12 +136,14 @@ export default class CalendarPageViewModel {
     public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
-    boardAndTasksModel: BoardsAndTasksModel,
+    boardsAndTasksModel: BoardsAndTasksModel,
     chatViewModel: ChatViewModel
   ) {
+    super(coreViewModel, boardsAndTasksModel);
+
     this.storageModel = storageModel;
     this.calendarModel = calendarModel;
-    this.boardsAndTasksModel = boardAndTasksModel;
+    this.boardsAndTasksModel = boardsAndTasksModel;
 
     this.chatViewModel = chatViewModel;
 
@@ -148,7 +152,7 @@ export default class CalendarPageViewModel {
     });
 
     // handlers
-    boardAndTasksModel.taskHandlerManager.addHandler(
+    boardsAndTasksModel.taskHandlerManager.addHandler(
       (taskFileContent: TaskFileContent) => {
         this.showTask(taskFileContent);
       }

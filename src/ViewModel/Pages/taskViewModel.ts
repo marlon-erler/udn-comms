@@ -5,16 +5,14 @@ import BoardsAndTasksModel, {
 } from "../../Model/Files/boardsAndTasksModel";
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
-import BoardViewModel from "./boardViewModel";
-import CalendarPageViewModel from "./calendarPageViewModel";
 import CoreViewModel from "../Global/coreViewModel";
+import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import { allowDrag } from "../../View/utility";
 
 export default class TaskViewModel {
   boardsAndTasksModel: BoardsAndTasksModel;
 
-  boardViewModel: BoardViewModel | null;
-  calendarPageViewModel: CalendarPageViewModel | null;
+  containingModel: TaskContainingPageViewModel;
 
   // data
   task: TaskFileContent;
@@ -79,11 +77,11 @@ export default class TaskViewModel {
 
   // view
   open = (): void => {
-    this.boardViewModel?.selectTask(this);
+    this.containingModel.selectTask(this);
   };
 
   close = (): void => {
-    this.boardViewModel?.closeTask();
+    this.containingModel.closeTask();
   };
 
   closeAndSave = (): void => {
@@ -92,8 +90,7 @@ export default class TaskViewModel {
   };
 
   updateIndex = (): void => {
-    if (this.boardViewModel == null) return;
-    const index: number = this.boardViewModel.taskIndexManager.getIndex(this);
+    const index: number = this.containingModel.taskIndexManager.getIndex(this);
     this.index.value = index;
   };
 
@@ -116,25 +113,14 @@ export default class TaskViewModel {
 
     this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
 
-    if (this.boardViewModel != null) {
-      this.boardViewModel.showTaskInList(newTaskFileContent);
-      this.boardViewModel.updateTaskIndices();
-    }
-    if (this.calendarPageViewModel != null) {
-      this.calendarPageViewModel.showTask(newTaskFileContent);
-    }
+    this.containingModel.showTask(newTaskFileContent);
+    this.containingModel.updateTaskIndices();
   };
 
   deleteTask = (): void => {
     this.close();
     this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
-
-    if (this.boardViewModel != null) {
-      this.boardViewModel.removeTaskFromList(this.task.fileId);
-    }
-    if (this.calendarPageViewModel != null) {
-      this.calendarPageViewModel.removeTaskFromView(this.task);
-    }
+    this.containingModel.removeTaskFromView(this.task);
   };
 
   // load
@@ -184,13 +170,11 @@ export default class TaskViewModel {
   constructor(
     public coreViewModel: CoreViewModel,
     boardsAndTasksModel: BoardsAndTasksModel,
-    boardViewModel: BoardViewModel | null,
-    calendarPageViewModel: CalendarPageViewModel | null,
+    containingModel: TaskContainingPageViewModel,
     taskFileContent: TaskFileContent
   ) {
     this.boardsAndTasksModel = boardsAndTasksModel;
-    this.boardViewModel = boardViewModel;
-    this.calendarPageViewModel = calendarPageViewModel;
+    this.containingModel = containingModel;
 
     this.task = taskFileContent;
 
@@ -202,7 +186,7 @@ export default class TaskViewModel {
       this.switchVersion(selectedVersionId);
     });
   }
-  
+
   // utility
   static getStringsForFilter = (taskViewModel: TaskViewModel): string[] => {
     return [

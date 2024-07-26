@@ -4,6 +4,7 @@ import * as React from "bloatless-react";
 
 import CalendarPageViewModel from "../../ViewModel/Pages/calendarPageViewModel";
 import { MonthGrid } from "../Components/monthGrid";
+import { TaskSettingsModal } from "../Modals/taskSettingsModal";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
 
@@ -44,6 +45,19 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
             class="flex-column gap"
             children:append={[listState, TaskViewModelToEntry]}
           ></div>
+        );
+      }
+    }
+  );
+
+  const taskSettingsModal = React.createProxyState(
+    [calendarPageViewModel.selectedTaskViewModel],
+    () => {
+      if (calendarPageViewModel.selectedTaskViewModel.value == undefined) {
+        return <div></div>;
+      } else {
+        return TaskSettingsModal(
+          calendarPageViewModel.selectedTaskViewModel.value
         );
       }
     }
@@ -131,6 +145,8 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
           <div class="content" children:set={sidePaneContent}></div>
         </div>
       </div>
+
+      <div children:set={taskSettingsModal}></div>
     </div>
   );
 }

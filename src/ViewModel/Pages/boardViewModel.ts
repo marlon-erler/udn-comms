@@ -9,10 +9,11 @@ import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import StorageModel from "../../Model/Global/storageModel";
+import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import TaskPageViewModel from "./taskPageViewModel";
 import TaskViewModel from "./taskViewModel";
 
-export default class BoardViewModel {
+export default class BoardViewModel extends TaskContainingPageViewModel {
   storageModel: StorageModel;
   boardsAndTasksModel: BoardsAndTasksModel;
 
@@ -20,10 +21,6 @@ export default class BoardViewModel {
 
   // data
   boardInfo: BoardInfoFileContent;
-
-  taskIndexManager: IndexManager<TaskViewModel> = new IndexManager(
-    (taskViewModel: TaskViewModel) => taskViewModel.sortingString
-  );
 
   // state
   name: React.State<string> = new React.State("");
@@ -34,14 +31,11 @@ export default class BoardViewModel {
   selectedPage: React.State<BoardPageType> = new React.State<any>(
     BoardPageType.List
   );
-  selectedTaskViewModel: React.State<TaskViewModel | undefined> =
-    new React.State<any>(undefined);
 
   isSelected: React.State<boolean>;
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
   isPresentingFilterModal: React.State<boolean> = new React.State(false);
 
-  taskViewModels: React.MapState<TaskViewModel> = new React.MapState();
   filteredTaskViewModels: React.ListState<TaskViewModel> =
     new React.ListState();
 
@@ -75,25 +69,6 @@ export default class BoardViewModel {
   };
 
   // methods
-  createTask = (): void => {
-    const taskFileContent: TaskFileContent =
-      this.boardsAndTasksModel.createTask(this.boardInfo.fileId);
-    const taskViewModel: TaskViewModel = new TaskViewModel(
-      this.coreViewModel,
-      this.boardsAndTasksModel,
-      this,
-      null,
-      taskFileContent
-    );
-    this.selectTask(taskViewModel);
-    this.updateTaskIndices();
-  };
-
-  removeTaskFromList = (taskId: string): void => {
-    this.taskViewModels.remove(taskId);
-    this.updateIndex();
-  };
-
   handleDropWithinBoard = (category?: string, status?: string): void => {
     const draggedObject: any = this.coreViewModel.draggedObject.value;
     if (draggedObject instanceof TaskViewModel == false) return;
@@ -122,14 +97,14 @@ export default class BoardViewModel {
   };
 
   // view
-  showTaskInList = (taskFileContent: TaskFileContent): void => {
+  showTask = (taskFileContent: TaskFileContent): void => {
     if (taskFileContent.boardId != this.boardInfo.fileId) {
       // remove task that was moved to different board
       this.boardsAndTasksModel.deleteTaskReference(
         this.boardInfo.fileId,
         taskFileContent.fileId
       );
-      this.removeTaskFromList(taskFileContent.fileId);
+      this.removeTaskFromView(taskFileContent);
       return;
     }
 
@@ -137,10 +112,14 @@ export default class BoardViewModel {
       this.coreViewModel,
       this.boardsAndTasksModel,
       this,
-      null,
       taskFileContent
     );
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+  };
+
+  removeTaskFromView = (taskFileContent: TaskFileContent): void => {
+    this.taskViewModels.remove(taskFileContent.fileId);
+    this.updateIndex();
   };
 
   select = (): void => {
@@ -169,25 +148,10 @@ export default class BoardViewModel {
     this.isPresentingFilterModal.value = false;
   };
 
-  selectTask = (selectedTask: TaskViewModel): void => {
-    this.selectedTaskViewModel.value = selectedTask;
-  };
-
-  closeTask = () => {
-    this.selectedTaskViewModel.value = undefined;
-  };
-
   updateIndex = (): void => {
     const index: number =
       this.taskPageViewModel.boardIndexManager.getIndex(this);
     this.index.value = index;
-  };
-
-  updateTaskIndices = (): void => {
-    this.taskIndexManager.update([...this.taskViewModels.value.values()]);
-    for (const boardViewModel of this.taskViewModels.value.values()) {
-      boardViewModel.updateIndex();
-    }
   };
 
   // load
@@ -211,7 +175,6 @@ export default class BoardViewModel {
         this.coreViewModel,
         this.boardsAndTasksModel,
         this,
-        null,
         taskFileContent
       );
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
@@ -229,13 +192,15 @@ export default class BoardViewModel {
   constructor(
     public coreViewModel: CoreViewModel,
     storageModel: StorageModel,
-    boardModel: BoardsAndTasksModel,
+    boardsAndTasksModel: BoardsAndTasksModel,
     taskPageViewModel: TaskPageViewModel,
     boardInfo: BoardInfoFileContent
   ) {
+    super(coreViewModel, boardsAndTasksModel);
+
     // set
     this.storageModel = storageModel;
-    this.boardsAndTasksModel = boardModel;
+    this.boardsAndTasksModel = boardsAndTasksModel;
     this.taskPageViewModel = taskPageViewModel;
     this.boardInfo = boardInfo;
 
@@ -259,10 +224,10 @@ export default class BoardViewModel {
     });
 
     // handlers
-    boardModel.taskHandlerManager.addHandler(
+    boardsAndTasksModel.taskHandlerManager.addHandler(
       (taskFileContent: TaskFileContent) => {
         if (taskFileContent.boardId != this.boardInfo.fileId) return;
-        this.showTaskInList(taskFileContent);
+        this.showTask(taskFileContent);
         this.updateTaskIndices();
       }
     );
