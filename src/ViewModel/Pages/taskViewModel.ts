@@ -75,6 +75,11 @@ export default class TaskViewModel {
     this.save();
   };
 
+  setDate = (dateISOString: string): void => {
+    this.date.value = dateISOString;
+    this.save();
+  }
+
   // view
   open = (): void => {
     this.containingModel.selectTask(this);

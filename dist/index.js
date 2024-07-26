@@ -662,6 +662,8 @@
         offset,
         firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
         isCurrentMonth,
+        year,
+        month,
         days: {}
       };
       for (let i = 0; i < daysInMonth; i++) {
@@ -1491,6 +1493,10 @@
       this.boardId.value = boardId;
       this.save();
     };
+    setDate = (dateISOString) => {
+      this.date.value = dateISOString;
+      this.save();
+    };
     // view
     open = () => {
       this.containingModel.selectTask(this);
@@ -1728,6 +1734,12 @@
         this.selectedYear.value += 1;
         this.selectedMonth.value = 1;
       }
+    };
+    handleDrop = (year, month, date) => {
+      const ISOString = CalendarModel.getISODateString(year, month, date);
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setDate(ISOString);
     };
     // load
     loadMonthTasks = () => {
@@ -2560,7 +2572,7 @@
   var translations = allTranslations[language] || allTranslations.en;
 
   // src/View/Components/monthGrid.tsx
-  function MonthGrid2(monthGrid, selectedDate) {
+  function MonthGrid2(monthGrid, selectedDate, handleDrop) {
     const dayLabels = [];
     let currentWeekday = monthGrid.firstDayOfWeek;
     while (dayLabels.length < 7) {
@@ -2591,13 +2603,18 @@
       function select() {
         selectedDate.value = parseInt(date);
       }
+      function drop() {
+        handleDrop(date);
+      }
       return /* @__PURE__ */ createElement(
         "button",
         {
           class: "tile",
           "on:click": select,
           "toggle:selected": isSelected,
-          "toggle:today": isToday
+          "toggle:today": isToday,
+          "on:dragover": allowDrop,
+          "on:drop": drop
         },
         /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
           "div",
@@ -2730,13 +2747,18 @@
     const mainContent = createProxyState(
       [calendarPageViewModel.monthGrid],
       () => {
-        if (calendarPageViewModel.monthGrid.value == void 0) {
+        const monthGrid = calendarPageViewModel.monthGrid.value;
+        if (monthGrid == void 0) {
           return /* @__PURE__ */ createElement("div", null);
         } else {
-          return MonthGrid2(
-            calendarPageViewModel.monthGrid.value,
-            calendarPageViewModel.selectedDate
-          );
+          let drop = function(date) {
+            calendarPageViewModel.handleDrop(
+              monthGrid.year.toString(),
+              monthGrid.month.toString(),
+              date
+            );
+          };
+          return MonthGrid2(monthGrid, calendarPageViewModel.selectedDate, drop);
         }
       }
     );

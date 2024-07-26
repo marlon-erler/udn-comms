@@ -4,10 +4,12 @@ import * as React from "bloatless-react";
 import { MonthGrid } from "../../Model/Files/calendarModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { translations } from "../translations";
+import { allowDrop } from "../utility";
 
 export function MonthGrid<T>(
   monthGrid: MonthGrid<React.MapState<T>>,
-  selectedDate: React.State<number>
+  selectedDate: React.State<number>,
+  handleDrop: (date: string) => void
 ) {
   const dayLabels: HTMLElement[] = [];
   let currentWeekday = monthGrid.firstDayOfWeek;
@@ -61,12 +63,18 @@ export function MonthGrid<T>(
             selectedDate.value = parseInt(date);
           }
 
+          function drop() {
+            handleDrop(date);
+          }
+
           return (
             <button
               class="tile"
               on:click={select}
               toggle:selected={isSelected}
               toggle:today={isToday}
+              on:dragover={allowDrop}
+              on:drop={drop}
             >
               <div>
                 <b>{date}</b>

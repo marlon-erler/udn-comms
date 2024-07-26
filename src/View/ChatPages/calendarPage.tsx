@@ -2,6 +2,7 @@ import "./calendarPage.css";
 
 import * as React from "bloatless-react";
 
+import CalendarModel from "../../Model/Files/calendarModel";
 import CalendarPageViewModel from "../../ViewModel/Pages/calendarPageViewModel";
 import { MonthGrid } from "../Components/monthGrid";
 import { TaskSettingsModal } from "../Modals/taskSettingsModal";
@@ -14,13 +15,20 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
   const mainContent = React.createProxyState(
     [calendarPageViewModel.monthGrid],
     () => {
-      if (calendarPageViewModel.monthGrid.value == undefined) {
+      const monthGrid = calendarPageViewModel.monthGrid.value;
+
+      if (monthGrid == undefined) {
         return <div></div>;
       } else {
-        return MonthGrid(
-          calendarPageViewModel.monthGrid.value,
-          calendarPageViewModel.selectedDate
-        );
+        function drop(date: string) {
+          calendarPageViewModel.handleDrop(
+            monthGrid!.year.toString(),
+            monthGrid!.month.toString(),
+            date
+          );
+        }
+
+        return MonthGrid(monthGrid, calendarPageViewModel.selectedDate, drop);
       }
     }
   );

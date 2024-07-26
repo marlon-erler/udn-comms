@@ -128,6 +128,15 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
     }
   };
 
+  handleDrop = (year: string, month: string, date: string): void => {
+    const ISOString: string = CalendarModel.getISODateString(year, month, date);
+
+    const draggedObject: any = this.coreViewModel.draggedObject.value;
+    if (draggedObject instanceof TaskViewModel == false) return;
+
+    draggedObject.setDate(ISOString);
+  };
+
   // load
   loadMonthTasks = (): void => {
     this.monthGrid.value = this.calendarModel.generateMonthGrid(

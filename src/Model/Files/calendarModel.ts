@@ -75,6 +75,8 @@ export default class CalendarModel {
       offset,
       firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
       isCurrentMonth,
+      year,
+      month,
       days: {},
     };
 
@@ -113,7 +115,11 @@ export default class CalendarModel {
     return `${paddedYear}-${paddedMonth}`;
   };
 
-  static getISODateString = (year: string, month: string, date: string): string => {
+  static getISODateString = (
+    year: string,
+    month: string,
+    date: string
+  ): string => {
     const monthString: string = CalendarModel.getMonthString(year, month);
     const paddedDate: string = date.padStart(2, "0");
     return `${monthString}-${paddedDate}`;
@@ -129,5 +135,9 @@ export interface MonthGrid<T> {
   offset: number;
   firstDayOfWeek: number;
   isCurrentMonth: boolean;
+
+  year: number;
+  month: number;
+
   days: { [date: string]: T };
 }
