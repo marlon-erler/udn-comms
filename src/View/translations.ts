@@ -205,6 +205,7 @@ const englishTranslations = {
       ///
 
       events: "Events",
+      noEvents: "No events",
     },
   },
 };

@@ -47,6 +47,14 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
 
       if (listState == undefined) {
         return <div></div>;
+      } else if (listState.value.size == 0) {
+        return (
+          <div class="width-100 height-100 flex-column justify-center align-center">
+            <span class="secondary">
+              {translations.chatPage.calendar.noEvents}
+            </span>
+          </div>
+        );
       } else {
         return (
           <div

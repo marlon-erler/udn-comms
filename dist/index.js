@@ -2561,7 +2561,8 @@
         ///
         searchEventsHeadline: "Search Events",
         ///
-        events: "Events"
+        events: "Events",
+        noEvents: "No events"
       }
     }
   };
@@ -2772,6 +2773,8 @@
         const listState = calendarPageViewModel.monthGrid.value?.days[calendarPageViewModel.selectedDate.toString()];
         if (listState == void 0) {
           return /* @__PURE__ */ createElement("div", null);
+        } else if (listState.value.size == 0) {
+          return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column justify-center align-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.calendar.noEvents));
         } else {
           return /* @__PURE__ */ createElement(
             "div",
