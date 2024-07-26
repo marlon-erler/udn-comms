@@ -21,7 +21,7 @@ export function TaskEntry(taskViewModel: TaskViewModel) {
       on:dragstart={taskViewModel.dragStart}
     >
       <div>
-        <b subscribe:innerText={taskViewModel.name}></b>
+        <b class="ellipsis" subscribe:innerText={taskViewModel.name}></b>
         <hr></hr>
         <div
           class="grid secondary"

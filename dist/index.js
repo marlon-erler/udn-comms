@@ -2764,7 +2764,7 @@
         "on:click": taskViewModel.open,
         "on:dragstart": taskViewModel.dragStart
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
         "div",
         {
           class: "grid secondary",
@@ -3604,6 +3604,7 @@
       "div",
       {
         class: "grid gap",
+        style: "grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))",
         "children:append": [filteredObjects, converter]
       }
     )), /* @__PURE__ */ createElement("button", { "on:click": close }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));

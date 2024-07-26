@@ -46,6 +46,7 @@ export function SearchModal<T>(
 
           <div
             class="grid gap"
+            style="grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))"
             children:append={[filteredObjects, converter]}
           ></div>
         </main>
