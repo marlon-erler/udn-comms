@@ -60,6 +60,7 @@
   width: 3.1rem;
 }
 
+
 @media (max-width: 1024px) {
   #chat-page > div > #main > #calendar-page {
     flex-direction: column;

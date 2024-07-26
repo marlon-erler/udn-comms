@@ -33,7 +33,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
     }
   );
 
-  const sidePaneContent = React.createProxyState(
+  const sidePaneContentWrapper = React.createProxyState(
     [
       calendarPageViewModel.selectedYear,
       calendarPageViewModel.selectedMonth,
@@ -44,19 +44,30 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
 
       if (listState == undefined) {
         return <div></div>;
-      } else if (listState.value.size == 0) {
-        return (
-          <div class="width-100 height-100 flex-column justify-center align-center">
-            <span class="secondary">
-              {translations.chatPage.calendar.noEvents}
-            </span>
-          </div>
-        );
       } else {
+        const sidePaneContent = React.createProxyState([listState], () => {
+          if (listState.value.size == 0) {
+            return (
+              <div class="width-100 height-100 flex-column justify-center align-center">
+                <span class="secondary slide-up">
+                  {translations.chatPage.calendar.noEvents}
+                </span>
+              </div>
+            );
+          } else {
+            return (
+              <div
+                class="flex-column gap slide-up padding-bottom"
+                children:append={[listState, TaskViewModelToEntry]}
+              ></div>
+            );
+          }
+        });
+
         return (
           <div
-            class="flex-column gap slide-up"
-            children:append={[listState, TaskViewModelToEntry]}
+            class="width-100 height-100"
+            children:set={sidePaneContent}
           ></div>
         );
       }
@@ -156,7 +167,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
         set:color={calendarPageViewModel.chatViewModel.displayedColor}
       >
         <div class="pane">
-          <div class="content" children:set={sidePaneContent}></div>
+          <div class="content" children:set={sidePaneContentWrapper}></div>
         </div>
       </div>
 

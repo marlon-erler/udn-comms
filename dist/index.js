@@ -2790,7 +2790,7 @@
         }
       }
     );
-    const sidePaneContent = createProxyState(
+    const sidePaneContentWrapper = createProxyState(
       [
         calendarPageViewModel.selectedYear,
         calendarPageViewModel.selectedMonth,
@@ -2800,14 +2800,25 @@
         const listState = calendarPageViewModel.getEventsForDate();
         if (listState == void 0) {
           return /* @__PURE__ */ createElement("div", null);
-        } else if (listState.value.size == 0) {
-          return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column justify-center align-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.calendar.noEvents));
         } else {
+          const sidePaneContent = createProxyState([listState], () => {
+            if (listState.value.size == 0) {
+              return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column justify-center align-center" }, /* @__PURE__ */ createElement("span", { class: "secondary slide-up" }, translations.chatPage.calendar.noEvents));
+            } else {
+              return /* @__PURE__ */ createElement(
+                "div",
+                {
+                  class: "flex-column gap slide-up padding-bottom",
+                  "children:append": [listState, TaskViewModelToEntry]
+                }
+              );
+            }
+          });
           return /* @__PURE__ */ createElement(
             "div",
             {
-              class: "flex-column gap slide-up",
-              "children:append": [listState, TaskViewModelToEntry]
+              class: "width-100 height-100",
+              "children:set": sidePaneContent
             }
           );
         }
@@ -2881,7 +2892,7 @@
         class: "pane-wrapper side background",
         "set:color": calendarPageViewModel.chatViewModel.displayedColor
       },
-      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "content", "children:set": sidePaneContent }))
+      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "content", "children:set": sidePaneContentWrapper }))
     ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }
 
