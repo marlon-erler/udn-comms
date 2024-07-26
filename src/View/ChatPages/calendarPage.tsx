@@ -40,10 +40,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
       calendarPageViewModel.selectedDate,
     ],
     () => {
-      const listState =
-        calendarPageViewModel.monthGrid.value?.days[
-          calendarPageViewModel.selectedDate.toString()
-        ];
+      const listState = calendarPageViewModel.getEventsForDate();
 
       if (listState == undefined) {
         return <div></div>;

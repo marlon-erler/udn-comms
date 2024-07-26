@@ -5,6 +5,7 @@ import { MonthGrid } from "../../Model/Files/calendarModel";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { translations } from "../translations";
 import { allowDrop } from "../utility";
+import { localeCompare } from "../../Model/Utility/utility";
 
 export function MonthGrid<T>(
   monthGrid: MonthGrid<React.MapState<T>>,
@@ -47,45 +48,47 @@ export function MonthGrid<T>(
       <div class="day-labels">{...dayLabels}</div>
       <div class="month-grid">
         {...offsetElements}
-        {...Object.entries(monthGrid.days).map((entry) => {
-          const [date, mapState] = entry;
+        {...Object.entries(monthGrid.days)
+          .sort((a, b) => localeCompare(a[0], b[0]))
+          .map((entry) => {
+            const [date, mapState] = entry;
 
-          const isSelected = React.createProxyState(
-            [selectedDate],
-            () => selectedDate.value == parseInt(date)
-          );
+            const isSelected = React.createProxyState(
+              [selectedDate],
+              () => selectedDate.value == parseInt(date)
+            );
 
-          const isToday: boolean =
-            monthGrid.isCurrentMonth == true &&
-            parseInt(date) == new Date().getDate();
+            const isToday: boolean =
+              monthGrid.isCurrentMonth == true &&
+              parseInt(date) == new Date().getDate();
 
-          function select() {
-            selectedDate.value = parseInt(date);
-          }
+            function select() {
+              selectedDate.value = parseInt(date);
+            }
 
-          function drop() {
-            handleDrop(date);
-          }
+            function drop() {
+              handleDrop(date);
+            }
 
-          return (
-            <button
-              class="tile"
-              on:click={select}
-              toggle:selected={isSelected}
-              toggle:today={isToday}
-              on:dragover={allowDrop}
-              on:drop={drop}
-            >
-              <div>
-                <b>{date}</b>
-                <div
-                  class="flex-column gap clip"
-                  children:append={[mapState, converter]}
-                ></div>
-              </div>
-            </button>
-          );
-        })}
+            return (
+              <button
+                class="tile"
+                on:click={select}
+                toggle:selected={isSelected}
+                toggle:today={isToday}
+                on:dragover={allowDrop}
+                on:drop={drop}
+              >
+                <div>
+                  <b>{date}</b>
+                  <div
+                    class="flex-column gap clip"
+                    children:append={[mapState, converter]}
+                  ></div>
+                </div>
+              </button>
+            );
+          })}
       </div>
     </div>
   );

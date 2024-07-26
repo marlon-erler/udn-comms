@@ -644,6 +644,11 @@
       const referencePath = [...monthPath, taskFileContent.fileId];
       this.storageModel.write(referencePath, "");
     };
+    deleteTaskReference = (monthString, taskId) => {
+      const monthPath = this.getMonthPath(monthString);
+      const referencePath = [...monthPath, taskId];
+      this.storageModel.write(referencePath, "");
+    };
     listTaskIds = (monthString) => {
       const monthPath = this.getMonthPath(monthString);
       return this.storageModel.list(monthPath);
@@ -667,7 +672,10 @@
         days: {}
       };
       for (let i = 0; i < daysInMonth; i++) {
-        grid.days[i + 1] = defaultValueCreator();
+        const paddedDate = _CalendarModel.padDateOrMonth(
+          (i + 1).toString()
+        );
+        grid.days[paddedDate] = defaultValueCreator();
       }
       return grid;
     };
@@ -684,17 +692,21 @@
     };
     static isoToDateString = (dateISOString) => {
       const [year, month, date, _] = dateISOString.split("-");
-      return date;
+      const paddedDate = _CalendarModel.padDateOrMonth(date ?? "");
+      return paddedDate;
     };
     static getMonthString = (year = "", month = "") => {
       const paddedYear = year.padStart(4, "0");
-      const paddedMonth = month.padStart(2, "0");
+      const paddedMonth = _CalendarModel.padDateOrMonth(month);
       return `${paddedYear}-${paddedMonth}`;
     };
     static getISODateString = (year, month, date) => {
       const monthString = _CalendarModel.getMonthString(year, month);
-      const paddedDate = date.padStart(2, "0");
+      const paddedDate = _CalendarModel.padDateOrMonth(date);
       return `${monthString}-${paddedDate}`;
+    };
+    static padDateOrMonth = (input) => {
+      return input.padStart(2, "0");
     };
   };
 
@@ -1684,20 +1696,33 @@
       this.selectTask(taskViewModel);
       this.updateTaskIndices();
     };
+    getEventsForDate = () => {
+      const paddedDate = CalendarModel.padDateOrMonth(
+        this.selectedDate.toString()
+      );
+      if (this.monthGrid.value == void 0) {
+        return void 0;
+      }
+      return this.monthGrid.value.days[paddedDate];
+    };
     // view
     getTaskMapState = (taskFileContent) => {
       if (this.monthGrid.value == null) return null;
-      const dateString = CalendarModel.isoToDateString(
+      const date = CalendarModel.isoToDateString(
         taskFileContent.date ?? ""
       );
-      if (dateString == void 0) return null;
-      return this.monthGrid.value.days[dateString];
+      return this.monthGrid.value.days[date];
     };
     showTask = (taskFileContent) => {
       const monthString = CalendarModel.isoToMonthString(
         taskFileContent.date ?? ""
       );
       if (monthString == void 0 || monthString != this.monthString) {
+        this.removeTaskFromView(taskFileContent);
+        this.calendarModel.deleteTaskReference(
+          this.monthString,
+          taskFileContent.fileId
+        );
         return;
       }
       const taskViewModel = new TaskViewModel(
@@ -1707,12 +1732,14 @@
         taskFileContent
       );
       const mapState = this.getTaskMapState(taskFileContent);
-      mapState?.set(taskFileContent.fileId, taskViewModel);
+      this.taskViewModels.handleRemoval(taskViewModel, () => {
+        mapState?.remove(taskFileContent.fileId);
+      });
+      this.taskViewModels.remove(taskFileContent.fileId);
       this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+      mapState?.set(taskFileContent.fileId, taskViewModel);
     };
     removeTaskFromView = (taskFileContent) => {
-      const mapState = this.getTaskMapState(taskFileContent);
-      mapState?.remove(taskFileContent.fileId);
       this.taskViewModels.remove(taskFileContent.fileId);
     };
     showToday = () => {
@@ -2594,7 +2621,7 @@
       });
       return view;
     };
-    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).map((entry) => {
+    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).sort((a, b) => localeCompare(a[0], b[0])).map((entry) => {
       const [date, mapState] = entry;
       const isSelected = createProxyState(
         [selectedDate],
@@ -2770,7 +2797,7 @@
         calendarPageViewModel.selectedDate
       ],
       () => {
-        const listState = calendarPageViewModel.monthGrid.value?.days[calendarPageViewModel.selectedDate.toString()];
+        const listState = calendarPageViewModel.getEventsForDate();
         if (listState == void 0) {
           return /* @__PURE__ */ createElement("div", null);
         } else if (listState.value.size == 0) {

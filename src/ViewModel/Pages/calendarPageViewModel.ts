@@ -60,17 +60,28 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
     this.updateTaskIndices();
   };
 
+  getEventsForDate = (): React.MapState<TaskViewModel> | undefined => {
+    const paddedDate: string = CalendarModel.padDateOrMonth(
+      this.selectedDate.toString()
+    );
+
+    if (this.monthGrid.value == undefined) {
+      return undefined;
+    }
+
+    return this.monthGrid.value.days[paddedDate];
+  };
+
   // view
   getTaskMapState = (
     taskFileContent: TaskFileContent
   ): React.MapState<TaskViewModel> | null => {
     if (this.monthGrid.value == null) return null;
 
-    const dateString: string | undefined = CalendarModel.isoToDateString(
+    const date: string = CalendarModel.isoToDateString(
       taskFileContent.date ?? ""
     );
-    if (dateString == undefined) return null;
-    return this.monthGrid.value.days[dateString];
+    return this.monthGrid.value.days[date];
   };
 
   showTask = (taskFileContent: TaskFileContent): void => {
@@ -78,7 +89,11 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
       taskFileContent.date ?? ""
     );
     if (monthString == undefined || monthString != this.monthString) {
-      // TODO remove
+      this.removeTaskFromView(taskFileContent);
+      this.calendarModel.deleteTaskReference(
+        this.monthString,
+        taskFileContent.fileId
+      );
       return;
     }
 
@@ -90,16 +105,18 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
     );
     const mapState: React.MapState<TaskViewModel> | null =
       this.getTaskMapState(taskFileContent);
-    mapState?.set(taskFileContent.fileId, taskViewModel);
 
+    this.taskViewModels.handleRemoval(taskViewModel, () => {
+      mapState?.remove(taskFileContent.fileId);
+    });
+
+    this.taskViewModels.remove(taskFileContent.fileId);
     this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+
+    mapState?.set(taskFileContent.fileId, taskViewModel);
   };
 
   removeTaskFromView = (taskFileContent: TaskFileContent): void => {
-    const mapState: React.MapState<TaskViewModel> | null =
-      this.getTaskMapState(taskFileContent);
-    mapState?.remove(taskFileContent.fileId);
-
     this.taskViewModels.remove(taskFileContent.fileId);
   };
 

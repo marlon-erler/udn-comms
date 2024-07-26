@@ -42,6 +42,13 @@ export default class CalendarModel {
     this.storageModel.write(referencePath, "");
   };
 
+  deleteTaskReference = (monthString: string, taskId: string): void => {
+    const monthPath: string[] = this.getMonthPath(monthString);
+    const referencePath: string[] = [...monthPath, taskId];
+
+    this.storageModel.write(referencePath, "");
+  };
+
   listTaskIds = (monthString: string): string[] => {
     const monthPath: string[] = this.getMonthPath(monthString);
     return this.storageModel.list(monthPath);
@@ -81,7 +88,10 @@ export default class CalendarModel {
     };
 
     for (let i = 0; i < daysInMonth; i++) {
-      grid.days[i + 1] = defaultValueCreator();
+      const paddedDate: string = CalendarModel.padDateOrMonth(
+        (i + 1).toString()
+      );
+      grid.days[paddedDate] = defaultValueCreator();
     }
 
     return grid;
@@ -104,14 +114,15 @@ export default class CalendarModel {
     return CalendarModel.getMonthString(year, month);
   };
 
-  static isoToDateString = (dateISOString: string): string | undefined => {
+  static isoToDateString = (dateISOString: string): string => {
     const [year, month, date, _] = dateISOString.split("-");
-    return date;
+    const paddedDate = CalendarModel.padDateOrMonth(date ?? "");
+    return paddedDate;
   };
 
   static getMonthString = (year: string = "", month: string = ""): string => {
     const paddedYear: string = year.padStart(4, "0");
-    const paddedMonth: string = month.padStart(2, "0");
+    const paddedMonth: string = CalendarModel.padDateOrMonth(month);
     return `${paddedYear}-${paddedMonth}`;
   };
 
@@ -121,8 +132,12 @@ export default class CalendarModel {
     date: string
   ): string => {
     const monthString: string = CalendarModel.getMonthString(year, month);
-    const paddedDate: string = date.padStart(2, "0");
+    const paddedDate: string = CalendarModel.padDateOrMonth(date);
     return `${monthString}-${paddedDate}`;
+  };
+
+  static padDateOrMonth = (input: string): string => {
+    return input.padStart(2, "0");
   };
 }
 

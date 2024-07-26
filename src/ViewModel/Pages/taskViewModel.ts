@@ -78,7 +78,7 @@ export default class TaskViewModel {
   setDate = (dateISOString: string): void => {
     this.date.value = dateISOString;
     this.save();
-  }
+  };
 
   // view
   open = (): void => {
