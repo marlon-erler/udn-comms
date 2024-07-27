@@ -161,12 +161,16 @@ export default class ConnectionModel {
 
   tryToSendMessage = (chatMessage: ChatMessage): boolean => {
     const stringifiedBody: string = stringify(chatMessage);
-    const isSent: boolean = this.udn.sendMessage(
+    const isSent: boolean = this.sendPlainMessage(
       chatMessage.channel,
       stringifiedBody
     );
     if (isSent) this.messageSentHandlerManager.trigger(chatMessage);
     return isSent;
+  };
+
+  sendPlainMessage = (channel: string, body: string): boolean => {
+    return this.udn.sendMessage(channel, body);
   };
 
   // storage
