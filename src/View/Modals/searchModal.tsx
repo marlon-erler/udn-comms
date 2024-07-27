@@ -1,25 +1,21 @@
 import * as React from "bloatless-react";
 
 import SearchViewModel from "../../ViewModel/Utility/searchViewModel";
+import { StringToOption } from "../Components/option";
 import { translations } from "../translations";
+import { v4 } from "uuid";
 
 export function SearchModal<T>(
+  searchViewModel: SearchViewModel<T>,
   headline: string,
-  allObjects: React.ListState<T> | React.MapState<T>,
-  filteredObjects: React.ListState<T>,
   converter: React.StateItemConverter<T>,
-  getStringsOfObject: (object: T) => string[],
   isOpen: React.State<boolean>
 ) {
-  const viewModel: SearchViewModel<T> = new SearchViewModel(
-    allObjects,
-    filteredObjects,
-    getStringsOfObject
-  );
-
   function close() {
     isOpen.value = false;
   }
+
+  const id = v4();
 
   return (
     <div class="modal" toggle:open={isOpen}>
@@ -29,14 +25,20 @@ export function SearchModal<T>(
           <div class="flex-row width-input">
             <input
               placeholder={translations.general.searchLabel}
-              bind:value={viewModel.searchInput}
-              on:enter={viewModel.applySearch}
+              bind:value={searchViewModel.searchInput}
+              on:enter={searchViewModel.applySearch}
+              list={id}
             ></input>
+            <datalist
+              hidden
+              id={id}
+              children:append={[searchViewModel.suggestions, StringToOption]}
+            ></datalist>
             <button
               class="primary"
               aria-label={translations.general.searchButtonAudioLabel}
-              on:click={viewModel.applySearch}
-              toggle:disabled={viewModel.cannotApplySearch}
+              on:click={searchViewModel.applySearch}
+              toggle:disabled={searchViewModel.cannotApplySearch}
             >
               <span class="icon">search</span>
             </button>
@@ -47,7 +49,7 @@ export function SearchModal<T>(
           <div
             class="grid gap"
             style="grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))"
-            children:append={[filteredObjects, converter]}
+            children:append={[searchViewModel.matchingObjects, converter]}
           ></div>
         </main>
         <button on:click={close}>

@@ -38,7 +38,7 @@ COLORS
 /* definition */
 :root {
   --background: hsla(0, 0%, 100%, 100%);
-  --background-glass: hsla(0, 0%, 100%, 40%);
+  --background-glass: hsla(0, 0%, 100%, 5%);
   --background-transparent: hsla(0, 0%, 0%, 5%);
   --background-hover: hsla(0, 0%, 55%, 12%);
   --background-active: hsla(0, 0%, 55%, 12%);

@@ -7,6 +7,7 @@ import BoardsAndTasksModel, {
 
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
+import SearchViewModel from "../Utility/searchViewModel";
 import StorageModel from "../../Model/Global/storageModel";
 import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import TaskPageViewModel from "./taskPageViewModel";
@@ -35,8 +36,10 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   isPresentingSettingsModal: React.State<boolean> = new React.State(false);
   isPresentingFilterModal: React.State<boolean> = new React.State(false);
 
+  searchViewModel: SearchViewModel<TaskViewModel>;
   filteredTaskViewModels: React.ListState<TaskViewModel> =
     new React.ListState();
+  searchSuggestions: React.ListState<string> = new React.ListState();
 
   // paths
   getBasePath = (): string[] => {
@@ -45,6 +48,10 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
 
   getLastUsedBoardPath = (): string[] => {
     return [...this.getBasePath(), BoardViewModelSubPath.LastUsedView];
+  };
+
+  getPreviousSearchesPath = (): string[] => {
+    return [...this.getBasePath(), BoardViewModelSubPath.PreviousSearches];
   };
 
   // settings
@@ -70,7 +77,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   // methods
   createTask = (): void => {
     this.createTaskFromBoardId(this.boardInfo.fileId);
-  }
+  };
 
   handleDropWithinBoard = (category?: string, status?: string): void => {
     const draggedObject: any = this.coreViewModel.draggedObject.value;
@@ -97,6 +104,14 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     if (lastUsedView == null) return;
 
     this.selectedPage.value = lastUsedView as BoardPageType;
+  };
+
+  storeSearchTerm = (searchTerm: string): void => {
+    const path: string[] = [...this.getPreviousSearchesPath(), searchTerm];
+    this.storageModel.write(path, "");
+    if (!this.searchSuggestions.value.has(searchTerm)) {
+      this.searchSuggestions.add(searchTerm);
+    }
   };
 
   // view
@@ -186,9 +201,16 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     this.updateTaskIndices();
   };
 
+  loadSearchSuggestions = (): void => {
+    const dirPath: string[] = this.getPreviousSearchesPath();
+    const searches: string[] = this.storageModel.list(dirPath);
+    this.searchSuggestions.add(...searches);
+  };
+
   loadData = (): void => {
     this.restoreLastUsedView();
     this.loadTasks();
+    this.loadSearchSuggestions();
   };
 
   // init
@@ -234,11 +256,23 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
         this.updateTaskIndices();
       }
     );
+
+    // search
+    this.searchViewModel = new SearchViewModel(
+      this.taskViewModels,
+      this.filteredTaskViewModels,
+      TaskViewModel.getStringsForFilter,
+      this.searchSuggestions
+    );
+    this.searchViewModel.appliedQuery.subscribe((newQuery) => {
+      this.storeSearchTerm(newQuery);
+    });
   }
 }
 
 export enum BoardViewModelSubPath {
   LastUsedView = "last-used-view",
+  PreviousSearches = "previous-searches",
 }
 
 // types

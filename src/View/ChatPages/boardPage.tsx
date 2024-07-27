@@ -115,11 +115,9 @@ export function BoardPage(boardViewModel: BoardViewModel) {
 
       {BoardSettingsModal(boardViewModel)}
       {SearchModal(
+        boardViewModel.searchViewModel,
         translations.chatPage.task.filterTasksHeadline,
-        boardViewModel.taskViewModels,
-        boardViewModel.filteredTaskViewModels,
         TaskViewModelToEntry,
-        TaskViewModel.getStringsForFilter,
         boardViewModel.isPresentingFilterModal
       )}
       <div children:set={taskSettingsModal}></div>

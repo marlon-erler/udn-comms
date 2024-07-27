@@ -2006,6 +2006,65 @@
     };
   };
 
+  // src/ViewModel/Utility/searchViewModel.ts
+  var SearchViewModel = class {
+    // data
+    allObjects;
+    getStringsOfObject;
+    // state
+    appliedQuery = new State("");
+    searchInput = new State("");
+    matchingObjects;
+    suggestions;
+    // guards
+    cannotApplySearch = createProxyState(
+      [this.searchInput, this.appliedQuery],
+      () => this.searchInput.value == this.appliedQuery.value
+    );
+    // methods
+    search = (searchTerm) => {
+      this.searchInput.value = searchTerm;
+      this.applySearch();
+    };
+    applySearch = () => {
+      this.appliedQuery.value = this.searchInput.value;
+      console.log("applying search");
+      this.matchingObjects.clear();
+      for (const object of this.allObjects.value.values()) {
+        const doesMatch = this.checkDoesMatchSearch(object);
+        if (doesMatch == false) continue;
+        this.matchingObjects.add(object);
+      }
+    };
+    // init
+    constructor(allObjects, matchingObjects, getStringsOfObject, suggestions) {
+      this.allObjects = allObjects;
+      this.matchingObjects = matchingObjects;
+      this.getStringsOfObject = getStringsOfObject;
+      this.suggestions = suggestions;
+      this.allObjects.handleAddition((newObject) => {
+        const doesMatch = this.checkDoesMatchSearch(newObject);
+        if (doesMatch == false) {
+          this.matchingObjects.remove(newObject);
+        } else {
+          if (this.matchingObjects.value.has(newObject)) return;
+          this.matchingObjects.add(newObject);
+          this.allObjects.handleRemoval(newObject, () => {
+            this.matchingObjects.remove(newObject);
+          });
+        }
+      });
+    }
+    // utility
+    checkDoesMatchSearch = (object) => {
+      return checkDoesObjectMatchSearch(
+        this.appliedQuery.value,
+        this.getStringsOfObject,
+        object
+      );
+    };
+  };
+
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class extends TaskContainingPageViewModel {
     // init
@@ -2035,6 +2094,15 @@
           this.updateTaskIndices();
         }
       );
+      this.searchViewModel = new SearchViewModel(
+        this.taskViewModels,
+        this.filteredTaskViewModels,
+        TaskViewModel.getStringsForFilter,
+        this.searchSuggestions
+      );
+      this.searchViewModel.appliedQuery.subscribe((newQuery) => {
+        this.storeSearchTerm(newQuery);
+      });
     }
     storageModel;
     boardsAndTasksModel;
@@ -2051,13 +2119,18 @@
     isSelected;
     isPresentingSettingsModal = new State(false);
     isPresentingFilterModal = new State(false);
+    searchViewModel;
     filteredTaskViewModels = new ListState();
+    searchSuggestions = new ListState();
     // paths
     getBasePath = () => {
       return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
     };
     getLastUsedBoardPath = () => {
       return [...this.getBasePath(), "last-used-view" /* LastUsedView */];
+    };
+    getPreviousSearchesPath = () => {
+      return [...this.getBasePath(), "previous-searches" /* PreviousSearches */];
     };
     // settings
     saveSettings = () => {
@@ -2100,6 +2173,13 @@
       const lastUsedView = this.storageModel.read(path);
       if (lastUsedView == null) return;
       this.selectedPage.value = lastUsedView;
+    };
+    storeSearchTerm = (searchTerm) => {
+      const path = [...this.getPreviousSearchesPath(), searchTerm];
+      this.storageModel.write(path, "");
+      if (!this.searchSuggestions.value.has(searchTerm)) {
+        this.searchSuggestions.add(searchTerm);
+      }
     };
     // view
     showTask = (taskFileContent) => {
@@ -2170,9 +2250,15 @@
       }
       this.updateTaskIndices();
     };
+    loadSearchSuggestions = () => {
+      const dirPath = this.getPreviousSearchesPath();
+      const searches = this.storageModel.list(dirPath);
+      this.searchSuggestions.add(...searches);
+    };
     loadData = () => {
       this.restoreLastUsedView();
       this.loadTasks();
+      this.loadSearchSuggestions();
     };
   };
 
@@ -3521,83 +3607,34 @@
     return RibbonButton(label, icon, isSelected, select);
   }
 
-  // src/ViewModel/Utility/searchViewModel.ts
-  var SearchViewModel = class {
-    // data
-    allObjects;
-    getStringsOfObject;
-    // state
-    appliedQuery = new State("");
-    searchInput = new State("");
-    matchingObjects;
-    // guards
-    cannotApplySearch = createProxyState(
-      [this.searchInput, this.appliedQuery],
-      () => this.searchInput.value == this.appliedQuery.value
-    );
-    // methods
-    applySearch = () => {
-      this.appliedQuery.value = this.searchInput.value;
-      console.log("applying search");
-      this.matchingObjects.clear();
-      for (const object of this.allObjects.value.values()) {
-        const doesMatch = this.checkDoesMatchSearch(object);
-        if (doesMatch == false) continue;
-        this.matchingObjects.add(object);
-      }
-    };
-    // init
-    constructor(allObjects, matchingObjects, getStringsOfObject) {
-      this.allObjects = allObjects;
-      this.matchingObjects = matchingObjects;
-      this.getStringsOfObject = getStringsOfObject;
-      this.allObjects.handleAddition((newObject) => {
-        const doesMatch = this.checkDoesMatchSearch(newObject);
-        if (doesMatch == false) {
-          this.matchingObjects.remove(newObject);
-        } else {
-          if (this.matchingObjects.value.has(newObject)) return;
-          this.matchingObjects.add(newObject);
-          this.allObjects.handleRemoval(newObject, () => {
-            this.matchingObjects.remove(newObject);
-          });
-        }
-      });
-    }
-    // utility
-    checkDoesMatchSearch = (object) => {
-      return checkDoesObjectMatchSearch(
-        this.appliedQuery.value,
-        this.getStringsOfObject,
-        object
-      );
-    };
-  };
-
   // src/View/Modals/searchModal.tsx
-  function SearchModal(headline, allObjects, filteredObjects, converter, getStringsOfObject, isOpen) {
-    const viewModel = new SearchViewModel(
-      allObjects,
-      filteredObjects,
-      getStringsOfObject
-    );
+  function SearchModal(searchViewModel, headline, converter, isOpen) {
     function close() {
       isOpen.value = false;
     }
+    const id = v4_default();
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isOpen }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, headline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translations.general.searchLabel,
-        "bind:value": viewModel.searchInput,
-        "on:enter": viewModel.applySearch
+        "bind:value": searchViewModel.searchInput,
+        "on:enter": searchViewModel.applySearch,
+        list: id
+      }
+    ), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id,
+        "children:append": [searchViewModel.suggestions, StringToOption]
       }
     ), /* @__PURE__ */ createElement(
       "button",
       {
         class: "primary",
         "aria-label": translations.general.searchButtonAudioLabel,
-        "on:click": viewModel.applySearch,
-        "toggle:disabled": viewModel.cannotApplySearch
+        "on:click": searchViewModel.applySearch,
+        "toggle:disabled": searchViewModel.cannotApplySearch
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "search")
     )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
@@ -3605,7 +3642,7 @@
       {
         class: "grid gap",
         style: "grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))",
-        "children:append": [filteredObjects, converter]
+        "children:append": [searchViewModel.matchingObjects, converter]
       }
     )), /* @__PURE__ */ createElement("button", { "on:click": close }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
@@ -3696,11 +3733,9 @@
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
     ))), /* @__PURE__ */ createElement("div", { class: "content main-content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), SearchModal(
+      boardViewModel.searchViewModel,
       translations.chatPage.task.filterTasksHeadline,
-      boardViewModel.taskViewModels,
-      boardViewModel.filteredTaskViewModels,
       TaskViewModelToEntry,
-      TaskViewModel.getStringsForFilter,
       boardViewModel.isPresentingFilterModal
     ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
   }

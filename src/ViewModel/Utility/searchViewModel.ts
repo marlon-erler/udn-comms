@@ -12,6 +12,8 @@ export default class SearchViewModel<T> {
   searchInput: React.State<string> = new React.State("");
   matchingObjects: React.ListState<T>;
 
+  suggestions: React.ListState<string>;
+
   // guards
   cannotApplySearch: React.State<boolean> = React.createProxyState(
     [this.searchInput, this.appliedQuery],
@@ -19,6 +21,11 @@ export default class SearchViewModel<T> {
   );
 
   // methods
+  search = (searchTerm: string): void => {
+    this.searchInput.value = searchTerm;
+    this.applySearch();
+  };
+
   applySearch = (): void => {
     this.appliedQuery.value = this.searchInput.value;
     console.log("applying search");
@@ -36,11 +43,13 @@ export default class SearchViewModel<T> {
   constructor(
     allObjects: React.ListState<T> | React.MapState<T>,
     matchingObjects: React.ListState<T>,
-    getStringsOfObject: (object: T) => string[]
+    getStringsOfObject: (object: T) => string[],
+    suggestions: React.ListState<string>
   ) {
     this.allObjects = allObjects;
     this.matchingObjects = matchingObjects;
     this.getStringsOfObject = getStringsOfObject;
+    this.suggestions = suggestions;
 
     // handle new objects
     this.allObjects.handleAddition((newObject: T) => {
