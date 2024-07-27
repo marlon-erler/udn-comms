@@ -31,7 +31,9 @@
 
 #home-page #overview-section,
 #home-page #chat-section {
-  padding-bottom: calc(var(--content-padding) + var(--header-height) + var(--safe-area-bottom));
+  padding-bottom: calc(
+    var(--content-padding) + var(--header-height) + var(--safe-area-bottom)
+  );
 }
 
 #home-page #chat-grid {
@@ -41,6 +43,15 @@
   gap: var(--gap-between-tiles);
 
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+.chat-entry[unread] {
+  border: var(--outline-width) solid black;
+}
+
+.chat-entry[unread]:not(:hover):not(:active) {
+  background: rgb(255, 217, 0) !important;
+  color: black;
 }
 
 @media (min-width: 640px) {

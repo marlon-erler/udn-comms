@@ -33,10 +33,12 @@ export default class ChatViewModel {
   );
 
   index: React.State<number> = new React.State(0);
+  hasUnreadMessages: React.State<boolean> = new React.State(false);
 
   // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
+    this.markUnread();
   };
 
   close = (): void => {
@@ -64,6 +66,11 @@ export default class ChatViewModel {
     this.index.value = index;
   };
 
+  markUnread = (): void => {
+    this.hasUnreadMessages.value = false;
+    this.chatModel.markUnread();
+  };
+
   // load
   loadPageSelection = (): void => {
     const path: string[] = StorageModel.getPath(
@@ -79,6 +86,10 @@ export default class ChatViewModel {
       this.storageModel.write(path, newPage);
       this.resetColor();
     });
+  };
+
+  loadInfo = (): void => {
+    this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
   };
 
   // init
@@ -101,7 +112,7 @@ export default class ChatViewModel {
       this.storageModel,
       this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
       this.chatModel.fileModel.boardsAndTasksModel,
-      this,
+      this
     );
     this.taskPageViewModel = new TaskPageViewModel(
       this.coreViewModel,
@@ -122,12 +133,17 @@ export default class ChatViewModel {
     chatModel.chatMessageHandlerManager.addHandler(
       (chatMessage: ChatMessage) => {
         this.messagePageViewModel.showChatMessage(chatMessage);
+        
+        if (this.chatListViewModel.selectedChat.value != this) {
+          this.hasUnreadMessages.value = true;
+        }
       }
     );
 
     // load
     this.loadPageSelection();
     this.resetColor();
+    this.loadInfo();
   }
 }
 

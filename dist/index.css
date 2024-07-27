@@ -426,6 +426,13 @@ body[showing-chat] #chat-page-wrapper {
   gap: var(--gap-between-tiles);
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
+.chat-entry[unread] {
+  border: var(--outline-width) solid black;
+}
+.chat-entry[unread]:not(:hover):not(:active) {
+  background: rgb(255, 217, 0) !important;
+  color: black;
+}
 @media (min-width: 640px) {
   #home-page #overview-section {
     width: 20rem;

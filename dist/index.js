@@ -1191,6 +1191,8 @@
       if (chatMessage == null) return;
       chatMessage.status = "received" /* Received */;
       this.addMessage(chatMessage);
+      this.info.hasUnreadMessages = true;
+      this.storeInfo();
     };
     handleMessageSent = (chatMessage) => {
       chatMessage.status = "sent" /* Sent */;
@@ -1257,6 +1259,10 @@
     };
     subscribe = () => {
       this.connectionModel.addChannel(this.info.primaryChannel);
+    };
+    markUnread = () => {
+      this.info.hasUnreadMessages = false;
+      this.storeInfo();
     };
     // storage
     storeInfo = () => {
@@ -2424,10 +2430,14 @@
       chatModel.chatMessageHandlerManager.addHandler(
         (chatMessage) => {
           this.messagePageViewModel.showChatMessage(chatMessage);
+          if (this.chatListViewModel.selectedChat.value != this) {
+            this.hasUnreadMessages.value = true;
+          }
         }
       );
       this.loadPageSelection();
       this.resetColor();
+      this.loadInfo();
     }
     chatModel;
     storageModel;
@@ -2443,9 +2453,11 @@
       "messages" /* Messages */
     );
     index = new State(0);
+    hasUnreadMessages = new State(false);
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
+      this.markUnread();
     };
     close = () => {
       this.chatListViewModel.closeChat();
@@ -2466,6 +2478,10 @@
       const index = this.chatListViewModel.chatIndexManager.getIndex(this);
       this.index.value = index;
     };
+    markUnread = () => {
+      this.hasUnreadMessages.value = false;
+      this.chatModel.markUnread();
+    };
     // load
     loadPageSelection = () => {
       const path = StorageModel.getPath(
@@ -2480,6 +2496,9 @@
         this.storageModel.write(path, newPage);
         this.resetColor();
       });
+    };
+    loadInfo = () => {
+      this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
     };
   };
 
@@ -4352,10 +4371,11 @@
     const view = /* @__PURE__ */ createElement(
       "button",
       {
-        class: "tile colored-tile",
+        class: "tile colored-tile chat-entry",
         "set:color": chatViewModel.settingsPageViewModel.color,
         style: "height: 8rem",
-        "on:click": chatViewModel.open
+        "on:click": chatViewModel.open,
+        "toggle:unread": chatViewModel.hasUnreadMessages
       },
       /* @__PURE__ */ createElement(
         "span",
