@@ -1548,6 +1548,16 @@
       const index = this.containingModel.taskIndexManager.getIndex(this);
       this.index.value = index;
     };
+    updateSuggestions = () => {
+      if (this.coreViewModel.taskCategorySuggestions.value.has(
+        this.category.value
+      ) == false) {
+        this.coreViewModel.taskCategorySuggestions.add(this.category.value);
+      }
+      if (this.coreViewModel.taskStatusSuggestions.value.has(this.status.value) == false) {
+        this.coreViewModel.taskStatusSuggestions.add(this.status.value);
+      }
+    };
     // settings
     save = () => {
       const newTaskFileContent = BoardsAndTasksModel.createTaskFileContent(
@@ -1565,6 +1575,7 @@
       this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
       this.containingModel.showTask(newTaskFileContent);
       this.containingModel.updateTaskIndices();
+      this.updateSuggestions();
     };
     deleteTask = () => {
       this.close();
@@ -1603,6 +1614,7 @@
       this.date.value = this.task.date ?? "";
       this.time.value = this.task.time ?? "";
       this.selectedVersionId.value = this.task.fileContentId;
+      this.updateSuggestions();
     };
     // utility
     static getStringsForFilter = (taskViewModel) => {
@@ -2843,6 +2855,8 @@
 
   // src/View/Modals/taskSettingsModal.tsx
   function TaskSettingsModal(taskViewModel) {
+    const categorySuggestionId = v4_default();
+    const statusSuggestionId = v4_default();
     return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
       "select",
       {
@@ -2855,7 +2869,39 @@
         rows: "10",
         "bind:value": taskViewModel.description
       }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.category }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.status }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": taskViewModel.category,
+        list: categorySuggestionId
+      }
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: categorySuggestionId,
+        "children:append": [
+          taskViewModel.coreViewModel.taskCategorySuggestions,
+          StringToOption
+        ]
+      }
+    ), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": taskViewModel.status,
+        list: statusSuggestionId
+      }
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: statusSuggestionId,
+        "children:append": [
+          taskViewModel.coreViewModel.taskCategorySuggestions,
+          StringToOption
+        ]
+      }
+    ), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
       translations.chatPage.task.deleteTaskButton,
       "delete_forever",
       taskViewModel.deleteTask
@@ -4366,6 +4412,8 @@
     draggedObject = new State(void 0);
     // suggestions
     boardSearchSuggestions = new ListState();
+    taskCategorySuggestions = new ListState();
+    taskStatusSuggestions = new ListState();
   };
 
   // src/View/Components/chatEntry.tsx

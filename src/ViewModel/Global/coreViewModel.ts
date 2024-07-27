@@ -6,4 +6,7 @@ export default class CoreViewModel {
 
   // suggestions
   boardSearchSuggestions: React.ListState<string> = new React.ListState();
+  
+  taskCategorySuggestions: React.ListState<string> = new React.ListState();
+  taskStatusSuggestions: React.ListState<string> = new React.ListState();
 }

@@ -5,8 +5,12 @@ import { StringToOption, VersionIdToOption } from "../Components/option";
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { translations } from "../translations";
+import { v4 } from "uuid";
 
 export function TaskSettingsModal(taskViewModel: TaskViewModel) {
+  const categorySuggestionId = v4();
+  const statusSuggestionId = v4();
+
   return (
     <div class="modal" open>
       <div>
@@ -52,17 +56,39 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
             <span class="icon">category</span>
             <div>
               <span>{translations.chatPage.task.taskCategoryLabel}</span>
-              <input bind:value={taskViewModel.category}></input>
+              <input
+                bind:value={taskViewModel.category}
+                list={categorySuggestionId}
+              ></input>
             </div>
           </label>
+          <datalist
+            hidden
+            id={categorySuggestionId}
+            children:append={[
+              taskViewModel.coreViewModel.taskCategorySuggestions,
+              StringToOption,
+            ]}
+          ></datalist>
 
           <label class="tile flex-no">
             <span class="icon">clock_loader_40</span>
             <div>
               <span>{translations.chatPage.task.taskStatusLabel}</span>
-              <input bind:value={taskViewModel.status}></input>
+              <input
+                bind:value={taskViewModel.status}
+                list={statusSuggestionId}
+              ></input>
             </div>
           </label>
+          <datalist
+            hidden
+            id={statusSuggestionId}
+            children:append={[
+              taskViewModel.coreViewModel.taskCategorySuggestions,
+              StringToOption,
+            ]}
+          ></datalist>
 
           <label class="tile flex-no">
             <span class="icon">priority_high</span>

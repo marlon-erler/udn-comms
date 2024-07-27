@@ -99,6 +99,23 @@ export default class TaskViewModel {
     this.index.value = index;
   };
 
+  updateSuggestions = (): void => {
+    if (
+      this.coreViewModel.taskCategorySuggestions.value.has(
+        this.category.value
+      ) == false
+    ) {
+      this.coreViewModel.taskCategorySuggestions.add(this.category.value);
+    }
+
+    if (
+      this.coreViewModel.taskStatusSuggestions.value.has(this.status.value) ==
+      false
+    ) {
+      this.coreViewModel.taskStatusSuggestions.add(this.status.value);
+    }
+  };
+
   // settings
   save = (): void => {
     const newTaskFileContent: TaskFileContent =
@@ -120,6 +137,8 @@ export default class TaskViewModel {
 
     this.containingModel.showTask(newTaskFileContent);
     this.containingModel.updateTaskIndices();
+
+    this.updateSuggestions();
   };
 
   deleteTask = (): void => {
@@ -169,6 +188,8 @@ export default class TaskViewModel {
     this.time.value = this.task.time ?? "";
 
     this.selectedVersionId.value = this.task.fileContentId;
+
+    this.updateSuggestions();
   };
 
   // init

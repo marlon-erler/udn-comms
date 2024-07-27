@@ -15,7 +15,7 @@ export function SearchModal<T>(
     isOpen.value = false;
   }
 
-  const id = v4();
+  const suggestionId = v4();
 
   return (
     <div class="modal" toggle:open={isOpen}>
@@ -27,11 +27,11 @@ export function SearchModal<T>(
               placeholder={translations.general.searchLabel}
               bind:value={searchViewModel.searchInput}
               on:enter={searchViewModel.applySearch}
-              list={id}
+              list={suggestionId}
             ></input>
             <datalist
               hidden
-              id={id}
+              id={suggestionId}
               children:append={[searchViewModel.suggestions, StringToOption]}
             ></datalist>
             <button
