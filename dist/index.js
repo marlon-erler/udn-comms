@@ -2100,8 +2100,8 @@
         TaskViewModel.getStringsForFilter,
         this.searchSuggestions
       );
-      this.searchViewModel.appliedQuery.subscribe((newQuery) => {
-        this.storeSearchTerm(newQuery);
+      this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
+        this.handleNewSearch(newQuery);
       });
     }
     storageModel;
@@ -2131,6 +2131,9 @@
     };
     getPreviousSearchesPath = () => {
       return [...this.getBasePath(), "previous-searches" /* PreviousSearches */];
+    };
+    getLastSearchPath = () => {
+      return [...this.getBasePath(), "last-search" /* LastSearch */];
     };
     // settings
     saveSettings = () => {
@@ -2174,12 +2177,17 @@
       if (lastUsedView == null) return;
       this.selectedPage.value = lastUsedView;
     };
-    storeSearchTerm = (searchTerm) => {
-      const path = [...this.getPreviousSearchesPath(), searchTerm];
-      this.storageModel.write(path, "");
+    handleNewSearch = (searchTerm) => {
+      const suggestionPath = [
+        ...this.getPreviousSearchesPath(),
+        searchTerm
+      ];
+      this.storageModel.write(suggestionPath, "");
       if (!this.searchSuggestions.value.has(searchTerm)) {
         this.searchSuggestions.add(searchTerm);
       }
+      const lastSearchPath = this.getLastSearchPath();
+      this.storageModel.write(lastSearchPath, searchTerm);
     };
     // view
     showTask = (taskFileContent) => {
@@ -2254,6 +2262,11 @@
       const dirPath = this.getPreviousSearchesPath();
       const searches = this.storageModel.list(dirPath);
       this.searchSuggestions.add(...searches);
+      const lastSearchPath = this.getLastSearchPath();
+      const lastSearch = this.storageModel.read(lastSearchPath);
+      if (lastSearch) {
+        this.searchViewModel.search(lastSearch);
+      }
     };
     loadData = () => {
       this.restoreLastUsedView();

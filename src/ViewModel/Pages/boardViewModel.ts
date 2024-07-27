@@ -54,6 +54,10 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     return [...this.getBasePath(), BoardViewModelSubPath.PreviousSearches];
   };
 
+  getLastSearchPath = (): string[] => {
+    return [...this.getBasePath(), BoardViewModelSubPath.LastSearch];
+  };
+
   // settings
   saveSettings = (): void => {
     const newBoardInfoFileContent: BoardInfoFileContent =
@@ -106,12 +110,18 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     this.selectedPage.value = lastUsedView as BoardPageType;
   };
 
-  storeSearchTerm = (searchTerm: string): void => {
-    const path: string[] = [...this.getPreviousSearchesPath(), searchTerm];
-    this.storageModel.write(path, "");
+  handleNewSearch = (searchTerm: string): void => {
+    const suggestionPath: string[] = [
+      ...this.getPreviousSearchesPath(),
+      searchTerm,
+    ];
+    this.storageModel.write(suggestionPath, "");
     if (!this.searchSuggestions.value.has(searchTerm)) {
       this.searchSuggestions.add(searchTerm);
     }
+
+    const lastSearchPath: string[] = this.getLastSearchPath();
+    this.storageModel.write(lastSearchPath, searchTerm);
   };
 
   // view
@@ -205,6 +215,12 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     const dirPath: string[] = this.getPreviousSearchesPath();
     const searches: string[] = this.storageModel.list(dirPath);
     this.searchSuggestions.add(...searches);
+
+    const lastSearchPath: string[] = this.getLastSearchPath();
+    const lastSearch: string | null = this.storageModel.read(lastSearchPath);
+    if (lastSearch) {
+      this.searchViewModel.search(lastSearch);
+    }
   };
 
   loadData = (): void => {
@@ -264,8 +280,8 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
       TaskViewModel.getStringsForFilter,
       this.searchSuggestions
     );
-    this.searchViewModel.appliedQuery.subscribe((newQuery) => {
-      this.storeSearchTerm(newQuery);
+    this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
+      this.handleNewSearch(newQuery);
     });
   }
 }
@@ -273,6 +289,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
 export enum BoardViewModelSubPath {
   LastUsedView = "last-used-view",
   PreviousSearches = "previous-searches",
+  LastSearch = "last-search",
 }
 
 // types
