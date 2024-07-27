@@ -76,7 +76,7 @@ COLORS
 @media (prefers-color-scheme: dark) {
   :root {
     --background: hsla(0, 0%, 9%, 100%);
-    --background-glass: hsla(0, 0%, 9%, 40%);
+    --background-glass: hsla(0, 0%, 9%, 20%);
     --background-transparent: hsla(0, 0%, 100%, 5%);
     --background-hover: hsla(0, 0%, 55%, 16%);
     --background-active: hsla(0, 0%, 55%, 40%);

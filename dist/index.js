@@ -2637,7 +2637,7 @@
       setNameButtonAudioLabel: "set name",
       firstDayOfWeekLabel: "First day of week",
       manageStorageButton: "Manage storage",
-      transferFilesButton: "Transfer Files",
+      transferDataButton: "Transfer Data",
       scrollToChatButton: "Chats",
       ///
       backToOverviewAudioLabel: "go back to overview",
@@ -2651,9 +2651,9 @@
       ///
       connectButtonAudioLabel: "connect"
     },
-    fileTransferModal: {
-      transferFilesHeadline: "Transfer Files",
-      selectionDescription: "Select the files that you want to transfer.",
+    dataTransferModal: {
+      transferDataHeadline: "Transfer Data",
+      selectionDescription: "Select the data that you want to transfer.",
       ///
       fromThisDeviceButton: "From this device",
       toThisDeviceButton: "To this device",
@@ -4438,10 +4438,10 @@
     taskStatusSuggestions = new ListState();
   };
 
-  // src/View/Modals/fileTransferModal.tsx
-  function FileTransferModal(fileTransferViewModel2) {
+  // src/View/Modals/dataTransferModal.tsx
+  function DataTransferModal(fileTransferViewModel2) {
     const OptionConverter = (fileOption) => {
-      return FileOption(fileOption, fileTransferViewModel2);
+      return OptionEntry(fileOption, fileTransferViewModel2);
     };
     return /* @__PURE__ */ createElement(
       "div",
@@ -4449,7 +4449,7 @@
         class: "modal",
         "toggle:open": fileTransferViewModel2.isShowingTransferModal
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.fileTransferModal.transferFilesHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.fileTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.fileTransferModal.generalHeadline), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.generalHeadline), /* @__PURE__ */ createElement(
         "div",
         {
           class: "flex-column gap content-margin-bottom",
@@ -4458,7 +4458,7 @@
             OptionConverter
           ]
         }
-      ), /* @__PURE__ */ createElement("h3", null, translations.fileTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
+      ), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
         "div",
         {
           class: "flex-column gap",
@@ -4485,7 +4485,7 @@
       )))
     );
   }
-  function FileOption(fileOption, fileTransferViewModel2) {
+  function OptionEntry(fileOption, fileTransferViewModel2) {
     const isSelected = new State(false);
     isSelected.subscribeSilent((isSelected2) => {
       if (isSelected2 == true) {
@@ -4587,11 +4587,11 @@
       this.chatFileOptions.clear();
       this.generalFileOptions.add(
         {
-          label: translations.fileTransferModal.connectionData,
+          label: translations.dataTransferModal.connectionData,
           path: StorageModel.getPath("connection" /* ConnectionModel */, [])
         },
         {
-          label: translations.fileTransferModal.settingsData,
+          label: translations.dataTransferModal.settingsData,
           path: StorageModel.getPath("settings" /* SettingsModel */, [])
         }
       );
@@ -4729,7 +4729,7 @@
         "on:click": fileTransferViewModel2.showTransferModal
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "sync_alt"),
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.transferFilesButton))
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.transferDataButton))
     ), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
@@ -5228,7 +5228,7 @@
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
-    FileTransferModal(fileTransferViewModel),
+    DataTransferModal(fileTransferViewModel),
     StorageModal(storageViewModel)
   );
 })();

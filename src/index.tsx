@@ -11,7 +11,7 @@ import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionModel from "./Model/Global/connectionModel";
 import ConnectionViewModel from "./ViewModel/Global/connectionViewModel";
 import CoreViewModel from "./ViewModel/Global/coreViewModel";
-import { FileTransferModal } from "./View/Modals/fileTransferModal";
+import { DataTransferModal } from "./View/Modals/dataTransferModal";
 import FileTransferModel from "./Model/Global/fileTransferModel";
 import FileTransferViewModel from "./ViewModel/Global/fileTransferViewModel";
 import { HomePage } from "./View/homePage";
@@ -83,6 +83,6 @@ document
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
-    FileTransferModal(fileTransferViewModel),
+    DataTransferModal(fileTransferViewModel),
     StorageModal(storageViewModel)
   );

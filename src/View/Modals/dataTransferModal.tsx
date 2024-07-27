@@ -7,13 +7,13 @@ import FileTransferViewModel, {
 import StorageModel from "../../Model/Global/storageModel";
 import { translations } from "../translations";
 
-export function FileTransferModal(
+export function DataTransferModal(
   fileTransferViewModel: FileTransferViewModel
 ) {
   const OptionConverter: React.StateItemConverter<FileTransferOption> = (
     fileOption: FileTransferOption
   ) => {
-    return FileOption(fileOption, fileTransferViewModel);
+    return OptionEntry(fileOption, fileTransferViewModel);
   };
 
   return (
@@ -23,14 +23,14 @@ export function FileTransferModal(
     >
       <div>
         <main>
-          <h2>{translations.fileTransferModal.transferFilesHeadline}</h2>
+          <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
           <span class="secondary">
-            {translations.fileTransferModal.selectionDescription}
+            {translations.dataTransferModal.selectionDescription}
           </span>
 
           <hr></hr>
 
-          <h3>{translations.fileTransferModal.generalHeadline}</h3>
+          <h3>{translations.dataTransferModal.generalHeadline}</h3>
           <div
             class="flex-column gap content-margin-bottom"
             children:append={[
@@ -39,7 +39,7 @@ export function FileTransferModal(
             ]}
           ></div>
 
-          <h3>{translations.fileTransferModal.chatsHeadline}</h3>
+          <h3>{translations.dataTransferModal.chatsHeadline}</h3>
           <div
             class="flex-column gap"
             children:append={[
@@ -68,7 +68,7 @@ export function FileTransferModal(
   );
 }
 
-function FileOption(
+function OptionEntry(
   fileOption: FileTransferOption,
   fileTransferViewModel: FileTransferViewModel
 ) {

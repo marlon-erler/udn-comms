@@ -124,7 +124,7 @@ export function HomePage(
       >
         <span class="icon">sync_alt</span>
         <div>
-          <span>{translations.homePage.transferFilesButton}</span>
+          <span>{translations.homePage.transferDataButton}</span>
         </div>
       </button>
 

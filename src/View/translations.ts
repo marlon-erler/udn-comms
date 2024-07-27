@@ -56,7 +56,7 @@ const englishTranslations = {
 
     manageStorageButton: "Manage storage",
 
-    transferFilesButton: "Transfer Files",
+    transferDataButton: "Transfer Data",
 
     scrollToChatButton: "Chats",
 
@@ -78,9 +78,9 @@ const englishTranslations = {
     connectButtonAudioLabel: "connect",
   },
 
-  fileTransferModal: {
-    transferFilesHeadline: "Transfer Files",
-    selectionDescription: "Select the files that you want to transfer.",
+  dataTransferModal: {
+    transferDataHeadline: "Transfer Data",
+    selectionDescription: "Select the data that you want to transfer.",
 
     ///
 

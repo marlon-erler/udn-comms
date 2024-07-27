@@ -28,11 +28,11 @@ export default class FileTransferViewModel {
 
     this.generalFileOptions.add(
       {
-        label: translations.fileTransferModal.connectionData,
+        label: translations.dataTransferModal.connectionData,
         path: StorageModel.getPath(StorageModelSubPath.ConnectionModel, []),
       },
       {
-        label: translations.fileTransferModal.settingsData,
+        label: translations.dataTransferModal.settingsData,
         path: StorageModel.getPath(StorageModelSubPath.SettingsModel, []),
       }
     );
@@ -69,4 +69,17 @@ export default class FileTransferViewModel {
 export interface FileTransferOption {
   label: string;
   path: string[];
+}
+
+export enum FileTransferModals {
+  DirectionSelection,
+
+  // sending
+  FileSelection,
+  TransferDataDisplay,
+  TransferDisplay,
+
+  // receiving
+  TransferDataInput,
+  ReceptionDisplay
 }
