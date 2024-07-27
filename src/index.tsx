@@ -31,6 +31,8 @@ const chatListModel = new ChatListModel(
 );
 const fileTransferModel = new FileTransferModel(storageModel, connectionModel);
 
+console.log(fileTransferModel.generateTransferData());
+
 // upgrade
 new v1Upgrader(settingsModel, connectionModel, chatListModel);
 

@@ -4,6 +4,13 @@ export interface Stringifiable {
   toString(): string;
 }
 
+// crypto
+export function generateRandomToken(length: number): string {
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return array.join("");
+}
+
 // date
 export function createTimestamp(): string {
   return new Date().toISOString();

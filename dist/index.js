@@ -314,6 +314,11 @@
   }
 
   // src/Model/Utility/utility.ts
+  function generateRandomToken(length) {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return array.join("");
+  }
   function createTimestamp() {
     return (/* @__PURE__ */ new Date()).toISOString();
   }
@@ -4411,6 +4416,24 @@
     taskStatusSuggestions = new ListState();
   };
 
+  // src/Model/Global/fileTransferModel.ts
+  var FileTransferModel = class {
+    storageModel;
+    connectionModel;
+    // methods
+    generateTransferData = () => {
+      return {
+        channel: generateRandomToken(2),
+        key: generateRandomToken(3)
+      };
+    };
+    // init
+    constructor(storageModel2, connectionModel2) {
+      this.storageModel = storageModel2;
+      this.connectionModel = connectionModel2;
+    }
+  };
+
   // src/View/Components/chatEntry.tsx
   function ChatEntry(chatViewModel) {
     const view = /* @__PURE__ */ createElement(
@@ -4975,6 +4998,8 @@
     settingsModel,
     connectionModel
   );
+  var fileTransferModel = new FileTransferModel(storageModel, connectionModel);
+  console.log(fileTransferModel.generateTransferData());
   new v1Upgrader(settingsModel, connectionModel, chatListModel);
   var coreVieWModel = new CoreViewModel();
   var storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
