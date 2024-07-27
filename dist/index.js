@@ -4448,6 +4448,8 @@
     generalFileOptions = new ListState();
     chatFileOptions = new ListState();
     selectedPaths = new ListState();
+    transferChannel = new State("");
+    transferKey = new State("");
     // guards
     hasNoPathsSelected = createProxyState(
       [this.selectedPaths],
@@ -4475,13 +4477,22 @@
         });
       }
     };
+    getTransferData = () => {
+      const transferData = this.fileTransferModel.generateTransferData();
+      this.transferChannel.value = transferData.channel;
+      this.transferKey.value = transferData.key;
+    };
     // view
     showDirectionSelectionModal = () => {
       this.presentedModal.value = 0 /* DirectionSelection */;
+      this.getOptions();
     };
     showFileSelectionModal = () => {
       this.presentedModal.value = 1 /* FileSelection */;
-      this.getOptions();
+    };
+    showTransferDataModal = () => {
+      this.presentedModal.value = 2 /* TransferDataDisplay */;
+      this.getTransferData();
     };
     hideModal = () => {
       this.presentedModal.value = void 0;
@@ -4495,7 +4506,7 @@
 
   // src/View/Modals/dataTransferModal.tsx
   function DataTransferModalWrapper(fileTransferViewModel2) {
-    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2));
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2));
   }
   function DirectionSelectionModal(fileTransferViewModel2) {
     const isPresented = createProxyState(
@@ -4519,6 +4530,9 @@
     };
     function OptionEntry(fileOption, fileTransferViewModel3) {
       const isSelected = new State(false);
+      if (fileTransferViewModel3.selectedPaths.value.has(fileOption.path)) {
+        isSelected.value = true;
+      }
       isSelected.subscribeSilent((isSelected2) => {
         if (isSelected2 == true) {
           fileTransferViewModel3.selectedPaths.add(fileOption.path);
@@ -4564,12 +4578,31 @@
       "button",
       {
         class: "primary flex",
-        "on:click": fileTransferViewModel2.hideModal,
+        "on:click": fileTransferViewModel2.showTransferDataModal,
         "toggle:disabled": fileTransferViewModel2.hasNoPathsSelected
       },
       translations.general.continueButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
     ))));
+  }
+  function TransferDataDisplayModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 2 /* TransferDataDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
+      "b",
+      {
+        "subscribe:innerText": fileTransferViewModel2.transferChannel
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferKeyHeadline), /* @__PURE__ */ createElement("b", { "subscribe:innerText": fileTransferViewModel2.transferKey }))))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
+        "on:click": fileTransferViewModel2.showFileSelectionModal
+      },
+      translations.general.backButton
+    ), /* @__PURE__ */ createElement("button", { class: "primary flex" }, translations.general.continueButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
   }
 
   // src/Model/Global/fileTransferModel.ts
@@ -4580,10 +4613,12 @@
     transferData;
     // general
     generateTransferData = () => {
-      return {
+      const transferData = {
         channel: generateRandomToken(2),
         key: generateRandomToken(3)
       };
+      this.transferData = transferData;
+      return transferData;
     };
     prepareToReceive = (transferData) => {
       this.connectionModel.addChannel(transferData.channel);
@@ -4601,7 +4636,10 @@
         this.transferData.key
       );
       const parsed = parse(decrypted);
-      const isFileData = checkMatchesObjectStructure(parsed, FileDataReference);
+      const isFileData = checkMatchesObjectStructure(
+        parsed,
+        FileDataReference
+      );
       if (isFileData == false) return;
       const fileData = parsed;
       this.storageModel.write(fileData.path, fileData.body);

@@ -17,10 +17,12 @@ export default class FileTransferModel {
 
   // general
   generateTransferData = (): TransferData => {
-    return {
+    const transferData: TransferData = {
       channel: generateRandomToken(2),
       key: generateRandomToken(3),
     };
+    this.transferData = transferData;
+    return transferData;
   };
 
   prepareToReceive = (transferData: TransferData) => {
@@ -41,11 +43,14 @@ export default class FileTransferModel {
       encryptedFileData,
       this.transferData.key
     );
-    
+
     const parsed: any = parse(decrypted);
-    const isFileData: boolean = checkMatchesObjectStructure(parsed, FileDataReference);
+    const isFileData: boolean = checkMatchesObjectStructure(
+      parsed,
+      FileDataReference
+    );
     if (isFileData == false) return;
-    
+
     const fileData: FileData = parsed;
     this.storageModel.write(fileData.path, fileData.body);
   };

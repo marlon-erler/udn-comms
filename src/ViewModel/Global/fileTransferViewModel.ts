@@ -1,12 +1,14 @@
 import * as React from "bloatless-react";
 
+import FileTransferModel, {
+  TransferData,
+} from "../../Model/Global/fileTransferModel";
 import StorageModel, {
   StorageModelSubPath,
 } from "../../Model/Global/storageModel";
 
 import ChatListModel from "../../Model/Chat/chatListModel";
 import ChatModel from "../../Model/Chat/chatModel";
-import FileTransferModel from "../../Model/Global/fileTransferModel";
 import { translations } from "../../View/translations";
 
 export default class FileTransferViewModel {
@@ -21,6 +23,9 @@ export default class FileTransferViewModel {
     new React.ListState();
   chatFileOptions: React.ListState<FileTransferOption> = new React.ListState();
   selectedPaths: React.ListState<string[]> = new React.ListState();
+
+  transferChannel: React.State<string> = new React.State("");
+  transferKey: React.State<string> = new React.State("");
 
   // guards
   hasNoPathsSelected: React.State<boolean> = React.createProxyState(
@@ -53,14 +58,26 @@ export default class FileTransferViewModel {
     }
   };
 
+  getTransferData = (): void => {
+    const transferData: TransferData =
+      this.fileTransferModel.generateTransferData();
+    this.transferChannel.value = transferData.channel;
+    this.transferKey.value = transferData.key;
+  };
+
   // view
   showDirectionSelectionModal = (): void => {
     this.presentedModal.value = FileTransferModal.DirectionSelection;
+    this.getOptions();
   };
 
   showFileSelectionModal = (): void => {
     this.presentedModal.value = FileTransferModal.FileSelection;
-    this.getOptions();
+  };
+
+  showTransferDataModal = (): void => {
+    this.presentedModal.value = FileTransferModal.TransferDataDisplay;
+    this.getTransferData();
   };
 
   hideModal = (): void => {

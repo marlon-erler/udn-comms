@@ -15,6 +15,7 @@ export function DataTransferModalWrapper(
     <div>
       {DirectionSelectionModal(fileTransferViewModel)}
       {FileSelectionModal(fileTransferViewModel)}
+      {TransferDataDisplayModal(fileTransferViewModel)}
     </div>
   );
 }
@@ -75,6 +76,9 @@ function FileSelectionModal(fileTransferViewModel: FileTransferViewModel) {
     fileTransferViewModel: FileTransferViewModel
   ) {
     const isSelected = new React.State(false);
+    if (fileTransferViewModel.selectedPaths.value.has(fileOption.path)) {
+      isSelected.value = true;
+    }
     isSelected.subscribeSilent((isSelected) => {
       if (isSelected == true) {
         fileTransferViewModel.selectedPaths.add(fileOption.path);
@@ -144,9 +148,65 @@ function FileSelectionModal(fileTransferViewModel: FileTransferViewModel) {
           </button>
           <button
             class="primary flex"
-            on:click={fileTransferViewModel.hideModal}
+            on:click={fileTransferViewModel.showTransferDataModal}
             toggle:disabled={fileTransferViewModel.hasNoPathsSelected}
           >
+            {translations.general.continueButton}
+            <span class="icon">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransferDataDisplayModal(
+  fileTransferViewModel: FileTransferViewModel
+) {
+  const isPresented = React.createProxyState(
+    [fileTransferViewModel.presentedModal],
+    () =>
+      fileTransferViewModel.presentedModal.value ==
+      FileTransferModal.TransferDataDisplay
+  );
+
+  return (
+    <div class="modal" toggle:open={isPresented}>
+      <div>
+        <main>
+          <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
+
+          <div class="flex-column gap content-margin-bottom">
+            <div class="tile">
+              <span class="icon">forum</span>
+              <div>
+                <span class="secondary">
+                  {translations.dataTransferModal.transferChannelHeadline}
+                </span>
+                <b
+                  subscribe:innerText={fileTransferViewModel.transferChannel}
+                ></b>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="icon">key</span>
+              <div>
+                <span class="secondary">
+                  {translations.dataTransferModal.transferKeyHeadline}
+                </span>
+                <b subscribe:innerText={fileTransferViewModel.transferKey}></b>
+              </div>
+            </div>
+          </div>
+        </main>
+        <div class="flex-row width-100">
+          <button
+            class="flex"
+            on:click={fileTransferViewModel.showFileSelectionModal}
+          >
+            {translations.general.backButton}
+          </button>
+          <button class="primary flex">
             {translations.general.continueButton}
             <span class="icon">arrow_forward</span>
           </button>
