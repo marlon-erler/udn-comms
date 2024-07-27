@@ -39,7 +39,6 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   searchViewModel: SearchViewModel<TaskViewModel>;
   filteredTaskViewModels: React.ListState<TaskViewModel> =
     new React.ListState();
-  searchSuggestions: React.ListState<string> = new React.ListState();
 
   // paths
   getBasePath = (): string[] => {
@@ -116,8 +115,8 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
       searchTerm,
     ];
     this.storageModel.write(suggestionPath, "");
-    if (!this.searchSuggestions.value.has(searchTerm)) {
-      this.searchSuggestions.add(searchTerm);
+    if (!this.coreViewModel.boardSearchSuggestions.value.has(searchTerm)) {
+      this.coreViewModel.boardSearchSuggestions.add(searchTerm);
     }
 
     const lastSearchPath: string[] = this.getLastSearchPath();
@@ -214,7 +213,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   loadSearchSuggestions = (): void => {
     const dirPath: string[] = this.getPreviousSearchesPath();
     const searches: string[] = this.storageModel.list(dirPath);
-    this.searchSuggestions.add(...searches);
+    this.coreViewModel.boardSearchSuggestions.add(...searches);
 
     const lastSearchPath: string[] = this.getLastSearchPath();
     const lastSearch: string | null = this.storageModel.read(lastSearchPath);
@@ -278,7 +277,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
       this.taskViewModels,
       this.filteredTaskViewModels,
       TaskViewModel.getStringsForFilter,
-      this.searchSuggestions
+      this.coreViewModel.boardSearchSuggestions
     );
     this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
       this.handleNewSearch(newQuery);

@@ -2104,7 +2104,7 @@
         this.taskViewModels,
         this.filteredTaskViewModels,
         TaskViewModel.getStringsForFilter,
-        this.searchSuggestions
+        this.coreViewModel.boardSearchSuggestions
       );
       this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
         this.handleNewSearch(newQuery);
@@ -2127,7 +2127,6 @@
     isPresentingFilterModal = new State(false);
     searchViewModel;
     filteredTaskViewModels = new ListState();
-    searchSuggestions = new ListState();
     // paths
     getBasePath = () => {
       return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
@@ -2189,8 +2188,8 @@
         searchTerm
       ];
       this.storageModel.write(suggestionPath, "");
-      if (!this.searchSuggestions.value.has(searchTerm)) {
-        this.searchSuggestions.add(searchTerm);
+      if (!this.coreViewModel.boardSearchSuggestions.value.has(searchTerm)) {
+        this.coreViewModel.boardSearchSuggestions.add(searchTerm);
       }
       const lastSearchPath = this.getLastSearchPath();
       this.storageModel.write(lastSearchPath, searchTerm);
@@ -2267,7 +2266,7 @@
     loadSearchSuggestions = () => {
       const dirPath = this.getPreviousSearchesPath();
       const searches = this.storageModel.list(dirPath);
-      this.searchSuggestions.add(...searches);
+      this.coreViewModel.boardSearchSuggestions.add(...searches);
       const lastSearchPath = this.getLastSearchPath();
       const lastSearch = this.storageModel.read(lastSearchPath);
       if (lastSearch) {
@@ -4363,7 +4362,10 @@
 
   // src/ViewModel/Global/coreViewModel.ts
   var CoreViewModel = class {
+    // drag&drop
     draggedObject = new State(void 0);
+    // suggestions
+    boardSearchSuggestions = new ListState();
   };
 
   // src/View/Components/chatEntry.tsx
