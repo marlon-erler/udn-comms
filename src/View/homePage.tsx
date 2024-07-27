@@ -120,7 +120,7 @@ export function HomePage(
 
       <button
         class="tile flex-no"
-        on:click={fileTransferViewModel.showTransferModal}
+        on:click={fileTransferViewModel.showDirectionSelectionModal}
       >
         <span class="icon">sync_alt</span>
         <div>

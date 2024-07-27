@@ -2602,6 +2602,7 @@
       abortButton: "Abort",
       cancelButton: "Cancel",
       closeButton: "Close",
+      backButton: "Back",
       continueButton: "Continue",
       confirmButton: "Confirm",
       saveButton: "Save",
@@ -4438,66 +4439,137 @@
     taskStatusSuggestions = new ListState();
   };
 
+  // src/ViewModel/Global/fileTransferViewModel.ts
+  var FileTransferViewModel = class {
+    fileTransferModel;
+    chatListModel;
+    // state
+    presentedModal = new State(void 0);
+    generalFileOptions = new ListState();
+    chatFileOptions = new ListState();
+    selectedPaths = new ListState();
+    // guards
+    hasNoPathsSelected = createProxyState(
+      [this.selectedPaths],
+      () => this.selectedPaths.value.size == 0
+    );
+    // methods
+    getOptions = () => {
+      this.generalFileOptions.clear();
+      this.chatFileOptions.clear();
+      this.generalFileOptions.add(
+        {
+          label: translations.dataTransferModal.connectionData,
+          path: StorageModel.getPath("connection" /* ConnectionModel */, [])
+        },
+        {
+          label: translations.dataTransferModal.settingsData,
+          path: StorageModel.getPath("settings" /* SettingsModel */, [])
+        }
+      );
+      const chatModels = this.chatListModel.chatModels;
+      for (const chatModel of chatModels) {
+        this.chatFileOptions.add({
+          label: chatModel.info.primaryChannel,
+          path: chatModel.getBasePath()
+        });
+      }
+    };
+    // view
+    showDirectionSelectionModal = () => {
+      this.presentedModal.value = 0 /* DirectionSelection */;
+    };
+    showFileSelectionModal = () => {
+      this.presentedModal.value = 1 /* FileSelection */;
+      this.getOptions();
+    };
+    hideModal = () => {
+      this.presentedModal.value = void 0;
+    };
+    // init
+    constructor(fileTransferModel2, chatListModel2) {
+      this.fileTransferModel = fileTransferModel2;
+      this.chatListModel = chatListModel2;
+    }
+  };
+
   // src/View/Modals/dataTransferModal.tsx
-  function DataTransferModal(fileTransferViewModel2) {
+  function DataTransferModalWrapper(fileTransferViewModel2) {
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2));
+  }
+  function DirectionSelectionModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 0 /* DirectionSelection */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile",
+        "on:click": fileTransferViewModel2.showFileSelectionModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "upload"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.fromThisDeviceButton)),
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ), /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "download"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+  function FileSelectionModal(fileTransferViewModel2) {
     const OptionConverter = (fileOption) => {
       return OptionEntry(fileOption, fileTransferViewModel2);
     };
-    return /* @__PURE__ */ createElement(
+    function OptionEntry(fileOption, fileTransferViewModel3) {
+      const isSelected = new State(false);
+      isSelected.subscribeSilent((isSelected2) => {
+        if (isSelected2 == true) {
+          fileTransferViewModel3.selectedPaths.add(fileOption.path);
+        } else {
+          fileTransferViewModel3.selectedPaths.remove(fileOption.path);
+        }
+      });
+      function toggle() {
+        isSelected.value = !isSelected.value;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "toggle:selected": isSelected, "on:click": toggle }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
+    }
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 1 /* FileSelection */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.generalHeadline), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "modal",
-        "toggle:open": fileTransferViewModel2.isShowingTransferModal
-      },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.generalHeadline), /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap content-margin-bottom",
-          "children:append": [
-            fileTransferViewModel2.generalFileOptions,
-            OptionConverter
-          ]
-        }
-      ), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap",
-          "children:append": [
-            fileTransferViewModel2.chatFileOptions,
-            OptionConverter
-          ]
-        }
-      )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "flex",
-          "on:click": fileTransferViewModel2.hideTransferModal
-        },
-        translations.general.cancelButton
-      ), /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "primary flex",
-          "on:click": fileTransferViewModel2.hideTransferModal
-        },
-        translations.general.continueButton,
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-      )))
-    );
-  }
-  function OptionEntry(fileOption, fileTransferViewModel2) {
-    const isSelected = new State(false);
-    isSelected.subscribeSilent((isSelected2) => {
-      if (isSelected2 == true) {
-        fileTransferViewModel2.selectedPaths.add(fileOption.path);
-      } else {
-        fileTransferViewModel2.selectedPaths.remove(fileOption.path);
+        class: "flex-column gap content-margin-bottom",
+        "children:append": [
+          fileTransferViewModel2.generalFileOptions,
+          OptionConverter
+        ]
       }
-    });
-    function toggle() {
-      isSelected.value = !isSelected.value;
-    }
-    return /* @__PURE__ */ createElement("button", { class: "tile", "toggle:selected": isSelected, "on:click": toggle }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
+    ), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap",
+        "children:append": [
+          fileTransferViewModel2.chatFileOptions,
+          OptionConverter
+        ]
+      }
+    )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
+      },
+      translations.general.backButton
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.hideModal,
+        "toggle:disabled": fileTransferViewModel2.hasNoPathsSelected
+      },
+      translations.general.continueButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
   }
 
   // src/Model/Global/fileTransferModel.ts
@@ -4570,52 +4642,6 @@
   var FileDataReference = {
     path: [""],
     body: ""
-  };
-
-  // src/ViewModel/Global/fileTransferViewModel.ts
-  var FileTransferViewModel = class {
-    fileTransferModel;
-    chatListModel;
-    // state
-    isShowingTransferModal = new State(false);
-    generalFileOptions = new ListState();
-    chatFileOptions = new ListState();
-    selectedPaths = new ListState();
-    // methods
-    getOptions = () => {
-      this.generalFileOptions.clear();
-      this.chatFileOptions.clear();
-      this.generalFileOptions.add(
-        {
-          label: translations.dataTransferModal.connectionData,
-          path: StorageModel.getPath("connection" /* ConnectionModel */, [])
-        },
-        {
-          label: translations.dataTransferModal.settingsData,
-          path: StorageModel.getPath("settings" /* SettingsModel */, [])
-        }
-      );
-      const chatModels = this.chatListModel.chatModels;
-      for (const chatModel of chatModels) {
-        this.chatFileOptions.add({
-          label: chatModel.info.primaryChannel,
-          path: chatModel.getBasePath()
-        });
-      }
-    };
-    // view
-    showTransferModal = () => {
-      this.isShowingTransferModal.value = true;
-      this.getOptions();
-    };
-    hideTransferModal = () => {
-      this.isShowingTransferModal.value = false;
-    };
-    // init
-    constructor(fileTransferModel2, chatListModel2) {
-      this.fileTransferModel = fileTransferModel2;
-      this.chatListModel = chatListModel2;
-    }
   };
 
   // src/View/Components/chatEntry.tsx
@@ -4726,7 +4752,7 @@
       "button",
       {
         class: "tile flex-no",
-        "on:click": fileTransferViewModel2.showTransferModal
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "sync_alt"),
       /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.transferDataButton))
@@ -5228,7 +5254,7 @@
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
-    DataTransferModal(fileTransferViewModel),
+    DataTransferModalWrapper(fileTransferViewModel),
     StorageModal(storageViewModel)
   );
 })();

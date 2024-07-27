@@ -14,12 +14,19 @@ export default class FileTransferViewModel {
   chatListModel: ChatListModel;
 
   // state
-  isShowingTransferModal: React.State<boolean> = new React.State(false);
+  presentedModal: React.State<FileTransferModal | undefined> =
+    new React.State<any>(undefined);
 
   generalFileOptions: React.ListState<FileTransferOption> =
     new React.ListState();
   chatFileOptions: React.ListState<FileTransferOption> = new React.ListState();
   selectedPaths: React.ListState<string[]> = new React.ListState();
+
+  // guards
+  hasNoPathsSelected: React.State<boolean> = React.createProxyState(
+    [this.selectedPaths],
+    () => this.selectedPaths.value.size == 0
+  );
 
   // methods
   getOptions = (): void => {
@@ -47,13 +54,17 @@ export default class FileTransferViewModel {
   };
 
   // view
-  showTransferModal = (): void => {
-    this.isShowingTransferModal.value = true;
+  showDirectionSelectionModal = (): void => {
+    this.presentedModal.value = FileTransferModal.DirectionSelection;
+  };
+
+  showFileSelectionModal = (): void => {
+    this.presentedModal.value = FileTransferModal.FileSelection;
     this.getOptions();
   };
 
-  hideTransferModal = (): void => {
-    this.isShowingTransferModal.value = false;
+  hideModal = (): void => {
+    this.presentedModal.value = undefined;
   };
 
   // init
@@ -71,7 +82,7 @@ export interface FileTransferOption {
   path: string[];
 }
 
-export enum FileTransferModals {
+export enum FileTransferModal {
   DirectionSelection,
 
   // sending
@@ -81,5 +92,5 @@ export enum FileTransferModals {
 
   // receiving
   TransferDataInput,
-  ReceptionDisplay
+  ReceptionDisplay,
 }

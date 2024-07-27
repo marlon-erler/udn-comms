@@ -10,6 +10,7 @@ const englishTranslations = {
     abortButton: "Abort",
     cancelButton: "Cancel",
     closeButton: "Close",
+    backButton: "Back",
 
     continueButton: "Continue",
     confirmButton: "Confirm",
