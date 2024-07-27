@@ -50,29 +50,6 @@ export default class StorageModel {
     }
   };
 
-  removeRecursively = (pathComponents: string[]): void => {
-    loop_over_files: for (const key of Object.keys(localStorage)) {
-      // get path of current entity
-      const pathComponentsOfCurrentEntity: string[] =
-        StorageModel.stringToPathComponents(key);
-
-      // exit if entity does not match
-      loop_over_path_components: for (
-        let i = 0;
-        i < pathComponents.length;
-        i++
-      ) {
-        if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
-        if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
-          continue loop_over_files;
-      }
-
-      // remove
-      this.remove(pathComponentsOfCurrentEntity, false);
-    }
-    this.initializeTree();
-  };
-
   rename = (
     sourcePathComponents: string[],
     destinationPathComponents: string[],
@@ -90,43 +67,52 @@ export default class StorageModel {
     return true;
   };
 
-  renameRecursively = (
-    sourcePathComponents: string[],
-    destinationPathComponents: string[]
-  ): void => {
+  // recursion
+  recurse = (pathComponents: string[], fn: (path: string[]) => void): void => {
     loop_over_files: for (const key of Object.keys(localStorage)) {
       // get path of current entity
-      const originalPathComponentsOfCurrentEntity: string[] =
+      const pathComponentsOfCurrentEntity: string[] =
         StorageModel.stringToPathComponents(key);
 
       // exit if entity does not match
       loop_over_path_components: for (
         let i = 0;
-        i < sourcePathComponents.length;
+        i < pathComponents.length;
         i++
       ) {
-        if (!originalPathComponentsOfCurrentEntity[i]) continue loop_over_files;
-        if (originalPathComponentsOfCurrentEntity[i] != sourcePathComponents[i])
+        if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
+        if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
           continue loop_over_files;
       }
 
+      // execute
+      fn(pathComponentsOfCurrentEntity);
+    }
+    this.initializeTree();
+  };
+
+  removeRecursively = (pathComponents: string[]): void => {
+    this.recurse(pathComponents, (path: string[]) => this.remove(path, false));
+    this.initializeTree();
+  };
+
+  renameRecursively = (
+    sourcePathComponents: string[],
+    destinationPathComponents: string[]
+  ): void => {
+    this.recurse(sourcePathComponents, (path: string[]) => {
       // assemble destinationPath
-      const relativePathOfCurrentEntity =
-        originalPathComponentsOfCurrentEntity.slice(
-          sourcePathComponents.length
-        );
+      const relativePathOfCurrentEntity = path.slice(
+        sourcePathComponents.length
+      );
       const destinationPathComponentsOfCurrentEntity = [
         ...destinationPathComponents,
         ...relativePathOfCurrentEntity,
       ];
 
       // rename
-      this.rename(
-        originalPathComponentsOfCurrentEntity,
-        destinationPathComponentsOfCurrentEntity,
-        false
-      );
-    }
+      this.rename(path, destinationPathComponentsOfCurrentEntity, false);
+    });
     this.initializeTree();
   };
 
@@ -221,7 +207,7 @@ export type StorageEntry = { [key: string]: StorageEntry };
 // locations
 export enum StorageModelSubPath {
   Chat = "chat",
-  
+
   ConnectionModel = "connection",
   SettingsModel = "settings",
 }

@@ -500,18 +500,6 @@
         this.initializeTree();
       }
     };
-    removeRecursively = (pathComponents) => {
-      loop_over_files: for (const key of Object.keys(localStorage)) {
-        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
-        loop_over_path_components: for (let i = 0; i < pathComponents.length; i++) {
-          if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
-          if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
-            continue loop_over_files;
-        }
-        this.remove(pathComponentsOfCurrentEntity, false);
-      }
-      this.initializeTree();
-    };
     rename = (sourcePathComponents, destinationPathComponents, shouldInitialize = true) => {
       const content = this.read(sourcePathComponents);
       if (content == null) return false;
@@ -522,27 +510,34 @@
       }
       return true;
     };
-    renameRecursively = (sourcePathComponents, destinationPathComponents) => {
+    // recursion
+    recurse = (pathComponents, fn) => {
       loop_over_files: for (const key of Object.keys(localStorage)) {
-        const originalPathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
-        loop_over_path_components: for (let i = 0; i < sourcePathComponents.length; i++) {
-          if (!originalPathComponentsOfCurrentEntity[i]) continue loop_over_files;
-          if (originalPathComponentsOfCurrentEntity[i] != sourcePathComponents[i])
+        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
+        loop_over_path_components: for (let i = 0; i < pathComponents.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
+          if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
             continue loop_over_files;
         }
-        const relativePathOfCurrentEntity = originalPathComponentsOfCurrentEntity.slice(
+        fn(pathComponentsOfCurrentEntity);
+      }
+      this.initializeTree();
+    };
+    removeRecursively = (pathComponents) => {
+      this.recurse(pathComponents, (path) => this.remove(path, false));
+      this.initializeTree();
+    };
+    renameRecursively = (sourcePathComponents, destinationPathComponents) => {
+      this.recurse(sourcePathComponents, (path) => {
+        const relativePathOfCurrentEntity = path.slice(
           sourcePathComponents.length
         );
         const destinationPathComponentsOfCurrentEntity = [
           ...destinationPathComponents,
           ...relativePathOfCurrentEntity
         ];
-        this.rename(
-          originalPathComponentsOfCurrentEntity,
-          destinationPathComponentsOfCurrentEntity,
-          false
-        );
-      }
+        this.rename(path, destinationPathComponentsOfCurrentEntity, false);
+      });
       this.initializeTree();
     };
     // stringifiable
@@ -3689,20 +3684,20 @@
     function close() {
       isOpen.value = false;
     }
-    const id = v4_default();
+    const suggestionId = v4_default();
     return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isOpen }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, headline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
         placeholder: translations.general.searchLabel,
         "bind:value": searchViewModel.searchInput,
         "on:enter": searchViewModel.applySearch,
-        list: id
+        list: suggestionId
       }
     ), /* @__PURE__ */ createElement(
       "datalist",
       {
         hidden: true,
-        id,
+        id: suggestionId,
         "children:append": [searchViewModel.suggestions, StringToOption]
       }
     ), /* @__PURE__ */ createElement(
