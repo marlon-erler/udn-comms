@@ -10,6 +10,12 @@ import { translations } from "../translations";
 export function FileTransferModal(
   fileTransferViewModel: FileTransferViewModel
 ) {
+  const OptionConverter: React.StateItemConverter<FileTransferOption> = (
+    fileOption: FileTransferOption
+  ) => {
+    return FileOption(fileOption, fileTransferViewModel);
+  };
+
   return (
     <div
       class="modal"
@@ -29,7 +35,7 @@ export function FileTransferModal(
             class="flex-column gap content-margin-bottom"
             children:append={[
               fileTransferViewModel.generalFileOptions,
-              FileOption,
+              OptionConverter,
             ]}
           ></div>
 
@@ -38,7 +44,7 @@ export function FileTransferModal(
             class="flex-column gap"
             children:append={[
               fileTransferViewModel.chatFileOptions,
-              FileOption,
+              OptionConverter,
             ]}
           ></div>
         </main>
@@ -62,9 +68,24 @@ export function FileTransferModal(
   );
 }
 
-function FileOption(fileOption: FileTransferOption) {
+function FileOption(
+  fileOption: FileTransferOption,
+  fileTransferViewModel: FileTransferViewModel
+) {
+  const isSelected = new React.State(false);
+  isSelected.subscribeSilent((isSelected) => {
+    if (isSelected == true) {
+      fileTransferViewModel.selectedPaths.add(fileOption.path);
+    } else {
+      fileTransferViewModel.selectedPaths.remove(fileOption.path);
+    }
+  });
+  function toggle() {
+    isSelected.value = !isSelected.value;
+  }
+
   return (
-    <button class="tile">
+    <button class="tile" toggle:selected={isSelected} on:click={toggle}>
       <div>
         <b class="ellipsis">{fileOption.label}</b>
         <span class="secondary ellipsis">

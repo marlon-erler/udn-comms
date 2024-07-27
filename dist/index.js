@@ -4440,6 +4440,9 @@
 
   // src/View/Modals/fileTransferModal.tsx
   function FileTransferModal(fileTransferViewModel2) {
+    const OptionConverter = (fileOption) => {
+      return FileOption(fileOption, fileTransferViewModel2);
+    };
     return /* @__PURE__ */ createElement(
       "div",
       {
@@ -4452,7 +4455,7 @@
           class: "flex-column gap content-margin-bottom",
           "children:append": [
             fileTransferViewModel2.generalFileOptions,
-            FileOption
+            OptionConverter
           ]
         }
       ), /* @__PURE__ */ createElement("h3", null, translations.fileTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
@@ -4461,7 +4464,7 @@
           class: "flex-column gap",
           "children:append": [
             fileTransferViewModel2.chatFileOptions,
-            FileOption
+            OptionConverter
           ]
         }
       )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
@@ -4482,8 +4485,19 @@
       )))
     );
   }
-  function FileOption(fileOption) {
-    return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
+  function FileOption(fileOption, fileTransferViewModel2) {
+    const isSelected = new State(false);
+    isSelected.subscribeSilent((isSelected2) => {
+      if (isSelected2 == true) {
+        fileTransferViewModel2.selectedPaths.add(fileOption.path);
+      } else {
+        fileTransferViewModel2.selectedPaths.remove(fileOption.path);
+      }
+    });
+    function toggle() {
+      isSelected.value = !isSelected.value;
+    }
+    return /* @__PURE__ */ createElement("button", { class: "tile", "toggle:selected": isSelected, "on:click": toggle }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
   }
 
   // src/Model/Global/fileTransferModel.ts
@@ -4566,6 +4580,7 @@
     isShowingTransferModal = new State(false);
     generalFileOptions = new ListState();
     chatFileOptions = new ListState();
+    selectedPaths = new ListState();
     // methods
     getOptions = () => {
       this.generalFileOptions.clear();

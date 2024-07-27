@@ -19,6 +19,7 @@ export default class FileTransferViewModel {
   generalFileOptions: React.ListState<FileTransferOption> =
     new React.ListState();
   chatFileOptions: React.ListState<FileTransferOption> = new React.ListState();
+  selectedPaths: React.ListState<string[]> = new React.ListState();
 
   // methods
   getOptions = (): void => {
