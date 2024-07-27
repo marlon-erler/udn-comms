@@ -11,6 +11,7 @@ import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionModel from "./Model/Global/connectionModel";
 import ConnectionViewModel from "./ViewModel/Global/connectionViewModel";
 import CoreViewModel from "./ViewModel/Global/coreViewModel";
+import FileTransferModel from "./Model/Global/fileTransferModel";
 import { HomePage } from "./View/homePage";
 import SettingsModel from "./Model/Global/settingsModel";
 import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
@@ -28,6 +29,7 @@ const chatListModel = new ChatListModel(
   settingsModel,
   connectionModel
 );
+const fileTransferModel = new FileTransferModel(storageModel, connectionModel);
 
 // upgrade
 new v1Upgrader(settingsModel, connectionModel, chatListModel);
