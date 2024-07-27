@@ -8,8 +8,10 @@ const englishTranslations = {
     searchButtonAudioLabel: "search",
 
     abortButton: "Abort",
+    cancelButton: "Cancel",
     closeButton: "Close",
 
+    continueButton: "Continue",
     confirmButton: "Confirm",
     saveButton: "Save",
     setButton: "Set",
@@ -54,6 +56,8 @@ const englishTranslations = {
 
     manageStorageButton: "Manage storage",
 
+    transferFilesButton: "Transfer Files",
+
     scrollToChatButton: "Chats",
 
     ///
@@ -72,6 +76,32 @@ const englishTranslations = {
     ///
 
     connectButtonAudioLabel: "connect",
+  },
+
+  fileTransferModal: {
+    transferFilesHeadline: "Transfer Files",
+    selectionDescription: "Select the files that you want to transfer.",
+
+    ///
+
+    fromThisDeviceButton: "From this device",
+    toThisDeviceButton: "To this device",
+
+    ///
+
+    generalHeadline: "General",
+    
+    connectionData: "Connection Data",
+    settingsData: "Settings Data",
+
+    ///
+
+    chatsHeadline: "Chats",
+
+    ///
+
+    transferChannelHeadline: "Transfer Chanel",
+    transferKeyHeadline: "Transfer Encryption Key",
   },
 
   storage: {

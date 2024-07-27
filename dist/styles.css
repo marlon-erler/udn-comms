@@ -591,6 +591,10 @@ hr {
   margin-bottom: var(--content-margin);
 }
 
+.content-margin-bottom {
+  margin-bottom: var(--content-margin) !important;
+}
+
 label:not(.tile) {
   margin-bottom: var(--label-margin-bottom);
 }

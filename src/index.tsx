@@ -11,7 +11,9 @@ import { ConnectionModal } from "./View/Modals/connectionModal";
 import ConnectionModel from "./Model/Global/connectionModel";
 import ConnectionViewModel from "./ViewModel/Global/connectionViewModel";
 import CoreViewModel from "./ViewModel/Global/coreViewModel";
+import { FileTransferModal } from "./View/Modals/fileTransferModal";
 import FileTransferModel from "./Model/Global/fileTransferModel";
+import FileTransferViewModel from "./ViewModel/Global/fileTransferViewModel";
 import { HomePage } from "./View/homePage";
 import SettingsModel from "./Model/Global/settingsModel";
 import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
@@ -31,8 +33,6 @@ const chatListModel = new ChatListModel(
 );
 const fileTransferModel = new FileTransferModel(storageModel, connectionModel);
 
-console.log(fileTransferModel.generateTransferData());
-
 // upgrade
 new v1Upgrader(settingsModel, connectionModel, chatListModel);
 
@@ -50,6 +50,10 @@ const chatListViewModel = new ChatListViewModel(
   storageModel,
   chatListModel,
   settingsViewModel
+);
+const fileTransferViewModel = new FileTransferViewModel(
+  fileTransferModel,
+  chatListModel
 );
 
 // view
@@ -74,9 +78,11 @@ document
       storageViewModel,
       settingsViewModel,
       connectionViewModel,
+      fileTransferViewModel,
       chatListViewModel
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
+    FileTransferModal(fileTransferViewModel),
     StorageModal(storageViewModel)
   );

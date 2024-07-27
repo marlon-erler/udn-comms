@@ -2600,7 +2600,9 @@
       deleteItemButtonAudioLabel: "delete item",
       searchButtonAudioLabel: "search",
       abortButton: "Abort",
+      cancelButton: "Cancel",
       closeButton: "Close",
+      continueButton: "Continue",
       confirmButton: "Confirm",
       saveButton: "Save",
       setButton: "Set",
@@ -2635,6 +2637,7 @@
       setNameButtonAudioLabel: "set name",
       firstDayOfWeekLabel: "First day of week",
       manageStorageButton: "Manage storage",
+      transferFilesButton: "Transfer Files",
       scrollToChatButton: "Chats",
       ///
       backToOverviewAudioLabel: "go back to overview",
@@ -2647,6 +2650,22 @@
       connectionModalHeadline: "Manage Connections",
       ///
       connectButtonAudioLabel: "connect"
+    },
+    fileTransferModal: {
+      transferFilesHeadline: "Transfer Files",
+      selectionDescription: "Select the files that you want to transfer.",
+      ///
+      fromThisDeviceButton: "From this device",
+      toThisDeviceButton: "To this device",
+      ///
+      generalHeadline: "General",
+      connectionData: "Connection Data",
+      settingsData: "Settings Data",
+      ///
+      chatsHeadline: "Chats",
+      ///
+      transferChannelHeadline: "Transfer Chanel",
+      transferKeyHeadline: "Transfer Encryption Key"
     },
     storage: {
       noItemSelected: "No item selected",
@@ -4268,12 +4287,15 @@
     };
     tryToSendMessage = (chatMessage) => {
       const stringifiedBody = stringify(chatMessage);
-      const isSent = this.udn.sendMessage(
+      const isSent = this.sendPlainMessage(
         chatMessage.channel,
         stringifiedBody
       );
       if (isSent) this.messageSentHandlerManager.trigger(chatMessage);
       return isSent;
+    };
+    sendPlainMessage = (channel, body) => {
+      return this.udn.sendMessage(channel, body);
     };
     // storage
     getPreviousAddressPath = () => {
@@ -4416,21 +4438,168 @@
     taskStatusSuggestions = new ListState();
   };
 
+  // src/View/Modals/fileTransferModal.tsx
+  function FileTransferModal(fileTransferViewModel2) {
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "modal",
+        "toggle:open": fileTransferViewModel2.isShowingTransferModal
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.fileTransferModal.transferFilesHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.fileTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.fileTransferModal.generalHeadline), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap content-margin-bottom",
+          "children:append": [
+            fileTransferViewModel2.generalFileOptions,
+            FileOption
+          ]
+        }
+      ), /* @__PURE__ */ createElement("h3", null, translations.fileTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [
+            fileTransferViewModel2.chatFileOptions,
+            FileOption
+          ]
+        }
+      )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "flex",
+          "on:click": fileTransferViewModel2.hideTransferModal
+        },
+        translations.general.cancelButton
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "primary flex",
+          "on:click": fileTransferViewModel2.hideTransferModal
+        },
+        translations.general.continueButton,
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+      )))
+    );
+  }
+  function FileOption(fileOption) {
+    return /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
+  }
+
   // src/Model/Global/fileTransferModel.ts
   var FileTransferModel = class {
     storageModel;
     connectionModel;
-    // methods
+    // data
+    transferData;
+    // general
     generateTransferData = () => {
       return {
         channel: generateRandomToken(2),
         key: generateRandomToken(3)
       };
     };
+    prepareToReceive = (transferData) => {
+      this.connectionModel.addChannel(transferData.channel);
+      this.transferData = transferData;
+    };
+    // handlers
+    handleMessage = (data) => {
+      if (this.transferData == void 0) return;
+      if (data.messageChannel != this.transferData.channel) return;
+    };
+    handleFile = async (encryptedFileData) => {
+      if (this.transferData == void 0) return;
+      const decrypted = await decryptString(
+        encryptedFileData,
+        this.transferData.key
+      );
+      const parsed = parse(decrypted);
+      const isFileData = checkMatchesObjectStructure(parsed, FileDataReference);
+      if (isFileData == false) return;
+      const fileData = parsed;
+      this.storageModel.write(fileData.path, fileData.body);
+    };
+    // sending
+    sendFiles = (...directoryPaths) => {
+      for (const directoryPath of directoryPaths) {
+        this.storageModel.recurse(directoryPath, (filePath) => {
+          this.sendFile(filePath);
+        });
+      }
+    };
+    sendFile = async (filePath) => {
+      if (this.transferData == void 0) return;
+      const fileContent = this.storageModel.read(filePath);
+      if (fileContent == null) return;
+      const fileData = {
+        path: filePath,
+        body: fileContent
+      };
+      const stringifiedFileData = stringify(fileData);
+      const encryptedFileData = await encryptString(
+        fileContent,
+        stringifiedFileData
+      );
+      this.connectionModel.sendPlainMessage(
+        this.transferData.channel,
+        encryptedFileData
+      );
+    };
     // init
     constructor(storageModel2, connectionModel2) {
       this.storageModel = storageModel2;
       this.connectionModel = connectionModel2;
+      this.connectionModel.messageHandlerManager.addHandler(this.handleMessage);
+    }
+  };
+  var FileDataReference = {
+    path: [""],
+    body: ""
+  };
+
+  // src/ViewModel/Global/fileTransferViewModel.ts
+  var FileTransferViewModel = class {
+    fileTransferModel;
+    chatListModel;
+    // state
+    isShowingTransferModal = new State(false);
+    generalFileOptions = new ListState();
+    chatFileOptions = new ListState();
+    // methods
+    getOptions = () => {
+      this.generalFileOptions.clear();
+      this.chatFileOptions.clear();
+      this.generalFileOptions.add(
+        {
+          label: translations.fileTransferModal.connectionData,
+          path: StorageModel.getPath("connection" /* ConnectionModel */, [])
+        },
+        {
+          label: translations.fileTransferModal.settingsData,
+          path: StorageModel.getPath("settings" /* SettingsModel */, [])
+        }
+      );
+      const chatModels = this.chatListModel.chatModels;
+      for (const chatModel of chatModels) {
+        this.chatFileOptions.add({
+          label: chatModel.info.primaryChannel,
+          path: chatModel.getBasePath()
+        });
+      }
+    };
+    // view
+    showTransferModal = () => {
+      this.isShowingTransferModal.value = true;
+      this.getOptions();
+    };
+    hideTransferModal = () => {
+      this.isShowingTransferModal.value = false;
+    };
+    // init
+    constructor(fileTransferModel2, chatListModel2) {
+      this.fileTransferModel = fileTransferModel2;
+      this.chatListModel = chatListModel2;
     }
   };
 
@@ -4469,7 +4638,7 @@
   };
 
   // src/View/homePage.tsx
-  function HomePage(storageViewModel2, settingsViewModel2, connectionViewModel2, chatListViewModel2) {
+  function HomePage(storageViewModel2, settingsViewModel2, connectionViewModel2, fileTransferViewModel2, chatListViewModel2) {
     const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
@@ -4538,7 +4707,15 @@
         i.toString(),
         i.toString() == settingsViewModel2.firstDayOfWeekInput.value
       )
-    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile flex-no",
+        "on:click": fileTransferViewModel2.showTransferModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "sync_alt"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.transferFilesButton))
+    ), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
     const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
       "input",
       {
@@ -4999,7 +5176,6 @@
     connectionModel
   );
   var fileTransferModel = new FileTransferModel(storageModel, connectionModel);
-  console.log(fileTransferModel.generateTransferData());
   new v1Upgrader(settingsModel, connectionModel, chatListModel);
   var coreVieWModel = new CoreViewModel();
   var storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
@@ -5013,6 +5189,10 @@
     storageModel,
     chatListModel,
     settingsViewModel
+  );
+  var fileTransferViewModel = new FileTransferViewModel(
+    fileTransferModel,
+    chatListModel
   );
   chatListViewModel.selectedChat.subscribe(() => {
     document.body.toggleAttribute(
@@ -5028,10 +5208,12 @@
       storageViewModel,
       settingsViewModel,
       connectionViewModel,
+      fileTransferViewModel,
       chatListViewModel
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
+    FileTransferModal(fileTransferViewModel),
     StorageModal(storageViewModel)
   );
 })();

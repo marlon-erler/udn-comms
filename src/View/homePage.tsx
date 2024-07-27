@@ -7,6 +7,7 @@ import { Option, StringToOption } from "./Components/option";
 import ChatListViewModel from "../ViewModel/Chat/chatListViewModel";
 import { ChatViewModelToChatEntry } from "./Components/chatEntry";
 import ConnectionViewModel from "../ViewModel/Global/connectionViewModel";
+import FileTransferViewModel from "../ViewModel/Global/fileTransferViewModel";
 import SettingsViewModel from "../ViewModel/Global/settingsViewModel";
 import StorageViewModel from "../ViewModel/Global/storageViewModel";
 import { translations } from "./translations";
@@ -15,6 +16,7 @@ export function HomePage(
   storageViewModel: StorageViewModel,
   settingsViewModel: SettingsViewModel,
   connectionViewModel: ConnectionViewModel,
+  fileTransferViewModel: FileTransferViewModel,
   chatListViewModel: ChatListViewModel
 ) {
   // sections
@@ -115,6 +117,16 @@ export function HomePage(
       </label>
 
       <hr></hr>
+
+      <button
+        class="tile flex-no"
+        on:click={fileTransferViewModel.showTransferModal}
+      >
+        <span class="icon">sync_alt</span>
+        <div>
+          <span>{translations.homePage.transferFilesButton}</span>
+        </div>
+      </button>
 
       <button class="tile flex-no" on:click={storageViewModel.showStorageModal}>
         <span class="icon">hard_drive_2</span>
