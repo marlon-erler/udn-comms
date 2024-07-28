@@ -2931,7 +2931,7 @@
         hidden: true,
         id: statusSuggestionId,
         "children:append": [
-          taskViewModel.coreViewModel.taskCategorySuggestions,
+          taskViewModel.coreViewModel.taskStatusSuggestions,
           StringToOption
         ]
       }
