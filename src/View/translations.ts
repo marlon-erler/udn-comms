@@ -480,6 +480,10 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       },
 
       calendar: {
+        eventsBoard: "Ereignisse",
+
+        ///
+
         todayButtonAudioLabel: "gehe zu heute",
 
         previousMonthButtonAudioLabel: "vorheriger monat",
@@ -708,6 +712,10 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       },
 
       calendar: {
+        eventsBoard: "Eventos",
+
+        ///
+
         todayButtonAudioLabel: "ir a hoy",
 
         previousMonthButtonAudioLabel: "mes anterior",
