@@ -83,6 +83,6 @@ document
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
-    DataTransferModalWrapper(fileTransferViewModel),
+    DataTransferModalWrapper(connectionViewModel, fileTransferViewModel),
     StorageModal(storageViewModel)
   );

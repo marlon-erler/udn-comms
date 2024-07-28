@@ -2511,6 +2511,7 @@
       dataEntryDescription: "Enter this data on the other device.",
       dataEntryInputDescription: "Enter the data displayed on the other device.",
       readyToReceiveDescription: "Click 'send' on the other device.",
+      notConnectedError: "You are not connected to any server.",
       ///
       fromThisDeviceButton: "From this device",
       toThisDeviceButton: "To this device",
@@ -2695,6 +2696,7 @@
         dataEntryDescription: "Gib diese Informationen auf dem anderen Ger\xE4t ein.",
         dataEntryInputDescription: "Gib die auf dem anderen Ger\xE4t angezeigten Informationen ein.",
         readyToReceiveDescription: "Klicke auf dem anderen Ger\xE4t auf 'Senden'.",
+        notConnectedError: "Du bist mit keinem Server verbunden.",
         fromThisDeviceButton: "Von diesem Ger\xE4t",
         toThisDeviceButton: "An dieses Ger\xE4t",
         generalHeadline: "Allgemein",
@@ -2863,6 +2865,7 @@
         dataEntryDescription: "Introduce estos datos en el otro dispositivo.",
         dataEntryInputDescription: "Introduce los datos mostrados en el otro dispositivo.",
         readyToReceiveDescription: "Haz clic en 'enviar' en el otro dispositivo.",
+        notConnectedError: "No est\xE1s conectado a ning\xFAn servidor.",
         fromThisDeviceButton: "Desde este dispositivo",
         toThisDeviceButton: "A este dispositivo",
         generalHeadline: "General",
@@ -4985,33 +4988,45 @@
   };
 
   // src/View/Modals/dataTransferModal.tsx
-  function DataTransferModalWrapper(fileTransferViewModel2) {
-    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2), TransferDataInputModal(fileTransferViewModel2), DataReceptionModal(fileTransferViewModel2));
+  function DataTransferModalWrapper(connectionViewModel2, fileTransferViewModel2) {
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(connectionViewModel2, fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2), TransferDataInputModal(fileTransferViewModel2), DataReceptionModal(fileTransferViewModel2));
   }
-  function DirectionSelectionModal(fileTransferViewModel2) {
+  function DirectionSelectionModal(connectionViewModel2, fileTransferViewModel2) {
     const isPresented = createProxyState(
       [fileTransferViewModel2.presentedModal],
       () => fileTransferViewModel2.presentedModal.value == 0 /* DirectionSelection */
     );
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement(
-      "button",
+    const isDisconnected = createProxyState(
+      [connectionViewModel2.isConnected],
+      () => connectionViewModel2.isConnected.value == false
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("p", { class: "error", "toggle:hidden": connectionViewModel2.isConnected }, translations.dataTransferModal.notConnectedError), /* @__PURE__ */ createElement(
+      "div",
       {
-        class: "tile",
-        "on:click": fileTransferViewModel2.showFileSelectionModal
+        class: "flex-column gap content-margin-bottom",
+        "toggle:hidden": isDisconnected
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "upload"),
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.fromThisDeviceButton)),
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "tile",
-        "on:click": fileTransferViewModel2.showTransferDataInputModal
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "download"),
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)),
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    ))), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+      /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "tile",
+          "on:click": fileTransferViewModel2.showFileSelectionModal
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "upload"),
+        /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.fromThisDeviceButton)),
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+      ),
+      /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "tile",
+          "on:click": fileTransferViewModel2.showTransferDataInputModal
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "download"),
+        /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)),
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+      )
+    )), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
   function FileSelectionModal(fileTransferViewModel2) {
     const OptionConverter = (fileOption) => {
@@ -5910,7 +5925,7 @@
     ),
     ChatPageWrapper(chatListViewModel),
     ConnectionModal(connectionViewModel),
-    DataTransferModalWrapper(fileTransferViewModel),
+    DataTransferModalWrapper(connectionViewModel, fileTransferViewModel),
     StorageModal(storageViewModel)
   );
 })();

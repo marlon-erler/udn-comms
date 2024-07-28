@@ -88,6 +88,8 @@ const englishTranslations = {
     dataEntryInputDescription: "Enter the data displayed on the other device.",
     readyToReceiveDescription: "Click 'send' on the other device.",
 
+    notConnectedError: "You are not connected to any server.",
+
     ///
 
     fromThisDeviceButton: "From this device",
@@ -128,7 +130,7 @@ const englishTranslations = {
 
     deleteItem: "Delete item",
 
-    removeJunkButton: "Delete junk files"
+    removeJunkButton: "Delete junk files",
   },
 
   chatPage: {
@@ -242,7 +244,7 @@ const englishTranslations = {
       eventsBoard: "Events",
 
       ///
-      
+
       todayButtonAudioLabel: "go to today",
 
       previousMonthButtonAudioLabel: "previous month",
@@ -348,14 +350,14 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
 
     dataTransferModal: {
       transferDataHeadline: "Datenübertragung",
-      selectionDescription:
-        "Wähle die Daten aus, die du übertragen möchtest.",
+      selectionDescription: "Wähle die Daten aus, die du übertragen möchtest.",
       dataEntryDescription:
         "Gib diese Informationen auf dem anderen Gerät ein.",
       dataEntryInputDescription:
         "Gib die auf dem anderen Gerät angezeigten Informationen ein.",
-      readyToReceiveDescription:
-        "Klicke auf dem anderen Gerät auf 'Senden'.",
+      readyToReceiveDescription: "Klicke auf dem anderen Gerät auf 'Senden'.",
+
+      notConnectedError: "Du bist mit keinem Server verbunden.",
 
       fromThisDeviceButton: "Von diesem Gerät",
       toThisDeviceButton: "An dieses Gerät",
@@ -389,7 +391,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
 
       deleteItem: "Element löschen",
 
-      removeJunkButton: "Datenmüll löschen"
+      removeJunkButton: "Datenmüll löschen",
     },
 
     chatPage: {
@@ -591,6 +593,8 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
         "Introduce los datos mostrados en el otro dispositivo.",
       readyToReceiveDescription: "Haz clic en 'enviar' en el otro dispositivo.",
 
+      notConnectedError: "No estás conectado a ningún servidor.",
+
       fromThisDeviceButton: "Desde este dispositivo",
       toThisDeviceButton: "A este dispositivo",
 
@@ -623,7 +627,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
 
       deleteItem: "Eliminar elemento",
 
-      removeJunkButton: "Eliminar archivos basura"
+      removeJunkButton: "Eliminar archivos basura",
     },
 
     chatPage: {

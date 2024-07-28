@@ -5,17 +5,19 @@ import FileTransferViewModel, {
   FileTransferOption,
 } from "../../ViewModel/Global/fileTransferViewModel";
 
+import ConnectionViewModel from "../../ViewModel/Global/connectionViewModel";
 import StorageModel from "../../Model/Global/storageModel";
 import { StringToTextSpan } from "../Components/textSpan";
 import { reload } from "../utility";
 import { translations } from "../translations";
 
 export function DataTransferModalWrapper(
+  connectionViewModel: ConnectionViewModel,
   fileTransferViewModel: FileTransferViewModel
 ) {
   return (
     <div>
-      {DirectionSelectionModal(fileTransferViewModel)}
+      {DirectionSelectionModal(connectionViewModel, fileTransferViewModel)}
       {FileSelectionModal(fileTransferViewModel)}
       {TransferDataDisplayModal(fileTransferViewModel)}
       {TransferDisplayModal(fileTransferViewModel)}
@@ -25,12 +27,20 @@ export function DataTransferModalWrapper(
   );
 }
 
-function DirectionSelectionModal(fileTransferViewModel: FileTransferViewModel) {
+function DirectionSelectionModal(
+  connectionViewModel: ConnectionViewModel,
+  fileTransferViewModel: FileTransferViewModel
+) {
   const isPresented = React.createProxyState(
     [fileTransferViewModel.presentedModal],
     () =>
       fileTransferViewModel.presentedModal.value ==
       FileTransferModal.DirectionSelection
+  );
+
+  const isDisconnected = React.createProxyState(
+    [connectionViewModel.isConnected],
+    () => connectionViewModel.isConnected.value == false
   );
 
   return (
@@ -39,7 +49,14 @@ function DirectionSelectionModal(fileTransferViewModel: FileTransferViewModel) {
         <main>
           <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
 
-          <div class="flex-column gap content-margin-bottom">
+          <p class="error" toggle:hidden={connectionViewModel.isConnected}>
+            {translations.dataTransferModal.notConnectedError}
+          </p>
+
+          <div
+            class="flex-column gap content-margin-bottom"
+            toggle:hidden={isDisconnected}
+          >
             <button
               class="tile"
               on:click={fileTransferViewModel.showFileSelectionModal}
