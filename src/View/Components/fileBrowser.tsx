@@ -14,7 +14,17 @@ export function FileBrowser(storageViewModel: StorageViewModel) {
     () => {
       if (storageViewModel.selectedPath.value == PATH_COMPONENT_SEPARATOR)
         return (
-          <span class="secondary">{translations.storage.noItemSelected}</span>
+          <div>
+            <span class="secondary">{translations.storage.noItemSelected}</span>
+
+            <hr></hr>
+
+            {DangerousActionButton(
+              translations.storage.removeJunkButton,
+              "delete_forever",
+              storageViewModel.removeJunk
+            )}
+          </div>
         );
 
       return (

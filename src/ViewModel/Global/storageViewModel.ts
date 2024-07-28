@@ -38,6 +38,11 @@ export default class StorageViewModel {
     this.didMakeChanges.value = true;
   };
 
+  removeJunk = (): void => {
+    this.storageModel.removeJunk();
+    this.selectedPath.value = PATH_COMPONENT_SEPARATOR;
+  };
+
   // view
   showStorageModal = (): void => {
     this.isShowingStorageModal.value = true;

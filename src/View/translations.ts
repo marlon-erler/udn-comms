@@ -126,6 +126,8 @@ const englishTranslations = {
     content: "Content",
 
     deleteItem: "Delete item",
+
+    removeJunkButton: "Delete junk files"
   },
 
   chatPage: {

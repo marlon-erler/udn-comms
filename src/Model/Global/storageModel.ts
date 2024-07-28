@@ -68,7 +68,7 @@ export default class StorageModel {
   };
 
   // recursion
-  recurse = (pathComponents: string[], fn: (path: string[]) => void): void => {
+  recurse = (rootDirectory: string[], fn: (path: string[]) => void): void => {
     loop_over_files: for (const key of Object.keys(localStorage)) {
       // get path of current entity
       const pathComponentsOfCurrentEntity: string[] =
@@ -77,11 +77,11 @@ export default class StorageModel {
       // exit if entity does not match
       loop_over_path_components: for (
         let i = 0;
-        i < pathComponents.length;
+        i < rootDirectory.length;
         i++
       ) {
         if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
-        if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
+        if (pathComponentsOfCurrentEntity[i] != rootDirectory[i])
           continue loop_over_files;
       }
 
@@ -134,6 +134,14 @@ export default class StorageModel {
 
     return object;
   };
+
+  // cleaning
+  removeJunk = (): void => {
+    this.recurse([], (path: string[]) => {
+      if (path[0] == DATA_VERSION) return;
+      this.remove(path);
+    })
+  }
 
   // tree
   initializeTree = (): void => {

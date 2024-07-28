@@ -516,12 +516,12 @@
       return true;
     };
     // recursion
-    recurse = (pathComponents, fn) => {
+    recurse = (rootDirectory, fn) => {
       loop_over_files: for (const key of Object.keys(localStorage)) {
         const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
-        loop_over_path_components: for (let i = 0; i < pathComponents.length; i++) {
+        loop_over_path_components: for (let i = 0; i < rootDirectory.length; i++) {
           if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
-          if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
+          if (pathComponentsOfCurrentEntity[i] != rootDirectory[i])
             continue loop_over_files;
         }
         fn(pathComponentsOfCurrentEntity);
@@ -556,6 +556,13 @@
       const object = parseValidObject(valueString, reference);
       if (object == null) return null;
       return object;
+    };
+    // cleaning
+    removeJunk = () => {
+      this.recurse([], (path) => {
+        if (path[0] == DATA_VERSION) return;
+        this.remove(path);
+      });
     };
     // tree
     initializeTree = () => {
@@ -2685,7 +2692,8 @@
       contentEmpty: "(empty)",
       path: "Path",
       content: "Content",
-      deleteItem: "Delete item"
+      deleteItem: "Delete item",
+      removeJunkButton: "Delete junk files"
     },
     chatPage: {
       closeChatAudioLabe: "close chat",
@@ -5487,7 +5495,11 @@
       [storageViewModel2.selectedPath],
       () => {
         if (storageViewModel2.selectedPath.value == PATH_COMPONENT_SEPARATOR)
-          return /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.storage.noItemSelected);
+          return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.storage.noItemSelected), /* @__PURE__ */ createElement("hr", null), DangerousActionButton(
+            translations.storage.removeJunkButton,
+            "delete_forever",
+            storageViewModel2.removeJunk
+          ));
         return /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.storage.path), /* @__PURE__ */ createElement(
           "span",
           {
@@ -5558,6 +5570,10 @@
       this.lastDeletedItemPath.value = this.selectedPath.value;
       this.storageModel.removeRecursively(path);
       this.didMakeChanges.value = true;
+    };
+    removeJunk = () => {
+      this.storageModel.removeJunk();
+      this.selectedPath.value = PATH_COMPONENT_SEPARATOR;
     };
     // view
     showStorageModal = () => {
