@@ -1694,6 +1694,7 @@
   };
 
   // src/ViewModel/Pages/calendarPageViewModel.ts
+  var CALENDAR_EVENT_BOARD_ID = "events";
   var CalendarPageViewModel = class extends TaskContainingPageViewModel {
     // init
     constructor(coreViewModel, chatViewModel, storageModel2, calendarModel, boardsAndTasksModel) {
@@ -1734,7 +1735,7 @@
     monthGrid = new State(void 0);
     // methods
     createEvent = () => {
-      const taskFileContent = this.boardsAndTasksModel.createTask("events");
+      const taskFileContent = this.boardsAndTasksModel.createTask(CALENDAR_EVENT_BOARD_ID);
       taskFileContent.date = CalendarModel.getISODateString(
         this.selectedYear.value.toString(),
         this.selectedMonth.value.toString(),
@@ -2186,6 +2187,7 @@
     };
     deleteBoard = () => {
       this.taskPageViewModel.deleteBoard(this.boardInfo);
+      this.chatViewModel.taskBoardSuggestions.remove(this.boardInfo.fileId);
       this.close();
     };
     // methods
@@ -2437,188 +2439,6 @@
     };
   };
 
-  // src/ViewModel/Chat/chatViewModel.ts
-  var ChatViewModel = class {
-    // init
-    constructor(coreViewModel, storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
-      this.coreViewModel = coreViewModel;
-      this.storageModel = storageModel2;
-      this.chatModel = chatModel;
-      this.settingsViewModel = settingsViewModel2;
-      this.chatListViewModel = chatListViewModel2;
-      this.calendarViewModel = new CalendarPageViewModel(
-        coreViewModel,
-        this,
-        this.storageModel,
-        this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
-        this.chatModel.fileModel.boardsAndTasksModel
-      );
-      this.taskPageViewModel = new TaskPageViewModel(
-        this.coreViewModel,
-        this,
-        this.storageModel,
-        this.chatModel.fileModel.boardsAndTasksModel
-      );
-      this.messagePageViewModel = new MessagePageViewModel(
-        this.coreViewModel,
-        this
-      );
-      this.settingsPageViewModel = new SettingsPageViewModel(
-        this.coreViewModel,
-        this
-      );
-      chatModel.chatMessageHandlerManager.addHandler(
-        (chatMessage) => {
-          this.messagePageViewModel.showChatMessage(chatMessage);
-          this.markRead();
-        }
-      );
-      this.loadPageSelection();
-      this.resetColor();
-      this.loadInfo();
-    }
-    chatModel;
-    storageModel;
-    settingsViewModel;
-    chatListViewModel;
-    calendarViewModel;
-    taskPageViewModel;
-    messagePageViewModel;
-    settingsPageViewModel;
-    // state
-    displayedColor = new State("standard" /* Standard */);
-    selectedPage = new State(
-      "messages" /* Messages */
-    );
-    index = new State(0);
-    hasUnreadMessages = new State(false);
-    taskBoardSuggestions = new MapState();
-    // view
-    open = () => {
-      this.chatListViewModel.openChat(this);
-      this.markRead();
-    };
-    close = () => {
-      this.chatListViewModel.closeChat();
-    };
-    closeSubPages = () => {
-    };
-    setColor = (color) => {
-      this.setDisplayedColor(color);
-      this.chatModel.setColor(color);
-    };
-    setDisplayedColor = (color) => {
-      this.displayedColor.value = color;
-    };
-    resetColor = () => {
-      this.displayedColor.value = this.settingsPageViewModel.color.value;
-    };
-    updateIndex = () => {
-      const index = this.chatListViewModel.chatIndexManager.getIndex(this);
-      this.index.value = index;
-    };
-    markRead = () => {
-      this.hasUnreadMessages.value = false;
-      this.chatModel.markRead();
-    };
-    // load
-    loadPageSelection = () => {
-      const path = StorageModel.getPath(
-        "chat" /* Chat */,
-        filePaths.chat.lastUsedPage(this.chatModel.id)
-      );
-      const lastUsedPage = this.storageModel.read(path);
-      if (lastUsedPage != null) {
-        this.selectedPage.value = lastUsedPage;
-      }
-      this.selectedPage.subscribeSilent((newPage) => {
-        this.storageModel.write(path, newPage);
-        this.resetColor();
-      });
-    };
-    loadInfo = () => {
-      this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
-    };
-  };
-
-  // src/ViewModel/Chat/chatListViewModel.ts
-  var ChatListViewModel = class {
-    // init
-    constructor(coreViewModel, storageModel2, chatListModel2, settingsViewModel2) {
-      this.coreViewModel = coreViewModel;
-      this.storageModel = storageModel2;
-      this.chatListModel = chatListModel2;
-      this.settingsViewModel = settingsViewModel2;
-      this.loadChats();
-    }
-    storageModel;
-    chatListModel;
-    settingsViewModel;
-    // data
-    chatIndexManager = new IndexManager(
-      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
-    );
-    // state
-    newChatPrimaryChannel = new State("");
-    chatViewModels = new ListState();
-    selectedChat = new State(
-      void 0
-    );
-    // guards
-    cannotCreateChat = createProxyState(
-      [this.newChatPrimaryChannel],
-      () => this.newChatPrimaryChannel.value == ""
-    );
-    // methods
-    createChat = () => {
-      const chatModel = this.chatListModel.createChat(
-        this.newChatPrimaryChannel.value
-      );
-      this.newChatPrimaryChannel.value = "";
-      const chatViewModel = this.createChatViewModel(chatModel);
-      this.trackChat(chatViewModel);
-      this.updateIndices();
-    };
-    trackChat = (chatViewModel) => {
-      this.chatViewModels.add(chatViewModel);
-    };
-    untrackChat = (chatViewModel) => {
-      this.chatListModel.untrackChat(chatViewModel.chatModel);
-      this.chatViewModels.remove(chatViewModel);
-    };
-    createChatViewModel = (chatModel) => {
-      return new ChatViewModel(
-        this.coreViewModel,
-        this.storageModel,
-        chatModel,
-        this.settingsViewModel,
-        this
-      );
-    };
-    updateIndices = () => {
-      this.chatIndexManager.update([...this.chatViewModels.value.values()]);
-      for (const chatViewModel of this.chatViewModels.value) {
-        chatViewModel.updateIndex();
-      }
-    };
-    // view
-    openChat = (chatViewModel) => {
-      this.selectedChat.value = chatViewModel;
-    };
-    closeChat = () => {
-      this.selectedChat.value = void 0;
-    };
-    // load
-    loadChats = () => {
-      this.chatViewModels.clear();
-      for (const chatModel of this.chatListModel.chatModels.values()) {
-        const chatViewModel = this.createChatViewModel(chatModel);
-        this.trackChat(chatViewModel);
-      }
-      this.updateIndices();
-    };
-  };
-
   // src/View/translations.ts
   var englishTranslations = {
     updater: {
@@ -2786,6 +2606,8 @@
         renameCategoryInputPlaceholder: "Rename category,"
       },
       calendar: {
+        eventsBoard: "Events",
+        ///
         todayButtonAudioLabel: "go to today",
         previousMonthButtonAudioLabel: "previous month",
         nextMonthButtonAudioLabel: "next month",
@@ -3135,6 +2957,192 @@
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;
 
+  // src/ViewModel/Chat/chatViewModel.ts
+  var ChatViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatModel = chatModel;
+      this.settingsViewModel = settingsViewModel2;
+      this.chatListViewModel = chatListViewModel2;
+      this.calendarViewModel = new CalendarPageViewModel(
+        coreViewModel,
+        this,
+        this.storageModel,
+        this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
+        this.chatModel.fileModel.boardsAndTasksModel
+      );
+      this.taskPageViewModel = new TaskPageViewModel(
+        this.coreViewModel,
+        this,
+        this.storageModel,
+        this.chatModel.fileModel.boardsAndTasksModel
+      );
+      this.messagePageViewModel = new MessagePageViewModel(
+        this.coreViewModel,
+        this
+      );
+      this.settingsPageViewModel = new SettingsPageViewModel(
+        this.coreViewModel,
+        this
+      );
+      chatModel.chatMessageHandlerManager.addHandler(
+        (chatMessage) => {
+          this.messagePageViewModel.showChatMessage(chatMessage);
+          this.markRead();
+        }
+      );
+      this.loadPageSelection();
+      this.resetColor();
+      this.loadInfo();
+    }
+    chatModel;
+    storageModel;
+    settingsViewModel;
+    chatListViewModel;
+    calendarViewModel;
+    taskPageViewModel;
+    messagePageViewModel;
+    settingsPageViewModel;
+    // state
+    displayedColor = new State("standard" /* Standard */);
+    selectedPage = new State(
+      "messages" /* Messages */
+    );
+    index = new State(0);
+    hasUnreadMessages = new State(false);
+    taskBoardSuggestions = new MapState();
+    // view
+    open = () => {
+      this.chatListViewModel.openChat(this);
+      this.markRead();
+    };
+    close = () => {
+      this.chatListViewModel.closeChat();
+    };
+    closeSubPages = () => {
+    };
+    setColor = (color) => {
+      this.setDisplayedColor(color);
+      this.chatModel.setColor(color);
+    };
+    setDisplayedColor = (color) => {
+      this.displayedColor.value = color;
+    };
+    resetColor = () => {
+      this.displayedColor.value = this.settingsPageViewModel.color.value;
+    };
+    updateIndex = () => {
+      const index = this.chatListViewModel.chatIndexManager.getIndex(this);
+      this.index.value = index;
+    };
+    markRead = () => {
+      this.hasUnreadMessages.value = false;
+      this.chatModel.markRead();
+    };
+    // load
+    loadPageSelection = () => {
+      const path = StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.lastUsedPage(this.chatModel.id)
+      );
+      const lastUsedPage = this.storageModel.read(path);
+      if (lastUsedPage != null) {
+        this.selectedPage.value = lastUsedPage;
+      }
+      this.selectedPage.subscribeSilent((newPage) => {
+        this.storageModel.write(path, newPage);
+        this.resetColor();
+      });
+    };
+    loadInfo = () => {
+      this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
+      this.taskBoardSuggestions.set(CALENDAR_EVENT_BOARD_ID, [
+        CALENDAR_EVENT_BOARD_ID,
+        translations.chatPage.calendar.eventsBoard
+      ]);
+    };
+  };
+
+  // src/ViewModel/Chat/chatListViewModel.ts
+  var ChatListViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatListModel2, settingsViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
+      this.settingsViewModel = settingsViewModel2;
+      this.loadChats();
+    }
+    storageModel;
+    chatListModel;
+    settingsViewModel;
+    // data
+    chatIndexManager = new IndexManager(
+      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
+    );
+    // state
+    newChatPrimaryChannel = new State("");
+    chatViewModels = new ListState();
+    selectedChat = new State(
+      void 0
+    );
+    // guards
+    cannotCreateChat = createProxyState(
+      [this.newChatPrimaryChannel],
+      () => this.newChatPrimaryChannel.value == ""
+    );
+    // methods
+    createChat = () => {
+      const chatModel = this.chatListModel.createChat(
+        this.newChatPrimaryChannel.value
+      );
+      this.newChatPrimaryChannel.value = "";
+      const chatViewModel = this.createChatViewModel(chatModel);
+      this.trackChat(chatViewModel);
+      this.updateIndices();
+    };
+    trackChat = (chatViewModel) => {
+      this.chatViewModels.add(chatViewModel);
+    };
+    untrackChat = (chatViewModel) => {
+      this.chatListModel.untrackChat(chatViewModel.chatModel);
+      this.chatViewModels.remove(chatViewModel);
+    };
+    createChatViewModel = (chatModel) => {
+      return new ChatViewModel(
+        this.coreViewModel,
+        this.storageModel,
+        chatModel,
+        this.settingsViewModel,
+        this
+      );
+    };
+    updateIndices = () => {
+      this.chatIndexManager.update([...this.chatViewModels.value.values()]);
+      for (const chatViewModel of this.chatViewModels.value) {
+        chatViewModel.updateIndex();
+      }
+    };
+    // view
+    openChat = (chatViewModel) => {
+      this.selectedChat.value = chatViewModel;
+    };
+    closeChat = () => {
+      this.selectedChat.value = void 0;
+    };
+    // load
+    loadChats = () => {
+      this.chatViewModels.clear();
+      for (const chatModel of this.chatListModel.chatModels.values()) {
+        const chatViewModel = this.createChatViewModel(chatModel);
+        this.trackChat(chatViewModel);
+      }
+      this.updateIndices();
+    };
+  };
+
   // src/View/Components/monthGrid.tsx
   function MonthGrid2(monthGrid, selectedDate, handleDrop) {
     const dayLabels = [];
@@ -3198,9 +3206,6 @@
   var StringToOption = (string) => {
     return Option(string, string, false);
   };
-  var EntryToOption = (entry) => {
-    return Option(entry[1], entry[0], false);
-  };
   var VersionIdToOption = (versionId) => {
     const [date, rest] = versionId.split("T");
     const [time] = rest.split(".");
@@ -3246,6 +3251,10 @@
   function TaskSettingsModal(taskViewModel) {
     const categorySuggestionId = v4_default();
     const statusSuggestionId = v4_default();
+    const BoardOptionConverter = (entry) => {
+      const isSelected = entry[0] == taskViewModel.task.boardId;
+      return Option(entry[1], entry[0], isSelected);
+    };
     return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
       "select",
       {
@@ -3258,7 +3267,7 @@
         "bind:value": taskViewModel.boardId,
         "children:append": [
           taskViewModel.chatViewModel.taskBoardSuggestions,
-          EntryToOption
+          BoardOptionConverter
         ]
       }
     ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(

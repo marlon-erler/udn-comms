@@ -1,12 +1,14 @@
 import * as React from "bloatless-react";
 
+import CalendarPageViewModel, {
+  CALENDAR_EVENT_BOARD_ID,
+} from "../Pages/calendarPageViewModel";
 import ChatModel, { ChatMessage } from "../../Model/Chat/chatModel";
 import StorageModel, {
   StorageModelSubPath,
   filePaths,
 } from "../../Model/Global/storageModel";
 
-import CalendarPageViewModel from "../Pages/calendarPageViewModel";
 import ChatListViewModel from "./chatListViewModel";
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
@@ -15,6 +17,7 @@ import MessagePageViewModel from "../Pages/messagePageViewModel";
 import SettingsPageViewModel from "../Pages/settingsPageViewModel";
 import SettingsViewModel from "../Global/settingsViewModel";
 import TaskPageViewModel from "../Pages/taskPageViewModel";
+import { translations } from "../../View/translations";
 
 export default class ChatViewModel {
   chatModel: ChatModel;
@@ -93,6 +96,11 @@ export default class ChatViewModel {
 
   loadInfo = (): void => {
     this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
+
+    this.taskBoardSuggestions.set(CALENDAR_EVENT_BOARD_ID, [
+      CALENDAR_EVENT_BOARD_ID,
+      translations.chatPage.calendar.eventsBoard,
+    ]);
   };
 
   // init

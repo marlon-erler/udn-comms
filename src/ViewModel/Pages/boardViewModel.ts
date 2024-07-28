@@ -17,7 +17,7 @@ import TaskViewModel from "./taskViewModel";
 export default class BoardViewModel extends TaskContainingPageViewModel {
   storageModel: StorageModel;
   boardsAndTasksModel: BoardsAndTasksModel;
-  
+
   taskPageViewModel: TaskPageViewModel;
 
   // data
@@ -75,6 +75,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
 
   deleteBoard = (): void => {
     this.taskPageViewModel.deleteBoard(this.boardInfo);
+    this.chatViewModel.taskBoardSuggestions.remove(this.boardInfo.fileId);
     this.close();
   };
 

@@ -11,6 +11,8 @@ import StorageModel from "../../Model/Global/storageModel";
 import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import TaskViewModel from "./taskViewModel";
 
+export const CALENDAR_EVENT_BOARD_ID = "events";
+
 export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   storageModel: StorageModel;
   calendarModel: CalendarModel;
@@ -40,7 +42,7 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   // methods
   createEvent = (): void => {
     const taskFileContent: TaskFileContent =
-      this.boardsAndTasksModel.createTask("events");
+      this.boardsAndTasksModel.createTask(CALENDAR_EVENT_BOARD_ID);
     taskFileContent.date = CalendarModel.getISODateString(
       this.selectedYear.value.toString(),
       this.selectedMonth.value.toString(),
@@ -184,7 +186,7 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
     public chatViewModel: ChatViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
-    boardsAndTasksModel: BoardsAndTasksModel,
+    boardsAndTasksModel: BoardsAndTasksModel
   ) {
     super(coreViewModel, chatViewModel, boardsAndTasksModel);
 

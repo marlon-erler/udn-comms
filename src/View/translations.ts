@@ -237,6 +237,10 @@ const englishTranslations = {
     },
 
     calendar: {
+      eventsBoard: "Events",
+
+      ///
+      
       todayButtonAudioLabel: "go to today",
 
       previousMonthButtonAudioLabel: "previous month",

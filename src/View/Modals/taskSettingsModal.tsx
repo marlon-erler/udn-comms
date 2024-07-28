@@ -1,7 +1,9 @@
 import * as React from "bloatless-react";
 
 import {
+  Entry,
   EntryToOption,
+  Option,
   StringToOption,
   VersionIdToOption,
 } from "../Components/option";
@@ -14,6 +16,13 @@ import { v4 } from "uuid";
 export function TaskSettingsModal(taskViewModel: TaskViewModel) {
   const categorySuggestionId = v4();
   const statusSuggestionId = v4();
+
+  const BoardOptionConverter: React.StateItemConverter<Entry> = (
+    entry: Entry
+  ) => {
+    const isSelected = entry[0] == taskViewModel.task.boardId;
+    return Option(entry[1], entry[0], isSelected);
+  };
 
   return (
     <div class="modal" open>
@@ -51,7 +60,7 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
                 bind:value={taskViewModel.boardId}
                 children:append={[
                   taskViewModel.chatViewModel.taskBoardSuggestions,
-                  EntryToOption,
+                  BoardOptionConverter,
                 ]}
               ></select>
               <span class="icon">arrow_drop_down</span>
