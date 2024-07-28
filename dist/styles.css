@@ -1066,19 +1066,19 @@ main,
 
 article > div,
 .modal main {
-  overflow: scroll;
+  overflow: auto;
 }
 
 main {
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 .scroll-h {
-  overflow-x: scroll !important;
+  overflow-x: auto !important;
 }
 
 .scroll-v {
-  overflow-y: scroll !important;
+  overflow-y: auto !important;
 }
 
 .ellipsis {
