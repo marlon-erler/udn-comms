@@ -2523,6 +2523,7 @@
       transferChannelHeadline: "Transfer Chanel",
       transferKeyHeadline: "Transfer Encryption Key",
       sendButton: "Send",
+      sendAgainButton: "Send again",
       ///
       filesSentCount: (count) => `Files sent: ${count}.`,
       allFilesSent: "Done.",
@@ -2703,6 +2704,7 @@
         transferChannelHeadline: "\xDCbertragungskanal",
         transferKeyHeadline: "Schl\xFCssel",
         sendButton: "Senden",
+        sendAgainButton: "Erneut senden",
         filesSentCount: (count) => `Dateien gesendet: ${count}.`,
         allFilesSent: "Fertig.",
         filesReceivedCount: (count) => `Dateien empfangen: ${count}.`
@@ -2870,6 +2872,7 @@
         transferChannelHeadline: "Canal de Transferencia",
         transferKeyHeadline: "Clave de Encriptaci\xF3n de Transferencia",
         sendButton: "Enviar",
+        sendAgainButton: "Enviar otra vez",
         filesSentCount: (count) => `Archivos enviados: ${count}.`,
         allFilesSent: "Hecho.",
         filesReceivedCount: (count) => `Archivos recibidos: ${count}.`
@@ -5125,15 +5128,24 @@
           StringToTextSpan
         ]
       }
-    )), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
       "button",
       {
+        class: "flex",
+        "on:click": fileTransferViewModel2.initiateTransfer
+      },
+      translations.dataTransferModal.sendAgainButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "restart_alt")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
         "on:click": fileTransferViewModel2.hideModal,
         "toggle:disabled": fileTransferViewModel2.didNotFinishSending
       },
       translations.general.closeButton,
       /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    )));
+    ))));
   }
   function TransferDataInputModal(fileTransferViewModel2) {
     const isPresented = createProxyState(

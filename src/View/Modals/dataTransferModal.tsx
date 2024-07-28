@@ -269,13 +269,23 @@ function TransferDisplayModal(fileTransferViewModel: FileTransferViewModel) {
             ]}
           ></div>
         </main>
-        <button
-          on:click={fileTransferViewModel.hideModal}
-          toggle:disabled={fileTransferViewModel.didNotFinishSending}
-        >
-          {translations.general.closeButton}
-          <span class="icon">close</span>
-        </button>
+        <div class="flex-row width-100">
+          <button
+            class="flex"
+            on:click={fileTransferViewModel.initiateTransfer}
+          >
+            {translations.dataTransferModal.sendAgainButton}
+            <span class="icon">restart_alt</span>
+          </button>
+          <button
+            class="flex"
+            on:click={fileTransferViewModel.hideModal}
+            toggle:disabled={fileTransferViewModel.didNotFinishSending}
+          >
+            {translations.general.closeButton}
+            <span class="icon">close</span>
+          </button>
+        </div>
       </div>
     </div>
   );

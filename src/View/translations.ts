@@ -108,6 +108,7 @@ const englishTranslations = {
     transferKeyHeadline: "Transfer Encryption Key",
 
     sendButton: "Send",
+    sendAgainButton: "Send again",
 
     ///
 
@@ -370,6 +371,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       transferKeyHeadline: "Schlüssel",
 
       sendButton: "Senden",
+      sendAgainButton: "Erneut senden",
 
       filesSentCount: (count) => `Dateien gesendet: ${count}.`,
       allFilesSent: "Fertig.",
@@ -603,6 +605,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       transferKeyHeadline: "Clave de Encriptación de Transferencia",
 
       sendButton: "Enviar",
+      sendAgainButton: "Enviar otra vez",
 
       filesSentCount: (count) => `Archivos enviados: ${count}.`,
       allFilesSent: "Hecho.",
