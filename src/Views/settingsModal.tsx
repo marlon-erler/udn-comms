@@ -28,8 +28,7 @@ export function SettingsModal() {
         <main>
           <h2>{translation.settings}</h2>
 
-          <div class="flex-row width-input">
-            <label class="tile">
+          <label class="tile">
             <span class="icon">calendar_month</span>
             <div>
               <span>{translation.firstDayOfWeek}</span>
@@ -41,7 +40,6 @@ export function SettingsModal() {
               <span class="icon">arrow_drop_down</span>
             </div>
           </label>
-          </div>
 
           <hr></hr>
 
