@@ -347,13 +347,13 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
     dataTransferModal: {
       transferDataHeadline: "Datenübertragung",
       selectionDescription:
-        "Wählen Sie die Daten aus, die Sie übertragen möchten.",
+        "Wähle die Daten aus, die du übertragen möchtest.",
       dataEntryDescription:
-        "Geben Sie diese Informationen auf dem anderen Gerät ein.",
+        "Gib diese Informationen auf dem anderen Gerät ein.",
       dataEntryInputDescription:
-        "Geben Sie die auf dem anderen Gerät angezeigten Informationen ein.",
+        "Gib die auf dem anderen Gerät angezeigten Informationen ein.",
       readyToReceiveDescription:
-        "Klicken Sie auf dem anderen Gerät auf 'Senden'.",
+        "Klicke auf dem anderen Gerät auf 'Senden'.",
 
       fromThisDeviceButton: "Von diesem Gerät",
       toThisDeviceButton: "An dieses Gerät",
