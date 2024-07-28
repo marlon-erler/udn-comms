@@ -214,10 +214,12 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     const dirPath: string[] = this.getPreviousSearchesPath();
     const searches: string[] = this.storageModel.list(dirPath);
     this.coreViewModel.boardSearchSuggestions.add(...searches);
+  };
 
+  restoreSearch = (): void => {
     const lastSearchPath: string[] = this.getLastSearchPath();
     const lastSearch: string | null = this.storageModel.read(lastSearchPath);
-    if (lastSearch) {
+    if (lastSearch != null) {
       this.searchViewModel.search(lastSearch);
     }
   };
@@ -282,6 +284,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
     this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
       this.handleNewSearch(newQuery);
     });
+    this.restoreSearch();
   }
 }
 

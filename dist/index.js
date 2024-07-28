@@ -426,7 +426,7 @@
   function getLocalStorageItemAndClear(key) {
     const value = localStorage.getItem(key);
     localStorage.removeItem(key);
-    console.log(localStorage.getItem(key));
+    if (value != null) localStorage.setItem(`_${key}`, value);
     return value;
   }
   function stringify(data) {
@@ -2049,7 +2049,7 @@
     };
     applySearch = () => {
       this.appliedQuery.value = this.searchInput.value;
-      console.log("applying search");
+      console.trace("applying search");
       this.matchingObjects.clear();
       for (const object of this.allObjects.value.values()) {
         const doesMatch = this.checkDoesMatchSearch(object);
@@ -2124,6 +2124,7 @@
       this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
         this.handleNewSearch(newQuery);
       });
+      this.restoreSearch();
     }
     storageModel;
     boardsAndTasksModel;
@@ -2282,9 +2283,11 @@
       const dirPath = this.getPreviousSearchesPath();
       const searches = this.storageModel.list(dirPath);
       this.coreViewModel.boardSearchSuggestions.add(...searches);
+    };
+    restoreSearch = () => {
       const lastSearchPath = this.getLastSearchPath();
       const lastSearch = this.storageModel.read(lastSearchPath);
-      if (lastSearch) {
+      if (lastSearch != null) {
         this.searchViewModel.search(lastSearch);
       }
     };

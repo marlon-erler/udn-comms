@@ -223,7 +223,7 @@ export class IndexManager<T> {
 export function getLocalStorageItemAndClear(key: string): string | null {
   const value: string | null = localStorage.getItem(key);
   localStorage.removeItem(key);
-  console.log(localStorage.getItem(key));
+  if (value != null) localStorage.setItem(`_${key}`, value);
   return value;
 }
 
