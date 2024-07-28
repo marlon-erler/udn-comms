@@ -133,10 +133,7 @@ export default class ChatViewModel {
     chatModel.chatMessageHandlerManager.addHandler(
       (chatMessage: ChatMessage) => {
         this.messagePageViewModel.showChatMessage(chatMessage);
-        
-        if (this.chatListViewModel.selectedChat.value != this) {
-          this.hasUnreadMessages.value = true;
-        }
+        this.markUnread();
       }
     );
 

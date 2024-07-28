@@ -2447,9 +2447,7 @@
       chatModel.chatMessageHandlerManager.addHandler(
         (chatMessage) => {
           this.messagePageViewModel.showChatMessage(chatMessage);
-          if (this.chatListViewModel.selectedChat.value != this) {
-            this.hasUnreadMessages.value = true;
-          }
+          this.markUnread();
         }
       );
       this.loadPageSelection();
