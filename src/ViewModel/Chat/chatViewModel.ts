@@ -38,7 +38,7 @@ export default class ChatViewModel {
   // view
   open = (): void => {
     this.chatListViewModel.openChat(this);
-    this.markUnread();
+    this.markRead();
   };
 
   close = (): void => {
@@ -66,9 +66,9 @@ export default class ChatViewModel {
     this.index.value = index;
   };
 
-  markUnread = (): void => {
+  markRead = (): void => {
     this.hasUnreadMessages.value = false;
-    this.chatModel.markUnread();
+    this.chatModel.markRead();
   };
 
   // load
@@ -133,7 +133,7 @@ export default class ChatViewModel {
     chatModel.chatMessageHandlerManager.addHandler(
       (chatMessage: ChatMessage) => {
         this.messagePageViewModel.showChatMessage(chatMessage);
-        this.markUnread();
+        this.markRead();
       }
     );
 

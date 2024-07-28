@@ -174,7 +174,7 @@ export default class ChatModel {
     this.connectionModel.addChannel(this.info.primaryChannel);
   };
 
-  markUnread = (): void => {
+  markRead = (): void => {
     this.info.hasUnreadMessages = false;
     this.storeInfo();
   }
