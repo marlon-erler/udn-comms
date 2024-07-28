@@ -4191,7 +4191,7 @@
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "ghost board-toggle-button",
+        class: "ghost board-toggle-button inset-outline",
         "aria-label": translations.chatPage.task.toggleBoardButtonAudioLabel,
         "on:click": boardViewModel.taskPageViewModel.toggleBoardList,
         "toggle:selected": boardViewModel.taskPageViewModel.isShowingBoadList
@@ -4299,6 +4299,7 @@
       /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
         "input",
         {
+          class: "no-outline",
           "bind:value": taskPageViewModel.newBoardNameInput,
           "on:enter": taskPageViewModel.createBoard,
           placeholder: translations.chatPage.task.newBoardNamePlaceholder

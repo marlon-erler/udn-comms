@@ -29,7 +29,7 @@ ANIMATION
 }
 
 .slide-up {
-  animation: slide-up var(--animation-duration)
+  animation: slide-up var(--animation-duration);
 }
 
 /*
@@ -383,12 +383,17 @@ hr {
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus:not(
     label.tile *
-  ),
+  ):not(.no-outline),
 label.tile:has(input:focus),
 label.tile:has(textarea:focus),
 textarea:focus:not(label.tile *),
 [selected] {
   outline: var(--outline-width) solid var(--primary);
+}
+
+.inset-outline[selected] {
+  outline: none;
+  box-shadow: var(--primary) 0 0 0 var(--outline-width) inset;
 }
 
 /* border-radius */

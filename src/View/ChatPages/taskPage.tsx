@@ -55,6 +55,7 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
           <div class="toolbar">
             <div class="flex-row width-input">
               <input
+              class="no-outline"
                 bind:value={taskPageViewModel.newBoardNameInput}
                 on:enter={taskPageViewModel.createBoard}
                 placeholder={translations.chatPage.task.newBoardNamePlaceholder}

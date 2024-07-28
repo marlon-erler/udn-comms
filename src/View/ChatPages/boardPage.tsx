@@ -66,7 +66,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
             <span class="icon">arrow_back</span>
           </button>
           <button
-            class="ghost board-toggle-button"
+            class="ghost board-toggle-button inset-outline"
             aria-label={translations.chatPage.task.toggleBoardButtonAudioLabel}
             on:click={boardViewModel.taskPageViewModel.toggleBoardList}
             toggle:selected={boardViewModel.taskPageViewModel.isShowingBoadList}
