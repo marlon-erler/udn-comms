@@ -380,6 +380,8 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       content: "Inhalt",
 
       deleteItem: "Element löschen",
+
+      removeJunkButton: "Datenmüll löschen"
     },
 
     chatPage: {
@@ -605,6 +607,8 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
       content: "Contenido",
 
       deleteItem: "Eliminar elemento",
+
+      removeJunkButton: "Eliminar archivos basura"
     },
 
     chatPage: {

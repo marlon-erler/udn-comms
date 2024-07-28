@@ -2867,7 +2867,8 @@
         contentEmpty: "(leer)",
         path: "Pfad",
         content: "Inhalt",
-        deleteItem: "Element l\xF6schen"
+        deleteItem: "Element l\xF6schen",
+        removeJunkButton: "Datenm\xFCll l\xF6schen"
       },
       chatPage: {
         closeChatAudioLabe: "Chat schlie\xDFen",
@@ -3029,7 +3030,8 @@
         contentEmpty: "(vac\xEDo)",
         path: "Ruta",
         content: "Contenido",
-        deleteItem: "Eliminar elemento"
+        deleteItem: "Eliminar elemento",
+        removeJunkButton: "Eliminar archivos basura"
       },
       chatPage: {
         closeChatAudioLabe: "cerrar chat",
