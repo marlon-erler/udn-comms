@@ -1260,7 +1260,7 @@
     subscribe = () => {
       this.connectionModel.addChannel(this.info.primaryChannel);
     };
-    markUnread = () => {
+    markRead = () => {
       this.info.hasUnreadMessages = false;
       this.storeInfo();
     };
@@ -2049,7 +2049,6 @@
     };
     applySearch = () => {
       this.appliedQuery.value = this.searchInput.value;
-      console.trace("applying search");
       this.matchingObjects.clear();
       for (const object of this.allObjects.value.values()) {
         const doesMatch = this.checkDoesMatchSearch(object);
@@ -2447,7 +2446,7 @@
       chatModel.chatMessageHandlerManager.addHandler(
         (chatMessage) => {
           this.messagePageViewModel.showChatMessage(chatMessage);
-          this.markUnread();
+          this.markRead();
         }
       );
       this.loadPageSelection();
@@ -2472,7 +2471,7 @@
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
-      this.markUnread();
+      this.markRead();
     };
     close = () => {
       this.chatListViewModel.closeChat();
@@ -2493,9 +2492,9 @@
       const index = this.chatListViewModel.chatIndexManager.getIndex(this);
       this.index.value = index;
     };
-    markUnread = () => {
+    markRead = () => {
       this.hasUnreadMessages.value = false;
-      this.chatModel.markUnread();
+      this.chatModel.markRead();
     };
     // load
     loadPageSelection = () => {
@@ -2776,7 +2775,331 @@
     }
   };
   var allTranslations = {
-    en: englishTranslations
+    en: englishTranslations,
+    de: {
+      updater: {
+        migrated: "Migriert"
+      },
+      general: {
+        deleteItemButtonAudioLabel: "element l\xF6schen",
+        searchButtonAudioLabel: "suchen",
+        abortButton: "Abbrechen",
+        cancelButton: "Abbrechen",
+        closeButton: "Schlie\xDFen",
+        backButton: "Zur\xFCck",
+        continueButton: "Weiter",
+        confirmButton: "Best\xE4tigen",
+        saveButton: "Speichern",
+        setButton: "OK",
+        reloadAppButton: "Neu laden",
+        fileVersionLabel: "Version",
+        searchLabel: "Suche"
+      },
+      regional: {
+        weekdays: {
+          full: [
+            "Sonntag",
+            "Montag",
+            "Dienstag",
+            "Mittwoch",
+            "Donnerstag",
+            "Freitag",
+            "Samstag"
+          ],
+          abbreviated: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+        }
+      },
+      homePage: {
+        appName: "Comms",
+        overviewHeadline: "\xDCbersicht",
+        serverAddress: "Serveradresse",
+        serverAddressPlaceholder: "wss://192.168.0.69:3000",
+        connectAudioLabel: "mit Server verbinden",
+        disconnectAudioLabel: "vom Server trennen",
+        manageConnectionsAudioLabel: "Verbindungen verwalten",
+        yourNameLabel: "Dein Name",
+        yourNamePlaceholder: "Max Mustermann",
+        setNameButtonAudioLabel: "Name speichern",
+        firstDayOfWeekLabel: "Erster Wochentag",
+        manageStorageButton: "Daten verwalten",
+        transferDataButton: "Daten\xFCbertragung",
+        scrollToChatButton: "Chats",
+        backToOverviewAudioLabel: "zur\xFCck zur \xFCbersicht",
+        chatsHeadline: "Chats",
+        addChatAudioLabel: "Name des neuen Chats",
+        addChatPlaceholder: "Chat hinzuf\xFCgen",
+        addChatButton: "Chat hinzuf\xFCgen"
+      },
+      connectionModal: {
+        connectionModalHeadline: "Verbindungen verwalten",
+        connectButtonAudioLabel: "verbinden"
+      },
+      dataTransferModal: {
+        transferDataHeadline: "Daten\xFCbertragung",
+        selectionDescription: "W\xE4hlen Sie die Daten aus, die Sie \xFCbertragen m\xF6chten.",
+        dataEntryDescription: "Geben Sie diese Informationen auf dem anderen Ger\xE4t ein.",
+        dataEntryInputDescription: "Geben Sie die auf dem anderen Ger\xE4t angezeigten Informationen ein.",
+        readyToReceiveDescription: "Klicken Sie auf dem anderen Ger\xE4t auf 'Senden'.",
+        fromThisDeviceButton: "Von diesem Ger\xE4t",
+        toThisDeviceButton: "An dieses Ger\xE4t",
+        generalHeadline: "Allgemein",
+        connectionData: "Verbindungsdaten",
+        settingsData: "Einstellungen",
+        chatsHeadline: "Chats",
+        transferChannelHeadline: "\xDCbertragungskanal",
+        transferKeyHeadline: "Schl\xFCssel",
+        sendButton: "Senden",
+        filesSentCount: (count) => `Dateien gesendet: ${count}.`,
+        allFilesSent: "Fertig.",
+        filesReceivedCount: (count) => `Dateien empfangen: ${count}.`
+      },
+      storage: {
+        noItemSelected: "Kein Element ausgew\xE4hlt",
+        notAFile: "(keine Datei)",
+        contentEmpty: "(leer)",
+        path: "Pfad",
+        content: "Inhalt",
+        deleteItem: "Element l\xF6schen"
+      },
+      chatPage: {
+        closeChatAudioLabe: "Chat schlie\xDFen",
+        chatSettingsAudioLabel: "Chateinstellungen",
+        pages: {
+          settings: "Einstellungen",
+          messages: "Nachrichten",
+          tasks: "Aufgaben",
+          calendar: "Kalender"
+        },
+        settings: {
+          settingsHeadline: "Einstellungen",
+          primaryChannelLabel: "Hauptkanal",
+          setPrimaryChannelButtonAudioLabel: "Hauptkanal festlegen",
+          newSecondaryChannelPlaceholder: "Sekund\xE4ren Kanal hinzuf\xFCgen",
+          newSecondaryChannelAudioLabel: "Name des neuen sekund\xE4ren Kanals",
+          addSecondaryChannelButtonAudioLabel: "Sekund\xE4ren Kanal hinzuf\xFCgen",
+          encryptionKeyLabel: "Schl\xFCssel",
+          setEncryptionKeyButtonAudioLabel: "Schl\xFCssel festlegen",
+          showEncryptionKey: "Schl\xFCssel anzeigen",
+          deleteChatButton: "Gesamten Chat l\xF6schen"
+        },
+        message: {
+          messagesHeadline: "Nachrichten",
+          composerInputPlaceholder: "Schreib eine Nachricht...",
+          sendMessageButtonAudioLabel: "nachricht senden",
+          showMessageInfoButtonAudioLabel: "nachrichteninfo anzeigen",
+          messageInfoHeadline: "Nachrichteninfo",
+          sentBy: "Gesendet von",
+          timeSent: "Sendezeit",
+          channel: "Kanal",
+          messageContent: "Nachrichteninhalt",
+          copyMessageButton: "Nachricht kopieren",
+          resendMessageButton: "Nachricht erneut senden",
+          decryptMessageButton: "Nachricht entschl\xFCsseln",
+          deleteMessageButton: "Nachricht l\xF6schen"
+        },
+        task: {
+          newBoardNamePlaceholder: "Board erstellen",
+          createBoardButtonAudioLabel: "board erstellen",
+          noBoardSelected: "Kein Board ausgew\xE4hlt",
+          boardNotFound: "Board nicht gefunden",
+          closeBoard: "Board schlie\xDFen",
+          showBoardSettingsButtonAudioLabel: "Board-Einstellungen anzeigen",
+          listViewButtonAudioLabel: "Listenansicht",
+          kanbanViewButtonAudioLabel: "Kanban-Ansicht",
+          statusViewButtonAudioLabel: "Statusrasteransicht",
+          filterTasksButtonAudioLabel: "Aufgaben filtern",
+          createTaskButtonAudioLabel: "Neue Aufgabe erstellen",
+          boardSettingsHeadline: "Board-Einstellungen",
+          boardNameInputLabel: "Boardname",
+          deleteBoardButton: "Board und alle Aufgaben l\xF6schen",
+          taskSettingsHeadline: "Aufgabe bearbeiten",
+          taskNameLabel: "Titel",
+          taskCategoryLabel: "Kategorie",
+          taskStatusLabel: "Status",
+          taskPriorityLabel: "Priorit\xE4t",
+          taskDescriptionLabel: "Beschreibung",
+          taskDateLabel: "Datum",
+          taskTimeLabel: "Uhrzeit",
+          deleteTaskButton: "Aufgabe l\xF6schen",
+          filterTasksHeadline: "Aufgaben filtern",
+          renameCategoryInputPlaceholder: "Kategorie umbenennen"
+        },
+        calendar: {
+          todayButtonAudioLabel: "gehe zu heute",
+          previousMonthButtonAudioLabel: "vorheriger monat",
+          nextMonthButtonAudioLabel: "n\xE4chster monat",
+          yearInputAudioLabel: "Jahr",
+          monthInputAudioLabel: "Monat",
+          yearInputPlaceholder: "2000",
+          monthInputPlaceholder: "01",
+          searchEventsHeadline: "Ereignisse suchen",
+          events: "Ereignisse",
+          noEvents: "Keine Ereignisse"
+        }
+      }
+    },
+    es: {
+      updater: {
+        migrated: "Migrado"
+      },
+      general: {
+        deleteItemButtonAudioLabel: "eliminar elemento",
+        searchButtonAudioLabel: "buscar",
+        abortButton: "Abortar",
+        cancelButton: "Cancelar",
+        closeButton: "Cerrar",
+        backButton: "Atr\xE1s",
+        continueButton: "Continuar",
+        confirmButton: "Confirmar",
+        saveButton: "Guardar",
+        setButton: "OK",
+        reloadAppButton: "Recargar app",
+        fileVersionLabel: "Versi\xF3n",
+        searchLabel: "Buscar"
+      },
+      regional: {
+        weekdays: {
+          full: [
+            "Domingo",
+            "Lunes",
+            "Martes",
+            "Mi\xE9rcoles",
+            "Jueves",
+            "Viernes",
+            "S\xE1bado"
+          ],
+          abbreviated: ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"]
+        }
+      },
+      homePage: {
+        appName: "Comms",
+        overviewHeadline: "Resumen",
+        serverAddress: "Direcci\xF3n del servidor",
+        serverAddressPlaceholder: "wss://192.168.0.69:3000",
+        connectAudioLabel: "conectar al servidor",
+        disconnectAudioLabel: "desconectar del servidor",
+        manageConnectionsAudioLabel: "gestionar conexiones",
+        yourNameLabel: "Tu nombre",
+        yourNamePlaceholder: "Juan P\xE9rez",
+        setNameButtonAudioLabel: "establecer nombre",
+        firstDayOfWeekLabel: "Primer d\xEDa de la semana",
+        manageStorageButton: "Gestionar almacenamiento",
+        transferDataButton: "Transferencia de datos",
+        scrollToChatButton: "Chats",
+        backToOverviewAudioLabel: "volver al resumen",
+        chatsHeadline: "Chats",
+        addChatAudioLabel: "nombre del nuevo chat",
+        addChatPlaceholder: "A\xF1adir chat",
+        addChatButton: "A\xF1adir chat"
+      },
+      connectionModal: {
+        connectionModalHeadline: "Gestionar Conexiones",
+        connectButtonAudioLabel: "conectar"
+      },
+      dataTransferModal: {
+        transferDataHeadline: "Transferencia de Datos",
+        selectionDescription: "Selecciona los datos que quieres transferir.",
+        dataEntryDescription: "Introduce estos datos en el otro dispositivo.",
+        dataEntryInputDescription: "Introduce los datos mostrados en el otro dispositivo.",
+        readyToReceiveDescription: "Haz clic en 'enviar' en el otro dispositivo.",
+        fromThisDeviceButton: "Desde este dispositivo",
+        toThisDeviceButton: "A este dispositivo",
+        generalHeadline: "General",
+        connectionData: "Datos de Conexi\xF3n",
+        settingsData: "Datos de Configuraci\xF3n",
+        chatsHeadline: "Chats",
+        transferChannelHeadline: "Canal de Transferencia",
+        transferKeyHeadline: "Clave de Encriptaci\xF3n de Transferencia",
+        sendButton: "Enviar",
+        filesSentCount: (count) => `Archivos enviados: ${count}.`,
+        allFilesSent: "Hecho.",
+        filesReceivedCount: (count) => `Archivos recibidos: ${count}.`
+      },
+      storage: {
+        noItemSelected: "Ning\xFAn elemento seleccionado",
+        notAFile: "(no es un archivo)",
+        contentEmpty: "(vac\xEDo)",
+        path: "Ruta",
+        content: "Contenido",
+        deleteItem: "Eliminar elemento"
+      },
+      chatPage: {
+        closeChatAudioLabe: "cerrar chat",
+        chatSettingsAudioLabel: "configuraci\xF3n del chat",
+        pages: {
+          settings: "Configuraci\xF3n",
+          messages: "Mensajes",
+          tasks: "Tareas",
+          calendar: "Calendario"
+        },
+        settings: {
+          settingsHeadline: "Configuraci\xF3n",
+          primaryChannelLabel: "Canal principal",
+          setPrimaryChannelButtonAudioLabel: "establecer canal principal",
+          newSecondaryChannelPlaceholder: "A\xF1adir canal secundario",
+          newSecondaryChannelAudioLabel: "nombre del nuevo canal secundario",
+          addSecondaryChannelButtonAudioLabel: "a\xF1adir canal secundario",
+          encryptionKeyLabel: "Clave de encriptaci\xF3n",
+          setEncryptionKeyButtonAudioLabel: "establecer clave de encriptaci\xF3n",
+          showEncryptionKey: "Mostrar clave de encriptaci\xF3n",
+          deleteChatButton: "Eliminar todo el chat"
+        },
+        message: {
+          messagesHeadline: "Mensajes",
+          composerInputPlaceholder: "Escribe un mensaje...",
+          sendMessageButtonAudioLabel: "enviar mensaje",
+          showMessageInfoButtonAudioLabel: "mostrar informaci\xF3n del mensaje",
+          messageInfoHeadline: "Informaci\xF3n del Mensaje",
+          sentBy: "Enviado por",
+          timeSent: "Hora de env\xEDo",
+          channel: "Canal",
+          messageContent: "Contenido del mensaje",
+          copyMessageButton: "Copiar mensaje",
+          resendMessageButton: "Reenviar mensaje",
+          decryptMessageButton: "Desencriptar mensaje",
+          deleteMessageButton: "Eliminar mensaje"
+        },
+        task: {
+          newBoardNamePlaceholder: "Crear un tablero",
+          createBoardButtonAudioLabel: "crear tablero",
+          noBoardSelected: "Ning\xFAn tablero seleccionado",
+          boardNotFound: "Tablero no encontrado",
+          closeBoard: "cerrar tablero",
+          showBoardSettingsButtonAudioLabel: "mostrar configuraci\xF3n del tablero",
+          listViewButtonAudioLabel: "vista de lista",
+          kanbanViewButtonAudioLabel: "vista kanban",
+          statusViewButtonAudioLabel: "vista de cuadr\xEDcula de estado",
+          filterTasksButtonAudioLabel: "filtrar tareas",
+          createTaskButtonAudioLabel: "crear nueva tarea",
+          boardSettingsHeadline: "Configuraci\xF3n del Tablero",
+          boardNameInputLabel: "Nombre del tablero",
+          deleteBoardButton: "Eliminar tablero y todas las tareas",
+          taskSettingsHeadline: "Editar Tarea",
+          taskNameLabel: "T\xEDtulo",
+          taskCategoryLabel: "Categor\xEDa",
+          taskStatusLabel: "Estado",
+          taskPriorityLabel: "Prioridad",
+          taskDescriptionLabel: "Descripci\xF3n",
+          taskDateLabel: "Fecha",
+          taskTimeLabel: "Hora",
+          deleteTaskButton: "Eliminar tarea",
+          filterTasksHeadline: "Filtrar Tareas",
+          renameCategoryInputPlaceholder: "Renombrar categor\xEDa"
+        },
+        calendar: {
+          todayButtonAudioLabel: "ir a hoy",
+          previousMonthButtonAudioLabel: "mes anterior",
+          nextMonthButtonAudioLabel: "mes siguiente",
+          yearInputAudioLabel: "a\xF1o",
+          monthInputAudioLabel: "mes",
+          yearInputPlaceholder: "2000",
+          monthInputPlaceholder: "01",
+          searchEventsHeadline: "Buscar Eventos",
+          events: "Eventos",
+          noEvents: "No hay eventos"
+        }
+      }
+    }
   };
   var language = navigator.language.substring(0, 2);
   var translations = allTranslations[language] || allTranslations.en;

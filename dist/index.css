@@ -757,7 +757,6 @@ body[showing-chat] #chat-page-wrapper {
 .file-browser .scroll-area {
   flex: 1;
   width: 100%;
-  height: 100%;
   overflow-y: auto;
   padding: var(--content-padding);
 }

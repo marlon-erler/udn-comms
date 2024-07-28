@@ -28,7 +28,6 @@ export default class SearchViewModel<T> {
 
   applySearch = (): void => {
     this.appliedQuery.value = this.searchInput.value;
-    console.trace("applying search");
 
     this.matchingObjects.clear();
     for (const object of this.allObjects.value.values()) {
