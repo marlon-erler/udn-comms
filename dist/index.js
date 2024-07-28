@@ -2353,6 +2353,7 @@
     // state
     newBoardNameInput = new State("");
     boardViewModels = new MapState();
+    isShowingBoadList = new State(true);
     selectedBoardId = new State(
       void 0
     );
@@ -2380,6 +2381,9 @@
       this.updateBoardIndices();
     };
     // view
+    toggleBoardList = () => {
+      this.isShowingBoadList.value = !this.isShowingBoadList.value;
+    };
     showBoardInList = (boardInfo) => {
       const boardViewModel = new BoardViewModel(
         this.coreViewModel,
@@ -2578,7 +2582,8 @@
         noBoardSelected: "No board selected",
         boardNotFound: "Board not found",
         ///
-        closeBoard: "close board",
+        closeBoardButtonAudioLabel: "close board",
+        toggleBoardButtonAudioLabel: "toggle board list",
         showBoardSettingsButtonAudioLabel: "show board settigns",
         listViewButtonAudioLabel: "list view",
         kanbanViewButtonAudioLabel: "kanban view",
@@ -2685,10 +2690,10 @@
       },
       dataTransferModal: {
         transferDataHeadline: "Daten\xFCbertragung",
-        selectionDescription: "W\xE4hlen Sie die Daten aus, die Sie \xFCbertragen m\xF6chten.",
-        dataEntryDescription: "Geben Sie diese Informationen auf dem anderen Ger\xE4t ein.",
-        dataEntryInputDescription: "Geben Sie die auf dem anderen Ger\xE4t angezeigten Informationen ein.",
-        readyToReceiveDescription: "Klicken Sie auf dem anderen Ger\xE4t auf 'Senden'.",
+        selectionDescription: "W\xE4hle die Daten aus, die du \xFCbertragen m\xF6chtest.",
+        dataEntryDescription: "Gib diese Informationen auf dem anderen Ger\xE4t ein.",
+        dataEntryInputDescription: "Gib die auf dem anderen Ger\xE4t angezeigten Informationen ein.",
+        readyToReceiveDescription: "Klicke auf dem anderen Ger\xE4t auf 'Senden'.",
         fromThisDeviceButton: "Von diesem Ger\xE4t",
         toThisDeviceButton: "An dieses Ger\xE4t",
         generalHeadline: "Allgemein",
@@ -2752,7 +2757,8 @@
           createBoardButtonAudioLabel: "board erstellen",
           noBoardSelected: "Kein Board ausgew\xE4hlt",
           boardNotFound: "Board nicht gefunden",
-          closeBoard: "Board schlie\xDFen",
+          closeBoardButtonAudioLabel: "board schlie\xDFen",
+          toggleBoardButtonAudioLabel: "board-liste ein/ausblenden",
           showBoardSettingsButtonAudioLabel: "Board-Einstellungen anzeigen",
           listViewButtonAudioLabel: "Listenansicht",
           kanbanViewButtonAudioLabel: "Kanban-Ansicht",
@@ -2918,7 +2924,8 @@
           createBoardButtonAudioLabel: "crear tablero",
           noBoardSelected: "Ning\xFAn tablero seleccionado",
           boardNotFound: "Tablero no encontrado",
-          closeBoard: "cerrar tablero",
+          closeBoardButtonAudioLabel: "cerrar tablero",
+          toggleBoardButtonAudioLabel: "mostrar o ocultar lista de tableros",
           showBoardSettingsButtonAudioLabel: "mostrar configuraci\xF3n del tablero",
           listViewButtonAudioLabel: "vista de lista",
           kanbanViewButtonAudioLabel: "vista kanban",
@@ -4176,11 +4183,20 @@
     return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "ghost",
-        "aria-label": translations.chatPage.task.closeBoard,
+        class: "ghost board-close-button",
+        "aria-label": translations.chatPage.task.closeBoardButtonAudioLabel,
         "on:click": boardViewModel.close
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost board-toggle-button",
+        "aria-label": translations.chatPage.task.toggleBoardButtonAudioLabel,
+        "on:click": boardViewModel.taskPageViewModel.toggleBoardList,
+        "toggle:selected": boardViewModel.taskPageViewModel.isShowingBoadList
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "dock_to_left")
     ), /* @__PURE__ */ createElement(
       "button",
       {
@@ -4273,7 +4289,7 @@
         return BoardPage(selectedBoard);
       }
     );
-    return /* @__PURE__ */ createElement("div", { id: "task-page", "toggle:isshowingboard": isShowingBoard }, /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { id: "task-page", "toggle:isshowingboard": isShowingBoard, "set:showingboardlist": taskPageViewModel.isShowingBoadList }, /* @__PURE__ */ createElement(
       "div",
       {
         id: "board-list",

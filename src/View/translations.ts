@@ -193,7 +193,8 @@ const englishTranslations = {
 
       ///
 
-      closeBoard: "close board",
+      closeBoardButtonAudioLabel: "close board",
+      toggleBoardButtonAudioLabel: "toggle board list",
       showBoardSettingsButtonAudioLabel: "show board settigns",
 
       listViewButtonAudioLabel: "list view",
@@ -444,7 +445,8 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
         noBoardSelected: "Kein Board ausgewählt",
         boardNotFound: "Board nicht gefunden",
 
-        closeBoard: "Board schließen",
+        closeBoardButtonAudioLabel: "board schließen",
+        toggleBoardButtonAudioLabel: "board-liste ein/ausblenden",
         showBoardSettingsButtonAudioLabel: "Board-Einstellungen anzeigen",
 
         listViewButtonAudioLabel: "Listenansicht",
@@ -676,7 +678,8 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
         noBoardSelected: "Ningún tablero seleccionado",
         boardNotFound: "Tablero no encontrado",
 
-        closeBoard: "cerrar tablero",
+        closeBoardButtonAudioLabel: "cerrar tablero",
+        toggleBoardButtonAudioLabel: "mostrar o ocultar lista de tableros",
         showBoardSettingsButtonAudioLabel: "mostrar configuración del tablero",
 
         listViewButtonAudioLabel: "vista de lista",

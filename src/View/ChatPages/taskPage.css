@@ -76,6 +76,22 @@
   display: flex;
 }
 
+#chat-page > div > #main > #task-page .board-close-button {
+  display: none;
+}
+
+#chat-page > div > #main > #task-page .board-toggle-button {
+  display: flex;
+}
+
+#chat-page
+  > div
+  > #main
+  > #task-page[isshowingboard][showingboardlist="false"]
+  #board-list {
+  display: none;
+}
+
 @media (min-width: 640px) {
   #chat-page > div > #main > #task-page .task-grid {
     display: grid;
@@ -98,5 +114,13 @@
 
   #chat-page > div > #main > #task-page[isshowingboard] #board-content {
     display: flex;
+  }
+
+  #chat-page > div > #main > #task-page .board-close-button {
+    display: flex;
+  }
+
+  #chat-page > div > #main > #task-page .board-toggle-button {
+    display: none;
   }
 }

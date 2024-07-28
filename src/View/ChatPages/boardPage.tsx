@@ -10,7 +10,6 @@ import { BoardStatusGridPage } from "./boardStatusGridPage";
 import { BoardViewToggleButton } from "../Components/boardViewToggleButton";
 import { SearchModal } from "../Modals/searchModal";
 import { TaskSettingsModal } from "../Modals/taskSettingsModal";
-import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
 import { TaskViewModelToEntry } from "../Components/taskEntry";
 import { translations } from "../translations";
 
@@ -60,11 +59,19 @@ export function BoardPage(boardViewModel: BoardViewModel) {
       <div class="toolbar">
         <span>
           <button
-            class="ghost"
-            aria-label={translations.chatPage.task.closeBoard}
+            class="ghost board-close-button"
+            aria-label={translations.chatPage.task.closeBoardButtonAudioLabel}
             on:click={boardViewModel.close}
           >
             <span class="icon">arrow_back</span>
+          </button>
+          <button
+            class="ghost board-toggle-button"
+            aria-label={translations.chatPage.task.toggleBoardButtonAudioLabel}
+            on:click={boardViewModel.taskPageViewModel.toggleBoardList}
+            toggle:selected={boardViewModel.taskPageViewModel.isShowingBoadList}
+          >
+            <span class="icon">dock_to_left</span>
           </button>
           <button
             class="ghost"

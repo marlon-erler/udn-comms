@@ -45,7 +45,7 @@ export function TaskPage(taskPageViewModel: TaskPageViewModel) {
   );
 
   return (
-    <div id="task-page" toggle:isshowingboard={isShowingBoard}>
+    <div id="task-page" toggle:isshowingboard={isShowingBoard}  set:showingboardlist={taskPageViewModel.isShowingBoadList}>
       <div
         id="board-list"
         class="pane-wrapper side background"

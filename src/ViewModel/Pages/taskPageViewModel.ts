@@ -37,6 +37,8 @@ export default class TaskPageViewModel {
 
   boardViewModels: React.MapState<BoardViewModel> = new React.MapState();
 
+  isShowingBoadList: React.State<boolean> = new React.State(true);
+
   selectedBoardId: React.State<string | undefined> = new React.State<any>(
     undefined
   );
@@ -72,6 +74,10 @@ export default class TaskPageViewModel {
   };
 
   // view
+  toggleBoardList = (): void => {
+    this.isShowingBoadList.value = !this.isShowingBoadList.value;
+  };
+
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(
       this.coreViewModel,
