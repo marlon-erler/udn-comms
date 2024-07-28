@@ -214,6 +214,7 @@ const englishTranslations = {
       taskSettingsHeadline: "Edit Task",
 
       taskNameLabel: "Title",
+      taskBoardLabel: "Board",
 
       taskCategoryLabel: "Category",
       taskStatusLabel: "Status",
@@ -456,6 +457,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
         taskSettingsHeadline: "Aufgabe bearbeiten",
 
         taskNameLabel: "Titel",
+        taskBoardLabel: "Board",
 
         taskCategoryLabel: "Kategorie",
         taskStatusLabel: "Status",
@@ -683,6 +685,7 @@ const allTranslations: { [language: string]: typeof englishTranslations } = {
         taskSettingsHeadline: "Editar Tarea",
 
         taskNameLabel: "Título",
+        taskBoardLabel: "Tablero",
 
         taskCategoryLabel: "Categoría",
         taskStatusLabel: "Estado",

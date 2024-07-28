@@ -4,14 +4,12 @@ import BoardsAndTasksModel, {
   TaskFileContent,
 } from "../../Model/Files/boardsAndTasksModel";
 
-import BoardViewModel from "./boardViewModel";
-import CalendarPageViewModel from "./calendarPageViewModel";
+import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import { IndexManager } from "../../Model/Utility/utility";
 import TaskViewModel from "./taskViewModel";
 
 export default class TaskContainingPageViewModel {
-  coreViewModel: CoreViewModel;
   boardsAndTasksModel: BoardsAndTasksModel;
 
   // state
@@ -30,6 +28,7 @@ export default class TaskContainingPageViewModel {
       this.boardsAndTasksModel.createTask(boardId);
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
+      this.chatViewModel,
       this.boardsAndTasksModel,
       this,
       taskFileContent
@@ -59,10 +58,10 @@ export default class TaskContainingPageViewModel {
 
   // init
   constructor(
-    coreViewModel: CoreViewModel,
+    public coreViewModel: CoreViewModel,
+    public chatViewModel: ChatViewModel,
     boardsAndTasksModel: BoardsAndTasksModel
   ) {
-    this.coreViewModel = coreViewModel;
     this.boardsAndTasksModel = boardsAndTasksModel;
   }
 }

@@ -14,6 +14,12 @@ export const StringToOption: React.StateItemConverter<string> = (
   return Option(string, string, false);
 };
 
+export const EntryToOption: React.StateItemConverter<Entry> = (
+  entry: Entry
+) => {
+  return Option(entry[1], entry[0], false);
+};
+
 export const VersionIdToOption: React.StateItemConverter<string> = (
   versionId: string
 ) => {
@@ -22,3 +28,5 @@ export const VersionIdToOption: React.StateItemConverter<string> = (
   const readableName = `${date} ${time}`;
   return Option(readableName, versionId, false);
 };
+
+export type Entry = [string, string];

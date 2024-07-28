@@ -16,8 +16,6 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   calendarModel: CalendarModel;
   boardsAndTasksModel: BoardsAndTasksModel;
 
-  chatViewModel: ChatViewModel;
-
   // data
   get monthString(): string {
     return CalendarModel.getMonthString(
@@ -51,6 +49,7 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
 
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
+      this.chatViewModel,
       this.boardsAndTasksModel,
       this,
       taskFileContent
@@ -99,6 +98,7 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
 
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
+      this.chatViewModel,
       this.boardsAndTasksModel,
       this,
       taskFileContent
@@ -181,12 +181,12 @@ export default class CalendarPageViewModel extends TaskContainingPageViewModel {
   // init
   constructor(
     public coreViewModel: CoreViewModel,
+    public chatViewModel: ChatViewModel,
     storageModel: StorageModel,
     calendarModel: CalendarModel,
     boardsAndTasksModel: BoardsAndTasksModel,
-    chatViewModel: ChatViewModel
   ) {
-    super(coreViewModel, boardsAndTasksModel);
+    super(coreViewModel, chatViewModel, boardsAndTasksModel);
 
     this.storageModel = storageModel;
     this.calendarModel = calendarModel;

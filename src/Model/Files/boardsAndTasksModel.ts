@@ -140,6 +140,12 @@ export default class BoardsAndTasksModel {
     return boardInfoFileContentOrNull;
   };
 
+  getBoardName = (boardId: string): string => {
+    const boardInfo: BoardInfoFileContent|null = this.getBoardInfo(boardId);
+    if (boardInfo == null) return "";
+    return boardInfo.name;
+  }
+
   //tasks
   createTask = (boardId: string): TaskFileContent => {
     const taskFileContent: TaskFileContent =

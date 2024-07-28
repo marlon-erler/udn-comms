@@ -5,6 +5,7 @@ import BoardsAndTasksModel, {
   TaskFileContent,
 } from "../../Model/Files/boardsAndTasksModel";
 
+import ChatViewModel from "../Chat/chatViewModel";
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
 import SearchViewModel from "../Utility/searchViewModel";
@@ -16,7 +17,7 @@ import TaskViewModel from "./taskViewModel";
 export default class BoardViewModel extends TaskContainingPageViewModel {
   storageModel: StorageModel;
   boardsAndTasksModel: BoardsAndTasksModel;
-
+  
   taskPageViewModel: TaskPageViewModel;
 
   // data
@@ -137,6 +138,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
 
     const taskViewModel: TaskViewModel = new TaskViewModel(
       this.coreViewModel,
+      this.chatViewModel,
       this.boardsAndTasksModel,
       this,
       taskFileContent
@@ -200,6 +202,7 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
 
       const taskViewModel: TaskViewModel = new TaskViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.boardsAndTasksModel,
         this,
         taskFileContent
@@ -233,12 +236,13 @@ export default class BoardViewModel extends TaskContainingPageViewModel {
   // init
   constructor(
     public coreViewModel: CoreViewModel,
+    public chatViewModel: ChatViewModel,
     storageModel: StorageModel,
     boardsAndTasksModel: BoardsAndTasksModel,
     taskPageViewModel: TaskPageViewModel,
     boardInfo: BoardInfoFileContent
   ) {
-    super(coreViewModel, boardsAndTasksModel);
+    super(coreViewModel, chatViewModel, boardsAndTasksModel);
 
     // set
     this.storageModel = storageModel;

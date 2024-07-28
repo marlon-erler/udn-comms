@@ -1,6 +1,10 @@
 import * as React from "bloatless-react";
 
-import { StringToOption, VersionIdToOption } from "../Components/option";
+import {
+  EntryToOption,
+  StringToOption,
+  VersionIdToOption,
+} from "../Components/option";
 
 import { DangerousActionButton } from "../Components/dangerousActionButton";
 import TaskViewModel from "../../ViewModel/Pages/taskViewModel";
@@ -36,6 +40,21 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
             <div>
               <span>{translations.chatPage.task.taskNameLabel}</span>
               <input bind:value={taskViewModel.name}></input>
+            </div>
+          </label>
+
+          <label class="tile flex-no">
+            <span class="icon">category</span>
+            <div>
+              <span>{translations.chatPage.task.taskBoardLabel}</span>
+              <select
+                bind:value={taskViewModel.boardId}
+                children:append={[
+                  taskViewModel.chatViewModel.taskBoardSuggestions,
+                  EntryToOption,
+                ]}
+              ></select>
+              <span class="icon">arrow_drop_down</span>
             </div>
           </label>
 

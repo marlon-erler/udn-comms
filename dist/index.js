@@ -841,6 +841,11 @@
       );
       return boardInfoFileContentOrNull;
     };
+    getBoardName = (boardId) => {
+      const boardInfo = this.getBoardInfo(boardId);
+      if (boardInfo == null) return "";
+      return boardInfo.name;
+    };
     //tasks
     createTask = (boardId) => {
       const taskFileContent = _BoardsAndTasksModel.createTaskFileContent(v4_default(), "", boardId);
@@ -1483,8 +1488,9 @@
   // src/ViewModel/Pages/taskViewModel.ts
   var TaskViewModel = class {
     // init
-    constructor(coreViewModel, boardsAndTasksModel, containingModel, taskFileContent) {
+    constructor(coreViewModel, chatViewModel, boardsAndTasksModel, containingModel, taskFileContent) {
       this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
       this.boardsAndTasksModel = boardsAndTasksModel;
       this.containingModel = containingModel;
       this.task = taskFileContent;
@@ -1642,7 +1648,12 @@
 
   // src/ViewModel/Pages/taskContainingPageViewModel.ts
   var TaskContainingPageViewModel = class {
-    coreViewModel;
+    // init
+    constructor(coreViewModel, chatViewModel, boardsAndTasksModel) {
+      this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+    }
     boardsAndTasksModel;
     // state
     taskIndexManager = new IndexManager(
@@ -1655,6 +1666,7 @@
       const taskFileContent = this.boardsAndTasksModel.createTask(boardId);
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.boardsAndTasksModel,
         this,
         taskFileContent
@@ -1679,19 +1691,15 @@
         boardViewModel.updateIndex();
       }
     };
-    // init
-    constructor(coreViewModel, boardsAndTasksModel) {
-      this.coreViewModel = coreViewModel;
-      this.boardsAndTasksModel = boardsAndTasksModel;
-    }
   };
 
   // src/ViewModel/Pages/calendarPageViewModel.ts
   var CalendarPageViewModel = class extends TaskContainingPageViewModel {
     // init
-    constructor(coreViewModel, storageModel2, calendarModel, boardsAndTasksModel, chatViewModel) {
-      super(coreViewModel, boardsAndTasksModel);
+    constructor(coreViewModel, chatViewModel, storageModel2, calendarModel, boardsAndTasksModel) {
+      super(coreViewModel, chatViewModel, boardsAndTasksModel);
       this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
       this.storageModel = storageModel2;
       this.calendarModel = calendarModel;
       this.boardsAndTasksModel = boardsAndTasksModel;
@@ -1708,7 +1716,6 @@
     storageModel;
     calendarModel;
     boardsAndTasksModel;
-    chatViewModel;
     // data
     get monthString() {
       return CalendarModel.getMonthString(
@@ -1735,6 +1742,7 @@
       );
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.boardsAndTasksModel,
         this,
         taskFileContent
@@ -1773,6 +1781,7 @@
       }
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.boardsAndTasksModel,
         this,
         taskFileContent
@@ -2095,9 +2104,10 @@
   // src/ViewModel/Pages/boardViewModel.ts
   var BoardViewModel = class extends TaskContainingPageViewModel {
     // init
-    constructor(coreViewModel, storageModel2, boardsAndTasksModel, taskPageViewModel, boardInfo) {
-      super(coreViewModel, boardsAndTasksModel);
+    constructor(coreViewModel, chatViewModel, storageModel2, boardsAndTasksModel, taskPageViewModel, boardInfo) {
+      super(coreViewModel, chatViewModel, boardsAndTasksModel);
       this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
       this.storageModel = storageModel2;
       this.boardsAndTasksModel = boardsAndTasksModel;
       this.taskPageViewModel = taskPageViewModel;
@@ -2228,6 +2238,7 @@
       }
       const taskViewModel = new TaskViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.boardsAndTasksModel,
         this,
         taskFileContent
@@ -2277,6 +2288,7 @@
         if (taskFileContent == null) continue;
         const taskViewModel = new TaskViewModel(
           this.coreViewModel,
+          this.chatViewModel,
           this.boardsAndTasksModel,
           this,
           taskFileContent
@@ -2307,8 +2319,9 @@
   // src/ViewModel/Pages/taskPageViewModel.ts
   var TaskPageViewModel = class {
     // init
-    constructor(coreViewModel, storageModel2, boardModel, chatViewModel) {
+    constructor(coreViewModel, chatViewModel, storageModel2, boardModel) {
       this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
       this.storageModel = storageModel2;
       this.boardsAndTasksModel = boardModel;
       this.chatViewModel = chatViewModel;
@@ -2321,7 +2334,6 @@
     }
     storageModel;
     boardsAndTasksModel;
-    chatViewModel;
     // data
     boardIndexManager = new IndexManager(
       (boardViewModel) => boardViewModel.name.value
@@ -2369,12 +2381,17 @@
     showBoardInList = (boardInfo) => {
       const boardViewModel = new BoardViewModel(
         this.coreViewModel,
+        this.chatViewModel,
         this.storageModel,
         this.boardsAndTasksModel,
         this,
         boardInfo
       );
       this.boardViewModels.set(boardInfo.fileId, boardViewModel);
+      this.chatViewModel.taskBoardSuggestions.set(boardInfo.fileId, [
+        boardInfo.fileId,
+        this.boardsAndTasksModel.getBoardName(boardInfo.fileId)
+      ]);
     };
     selectBoard = (boardViewModel) => {
       this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
@@ -2431,16 +2448,16 @@
       this.chatListViewModel = chatListViewModel2;
       this.calendarViewModel = new CalendarPageViewModel(
         coreViewModel,
+        this,
         this.storageModel,
         this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
-        this.chatModel.fileModel.boardsAndTasksModel,
-        this
+        this.chatModel.fileModel.boardsAndTasksModel
       );
       this.taskPageViewModel = new TaskPageViewModel(
         this.coreViewModel,
+        this,
         this.storageModel,
-        this.chatModel.fileModel.boardsAndTasksModel,
-        this
+        this.chatModel.fileModel.boardsAndTasksModel
       );
       this.messagePageViewModel = new MessagePageViewModel(
         this.coreViewModel,
@@ -2475,6 +2492,7 @@
     );
     index = new State(0);
     hasUnreadMessages = new State(false);
+    taskBoardSuggestions = new MapState();
     // view
     open = () => {
       this.chatListViewModel.openChat(this);
@@ -2754,6 +2772,7 @@
         ///
         taskSettingsHeadline: "Edit Task",
         taskNameLabel: "Title",
+        taskBoardLabel: "Board",
         taskCategoryLabel: "Category",
         taskStatusLabel: "Status",
         taskPriorityLabel: "Priority",
@@ -2923,6 +2942,7 @@
           deleteBoardButton: "Board und alle Aufgaben l\xF6schen",
           taskSettingsHeadline: "Aufgabe bearbeiten",
           taskNameLabel: "Titel",
+          taskBoardLabel: "Board",
           taskCategoryLabel: "Kategorie",
           taskStatusLabel: "Status",
           taskPriorityLabel: "Priorit\xE4t",
@@ -3086,6 +3106,7 @@
           deleteBoardButton: "Eliminar tablero y todas las tareas",
           taskSettingsHeadline: "Editar Tarea",
           taskNameLabel: "T\xEDtulo",
+          taskBoardLabel: "Tablero",
           taskCategoryLabel: "Categor\xEDa",
           taskStatusLabel: "Estado",
           taskPriorityLabel: "Prioridad",
@@ -3177,6 +3198,9 @@
   var StringToOption = (string) => {
     return Option(string, string, false);
   };
+  var EntryToOption = (entry) => {
+    return Option(entry[1], entry[0], false);
+  };
   var VersionIdToOption = (versionId) => {
     const [date, rest] = versionId.split("T");
     const [time] = rest.split(".");
@@ -3228,7 +3252,16 @@
         "bind:value": taskViewModel.selectedVersionId,
         "children:append": [taskViewModel.versionIds, VersionIdToOption]
       }
-    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskBoardLabel), /* @__PURE__ */ createElement(
+      "select",
+      {
+        "bind:value": taskViewModel.boardId,
+        "children:append": [
+          taskViewModel.chatViewModel.taskBoardSuggestions,
+          EntryToOption
+        ]
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
       "textarea",
       {
         rows: "10",
@@ -4776,9 +4809,10 @@
 
   // src/ViewModel/Global/coreViewModel.ts
   var CoreViewModel = class {
-    // drag&drop
+    // DRAG & DROP
     draggedObject = new State(void 0);
-    // suggestions
+    // SUGGESTIONS
+    // boards & tasks
     boardSearchSuggestions = new ListState();
     taskCategorySuggestions = new ListState();
     taskStatusSuggestions = new ListState();

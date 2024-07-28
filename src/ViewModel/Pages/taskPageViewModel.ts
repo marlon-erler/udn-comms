@@ -14,8 +14,6 @@ export default class TaskPageViewModel {
   storageModel: StorageModel;
   boardsAndTasksModel: BoardsAndTasksModel;
 
-  chatViewModel: ChatViewModel;
-
   // data
   boardIndexManager: IndexManager<BoardViewModel> = new IndexManager(
     (boardViewModel: BoardViewModel) => boardViewModel.name.value
@@ -77,12 +75,18 @@ export default class TaskPageViewModel {
   showBoardInList = (boardInfo: BoardInfoFileContent): void => {
     const boardViewModel: BoardViewModel = new BoardViewModel(
       this.coreViewModel,
+      this.chatViewModel,
       this.storageModel,
       this.boardsAndTasksModel,
       this,
       boardInfo
     );
     this.boardViewModels.set(boardInfo.fileId, boardViewModel);
+
+    this.chatViewModel.taskBoardSuggestions.set(boardInfo.fileId, [
+      boardInfo.fileId,
+      this.boardsAndTasksModel.getBoardName(boardInfo.fileId),
+    ]);
   };
 
   selectBoard = (boardViewModel: BoardViewModel): void => {
@@ -145,9 +149,9 @@ export default class TaskPageViewModel {
   // init
   constructor(
     public coreViewModel: CoreViewModel,
+    public chatViewModel: ChatViewModel,
     storageModel: StorageModel,
-    boardModel: BoardsAndTasksModel,
-    chatViewModel: ChatViewModel
+    boardModel: BoardsAndTasksModel
   ) {
     this.storageModel = storageModel;
     this.boardsAndTasksModel = boardModel;

@@ -5,6 +5,7 @@ import BoardsAndTasksModel, {
 } from "../../Model/Files/boardsAndTasksModel";
 import { localeCompare, padZero } from "../../Model/Utility/utility";
 
+import ChatViewModel from "../Chat/chatViewModel";
 import CoreViewModel from "../Global/coreViewModel";
 import TaskContainingPageViewModel from "./taskContainingPageViewModel";
 import { allowDrag } from "../../View/utility";
@@ -195,6 +196,7 @@ export default class TaskViewModel {
   // init
   constructor(
     public coreViewModel: CoreViewModel,
+    public chatViewModel: ChatViewModel,
     boardsAndTasksModel: BoardsAndTasksModel,
     containingModel: TaskContainingPageViewModel,
     taskFileContent: TaskFileContent

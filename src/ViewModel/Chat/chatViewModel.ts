@@ -10,6 +10,7 @@ import CalendarPageViewModel from "../Pages/calendarPageViewModel";
 import ChatListViewModel from "./chatListViewModel";
 import { Color } from "../../colors";
 import CoreViewModel from "../Global/coreViewModel";
+import { Entry } from "../../View/Components/option";
 import MessagePageViewModel from "../Pages/messagePageViewModel";
 import SettingsPageViewModel from "../Pages/settingsPageViewModel";
 import SettingsViewModel from "../Global/settingsViewModel";
@@ -34,6 +35,8 @@ export default class ChatViewModel {
 
   index: React.State<number> = new React.State(0);
   hasUnreadMessages: React.State<boolean> = new React.State(false);
+
+  taskBoardSuggestions: React.MapState<Entry> = new React.MapState();
 
   // view
   open = (): void => {
@@ -109,16 +112,16 @@ export default class ChatViewModel {
     // page viewModels
     this.calendarViewModel = new CalendarPageViewModel(
       coreViewModel,
+      this,
       this.storageModel,
       this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
-      this.chatModel.fileModel.boardsAndTasksModel,
-      this
+      this.chatModel.fileModel.boardsAndTasksModel
     );
     this.taskPageViewModel = new TaskPageViewModel(
       this.coreViewModel,
+      this,
       this.storageModel,
-      this.chatModel.fileModel.boardsAndTasksModel,
-      this
+      this.chatModel.fileModel.boardsAndTasksModel
     );
     this.messagePageViewModel = new MessagePageViewModel(
       this.coreViewModel,
