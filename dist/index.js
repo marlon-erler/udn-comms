@@ -2776,6 +2776,8 @@
           renameCategoryInputPlaceholder: "Kategorie umbenennen"
         },
         calendar: {
+          eventsBoard: "Ereignisse",
+          ///
           todayButtonAudioLabel: "gehe zu heute",
           previousMonthButtonAudioLabel: "vorheriger monat",
           nextMonthButtonAudioLabel: "n\xE4chster monat",
@@ -2940,6 +2942,8 @@
           renameCategoryInputPlaceholder: "Renombrar categor\xEDa"
         },
         calendar: {
+          eventsBoard: "Eventos",
+          ///
           todayButtonAudioLabel: "ir a hoy",
           previousMonthButtonAudioLabel: "mes anterior",
           nextMonthButtonAudioLabel: "mes siguiente",
