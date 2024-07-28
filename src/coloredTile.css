@@ -1,0 +1,26 @@
+.colored-tile {
+    position: relative;
+
+    display: flex;
+    align-items: flex-end !important;
+    justify-content: start;
+
+    overflow: hidden;
+}
+
+.colored-tile h2 {
+    margin: 0px;
+}
+
+.colored-tile .shadow {
+    position: absolute;
+
+    left: -15px;
+    bottom: -45px;
+
+    font-size: 7rem;
+
+    opacity: 0.1;
+
+    white-space: nowrap;
+}

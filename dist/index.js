@@ -49,9 +49,6 @@
   var v4_default = v4;
 
   // node_modules/bloatless-react/index.ts
-  function UUID() {
-    return v4_default();
-  }
   var State = class {
     _value;
     _bindings = /* @__PURE__ */ new Set();
@@ -181,43 +178,6 @@
   function bulkSubscribe(statesToSubscibe, fn) {
     statesToSubscibe.forEach((state) => state.subscribeSilent(fn));
   }
-  function persistState(localStorageKey, state) {
-    state.subscribe(() => {
-      const stringifiedValue = state.toString();
-      localStorage.setItem(localStorageKey, stringifiedValue);
-    });
-  }
-  function restoreState(localStorageKey, initialStateValue) {
-    const storedString = localStorage.getItem(localStorageKey) ?? JSON.stringify(initialStateValue);
-    const convertedValue = JSON.parse(storedString);
-    const state = new State(convertedValue);
-    persistState(localStorageKey, state);
-    return state;
-  }
-  function restoreListState(localStorageKey, initialItems = []) {
-    const storedString = localStorage.getItem(localStorageKey) ?? "";
-    try {
-      const array = JSON.parse(storedString);
-      if (!Array.isArray(array)) throw "";
-      initialItems = array;
-    } catch {
-    }
-    const state = new ListState(initialItems);
-    persistState(localStorageKey, state);
-    return state;
-  }
-  function restoreMapState(localStorageKey, initialItems = []) {
-    const storedString = localStorage.getItem(localStorageKey) ?? "";
-    try {
-      const array = JSON.parse(storedString);
-      if (!Array.isArray(array)) throw "";
-      initialItems = array;
-    } catch {
-    }
-    const state = new MapState(initialItems);
-    persistState(localStorageKey, state);
-    return state;
-  }
   function createElement(tagName, attributes = {}, ...children) {
     const element = document.createElement(tagName);
     if (attributes != null)
@@ -287,9 +247,7 @@
                 break;
               }
               case "append":
-              case "appendandscroll":
               case "prepend": {
-                element.style.scrollBehavior = "smooth";
                 try {
                   const [listState, toElement] = value;
                   listState.handleAddition((newItem) => {
@@ -304,11 +262,14 @@
                       element.prepend(child);
                     }
                   });
-                } catch {
-                  throw `error: cannot process subscribe:children directive because StateItemConverter is not defined. Usage: "subscribe:children={[list, converter]}"; you can find a more detailed example in the documentation`;
+                } catch (error) {
+                  console.error(error);
+                  throw `error: cannot process subscribe:children directive. 
+ Usage: "children:append={[list, converter]}"; you can find a more detailed example in the documentation.`;
                 }
               }
             }
+            break;
           }
           default:
             element.setAttribute(attributename, value);
@@ -318,7 +279,794 @@
     return element;
   }
 
-  // src/cryptUtility.ts
+  // src/Model/Utility/typeSafety.ts
+  var DATA_VERSION = "v2";
+  function checkIsValidObject(object) {
+    return object.dataVersion == DATA_VERSION;
+  }
+  function checkMatchesObjectStructure(objectToCheck, reference) {
+    if (typeof reference != "object") {
+      return typeof objectToCheck == typeof reference;
+    }
+    for (const key of Object.keys(reference)) {
+      const requiredType = typeof reference[key];
+      const actualType = typeof objectToCheck[key];
+      if (requiredType != actualType) return false;
+      if (Array.isArray(reference[key]) || reference[key] instanceof Set) {
+        if (objectToCheck[key].length == 0) continue;
+        if (objectToCheck[key].size == 0) continue;
+        const [firstOfObjectToCheck] = objectToCheck[key];
+        const [fisrtOfReference] = reference[key];
+        const doesFirstItemMatch = checkMatchesObjectStructure(
+          firstOfObjectToCheck,
+          fisrtOfReference
+        );
+        if (doesFirstItemMatch == false) return false;
+      } else if (requiredType == "object") {
+        const doesNestedObjectMatch = checkMatchesObjectStructure(
+          objectToCheck[key],
+          reference[key]
+        );
+        if (doesNestedObjectMatch == false) return false;
+      }
+    }
+    return true;
+  }
+
+  // src/Model/Utility/utility.ts
+  function generateRandomToken(length) {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return array.join("");
+  }
+  function createTimestamp() {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  }
+  function checkDoesObjectMatchReference(reference, stringEntryObject) {
+    reference_entry_loop: for (const referenceEntry of Object.entries(
+      reference
+    )) {
+      const [referenceKey, referenceValue] = referenceEntry;
+      const stringEntryObjectValue = stringEntryObject[referenceKey];
+      if (referenceValue == void 0) return false;
+      if (referenceValue[0] == "-") {
+        const strippedReferenceValue = referenceValue.toString().substring(1);
+        if (strippedReferenceValue == "" && stringEntryObjectValue != void 0 && stringEntryObjectValue != "") {
+          return false;
+        }
+        if (stringEntryObjectValue == strippedReferenceValue) {
+          return false;
+        }
+      } else {
+        if (referenceValue == "" && (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")) {
+          return false;
+        } else if (referenceValue == "") {
+          continue reference_entry_loop;
+        }
+        if (stringEntryObjectValue != referenceValue) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  function collectObjectValuesForKey(key, converter, objects) {
+    const values = /* @__PURE__ */ new Set();
+    for (const object of objects) {
+      const stringEntryObject = converter(object);
+      const stringEntryObjectValue = stringEntryObject[key];
+      if (stringEntryObjectValue == void 0 || stringEntryObjectValue == "")
+        continue;
+      values.add(stringEntryObjectValue.toString());
+    }
+    return [...values.values()];
+  }
+  function checkDoesObjectMatchSearch(query, getStringsOfObject, object) {
+    if (query == "") return true;
+    const stringsInObject = getStringsOfObject(object);
+    const wordsInObject = [];
+    for (const string of stringsInObject) {
+      const lowercaseWordsInString = string.toString().toLowerCase().split(" ").filter((word) => word != "");
+      wordsInObject.push(...lowercaseWordsInString);
+    }
+    const lowercaseWordsInQuery = query.toLowerCase().split(" ").filter((word) => word != "");
+    for (const queryWord of lowercaseWordsInQuery) {
+      if (queryWord[0] == "-") {
+        const wordContent = queryWord.substring(1);
+        if (wordsInObject.includes(wordContent)) {
+          return false;
+        }
+      } else {
+        if (wordsInObject.includes(queryWord) == false) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  var HandlerManager = class {
+    handlers = /* @__PURE__ */ new Set();
+    // manage
+    addHandler = (handler) => {
+      this.handlers.add(handler);
+    };
+    deleteHandler = (handler) => {
+      this.handlers.delete(handler);
+    };
+    // trigger
+    trigger = (item) => {
+      for (const handler of this.handlers) {
+        handler(item);
+      }
+    };
+  };
+  var IndexManager = class {
+    itemToString;
+    sortedStrings = [];
+    // methods
+    update = (items) => {
+      this.sortedStrings = [];
+      let strings = [];
+      for (const item of items) {
+        const string = this.itemToString(item);
+        strings.push(string);
+      }
+      this.sortedStrings = strings.sort(localeCompare);
+    };
+    getIndex = (item) => {
+      const string = this.itemToString(item);
+      const index = this.sortedStrings.indexOf(string);
+      return index;
+    };
+    // init
+    constructor(itemToString) {
+      this.itemToString = itemToString;
+    }
+  };
+  function getLocalStorageItemAndClear(key) {
+    const value = localStorage.getItem(key);
+    localStorage.removeItem(key);
+    if (value != null) localStorage.setItem(`_${key}`, value);
+    return value;
+  }
+  function stringify(data) {
+    return JSON.stringify(data, null, 4);
+  }
+  function padZero(string, length) {
+    return (string ?? "").padStart(length, "0");
+  }
+  function parse(string) {
+    try {
+      return JSON.parse(string);
+    } catch {
+      return {};
+    }
+  }
+  function parseValidObject(string, reference) {
+    const parsed = parse(string);
+    if (checkIsValidObject(parsed) == false) return null;
+    const doesMatchReference = checkMatchesObjectStructure(
+      parsed,
+      reference
+    );
+    if (doesMatchReference == false) return null;
+    return parsed;
+  }
+  function parseOrFallback(inputString) {
+    try {
+      return JSON.parse(inputString);
+    } catch {
+      return inputString;
+    }
+  }
+  function parseArray(inputString) {
+    const parsed = parseOrFallback(inputString);
+    if (Array.isArray(parsed) == false) return [];
+    return parsed;
+  }
+  function localeCompare(a, b) {
+    return a.localeCompare(b);
+  }
+
+  // src/Model/Global/storageModel.ts
+  var PATH_COMPONENT_SEPARATOR = "\\";
+  var StorageModel = class _StorageModel {
+    storageEntryTree = {};
+    // read
+    read = (pathComponents) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      return localStorage.getItem(pathString);
+    };
+    list = (pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const component of pathComponents) {
+        const nextParent = currentParent[component];
+        if (nextParent == void 0) return [];
+        currentParent = nextParent;
+      }
+      return [...Object.keys(currentParent).sort(localeCompare)];
+    };
+    // write
+    write = (pathComponents, value) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.setItem(pathString, value);
+      this.updateTree(...pathComponents);
+    };
+    remove = (pathComponents, shouldInitialize = true) => {
+      const pathString = _StorageModel.pathComponentsToString(
+        ...pathComponents
+      );
+      localStorage.removeItem(pathString);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+    };
+    rename = (sourcePathComponents, destinationPathComponents, shouldInitialize = true) => {
+      const content = this.read(sourcePathComponents);
+      if (content == null) return false;
+      this.write(destinationPathComponents, content);
+      this.remove(sourcePathComponents);
+      if (shouldInitialize == true) {
+        this.initializeTree();
+      }
+      return true;
+    };
+    // recursion
+    recurse = (pathComponents, fn) => {
+      loop_over_files: for (const key of Object.keys(localStorage)) {
+        const pathComponentsOfCurrentEntity = _StorageModel.stringToPathComponents(key);
+        loop_over_path_components: for (let i = 0; i < pathComponents.length; i++) {
+          if (!pathComponentsOfCurrentEntity[i]) continue loop_over_files;
+          if (pathComponentsOfCurrentEntity[i] != pathComponents[i])
+            continue loop_over_files;
+        }
+        fn(pathComponentsOfCurrentEntity);
+      }
+      this.initializeTree();
+    };
+    removeRecursively = (pathComponents) => {
+      this.recurse(pathComponents, (path) => this.remove(path, false));
+      this.initializeTree();
+    };
+    renameRecursively = (sourcePathComponents, destinationPathComponents) => {
+      this.recurse(sourcePathComponents, (path) => {
+        const relativePathOfCurrentEntity = path.slice(
+          sourcePathComponents.length
+        );
+        const destinationPathComponentsOfCurrentEntity = [
+          ...destinationPathComponents,
+          ...relativePathOfCurrentEntity
+        ];
+        this.rename(path, destinationPathComponentsOfCurrentEntity, false);
+      });
+      this.initializeTree();
+    };
+    // stringifiable
+    writeStringifiable = (pathComponents, value) => {
+      const valueString = stringify(value);
+      this.write(pathComponents, valueString);
+    };
+    readStringifiable = (pathComponents, reference) => {
+      const valueString = this.read(pathComponents);
+      if (!valueString) return null;
+      const object = parseValidObject(valueString, reference);
+      if (object == null) return null;
+      return object;
+    };
+    // tree
+    initializeTree = () => {
+      console.log("initializing tree");
+      this.storageEntryTree = {};
+      for (const key of Object.keys(localStorage)) {
+        const components = _StorageModel.stringToPathComponents(key);
+        this.updateTree(...components);
+      }
+    };
+    updateTree = (...pathComponents) => {
+      let currentParent = this.storageEntryTree;
+      for (const pathPart of pathComponents) {
+        if (!currentParent[pathPart]) {
+          currentParent[pathPart] = {};
+        }
+        currentParent = currentParent[pathPart];
+      }
+    };
+    printTree = () => {
+      return stringify(this.storageEntryTree);
+    };
+    // init
+    constructor() {
+      this.initializeTree();
+    }
+    // utility
+    static getFileName = (pathComponents) => {
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
+    static getFileNameFromString = (pathString) => {
+      const pathComponents = this.stringToPathComponents(pathString);
+      return pathComponents[pathComponents.length - 1] || "\\";
+    };
+    static pathComponentsToString = (...pathComponents) => {
+      return pathComponents.filter((x) => x != "").join(PATH_COMPONENT_SEPARATOR);
+    };
+    static stringToPathComponents = (string) => {
+      return string.split(PATH_COMPONENT_SEPARATOR).filter((x) => x != "");
+    };
+    static join = (...items) => {
+      let allComponents = [];
+      for (const item of items) {
+        const parts = this.stringToPathComponents(item);
+        allComponents.push(...parts);
+      }
+      return _StorageModel.pathComponentsToString(...allComponents);
+    };
+    static getPath(locationName, filePath) {
+      return [DATA_VERSION, locationName, ...filePath];
+    }
+  };
+  var filePaths = {
+    connectionModel: {
+      socketAddress: ["socket-address"],
+      reconnectAddress: ["reconnect-address"],
+      outbox: ["outbox"],
+      mailboxes: ["mailboxes"],
+      previousAddresses: ["previous-addresses"]
+    },
+    chat: {
+      base: [],
+      chatBase: (id) => [id],
+      info: (id) => [...filePaths.chat.chatBase(id), "info"],
+      color: (id) => [...filePaths.chat.chatBase(id), "color"],
+      messages: (id) => [...filePaths.chat.chatBase(id), "messages"],
+      lastUsedPage: (id) => [
+        ...filePaths.chat.chatBase(id),
+        "last-used-page"
+      ],
+      files: (id) => [...filePaths.chat.chatBase(id), "files"]
+    },
+    settingsModel: {
+      username: ["user-name"],
+      firstDayOfWeek: ["first-day-of-week"]
+    }
+  };
+
+  // src/Model/Files/calendarModel.ts
+  var CalendarModel = class _CalendarModel {
+    storageModel;
+    fileModel;
+    settingsModel;
+    // paths
+    getBasePath = () => {
+      return this.fileModel.getModelContainerPath("calendar" /* ModelCalendar */);
+    };
+    getViewPath = () => {
+      return [...this.getBasePath(), "view" /* ModelView */];
+    };
+    getMonthContainerPath = () => {
+      return [...this.getBasePath(), "months" /* Months */];
+    };
+    getMonthPath = (monthString) => {
+      return [...this.getMonthContainerPath(), monthString];
+    };
+    // main
+    storeTaskReference = (taskFileContent) => {
+      if (taskFileContent.date == void 0) return;
+      const monthString = _CalendarModel.isoToMonthString(
+        taskFileContent.date
+      );
+      const monthPath = this.getMonthPath(monthString);
+      const referencePath = [...monthPath, taskFileContent.fileId];
+      this.storageModel.write(referencePath, "");
+    };
+    deleteTaskReference = (monthString, taskId) => {
+      const monthPath = this.getMonthPath(monthString);
+      const referencePath = [...monthPath, taskId];
+      this.storageModel.write(referencePath, "");
+    };
+    listTaskIds = (monthString) => {
+      const monthPath = this.getMonthPath(monthString);
+      return this.storageModel.list(monthPath);
+    };
+    generateMonthGrid = (year, month, defaultValueCreator) => {
+      const date = /* @__PURE__ */ new Date();
+      const isCurrentMonth = year == date.getFullYear() && month == date.getMonth() + 1;
+      date.setFullYear(year);
+      date.setMonth(month - 1);
+      date.setDate(1);
+      const offset = date.getDay() - parseInt(this.settingsModel.firstDayOfWeek);
+      date.setMonth(month);
+      date.setDate(-1);
+      const daysInMonth = date.getDate() + 1;
+      const grid = {
+        offset,
+        firstDayOfWeek: parseInt(this.settingsModel.firstDayOfWeek),
+        isCurrentMonth,
+        year,
+        month,
+        days: {}
+      };
+      for (let i = 0; i < daysInMonth; i++) {
+        const paddedDate = _CalendarModel.padDateOrMonth(
+          (i + 1).toString()
+        );
+        grid.days[paddedDate] = defaultValueCreator();
+      }
+      return grid;
+    };
+    // init
+    constructor(storageModel2, settingsModel2, fileModel) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
+      this.fileModel = fileModel;
+    }
+    // utility
+    static isoToMonthString = (dateISOString) => {
+      const [year, month, _] = dateISOString.split("-");
+      return _CalendarModel.getMonthString(year, month);
+    };
+    static isoToDateString = (dateISOString) => {
+      const [year, month, date, _] = dateISOString.split("-");
+      const paddedDate = _CalendarModel.padDateOrMonth(date ?? "");
+      return paddedDate;
+    };
+    static getMonthString = (year = "", month = "") => {
+      const paddedYear = year.padStart(4, "0");
+      const paddedMonth = _CalendarModel.padDateOrMonth(month);
+      return `${paddedYear}-${paddedMonth}`;
+    };
+    static getISODateString = (year, month, date) => {
+      const monthString = _CalendarModel.getMonthString(year, month);
+      const paddedDate = _CalendarModel.padDateOrMonth(date);
+      return `${monthString}-${paddedDate}`;
+    };
+    static padDateOrMonth = (input) => {
+      return input.padStart(2, "0");
+    };
+  };
+
+  // src/colors.ts
+  var Color = /* @__PURE__ */ ((Color2) => {
+    Color2["Standard"] = "standard";
+    Color2["Coral"] = "coral";
+    Color2["Yellow"] = "yellow";
+    Color2["Mint"] = "mint";
+    Color2["LightBlue"] = "lightblue";
+    Color2["Blue"] = "blue";
+    Color2["purple"] = "purple";
+    return Color2;
+  })(Color || {});
+
+  // src/Model/Files/boardsAndTasksModel.ts
+  var BoardsAndTasksModel = class _BoardsAndTasksModel {
+    storageModel;
+    settingsModel;
+    chatModel;
+    fileModel;
+    calendarModel;
+    // data
+    boardHandlerManager = new HandlerManager();
+    taskHandlerManager = new HandlerManager();
+    // paths
+    getBasePath = () => {
+      return this.fileModel.getModelContainerPath("tasks" /* ModelTask */);
+    };
+    getViewPath = () => {
+      return [...this.getBasePath(), "view" /* ModelView */];
+    };
+    getBoardFilePath = (boardId) => {
+      return [...this.fileModel.getFilePath(boardId)];
+    };
+    getTaskFilePath = (taskId) => {
+      return [...this.fileModel.getFilePath(taskId)];
+    };
+    getBoardContainerPath = () => {
+      return [...this.getBasePath(), "boards" /* Boards */];
+    };
+    getBoardDirectoryPath = (boardId) => {
+      return [...this.getBoardContainerPath(), boardId];
+    };
+    getTaskContainerPath = (boardId) => {
+      return [
+        ...this.getBoardDirectoryPath(boardId),
+        "tasks" /* BoardTasks */
+      ];
+    };
+    getTaskReferencePath = (boardId, fileId) => {
+      return [...this.getTaskContainerPath(boardId), fileId];
+    };
+    // handlers
+    handleFileContent = (fileContent) => {
+      if (checkMatchesObjectStructure(fileContent, BoardInfoFileContentReference) == true) {
+        this.handleBoard(fileContent);
+      } else if (checkMatchesObjectStructure(fileContent, TaskFileContentReference) == true) {
+        this.handleTask(fileContent);
+      }
+    };
+    handleBoard = (boardInfoFileContent) => {
+      this.updateBoard(boardInfoFileContent);
+    };
+    handleTask = (taskFileContent) => {
+      this.updateTask(taskFileContent);
+    };
+    // boards
+    createBoard = (name) => {
+      const boardInfoFileContent = _BoardsAndTasksModel.createBoardInfoFileContent(
+        v4_default(),
+        name,
+        "standard" /* Standard */
+      );
+      return boardInfoFileContent;
+    };
+    updateBoard = (boardInfoFileContent) => {
+      this.storeBoard(boardInfoFileContent);
+      this.boardHandlerManager.trigger(boardInfoFileContent);
+    };
+    updateBoardAndSend = (boardInfoFileContent) => {
+      this.updateBoard(boardInfoFileContent);
+      this.chatModel.sendMessage("", boardInfoFileContent);
+    };
+    storeBoard = (boardInfoFileContent) => {
+      this.fileModel.storeFileContent(boardInfoFileContent);
+      const boardDirectoryPath = this.getBoardDirectoryPath(
+        boardInfoFileContent.fileId
+      );
+      this.storageModel.write(boardDirectoryPath, "");
+    };
+    deleteBoard = (boardId) => {
+      const boardFilePath = this.getBoardFilePath(boardId);
+      const boardDirectoryPath = this.getBoardDirectoryPath(boardId);
+      this.storageModel.removeRecursively(boardFilePath);
+      this.storageModel.removeRecursively(boardDirectoryPath);
+    };
+    listBoardIds = () => {
+      const boardContainerPath = this.getBoardContainerPath();
+      const boardIds = this.storageModel.list(boardContainerPath);
+      return boardIds;
+    };
+    getBoardInfo = (fileId) => {
+      const boardInfoFileContentOrNull = this.fileModel.getLatestFileContent(
+        fileId,
+        BoardInfoFileContentReference
+      );
+      return boardInfoFileContentOrNull;
+    };
+    //tasks
+    createTask = (boardId) => {
+      const taskFileContent = _BoardsAndTasksModel.createTaskFileContent(v4_default(), "", boardId);
+      return taskFileContent;
+    };
+    updateTask = (taskFileContent) => {
+      this.storeTask(taskFileContent);
+      this.taskHandlerManager.trigger(taskFileContent);
+    };
+    updateTaskAndSend = (taskFileContent) => {
+      this.updateTask(taskFileContent);
+      this.chatModel.sendMessage("", taskFileContent);
+    };
+    storeTask = (taskFileContent) => {
+      this.fileModel.storeFileContent(taskFileContent);
+      const taskReferencePath = this.getTaskReferencePath(
+        taskFileContent.boardId,
+        taskFileContent.fileId
+      );
+      this.storageModel.write(taskReferencePath, "");
+      this.calendarModel.storeTaskReference(taskFileContent);
+    };
+    listTaskIds = (boardId) => {
+      const taskContainerPath = this.getTaskContainerPath(boardId);
+      const fileIds = this.storageModel.list(taskContainerPath);
+      return fileIds;
+    };
+    listTaskVersionIds = (taskId) => {
+      const versionIds = this.fileModel.listFileContentIds(taskId);
+      return versionIds;
+    };
+    getLatestTaskFileContent = (taskId) => {
+      const taskFileContentOrNull = this.fileModel.getLatestFileContent(taskId, TaskFileContentReference);
+      return taskFileContentOrNull;
+    };
+    getSpecificTaskFileContent = (taskId, versionId) => {
+      const taskFileContentOrNull = this.fileModel.getFileContent(
+        taskId,
+        versionId,
+        TaskFileContentReference
+      );
+      return taskFileContentOrNull;
+    };
+    deleteTask = (boardId, taskId) => {
+      const taskFilePath = this.getTaskFilePath(taskId);
+      this.storageModel.removeRecursively(taskFilePath);
+      this.deleteTaskReference(boardId, taskId);
+    };
+    deleteTaskReference = (boardId, taskId) => {
+      const taskReferencePath = this.getTaskReferencePath(
+        boardId,
+        taskId
+      );
+      this.storageModel.removeRecursively(taskReferencePath);
+    };
+    // init
+    constructor(storageModel2, settingsModel2, chatModel, fileModel) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
+      this.chatModel = chatModel;
+      this.fileModel = fileModel;
+      this.calendarModel = new CalendarModel(
+        this.storageModel,
+        this.settingsModel,
+        this.fileModel
+      );
+    }
+    // utility
+    static createBoardInfoFileContent = (fileId, name, color) => {
+      const fileContent = FileModel2.createFileContent(
+        fileId,
+        "board-info"
+      );
+      return {
+        ...fileContent,
+        name,
+        color
+      };
+    };
+    static createTaskFileContent = (fileId, name, boardId) => {
+      const fileContent = FileModel2.createFileContent(
+        fileId,
+        "task"
+      );
+      return {
+        ...fileContent,
+        name,
+        boardId
+      };
+    };
+  };
+  var BoardInfoFileContentReference = {
+    dataVersion: DATA_VERSION,
+    fileId: "string",
+    fileContentId: "",
+    creationDate: "",
+    type: "board-info",
+    name: "",
+    color: ""
+  };
+  var TaskFileContentReference = {
+    dataVersion: DATA_VERSION,
+    fileId: "string",
+    fileContentId: "",
+    creationDate: "",
+    type: "task",
+    name: "",
+    boardId: ""
+  };
+
+  // src/Model/Files/fileModel.ts
+  var FileModel2 = class _FileModel {
+    storageModel;
+    settingsModel;
+    chatModel;
+    boardsAndTasksModel;
+    // paths
+    getBasePath = () => {
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.files(this.chatModel.id)
+      );
+    };
+    getFileContainerPath = () => {
+      return [...this.getBasePath(), "data" /* Data */];
+    };
+    getModelContainerPath = (modelName) => {
+      return [...this.getBasePath(), "model" /* Model */, modelName];
+    };
+    getFilePath = (fileId) => {
+      return [...this.getFileContainerPath(), fileId];
+    };
+    getFileContentPath = (fileId, fileContentId) => {
+      const filePath = this.getFilePath(fileId);
+      return [...filePath, fileContentId];
+    };
+    // handlers
+    handleStringifiedFileContent = (stringifiedFileContent) => {
+      const fileContent = parseValidObject(
+        stringifiedFileContent,
+        FileContentReference
+      );
+      if (fileContent == null) return;
+      this.handleFileContent(fileContent);
+    };
+    handleFileContent = (fileContent) => {
+      const didStore = this.storeFileContent(fileContent);
+      if (didStore == false) return;
+      this.boardsAndTasksModel.handleFileContent(fileContent);
+    };
+    // methods
+    addFileContentAndSend = (fileContent) => {
+      this.handleFileContent(fileContent);
+      this.chatModel.sendMessage("", fileContent);
+    };
+    // storage
+    storeFileContent = (fileContent) => {
+      const fileContentPath = this.getFileContentPath(
+        fileContent.fileId,
+        fileContent.fileContentId
+      );
+      const existingFileContent = this.storageModel.read(fileContentPath);
+      if (existingFileContent != null) return false;
+      const stringifiedContent = stringify(fileContent);
+      this.storageModel.write(fileContentPath, stringifiedContent);
+      return true;
+    };
+    listFileIds = () => {
+      return this.storageModel.list(this.getBasePath());
+    };
+    listFileContentIds = (fileId) => {
+      const filePath = this.getFilePath(fileId);
+      return this.storageModel.list(filePath);
+    };
+    selectLatestFileContentId = (fileContentIds) => {
+      return fileContentIds[fileContentIds.length - 1];
+    };
+    getFileContent = (fileId, fileContentName, reference) => {
+      const filePath = this.getFileContentPath(fileId, fileContentName);
+      const fileContentOrNull = this.storageModel.readStringifiable(
+        filePath,
+        reference
+      );
+      return fileContentOrNull;
+    };
+    getLatestFileContent = (fileId, reference) => {
+      const fileContentsIds = this.listFileContentIds(fileId);
+      const latestFileContentId = this.selectLatestFileContentId(fileContentsIds);
+      if (latestFileContentId == void 0) return null;
+      const fileContent = this.getFileContent(
+        fileId,
+        latestFileContentId,
+        reference
+      );
+      return fileContent;
+    };
+    // init
+    constructor(storageModel2, settingsModel2, chatModel) {
+      this.chatModel = chatModel;
+      this.settingsModel = settingsModel2;
+      this.storageModel = storageModel2;
+      this.boardsAndTasksModel = new BoardsAndTasksModel(
+        this.storageModel,
+        this.settingsModel,
+        chatModel,
+        this
+      );
+    }
+    // utility
+    static generateFileContentId = (creationDate) => {
+      return creationDate + v4_default();
+    };
+    static createFileContent = (fileId, type) => {
+      const creationDate = createTimestamp();
+      const fileContentId = _FileModel.generateFileContentId(creationDate);
+      return {
+        dataVersion: DATA_VERSION,
+        fileId,
+        fileContentId,
+        creationDate,
+        type
+      };
+    };
+  };
+  var FileContentReference = {
+    dataVersion: DATA_VERSION,
+    fileId: "",
+    fileContentId: "",
+    creationDate: "",
+    type: ""
+  };
+
+  // src/Model/Utility/crypto.ts
   var IV_SIZE = 12;
   var ENCRYPTION_ALG = "AES-GCM";
   async function encryptString(plaintext, passphrase) {
@@ -391,726 +1139,2931 @@
     return new Uint8Array(array);
   }
 
-  // src/utility.tsx
-  var storageKeys = {
-    viewType(id) {
-      return id + "view-type";
-    },
-    hasUnread(id) {
-      return id + "has-unread-messages";
-    },
-    primaryChannel(id) {
-      return id + "primary-channel";
-    },
-    secondaryChannels(id) {
-      return id + "secondary-channels";
-    },
-    encyptionKey(id) {
-      return id + "encryption-key";
-    },
-    messages(id) {
-      return id + "messages";
-    },
-    objects(id) {
-      return id + "items";
-    },
-    outbox(id) {
-      return id + "outbox";
-    },
-    itemOutbox(id) {
-      return id + "item-outbox";
-    },
-    composingMessage(id) {
-      return id + "composing-message";
-    }
-  };
-  var stringToOptionTag = (value) => {
-    return /* @__PURE__ */ createElement("option", null, value);
-  };
-  function getRawObjectIndex(latest) {
-    const dateString = latest.date || "0000-00-00";
-    const [year, month, date] = dateString.split("-");
-    const timeString = latest.time || "00:00";
-    const [hour, minute] = timeString.split(":");
-    const hourInMinutes = parseInt(hour) * 60;
-    const minutesTotal = parseInt(minute) + hourInMinutes;
-    const paddedMinutes = minutesTotal.toString().padStart(4, "0");
-    const priority = latest.priority ?? 0;
-    const priorityInverse = 100 - priority;
-    const paddedPriority = priorityInverse.toString().padStart(3, "0");
-    return `${year}${month}${date}${paddedMinutes}${paddedPriority}`;
-  }
-
-  // src/translations.ts
-  var englishTranslations = {
-    // general
-    set: "Set",
-    save: "Save",
-    search: "Search",
-    reset: "Reset",
-    back: "Back",
-    undoChanges: "Undo changes",
-    close: "Close",
-    discard: "Discard",
-    rename: "Rename",
-    firstDayOfWeek: "First day of week",
-    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    previousMonth: "previous month",
-    nextMonth: "next month",
-    // settings
-    settings: "Settings",
-    showSettings: "Show settings",
-    zoomOut: "Zoom Out",
-    zoomIn: "Zoom In",
-    repairApp: "Repair App",
-    clearAddresses: "Clear previous connections",
-    clearCategories: "Clear suggestions for object categories",
-    clearStatuses: "Clear suggestions for object statuses",
-    clearObjectFilters: "Clear object filters",
-    // overview
-    overview: "Overview",
-    connection: "Connection",
-    chats: "Chats",
-    yourName: "Your Name",
-    namePlaceholder: "Jane Doe",
-    encryptionUnavailableTitle: "Encryption is not available",
-    encryptionUnavailableMessage: "Obtain this app via HTTPS or continue without encryption",
-    serverAddress: "Server Address",
-    serverAddressPlaceholder: "wss://192.168.0.69:3000",
-    previousConnections: "Previous connections",
-    connectToServer: "Connect",
-    disconnect: "Disconnect",
-    mailbox: "Mailbox",
-    requestMailbox: "Enable",
-    deleteMailbox: "Disable",
-    mailboxExplanation: "When you're disconnected, messages will be kept on the server temporarily",
-    outbox: "Outbox",
-    outboxText: (count) => {
-      switch (count) {
-        case 0:
-          return "All items sent";
-        case 1:
-          return "1 item in outbox";
-        default:
-          return `${count} items in outbox`;
-      }
-    },
-    primaryChannel: "Primary channel",
-    primaryChannelPlaceholder: "my-channel",
-    addChat: "Add",
-    // chat
-    showChatOptions: "show chat options",
-    configureChatTitle: "Configure Chat",
-    secondaryChannel: "Secondary channel",
-    secondaryChannelPlaceholder: "Add secondary channel",
-    addSecondaryChannel: "Add secondary channel",
-    removeSecondaryChannel: "Remove secondary channel",
-    encryptionKey: "Encryption key",
-    encryptionKeyPlaceholder: "n10d2482dg283hg",
-    showKey: "Show key",
-    clearObjects: "Delete all objects",
-    clearChatMessages: "Clear chat messages",
-    removeChat: "Remove chat",
-    messageInOutbox: "Pending",
-    noChatSelected: "No chat selected",
-    composerPlaceholder: "Type a message...",
-    sendMessage: "Send",
-    // messages
-    resendMessage: "Resend message",
-    decryptMessage: "Decrypt message",
-    copyMessage: "Copy message",
-    deleteMessage: "Delete message",
-    // objects
-    objectsInTotal: "Objects in total: ",
-    showObjects: "show objects",
-    createObject: "create object",
-    untitledObject: "Untitled Object",
-    filterObjects: "Filter Objects",
-    searchTitle: "Search",
-    searchPlaceholder: "Note 2000-12-31",
-    searchTitleText: (term, resultCount) => term == "" ? `Objects in total: ${resultCount}` : `Matches for "${term}": ${resultCount}`,
-    viewAll: "All",
-    viewNotes: "Notes",
-    viewKanban: "Kanban",
-    viewStatus: "Status",
-    viewCalendar: "Calendar",
-    noObjects: "No objects",
-    objectTitle: "Object title",
-    objectTitlePlaceholder: "My object",
-    objectVersion: "Object version",
-    note: "Note",
-    noteContentPlaceholder: "Take a note...",
-    category: "Category",
-    categoryPlaceholder: "Define a category",
-    priority: "Priority",
-    priorityPlaceholder: "2",
-    status: "Status",
-    statusPlaceholder: "Pending",
-    date: "Date",
-    time: "Time",
-    resendObjects: "Resend all objects",
-    deleteObject: "Delete object"
-  };
-  var allTranslations = {
-    en: englishTranslations,
-    es: {
-      // general
-      set: "Guardar",
-      save: "Guardar",
-      search: "Buscar",
-      reset: "Restablecer",
-      back: "Atr\xE1s",
-      undoChanges: "Deshacer",
-      close: "Cerrar",
-      discard: "Descartar",
-      rename: "Renombrar",
-      firstDayOfWeek: "Primer d\xEDa de la semana",
-      weekdays: ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"],
-      previousMonth: "\xDAltimo mes",
-      nextMonth: "Pr\xF3ximo mes",
-      // settings
-      settings: "Configuraci\xF3n",
-      showSettings: "Mostrar configuraci\xF3n",
-      zoomOut: "Alejar",
-      zoomIn: "Acercar",
-      repairApp: "Reparar Aplicaci\xF3n",
-      clearAddresses: "Borrar conexiones previas",
-      clearCategories: "Borrar sugerencias para categor\xEDas de objetos",
-      clearStatuses: "Borrar sugerencias para estados de objetos",
-      clearObjectFilters: "Borrar filtros de objetos",
-      // overview
-      overview: "Resumen",
-      connection: "Conexi\xF3n",
-      chats: "Chats",
-      yourName: "Tu nombre",
-      namePlaceholder: "Juan P\xE9rez",
-      encryptionUnavailableTitle: "Cifrado no disponible",
-      encryptionUnavailableMessage: "Obt\xE9n esta aplicaci\xF3n a trav\xE9s de HTTPS o contin\xFAa sin cifrado",
-      serverAddress: "Direcci\xF3n del servidor",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      previousConnections: "Conexiones anteriores",
-      connectToServer: "Conectar",
-      disconnect: "Desconectar",
-      mailbox: "Buz\xF3n",
-      requestMailbox: "Activar",
-      deleteMailbox: "Desactivar",
-      mailboxExplanation: "Si est\xE1s sin conexi\xF3n, los mensajes se guardar\xE1n temporalmente en el servidor",
-      outbox: "Bandeja de salida",
-      outboxText: (count) => {
-        switch (count) {
-          case 0:
-            return "Todos los elementos enviados";
-          case 1:
-            return "1 elemento en bandeja de salida";
-          default:
-            return `${count} elementos en bandeja de salida`;
-        }
-      },
-      primaryChannel: "Canal principal",
-      primaryChannelPlaceholder: "mi-canal",
-      addChat: "A\xF1adir",
-      // chat
-      showChatOptions: "Mostrar opciones del chat",
-      configureChatTitle: "Configurar chat",
-      secondaryChannel: "Canal secundario",
-      secondaryChannelPlaceholder: "A\xF1adir canal secundario",
-      addSecondaryChannel: "A\xF1adir canal secundario",
-      removeSecondaryChannel: "Eliminar canal secundario",
-      encryptionKey: "Clave de cifrado",
-      encryptionKeyPlaceholder: "n10d2482dg283hg",
-      showKey: "Mostrar clave",
-      clearObjects: "Eliminar todos los objetos",
-      clearChatMessages: "Eliminar todos los mensajes",
-      removeChat: "Eliminar chat",
-      messageInOutbox: "Pendiente",
-      noChatSelected: "Selecciona un chat",
-      composerPlaceholder: "Escribe un mensaje...",
-      sendMessage: "Enviar",
-      // messages
-      resendMessage: "Reenviar mensaje",
-      decryptMessage: "Descifrar mensaje",
-      copyMessage: "Copiar mensaje",
-      deleteMessage: "Eliminar este mensaje",
-      // objects
-      objectsInTotal: "Objetos en total: ",
-      showObjects: "mostrar objetos",
-      createObject: "a\xF1adir nuevo objeto",
-      untitledObject: "Sin t\xEDtulo",
-      filterObjects: "Filtrar objetos",
-      searchTitle: "Buscar",
-      searchPlaceholder: "Nota 2000-12-31",
-      searchTitleText: (term, resultCount) => term == "" ? `Objetos en total: ${resultCount}` : `Resultados por "${term}": ${resultCount}`,
-      viewAll: "Todos",
-      viewNotes: "Notas",
-      viewKanban: "Kanban",
-      viewStatus: "Estado",
-      viewCalendar: "Calendario",
-      noObjects: "Sin objetos",
-      objectTitle: "T\xEDtulo",
-      objectTitlePlaceholder: "Mi objeto",
-      objectVersion: "Version del objeto",
-      note: "Nota",
-      noteContentPlaceholder: "Toma nota...",
-      category: "Categor\xEDa",
-      categoryPlaceholder: "Define una categor\xEDa",
-      priority: "Prioridad",
-      priorityPlaceholder: "2",
-      status: "Estado",
-      statusPlaceholder: "Pendiente",
-      date: "Fecha",
-      time: "Hora",
-      resendObjects: "Reenviar todos los objetos",
-      deleteObject: "Eliminar objeto"
-    },
-    de: {
-      // general
-      set: "OK",
-      save: "Sichern",
-      search: "Suchen",
-      reset: "Zur\xFCcksetzen",
-      back: "Zur\xFCck",
-      undoChanges: "\xC4nderungen verwerfen",
-      close: "Schlie\xDFen",
-      discard: "Verwerfen",
-      rename: "Umbenennen",
-      firstDayOfWeek: "Erster Wochentag",
-      weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
-      previousMonth: "Vorheriger Monat",
-      nextMonth: "N\xE4chster Monat",
-      // settings
-      settings: "Einstellungen",
-      showSettings: "Einstellungen anzeigen",
-      zoomOut: "Verkleinern",
-      zoomIn: "Vergr\xF6\xDFern",
-      repairApp: "App reparieren",
-      clearAddresses: "Vorherige Verbindungen l\xF6schen",
-      clearCategories: "Vorschl\xE4ge f\xFCr Objektkategorien l\xF6schen",
-      clearStatuses: "Vorschl\xE4ge f\xFCr Objektstaten l\xF6schen",
-      clearObjectFilters: "Objektfilter l\xF6schen",
-      // overview
-      overview: "\xDCbersicht",
-      connection: "Verbindung",
-      chats: "Chats",
-      yourName: "Dein Name",
-      namePlaceholder: "Max Mustermann",
-      encryptionUnavailableTitle: "Verschl\xFCsselung nicht m\xF6glich",
-      encryptionUnavailableMessage: "Lade diese app \xFCber HTTPS, um Nachrichten zu verschl\xFCsseln",
-      serverAddress: "Serveradresse",
-      serverAddressPlaceholder: "wss://192.168.0.69:3000",
-      previousConnections: "Vorherige Verbindungen",
-      connectToServer: "Verbinden",
-      disconnect: "Trennen",
-      mailbox: "Briefkasten",
-      requestMailbox: "Aktivieren",
-      deleteMailbox: "Deaktivieren",
-      mailboxExplanation: "Wenn du offline bist, werden Nachrichten auf dem Server gelagert",
-      outbox: "Ausgang",
-      outboxText: (count) => {
-        switch (count) {
-          case 0:
-            return "Alle Nachrichten gesendet";
-          case 1:
-            return "Eine Nachricht ausstehend";
-          default:
-            return `${count} Nachrichten ausstehend`;
-        }
-      },
-      primaryChannel: "Hauptkanal",
-      primaryChannelPlaceholder: "mein-kanal",
-      addChat: "Hinzuf\xFCgen",
-      // chat
-      showChatOptions: "Chatoptionen einblenden",
-      configureChatTitle: "Chat konfigurieren",
-      secondaryChannel: "Zweitkanal",
-      secondaryChannelPlaceholder: "Zweitkanal hinzuf\xFCgen",
-      addSecondaryChannel: "Zweitkanal hinzuf\xFCgen",
-      removeSecondaryChannel: "Zweitkanal entfernen",
-      encryptionKey: "Schl\xFCssel",
-      encryptionKeyPlaceholder: "n10d2482dg283hg",
-      showKey: "Schl\xFCssel anzeigen",
-      clearObjects: "Alle Objekte l\xF6schen",
-      clearChatMessages: "Nachrichtenverlauf leeren",
-      removeChat: "Chat l\xF6schen",
-      messageInOutbox: "Ausstehend",
-      noChatSelected: "Kein Chat ausgew\xE4hlt",
-      composerPlaceholder: "Neue Nachricht...",
-      sendMessage: "Senden",
-      // messages
-      resendMessage: "Erneut senden",
-      decryptMessage: "Nachricht entschl\xFCsseln",
-      copyMessage: "Nachricht kopieren",
-      deleteMessage: "Nachricht l\xF6schen",
-      // objects
-      objectsInTotal: "Objekte insgesamt: ",
-      showObjects: "Objekte anzeigen",
-      createObject: "Neues Objekt erstellen",
-      untitledObject: "Unbenannt",
-      filterObjects: "Objekte filtern",
-      searchTitle: "Suchen",
-      searchPlaceholder: "Notiz 2000-12-31",
-      searchTitleText: (term, resultCount) => term == "" ? `Objekte insgesamt: ${resultCount}` : `Ergebnisse f\xFCr "${term}": ${resultCount}`,
-      viewAll: "Alle",
-      viewNotes: "Notizen",
-      viewKanban: "Kanban",
-      viewStatus: "Status",
-      viewCalendar: "Kalender",
-      noObjects: "Keine Objekte",
-      objectTitle: "Titel",
-      objectTitlePlaceholder: "Mein Objekt",
-      objectVersion: "Version des Objekts",
-      note: "Notiz",
-      noteContentPlaceholder: "Notiz eingeben...",
-      category: "Kategorie",
-      categoryPlaceholder: "Kategorie eingeben...",
-      priority: "Priorit\xE4t",
-      priorityPlaceholder: "2",
-      status: "Status",
-      statusPlaceholder: "Ausstehend",
-      date: "Datum",
-      time: "Uhrzeit",
-      resendObjects: "Objekte erneut senden",
-      deleteObject: "Objekt l\xF6schen"
-    }
-  };
-  var language = navigator.language.substring(0, 2);
-  var translation = allTranslations[language] ?? allTranslations.en;
-
-  // src/Model/chatModel.ts
-  var MessageObjectWithIndex = class {
-    constructor(messageObject, index = 0) {
-      this.id = messageObject.id;
-      this.title = messageObject.title;
-      this.contentVersions = messageObject.contentVersions;
-      this.index = new State(index);
-    }
-  };
-  var Chat = class {
+  // src/Model/Chat/chatModel.ts
+  var ChatModel = class _ChatModel {
+    connectionModel;
+    storageModel;
+    settingsModel;
+    chatListModel;
+    fileModel;
+    // data
     id;
-    viewType;
-    isSubscribed = new State(false);
-    primaryChannel = new State("");
-    hasUnreadMessages;
-    secondaryChannels;
-    encryptionKey;
-    messages;
-    objects;
-    outbox;
-    objectOutbox;
-    isOutBoxEmpty;
-    composingMessage;
-    primaryChannelInput;
-    newSecondaryChannelName;
-    cannotSendMessage;
-    cannotResendMessage;
-    cannotAddSecondaryChannel;
-    cannotSetChannel;
-    cannotUndoChannel;
-    cannotClearMessages;
-    cannotClearObjects;
-    // init
-    constructor(id = UUID()) {
-      this.id = id;
-      this.viewType = restoreState(
-        storageKeys.viewType(id),
-        "all"
-      );
-      this.primaryChannel = restoreState(
-        storageKeys.primaryChannel(id),
-        ""
-      );
-      this.secondaryChannels = restoreListState(
-        storageKeys.secondaryChannels(id)
-      );
-      this.hasUnreadMessages = restoreState(
-        storageKeys.hasUnread(id),
-        false
-      );
-      this.encryptionKey = restoreState(storageKeys.encyptionKey(id), "");
-      this.messages = restoreListState(storageKeys.messages(id));
-      this.objects = restoreMapState(storageKeys.objects(id));
-      this.outbox = restoreListState(storageKeys.outbox(id));
-      this.objectOutbox = restoreMapState(storageKeys.itemOutbox(id));
-      this.isOutBoxEmpty = createProxyState(
-        [this.outbox],
-        () => this.outbox.value.size == 0
-      );
-      bulkSubscribe(
-        [this.outbox, this.objectOutbox],
-        () => this.updateOutboxCount()
-      );
-      this.updateOutboxCount();
-      this.composingMessage = restoreState(
-        storageKeys.composingMessage(id),
-        ""
-      );
-      this.newSecondaryChannelName = new State("");
-      this.primaryChannelInput = new State(this.primaryChannel.value);
-      this.cannotSendMessage = createProxyState(
-        [this.primaryChannel, this.composingMessage, senderName],
-        () => this.primaryChannel.value == "" || this.composingMessage.value == "" || senderName.value == ""
-      );
-      this.cannotResendMessage = createProxyState(
-        [this.primaryChannel, senderName],
-        () => this.primaryChannel.value == "" || senderName.value == ""
-      );
-      this.cannotAddSecondaryChannel = createProxyState(
-        [this.newSecondaryChannelName],
-        () => this.newSecondaryChannelName.value == ""
-      );
-      this.cannotSetChannel = createProxyState(
-        [this.primaryChannelInput, this.primaryChannel],
-        () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
-      );
-      this.cannotUndoChannel = createProxyState(
-        [this.primaryChannelInput, this.primaryChannel],
-        () => this.primaryChannelInput.value == this.primaryChannel.value
-      );
-      this.cannotClearMessages = createProxyState(
-        [this.messages],
-        () => this.messages.value.size == 0
-      );
-      this.cannotClearObjects = createProxyState(
-        [this.objects],
-        () => this.objects.value.size == 0
-      );
+    info;
+    color;
+    chatMessageHandlerManager = new HandlerManager();
+    get secondaryChannels() {
+      return this.info.secondaryChannels.sort(localeCompare);
     }
-    // general
-    deleteSelf = () => {
-      Object.values(storageKeys).forEach((storageKey) => {
-        localStorage.removeItem(storageKey(this.id));
-      });
-      chats.remove(this);
-      chatIds.remove(this.id);
+    // paths
+    getBasePath = () => {
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.chatBase(this.id)
+      );
+    };
+    getInfoPath = () => {
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.info(this.id)
+      );
+    };
+    getColorPath = () => {
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.color(this.id)
+      );
+    };
+    getMessageDirPath = () => {
+      return StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.messages(this.id)
+      );
+    };
+    getMessagePath = (id) => {
+      return [...this.getMessageDirPath(), id];
     };
     // handlers
-    onmessage = async (data) => {
-      if (!data.messageChannel) return;
-      const channels = data.messageChannel.split("/");
-      if (channels.indexOf(this.primaryChannel.value) == -1) return;
-      if (data.subscribed != void 0) this.handleSubscription(data.subscribed);
-      if (!data.messageBody) return;
-      const message = JSON.parse(data.messageBody);
-      const { sender, body, channel, isoDate, messageObjectString } = message;
-      if (messageObjectString) {
-        const decryptedMessageObjectString = await decryptString(
-          messageObjectString,
-          this.encryptionKey.value
-        );
-        const messageObject = JSON.parse(decryptedMessageObjectString);
-        if (messageObject.id) return this.handleMessageObject(messageObject);
-      }
-      this.handleMessage({
-        sender,
-        body: await decryptString(body, this.encryptionKey.value),
-        channel,
-        isoDate
-      });
-    };
-    handleSubscription = (isSubscribed) => {
-      this.isSubscribed.value = isSubscribed;
-      if (isSubscribed == true) {
-        this.sendMessagesInOutbox();
-      }
-    };
-    handleMessage = (chatMessage) => {
-      this.messages.add(chatMessage);
-      if (selectedChat.value != this) this.hasUnreadMessages.value = true;
-    };
-    handleMessageObject = (messageObject) => {
-      this.addObject(messageObject, true);
-    };
-    // sending
-    sendMessagesInOutbox = () => {
-      this.outbox.value.forEach(async (message) => {
-        const isSent = await this.sendMessage(message);
-        if (isSent == true) this.outbox.remove(message);
-      });
-      this.objectOutbox.value.forEach(async (messageObject) => {
-        const chatMessage = await this.createChatMessage("", messageObject);
-        const isSent = await this.sendMessage(chatMessage);
-        if (isSent == true) this.objectOutbox.remove(messageObject.id);
-      });
-    };
-    updateOutboxCount() {
-      outboxItemCount.value = this.outbox.value.size + this.objectOutbox.value.size;
-    }
-    // messages
-    createChatMessage = async (messageText, messageObject) => {
-      const secondaryChannelNames = [
-        ...this.secondaryChannels.value.values()
-      ];
-      const allChannelNames = [
-        this.primaryChannel.value,
-        ...secondaryChannelNames
-      ];
-      const joinedChannelName = allChannelNames.join("/");
-      const chatMessage = {
-        channel: joinedChannelName,
-        sender: senderName.value,
-        body: messageText,
-        isoDate: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      if (messageObject)
-        chatMessage.messageObjectString = await encryptString(
-          JSON.stringify(messageObject),
-          this.encryptionKey.value
-        );
-      return chatMessage;
-    };
-    sendMessageFromComposer = async () => {
-      if (this.cannotSendMessage.value == true) return;
-      await this.sendMessageFromText(this.composingMessage.value);
-      this.composingMessage.value = "";
-    };
-    sendMessageFromText = async (text) => {
-      const chatMessage = await this.createChatMessage(text);
-      this.outbox.add(chatMessage);
-      this.sendMessagesInOutbox();
-    };
-    resendMessage = (chatMessage) => {
-      if (this.cannotResendMessage.value == true) return;
-      this.sendMessageFromText(chatMessage.body);
-    };
-    clearMessages = () => {
-      this.messages.clear();
-    };
-    deleteMessage = (chatMessage) => {
-      this.messages.remove(chatMessage);
-    };
-    deleteOutboxMessage = (chatMessage) => {
-      this.outbox.remove(chatMessage);
-    };
-    decryptReceivedMessage = async (chatMessage) => {
-      chatMessage.body = await decryptString(
-        chatMessage.body,
-        this.encryptionKey.value
+    handleMessage = (body) => {
+      const chatMessage = parseValidObject(
+        body,
+        ChatMessageReference
       );
-      this.messages.callSubscriptions();
+      if (chatMessage == null) return;
+      chatMessage.status = "received" /* Received */;
+      this.addMessage(chatMessage);
+      this.info.hasUnreadMessages = true;
+      this.storeInfo();
     };
-    sendMessage = async (chatMessage) => {
-      if (isConnected.value == false || this.isSubscribed.value == false)
-        return false;
-      const encryptedBody = this.encryptionKey.value == "" ? chatMessage.body : await encryptString(chatMessage.body, this.encryptionKey.value);
-      chatMessage.body = encryptedBody;
-      const messageString = JSON.stringify(chatMessage);
-      UDN.sendMessage(chatMessage.channel, messageString);
+    handleMessageSent = (chatMessage) => {
+      chatMessage.status = "sent" /* Sent */;
+      this.addMessage(chatMessage);
+    };
+    // settings
+    setPrimaryChannel = (primaryChannel) => {
+      this.info.primaryChannel = primaryChannel;
+      this.storeInfo();
+      this.subscribe();
+    };
+    setSecondaryChannels = (secondaryChannels) => {
+      this.info.secondaryChannels = secondaryChannels;
+      this.storeInfo();
+    };
+    setEncryptionKey = (key) => {
+      this.info.encryptionKey = key;
+      this.storeInfo();
+    };
+    setColor = (color) => {
+      this.color = color;
+      this.storeColor();
+    };
+    // messaging
+    addMessage = async (chatMessage) => {
+      await this.decryptMessage(chatMessage);
+      if (chatMessage.body != "") {
+        const messagePath = this.getMessagePath(chatMessage.id);
+        this.storageModel.writeStringifiable(messagePath, chatMessage);
+        this.chatMessageHandlerManager.trigger(chatMessage);
+      }
+      this.fileModel.handleStringifiedFileContent(chatMessage.stringifiedFile);
+    };
+    sendMessage = async (body, fileContent) => {
+      const senderName = this.settingsModel.username;
+      if (senderName == "") return false;
+      const allChannels = [this.info.primaryChannel];
+      for (const secondaryChannel of this.info.secondaryChannels) {
+        allChannels.push(secondaryChannel);
+      }
+      const combinedChannel = allChannels.join("/");
+      const chatMessage = await _ChatModel.createChatMessage(
+        combinedChannel,
+        senderName,
+        this.info.encryptionKey,
+        body,
+        fileContent
+      );
+      this.addMessage(chatMessage);
+      this.connectionModel.sendMessageOrStore(chatMessage);
       return true;
     };
-    // objects
-    createObjectFromTitle = (title) => {
-      const firstObjectContent = this.createObjectContent();
-      const messageObject = {
-        id: UUID(),
-        title,
-        contentVersions: {}
-      };
-      this.addObjectContent(messageObject, firstObjectContent);
-      return messageObject;
-    };
-    createObjectContent = () => {
-      return {
-        id: UUID(),
-        isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString()
-      };
-    };
-    addObjectContent = (messageObject, content) => {
-      messageObject.contentVersions[content.id] = content;
-    };
-    updateObjectContent = (messageObject, content) => {
-      const latest = this.getMostRecentContent(messageObject);
-      Object.entries(content).forEach((entry) => {
-        const [key, value] = entry;
-        latest[key] = value;
-      });
-      this.addObjectContent(messageObject, latest);
-    };
-    addObject = (messageObject, ignoreIfUnchanged = false) => {
-      const existingObject = this.objects.value.get(messageObject.id);
-      if (existingObject) {
-        let isIdentical = existingObject.title == messageObject.title;
-        existingObject.title = messageObject.title;
-        Object.values(messageObject.contentVersions).forEach((content) => {
-          if (existingObject.contentVersions[content.id]) return;
-          this.addObjectContent(existingObject, content);
-          isIdentical = false;
-        });
-        if (isIdentical && ignoreIfUnchanged) return;
-        this.objects.set(existingObject.id, existingObject);
-      } else {
-        this.objects.set(messageObject.id, messageObject);
-      }
-      const latest = this.getMostRecentContent(messageObject);
-      if (latest.categoryName) usedObjectCategories.add(latest.categoryName);
-      if (latest.status) usedObjectStatuses.add(latest.status);
-    };
-    addObjectAndSend = (messageObject) => {
-      this.addObject(messageObject);
-      this.sendObject(messageObject);
-    };
-    sendObject = (messageObject) => {
-      this.objectOutbox.set(messageObject.id, messageObject);
-      this.sendMessagesInOutbox();
-    };
-    deleteObject = (messageObject) => {
-      this.objects.remove(messageObject.id);
-      this.objectOutbox.remove(messageObject.id);
-    };
-    resendObjects = () => {
-      this.objects.value.forEach((messageObject) => {
-        this.sendObject(messageObject);
-      });
-    };
-    clearObjects = () => {
-      this.objects.clear();
-    };
-    getSortedContents = (messageObject) => {
-      const contents = Object.values(messageObject.contentVersions);
-      contents.sort(
-        (a, b) => a.isoDateVersionCreated > b.isoDateVersionCreated ? -1 : 1
+    decryptMessage = async (chatMessage) => {
+      const decryptedBody = await decryptString(
+        chatMessage.body,
+        this.info.encryptionKey
       );
-      return contents;
+      const decryptedFile = await decryptString(
+        chatMessage.stringifiedFile ?? "",
+        this.info.encryptionKey
+      );
+      chatMessage.body = decryptedBody;
+      chatMessage.stringifiedFile = decryptedFile;
     };
-    getMostRecentContentId = (messageObject) => {
-      const contents = Object.values(messageObject.contentVersions);
-      return contents[contents.length - 1].id;
+    subscribe = () => {
+      this.connectionModel.addChannel(this.info.primaryChannel);
     };
-    getMostRecentContent = (messageObject) => {
-      const id = this.getMostRecentContentId(messageObject);
-      return this.getObjectContentFromId(messageObject, id);
+    markUnread = () => {
+      this.info.hasUnreadMessages = false;
+      this.storeInfo();
     };
-    getObjectContentFromId = (messageObject, contentId) => {
-      return messageObject.contentVersions[contentId];
+    // storage
+    storeInfo = () => {
+      this.storageModel.writeStringifiable(this.getInfoPath(), this.info);
     };
-    getObjectTitle = (messageObject) => {
-      return messageObject.title || translation.untitledObject;
+    storeColor = () => {
+      this.storageModel.write(this.getColorPath(), this.color);
     };
-    // channel
-    setChannel = () => {
-      if (this.cannotSetChannel.value == true) return;
-      this.primaryChannel.value = this.primaryChannelInput.value;
-      UDN.subscribe(this.primaryChannel.value);
-      updateMailbox();
+    delete = () => {
+      this.chatListModel.untrackChat(this);
+      const dirPath = this.getBasePath();
+      this.storageModel.removeRecursively(dirPath);
     };
-    undoChannelChange = () => {
-      this.primaryChannelInput.value = this.primaryChannel.value;
+    // load
+    loadInfo = () => {
+      const info = this.storageModel.readStringifiable(
+        this.getInfoPath(),
+        ChatInfoReference
+      );
+      if (info != null) {
+        this.info = info;
+      } else {
+        this.info = _ChatModel.generateChatInfo("0");
+      }
     };
-    addSecondaryChannel = () => {
-      if (this.cannotAddSecondaryChannel.value == true) return;
-      this.secondaryChannels.add(this.newSecondaryChannelName.value);
-      this.newSecondaryChannelName.value = "";
+    loadColor = () => {
+      const path = this.getColorPath();
+      const color = this.storageModel.read(path);
+      if (!color) {
+        this.color = "standard" /* Standard */;
+      } else {
+        this.color = color;
+      }
     };
-    removeSecondaryChannel = (channel) => {
-      this.secondaryChannels.remove(channel);
+    get messages() {
+      const messageIds = this.storageModel.list(
+        this.getMessageDirPath()
+      );
+      if (!Array.isArray(messageIds)) return [];
+      const chatMessages = [];
+      for (const messageId of messageIds) {
+        const messagePath = this.getMessagePath(messageId);
+        const chatMessage = this.storageModel.readStringifiable(messagePath, ChatMessageReference);
+        chatMessages.push(chatMessage);
+      }
+      const sorted = chatMessages.sort(
+        (a, b) => a.dateSent.localeCompare(b.dateSent)
+      );
+      return sorted;
+    }
+    // init
+    constructor(storageModel2, connectionModel2, settingsModel2, chatListModel2, chatId) {
+      this.id = chatId;
+      this.connectionModel = connectionModel2;
+      this.settingsModel = settingsModel2;
+      this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
+      this.loadInfo();
+      this.loadColor();
+      this.subscribe();
+      this.fileModel = new FileModel2(this.storageModel, this.settingsModel, this);
+    }
+    // utility
+    static generateChatInfo = (primaryChannel) => {
+      return {
+        dataVersion: DATA_VERSION,
+        primaryChannel,
+        secondaryChannels: [],
+        encryptionKey: "",
+        hasUnreadMessages: false
+      };
+    };
+    static createChatMessage = async (channel, sender, encryptionKey, body, fileContent) => {
+      const chatMessage = {
+        dataVersion: DATA_VERSION,
+        id: v4_default(),
+        channel,
+        sender,
+        body,
+        dateSent: createTimestamp(),
+        status: "outbox" /* Outbox */,
+        stringifiedFile: ""
+      };
+      if (fileContent != void 0) {
+        const stringifiedFile = stringify(fileContent);
+        chatMessage.stringifiedFile = stringifiedFile;
+      }
+      if (encryptionKey != "") {
+        chatMessage.body = await encryptString(chatMessage.body, encryptionKey);
+        chatMessage.stringifiedFile = await encryptString(
+          chatMessage.stringifiedFile,
+          encryptionKey
+        );
+      }
+      return chatMessage;
     };
   };
-  function createChatWithName(name) {
-    const newChat = new Chat();
-    chats.add(newChat);
-    newChat.primaryChannel.value = name;
-    newChat.primaryChannelInput.value = name;
-    chatIds.add(newChat.id);
-    UDN.subscribe(name);
-    updateMailbox();
+  var ChatInfoReference = {
+    dataVersion: DATA_VERSION,
+    primaryChannel: "",
+    secondaryChannels: [""],
+    encryptionKey: "",
+    hasUnreadMessages: true
+  };
+  var ChatMessageReference = {
+    dataVersion: DATA_VERSION,
+    id: "",
+    channel: "",
+    sender: "",
+    body: "",
+    dateSent: "",
+    status: "",
+    stringifiedFile: ""
+  };
+
+  // src/Model/Chat/chatListModel.ts
+  var ChatListModel = class {
+    storageModel;
+    settingsModel;
+    connectionModel;
+    // data
+    chatModels = /* @__PURE__ */ new Set();
+    // handlers
+    messageHandler = (data) => {
+      const channel = data.messageChannel;
+      const body = data.messageBody;
+      if (channel == void 0) return;
+      if (body == void 0) return;
+      this.routeMessageToCorrectChatModel(
+        channel,
+        (chatModel) => chatModel.handleMessage(body)
+      );
+    };
+    messageSentHandler = (chatMessage) => {
+      const channel = chatMessage.channel;
+      this.routeMessageToCorrectChatModel(
+        channel,
+        (chatModel) => chatModel.handleMessageSent(chatMessage)
+      );
+    };
+    // methods
+    routeMessageToCorrectChatModel = (channel, fn) => {
+      const allChannels = channel.split("/");
+      for (const chatModel of this.chatModels) {
+        for (const channel2 of allChannels) {
+          if (channel2 != chatModel.info.primaryChannel) continue;
+          fn(chatModel);
+          break;
+        }
+      }
+    };
+    // storage
+    addChatModel = (chatModel) => {
+      this.chatModels.add(chatModel);
+    };
+    createChat = (primaryChannel) => {
+      const id = v4_default();
+      const chatModel = new ChatModel(
+        this.storageModel,
+        this.connectionModel,
+        this.settingsModel,
+        this,
+        id
+      );
+      chatModel.setPrimaryChannel(primaryChannel);
+      this.addChatModel(chatModel);
+      return chatModel;
+    };
+    untrackChat = (chat) => {
+      this.chatModels.delete(chat);
+    };
+    // load
+    loadChats = () => {
+      const chatDir = StorageModel.getPath("chat" /* Chat */, filePaths.chat.base);
+      const chatIds = this.storageModel.list(chatDir);
+      for (const chatId of chatIds) {
+        const chatModel = new ChatModel(
+          this.storageModel,
+          this.connectionModel,
+          this.settingsModel,
+          this,
+          chatId
+        );
+        this.addChatModel(chatModel);
+      }
+    };
+    // init
+    constructor(storageModel2, settingsModel2, connectionModel2) {
+      this.storageModel = storageModel2;
+      this.settingsModel = settingsModel2;
+      this.connectionModel = connectionModel2;
+      this.loadChats();
+      connectionModel2.messageHandlerManager.addHandler(this.messageHandler);
+      connectionModel2.messageSentHandlerManager.addHandler(
+        this.messageSentHandler
+      );
+    }
+  };
+
+  // src/View/utility.ts
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+  function allowDrag(event) {
+    event.dataTransfer?.setData("text", "");
+  }
+  function reload() {
+    window.location.reload();
+  }
+
+  // src/ViewModel/Pages/taskViewModel.ts
+  var TaskViewModel = class {
+    // init
+    constructor(coreViewModel, boardsAndTasksModel, containingModel, taskFileContent) {
+      this.coreViewModel = coreViewModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+      this.containingModel = containingModel;
+      this.task = taskFileContent;
+      this.loadAllData();
+      this.selectedVersionId.subscribeSilent((selectedVersionId) => {
+        this.switchVersion(selectedVersionId);
+      });
+    }
+    boardsAndTasksModel;
+    containingModel;
+    // data
+    task;
+    get sortingString() {
+      const splitDate = this.date.value.split("-");
+      const year = padZero(splitDate[0], 4);
+      const month = padZero(splitDate[1], 2);
+      const date = padZero(splitDate[2], 2);
+      const splitTime = this.time.value.split(":");
+      const hour = padZero(splitTime[0], 2);
+      const minute = padZero(splitTime[1], 2);
+      const priorityNumber = parseInt(this.priority.value);
+      const invertedPriority = 100 - priorityNumber;
+      return year + month + date + hour + minute + invertedPriority + this.name.value;
+    }
+    // paths
+    getFilePath = () => {
+      return this.boardsAndTasksModel.getTaskFilePath(this.task.fileId);
+    };
+    // state
+    index = new State(0);
+    boardId = new State("");
+    name = new State("");
+    description = new State("");
+    category = new State("");
+    status = new State("");
+    priority = new State("");
+    date = new State("");
+    time = new State("");
+    selectedVersionId = new State("");
+    versionIds = new ListState();
+    // methods
+    dragStart = (event) => {
+      allowDrag(event);
+      this.coreViewModel.draggedObject.value = this;
+    };
+    setCategoryAndStatus = (category, status) => {
+      if (category != void 0) this.category.value = category;
+      if (status != void 0) this.status.value = status;
+      this.save();
+    };
+    setBoardId = (boardId) => {
+      this.boardId.value = boardId;
+      this.save();
+    };
+    setDate = (dateISOString) => {
+      this.date.value = dateISOString;
+      this.save();
+    };
+    // view
+    open = () => {
+      this.containingModel.selectTask(this);
+    };
+    close = () => {
+      this.containingModel.closeTask();
+    };
+    closeAndSave = () => {
+      this.close();
+      this.save();
+    };
+    updateIndex = () => {
+      const index = this.containingModel.taskIndexManager.getIndex(this);
+      this.index.value = index;
+    };
+    updateSuggestions = () => {
+      if (this.coreViewModel.taskCategorySuggestions.value.has(
+        this.category.value
+      ) == false) {
+        this.coreViewModel.taskCategorySuggestions.add(this.category.value);
+      }
+      if (this.coreViewModel.taskStatusSuggestions.value.has(this.status.value) == false) {
+        this.coreViewModel.taskStatusSuggestions.add(this.status.value);
+      }
+    };
+    // settings
+    save = () => {
+      const newTaskFileContent = BoardsAndTasksModel.createTaskFileContent(
+        this.task.fileId,
+        this.name.value,
+        this.task.boardId
+      );
+      newTaskFileContent.boardId = this.boardId.value;
+      newTaskFileContent.description = this.description.value;
+      newTaskFileContent.status = this.status.value;
+      newTaskFileContent.category = this.category.value;
+      newTaskFileContent.priority = this.priority.value;
+      newTaskFileContent.date = this.date.value;
+      newTaskFileContent.time = this.time.value;
+      this.boardsAndTasksModel.updateTaskAndSend(newTaskFileContent);
+      this.containingModel.showTask(newTaskFileContent);
+      this.containingModel.updateTaskIndices();
+      this.updateSuggestions();
+    };
+    deleteTask = () => {
+      this.close();
+      this.boardsAndTasksModel.deleteTask(this.task.boardId, this.task.fileId);
+      this.containingModel.removeTaskFromView(this.task);
+    };
+    // load
+    loadVersionIds = () => {
+      const versionIds = this.boardsAndTasksModel.listTaskVersionIds(
+        this.task.fileId
+      );
+      const sortedVersionIds = versionIds.sort(localeCompare).reverse();
+      this.versionIds.clear();
+      this.versionIds.add(...sortedVersionIds);
+    };
+    switchVersion = (versionId) => {
+      const taskFileContent = this.boardsAndTasksModel.getSpecificTaskFileContent(
+        this.task.fileId,
+        versionId
+      );
+      if (taskFileContent == null) return;
+      this.task = taskFileContent;
+      this.loadTaskData();
+    };
+    loadAllData = () => {
+      this.loadTaskData();
+      this.loadVersionIds();
+    };
+    loadTaskData = () => {
+      this.boardId.value = this.task.boardId;
+      this.name.value = this.task.name;
+      this.description.value = this.task.description ?? "";
+      this.category.value = this.task.category ?? "";
+      this.status.value = this.task.status ?? "";
+      this.priority.value = this.task.priority ?? "";
+      this.date.value = this.task.date ?? "";
+      this.time.value = this.task.time ?? "";
+      this.selectedVersionId.value = this.task.fileContentId;
+      this.updateSuggestions();
+    };
+    // utility
+    static getStringsForFilter = (taskViewModel) => {
+      return [
+        taskViewModel.task.name,
+        taskViewModel.task.description ?? "",
+        taskViewModel.task.category ?? "",
+        taskViewModel.task.status ?? "",
+        taskViewModel.task.priority ?? "",
+        taskViewModel.task.date ?? "",
+        taskViewModel.task.time ?? ""
+      ];
+    };
+  };
+
+  // src/ViewModel/Pages/taskContainingPageViewModel.ts
+  var TaskContainingPageViewModel = class {
+    coreViewModel;
+    boardsAndTasksModel;
+    // state
+    taskIndexManager = new IndexManager(
+      (taskViewModel) => taskViewModel.sortingString
+    );
+    selectedTaskViewModel = new State(void 0);
+    taskViewModels = new MapState();
+    // methods
+    createTaskFromBoardId = (boardId) => {
+      const taskFileContent = this.boardsAndTasksModel.createTask(boardId);
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      this.selectTask(taskViewModel);
+      this.updateTaskIndices();
+    };
+    // view
+    showTask = (taskFileContent) => {
+    };
+    removeTaskFromView = (taskFileContent) => {
+    };
+    selectTask = (selectedTask) => {
+      this.selectedTaskViewModel.value = selectedTask;
+    };
+    closeTask = () => {
+      this.selectedTaskViewModel.value = void 0;
+    };
+    updateTaskIndices = () => {
+      this.taskIndexManager.update([...this.taskViewModels.value.values()]);
+      for (const boardViewModel of this.taskViewModels.value.values()) {
+        boardViewModel.updateIndex();
+      }
+    };
+    // init
+    constructor(coreViewModel, boardsAndTasksModel) {
+      this.coreViewModel = coreViewModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+    }
+  };
+
+  // src/ViewModel/Pages/calendarPageViewModel.ts
+  var CalendarPageViewModel = class extends TaskContainingPageViewModel {
+    // init
+    constructor(coreViewModel, storageModel2, calendarModel, boardsAndTasksModel, chatViewModel) {
+      super(coreViewModel, boardsAndTasksModel);
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.calendarModel = calendarModel;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+      this.chatViewModel = chatViewModel;
+      bulkSubscribe([this.selectedYear, this.selectedMonth], () => {
+        this.loadMonthTasks();
+      });
+      boardsAndTasksModel.taskHandlerManager.addHandler(
+        (taskFileContent) => {
+          this.showTask(taskFileContent);
+        }
+      );
+    }
+    storageModel;
+    calendarModel;
+    boardsAndTasksModel;
+    chatViewModel;
+    // data
+    get monthString() {
+      return CalendarModel.getMonthString(
+        this.selectedYear.value.toString(),
+        this.selectedMonth.value.toString()
+      );
+    }
+    // paths
+    getBasePath = () => {
+      return [...this.calendarModel.getViewPath()];
+    };
+    // state
+    selectedYear = new State(0);
+    selectedMonth = new State(0);
+    selectedDate = new State(0);
+    monthGrid = new State(void 0);
+    // methods
+    createEvent = () => {
+      const taskFileContent = this.boardsAndTasksModel.createTask("events");
+      taskFileContent.date = CalendarModel.getISODateString(
+        this.selectedYear.value.toString(),
+        this.selectedMonth.value.toString(),
+        this.selectedDate.value.toString()
+      );
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      this.selectTask(taskViewModel);
+      this.updateTaskIndices();
+    };
+    getEventsForDate = () => {
+      const paddedDate = CalendarModel.padDateOrMonth(
+        this.selectedDate.toString()
+      );
+      if (this.monthGrid.value == void 0) {
+        return void 0;
+      }
+      return this.monthGrid.value.days[paddedDate];
+    };
+    // view
+    getTaskMapState = (taskFileContent) => {
+      if (this.monthGrid.value == null) return null;
+      const date = CalendarModel.isoToDateString(
+        taskFileContent.date ?? ""
+      );
+      return this.monthGrid.value.days[date];
+    };
+    showTask = (taskFileContent) => {
+      const monthString = CalendarModel.isoToMonthString(
+        taskFileContent.date ?? ""
+      );
+      if (monthString == void 0 || monthString != this.monthString) {
+        this.removeTaskFromView(taskFileContent);
+        this.calendarModel.deleteTaskReference(
+          this.monthString,
+          taskFileContent.fileId
+        );
+        return;
+      }
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      const mapState = this.getTaskMapState(taskFileContent);
+      this.taskViewModels.handleRemoval(taskViewModel, () => {
+        mapState?.remove(taskFileContent.fileId);
+      });
+      this.taskViewModels.remove(taskFileContent.fileId);
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+      mapState?.set(taskFileContent.fileId, taskViewModel);
+    };
+    removeTaskFromView = (taskFileContent) => {
+      this.taskViewModels.remove(taskFileContent.fileId);
+    };
+    showToday = () => {
+      const today = /* @__PURE__ */ new Date();
+      this.selectedYear.value = today.getFullYear();
+      this.selectedMonth.value = today.getMonth() + 1;
+      this.selectedDate.value = today.getDate();
+    };
+    showPreviousMonth = () => {
+      this.selectedMonth.value -= 1;
+      if (this.selectedMonth.value <= 0) {
+        this.selectedYear.value -= 1;
+        this.selectedMonth.value = 12;
+      }
+    };
+    showNextMonth = () => {
+      this.selectedMonth.value += 1;
+      if (this.selectedMonth.value >= 13) {
+        this.selectedYear.value += 1;
+        this.selectedMonth.value = 1;
+      }
+    };
+    handleDrop = (year, month, date) => {
+      const ISOString = CalendarModel.getISODateString(year, month, date);
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setDate(ISOString);
+    };
+    // load
+    loadMonthTasks = () => {
+      this.monthGrid.value = this.calendarModel.generateMonthGrid(
+        this.selectedYear.value,
+        this.selectedMonth.value,
+        () => new MapState()
+      );
+      const taskIds = this.calendarModel.listTaskIds(this.monthString);
+      for (const taskId of taskIds) {
+        const taskFileContent = this.boardsAndTasksModel.getLatestTaskFileContent(taskId);
+        if (taskFileContent == null) continue;
+        this.showTask(taskFileContent);
+      }
+      this.updateTaskIndices();
+    };
+    loadData = () => {
+      this.loadMonthTasks();
+      this.showToday();
+    };
+  };
+
+  // src/ViewModel/Chat/chatMessageViewModel.ts
+  var ChatMessageViewModel = class {
+    // init
+    constructor(coreViewModel, messagePageViewModel, chatMessage, sentByUser) {
+      this.coreViewModel = coreViewModel;
+      this.messagePageViewModel = messagePageViewModel;
+      this.chatMessage = chatMessage;
+      this.sentByUser = sentByUser;
+      this.loadData();
+    }
+    messagePageViewModel;
+    // data
+    chatMessage;
+    channel;
+    sender;
+    dateSent;
+    body = new State("");
+    status = new State(
+      void 0
+    );
+    sentByUser;
+    // state
+    isPresentingInfoModal = new State(false);
+    // methods
+    copyMessage = () => {
+      navigator.clipboard.writeText(this.body.value);
+    };
+    resendMessage = () => {
+      this.messagePageViewModel.sendMessageFromBody(this.body.value);
+    };
+    decryptMessage = () => {
+      this.messagePageViewModel.decryptMessage(this);
+    };
+    // view
+    showInfoModal = () => {
+      this.isPresentingInfoModal.value = true;
+    };
+    hideInfoModal = () => {
+      this.isPresentingInfoModal.value = false;
+    };
+    // load
+    loadData = () => {
+      this.channel = this.chatMessage.channel;
+      this.sender = this.chatMessage.sender;
+      this.dateSent = new Date(this.chatMessage.dateSent).toLocaleString();
+      this.body.value = this.chatMessage.body;
+      this.status.value = this.chatMessage.status;
+    };
+  };
+
+  // src/ViewModel/Pages/messagePageViewModel.ts
+  var MessagePageViewModel = class {
+    // init
+    constructor(coreViewModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
+      this.cannotSendMessage = createProxyState(
+        [this.chatViewModel.settingsViewModel.username, this.composingMessage],
+        () => this.chatViewModel.settingsViewModel.username.value == "" || this.composingMessage.value == ""
+      );
+    }
+    chatViewModel;
+    // state
+    chatMessageViewModels = new MapState();
+    composingMessage = new State("");
+    // guards
+    cannotSendMessage;
+    // methods
+    sendMessage = () => {
+      if (this.cannotSendMessage.value == true) return;
+      this.sendMessageFromBody(this.composingMessage.value);
+      this.composingMessage.value = "";
+    };
+    sendMessageFromBody = (body) => {
+      this.chatViewModel.chatModel.sendMessage(body);
+    };
+    decryptMessage = async (messageViewModel) => {
+      const chatMessage = messageViewModel.chatMessage;
+      await this.chatViewModel.chatModel.decryptMessage(chatMessage);
+      this.chatViewModel.chatModel.addMessage(chatMessage);
+      messageViewModel.loadData();
+    };
+    // view
+    showChatMessage = (chatMessage) => {
+      const chatMessageModel = new ChatMessageViewModel(
+        this.coreViewModel,
+        this,
+        chatMessage,
+        chatMessage.sender == this.chatViewModel.settingsViewModel.username.value
+      );
+      const existingChatMessageViewModel = this.chatMessageViewModels.value.get(chatMessage.id);
+      if (existingChatMessageViewModel != void 0) {
+        existingChatMessageViewModel.body.value = chatMessage.body;
+        existingChatMessageViewModel.status.value = chatMessage.status;
+      } else {
+        this.chatMessageViewModels.set(chatMessage.id, chatMessageModel);
+      }
+    };
+    // load
+    loadData = () => {
+      for (const chatMessage of this.chatViewModel.chatModel.messages) {
+        this.showChatMessage(chatMessage);
+      }
+    };
+  };
+
+  // src/ViewModel/Pages/settingsPageViewModel.ts
+  var SettingsPageViewModel = class {
+    // init
+    constructor(coreViewModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.chatViewModel = chatViewModel;
+      this.loadListRelevantData();
+      this.cannotSetEncryptionKey = createProxyState(
+        [this.encryptionKeyInput],
+        () => this.encryptionKeyInput.value == this.chatViewModel.chatModel.info.encryptionKey
+      );
+      this.color.subscribe((newColor) => {
+        this.applyColor(newColor);
+      });
+    }
+    chatViewModel;
+    // state
+    primaryChannel = new State("");
+    primaryChannelInput = new State("");
+    secondaryChannels = new ListState();
+    newSecondaryChannelInput = new State("");
+    encryptionKeyInput = new State("");
+    shouldShowEncryptionKey = new State(false);
+    encryptionKeyInputType = createProxyState(
+      [this.shouldShowEncryptionKey],
+      () => this.shouldShowEncryptionKey.value == true ? "text" : "password"
+    );
+    color = new State("standard" /* Standard */);
+    // guards
+    cannotSetPrimaryChannel = createProxyState(
+      [this.primaryChannel, this.primaryChannelInput],
+      () => this.primaryChannelInput.value == "" || this.primaryChannelInput.value == this.primaryChannel.value
+    );
+    cannotAddSecondaryChannel = createProxyState(
+      [this.newSecondaryChannelInput],
+      () => this.newSecondaryChannelInput.value == ""
+    );
+    cannotSetEncryptionKey;
+    // methods
+    setPrimaryChannel = () => {
+      this.chatViewModel.chatModel.setPrimaryChannel(
+        this.primaryChannelInput.value
+      );
+      this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.chatViewModel.chatListViewModel.updateIndices();
+    };
+    addSecondaryChannel = () => {
+      this.secondaryChannels.add(this.newSecondaryChannelInput.value);
+      this.newSecondaryChannelInput.value = "";
+      this.storeSecondaryChannels();
+      this.loadSecondaryChannels();
+    };
+    removeSecondaryChannel = (secondaryChannel) => {
+      this.secondaryChannels.remove(secondaryChannel);
+      this.storeSecondaryChannels();
+    };
+    storeSecondaryChannels = () => {
+      this.chatViewModel.chatModel.setSecondaryChannels([
+        ...this.secondaryChannels.value.values()
+      ]);
+    };
+    setEncryptionKey = () => {
+      this.chatViewModel.chatModel.setEncryptionKey(
+        this.encryptionKeyInput.value
+      );
+      this.encryptionKeyInput.callSubscriptions();
+    };
+    applyColor = (newColor) => {
+      this.chatViewModel.setColor(newColor);
+    };
+    remove = () => {
+      this.chatViewModel.close();
+      this.chatViewModel.chatModel.delete();
+      this.chatViewModel.chatListViewModel.untrackChat(this.chatViewModel);
+    };
+    // load
+    loadListRelevantData = () => {
+      this.primaryChannel.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.color.value = this.chatViewModel.chatModel.color;
+    };
+    loadData = () => {
+      this.primaryChannelInput.value = this.chatViewModel.chatModel.info.primaryChannel;
+      this.loadSecondaryChannels();
+      this.encryptionKeyInput.value = this.chatViewModel.chatModel.info.encryptionKey;
+    };
+    loadSecondaryChannels = () => {
+      this.secondaryChannels.clear();
+      for (const secondaryChannel of this.chatViewModel.chatModel.secondaryChannels) {
+        this.secondaryChannels.add(secondaryChannel);
+      }
+    };
+  };
+
+  // src/ViewModel/Utility/searchViewModel.ts
+  var SearchViewModel = class {
+    // data
+    allObjects;
+    getStringsOfObject;
+    // state
+    appliedQuery = new State("");
+    searchInput = new State("");
+    matchingObjects;
+    suggestions;
+    // guards
+    cannotApplySearch = createProxyState(
+      [this.searchInput, this.appliedQuery],
+      () => this.searchInput.value == this.appliedQuery.value
+    );
+    // methods
+    search = (searchTerm) => {
+      this.searchInput.value = searchTerm;
+      this.applySearch();
+    };
+    applySearch = () => {
+      this.appliedQuery.value = this.searchInput.value;
+      console.trace("applying search");
+      this.matchingObjects.clear();
+      for (const object of this.allObjects.value.values()) {
+        const doesMatch = this.checkDoesMatchSearch(object);
+        if (doesMatch == false) continue;
+        this.matchingObjects.add(object);
+      }
+    };
+    // init
+    constructor(allObjects, matchingObjects, getStringsOfObject, suggestions) {
+      this.allObjects = allObjects;
+      this.matchingObjects = matchingObjects;
+      this.getStringsOfObject = getStringsOfObject;
+      this.suggestions = suggestions;
+      this.allObjects.handleAddition((newObject) => {
+        const doesMatch = this.checkDoesMatchSearch(newObject);
+        if (doesMatch == false) {
+          this.matchingObjects.remove(newObject);
+        } else {
+          if (this.matchingObjects.value.has(newObject)) return;
+          this.matchingObjects.add(newObject);
+          this.allObjects.handleRemoval(newObject, () => {
+            this.matchingObjects.remove(newObject);
+          });
+        }
+      });
+    }
+    // utility
+    checkDoesMatchSearch = (object) => {
+      return checkDoesObjectMatchSearch(
+        this.appliedQuery.value,
+        this.getStringsOfObject,
+        object
+      );
+    };
+  };
+
+  // src/ViewModel/Pages/boardViewModel.ts
+  var BoardViewModel = class extends TaskContainingPageViewModel {
+    // init
+    constructor(coreViewModel, storageModel2, boardsAndTasksModel, taskPageViewModel, boardInfo) {
+      super(coreViewModel, boardsAndTasksModel);
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.boardsAndTasksModel = boardsAndTasksModel;
+      this.taskPageViewModel = taskPageViewModel;
+      this.boardInfo = boardInfo;
+      this.loadListRelevantData();
+      this.isSelected = createProxyState(
+        [this.taskPageViewModel.selectedBoardId],
+        () => this.taskPageViewModel.selectedBoardId.value == this.boardInfo.fileId
+      );
+      this.color.subscribe(() => {
+        if (this.isSelected.value == false) return;
+        this.applyColor();
+      });
+      this.selectedPage.subscribeSilent(() => {
+        this.storeLastUsedView();
+      });
+      boardsAndTasksModel.taskHandlerManager.addHandler(
+        (taskFileContent) => {
+          if (taskFileContent.boardId != this.boardInfo.fileId) return;
+          this.showTask(taskFileContent);
+          this.updateTaskIndices();
+        }
+      );
+      this.searchViewModel = new SearchViewModel(
+        this.taskViewModels,
+        this.filteredTaskViewModels,
+        TaskViewModel.getStringsForFilter,
+        this.coreViewModel.boardSearchSuggestions
+      );
+      this.searchViewModel.appliedQuery.subscribeSilent((newQuery) => {
+        this.handleNewSearch(newQuery);
+      });
+      this.restoreSearch();
+    }
+    storageModel;
+    boardsAndTasksModel;
+    taskPageViewModel;
+    // data
+    boardInfo;
+    // state
+    name = new State("");
+    color = new State("standard" /* Standard */);
+    index = new State(0);
+    selectedPage = new State(
+      "list" /* List */
+    );
+    isSelected;
+    isPresentingSettingsModal = new State(false);
+    isPresentingFilterModal = new State(false);
+    searchViewModel;
+    filteredTaskViewModels = new ListState();
+    // paths
+    getBasePath = () => {
+      return [...this.taskPageViewModel.getBoardViewPath(this.boardInfo.fileId)];
+    };
+    getLastUsedBoardPath = () => {
+      return [...this.getBasePath(), "last-used-view" /* LastUsedView */];
+    };
+    getPreviousSearchesPath = () => {
+      return [...this.getBasePath(), "previous-searches" /* PreviousSearches */];
+    };
+    getLastSearchPath = () => {
+      return [...this.getBasePath(), "last-search" /* LastSearch */];
+    };
+    // settings
+    saveSettings = () => {
+      const newBoardInfoFileContent = BoardsAndTasksModel.createBoardInfoFileContent(
+        this.boardInfo.fileId,
+        this.name.value,
+        this.color.value
+      );
+      this.taskPageViewModel.updateBoard(newBoardInfoFileContent);
+    };
+    applyColor = () => {
+      this.taskPageViewModel.chatViewModel.setDisplayedColor(this.color.value);
+    };
+    deleteBoard = () => {
+      this.taskPageViewModel.deleteBoard(this.boardInfo);
+      this.close();
+    };
+    // methods
+    createTask = () => {
+      this.createTaskFromBoardId(this.boardInfo.fileId);
+    };
+    handleDropWithinBoard = (category, status) => {
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setCategoryAndStatus(category, status);
+    };
+    handleDropBetweenBoards = () => {
+      const draggedObject = this.coreViewModel.draggedObject.value;
+      if (draggedObject instanceof TaskViewModel == false) return;
+      draggedObject.setBoardId(this.boardInfo.fileId);
+    };
+    // storage
+    storeLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.selectedPage.value;
+      this.storageModel.write(path, lastUsedView);
+    };
+    restoreLastUsedView = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedView = this.storageModel.read(path);
+      if (lastUsedView == null) return;
+      this.selectedPage.value = lastUsedView;
+    };
+    handleNewSearch = (searchTerm) => {
+      const suggestionPath = [
+        ...this.getPreviousSearchesPath(),
+        searchTerm
+      ];
+      this.storageModel.write(suggestionPath, "");
+      if (!this.coreViewModel.boardSearchSuggestions.value.has(searchTerm)) {
+        this.coreViewModel.boardSearchSuggestions.add(searchTerm);
+      }
+      const lastSearchPath = this.getLastSearchPath();
+      this.storageModel.write(lastSearchPath, searchTerm);
+    };
+    // view
+    showTask = (taskFileContent) => {
+      if (taskFileContent.boardId != this.boardInfo.fileId) {
+        this.boardsAndTasksModel.deleteTaskReference(
+          this.boardInfo.fileId,
+          taskFileContent.fileId
+        );
+        this.removeTaskFromView(taskFileContent);
+        return;
+      }
+      const taskViewModel = new TaskViewModel(
+        this.coreViewModel,
+        this.boardsAndTasksModel,
+        this,
+        taskFileContent
+      );
+      this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+    };
+    removeTaskFromView = (taskFileContent) => {
+      this.taskViewModels.remove(taskFileContent.fileId);
+      this.updateIndex();
+    };
+    select = () => {
+      this.taskPageViewModel.selectBoard(this);
+    };
+    close = () => {
+      this.taskPageViewModel.closeBoard();
+      this.taskViewModels.clear();
+    };
+    showSettings = () => {
+      this.isPresentingSettingsModal.value = true;
+    };
+    hideSettings = () => {
+      this.saveSettings();
+      this.isPresentingSettingsModal.value = false;
+    };
+    showFilterModal = () => {
+      this.isPresentingFilterModal.value = true;
+    };
+    hideFilterModal = () => {
+      this.isPresentingFilterModal.value = false;
+    };
+    updateIndex = () => {
+      const index = this.taskPageViewModel.boardIndexManager.getIndex(this);
+      this.index.value = index;
+    };
+    // load
+    loadListRelevantData = () => {
+      this.name.value = this.boardInfo.name;
+      this.color.value = this.boardInfo.color;
+    };
+    loadTasks = () => {
+      const taskIds = this.boardsAndTasksModel.listTaskIds(
+        this.boardInfo.fileId
+      );
+      for (const taskId of taskIds) {
+        if (this.taskViewModels.value.has(taskId)) return;
+        const taskFileContent = this.boardsAndTasksModel.getLatestTaskFileContent(taskId);
+        if (taskFileContent == null) continue;
+        const taskViewModel = new TaskViewModel(
+          this.coreViewModel,
+          this.boardsAndTasksModel,
+          this,
+          taskFileContent
+        );
+        this.taskViewModels.set(taskFileContent.fileId, taskViewModel);
+      }
+      this.updateTaskIndices();
+    };
+    loadSearchSuggestions = () => {
+      const dirPath = this.getPreviousSearchesPath();
+      const searches = this.storageModel.list(dirPath);
+      this.coreViewModel.boardSearchSuggestions.add(...searches);
+    };
+    restoreSearch = () => {
+      const lastSearchPath = this.getLastSearchPath();
+      const lastSearch = this.storageModel.read(lastSearchPath);
+      if (lastSearch != null) {
+        this.searchViewModel.search(lastSearch);
+      }
+    };
+    loadData = () => {
+      this.restoreLastUsedView();
+      this.loadTasks();
+      this.loadSearchSuggestions();
+    };
+  };
+
+  // src/ViewModel/Pages/taskPageViewModel.ts
+  var TaskPageViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, boardModel, chatViewModel) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.boardsAndTasksModel = boardModel;
+      this.chatViewModel = chatViewModel;
+      boardModel.boardHandlerManager.addHandler(
+        (boardInfoFileContent) => {
+          this.showBoardInList(boardInfoFileContent);
+          this.updateBoardIndices();
+        }
+      );
+    }
+    storageModel;
+    boardsAndTasksModel;
+    chatViewModel;
+    // data
+    boardIndexManager = new IndexManager(
+      (boardViewModel) => boardViewModel.name.value
+    );
+    // paths
+    getBasePath = () => {
+      return [...this.boardsAndTasksModel.getViewPath()];
+    };
+    getBoardViewPath = (boardId) => {
+      return [...this.getBasePath(), boardId];
+    };
+    getLastUsedBoardPath = () => {
+      return [...this.getBasePath(), "last-used-board" /* LastUsedBoard */];
+    };
+    // state
+    newBoardNameInput = new State("");
+    boardViewModels = new MapState();
+    selectedBoardId = new State(
+      void 0
+    );
+    // guards
+    cannotCreateBoard = createProxyState(
+      [this.newBoardNameInput],
+      () => this.newBoardNameInput.value == ""
+    );
+    // methods
+    createBoard = () => {
+      if (this.cannotCreateBoard.value == true) return;
+      const boardInfoFileContent = this.boardsAndTasksModel.createBoard(this.newBoardNameInput.value);
+      this.newBoardNameInput.value = "";
+      this.showBoardInList(boardInfoFileContent);
+      this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
+      this.updateBoardIndices();
+    };
+    updateBoard = (boardInfoFileContent) => {
+      this.boardsAndTasksModel.updateBoardAndSend(boardInfoFileContent);
+      this.updateBoardIndices();
+    };
+    deleteBoard = (boardInfoFileContent) => {
+      this.boardsAndTasksModel.deleteBoard(boardInfoFileContent.fileId);
+      this.boardViewModels.remove(boardInfoFileContent.fileId);
+      this.updateBoardIndices();
+    };
+    // view
+    showBoardInList = (boardInfo) => {
+      const boardViewModel = new BoardViewModel(
+        this.coreViewModel,
+        this.storageModel,
+        this.boardsAndTasksModel,
+        this,
+        boardInfo
+      );
+      this.boardViewModels.set(boardInfo.fileId, boardViewModel);
+    };
+    selectBoard = (boardViewModel) => {
+      this.selectedBoardId.value = boardViewModel.boardInfo.fileId;
+      this.chatViewModel.displayedColor.value = boardViewModel.color.value;
+      this.storeLastUsedBoard();
+    };
+    closeBoard = () => {
+      this.selectedBoardId.value = void 0;
+      this.chatViewModel.resetColor();
+      this.storeLastUsedBoard();
+    };
+    updateBoardIndices = () => {
+      this.boardIndexManager.update([...this.boardViewModels.value.values()]);
+      for (const boardViewModel of this.boardViewModels.value.values()) {
+        boardViewModel.updateIndex();
+      }
+    };
+    // storage
+    storeLastUsedBoard = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedBoardId = this.selectedBoardId.value ?? "";
+      this.storageModel.write(path, lastUsedBoardId);
+    };
+    openLastUsedBoard = () => {
+      const path = this.getLastUsedBoardPath();
+      const lastUsedBoardId = this.storageModel.read(path);
+      if (lastUsedBoardId == null) return;
+      const boardViewModel = this.boardViewModels.value.get(lastUsedBoardId);
+      if (boardViewModel == void 0) return;
+      this.selectBoard(boardViewModel);
+    };
+    // load
+    loadData = () => {
+      this.boardViewModels.clear();
+      const boardIds = this.boardsAndTasksModel.listBoardIds();
+      for (const boardId of boardIds) {
+        const boardInfo = this.boardsAndTasksModel.getBoardInfo(boardId);
+        if (boardInfo == null) continue;
+        this.showBoardInList(boardInfo);
+      }
+      this.updateBoardIndices();
+      this.openLastUsedBoard();
+    };
+  };
+
+  // src/ViewModel/Chat/chatViewModel.ts
+  var ChatViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatModel, settingsViewModel2, chatListViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatModel = chatModel;
+      this.settingsViewModel = settingsViewModel2;
+      this.chatListViewModel = chatListViewModel2;
+      this.calendarViewModel = new CalendarPageViewModel(
+        coreViewModel,
+        this.storageModel,
+        this.chatModel.fileModel.boardsAndTasksModel.calendarModel,
+        this.chatModel.fileModel.boardsAndTasksModel,
+        this
+      );
+      this.taskPageViewModel = new TaskPageViewModel(
+        this.coreViewModel,
+        this.storageModel,
+        this.chatModel.fileModel.boardsAndTasksModel,
+        this
+      );
+      this.messagePageViewModel = new MessagePageViewModel(
+        this.coreViewModel,
+        this
+      );
+      this.settingsPageViewModel = new SettingsPageViewModel(
+        this.coreViewModel,
+        this
+      );
+      chatModel.chatMessageHandlerManager.addHandler(
+        (chatMessage) => {
+          this.messagePageViewModel.showChatMessage(chatMessage);
+          this.markUnread();
+        }
+      );
+      this.loadPageSelection();
+      this.resetColor();
+      this.loadInfo();
+    }
+    chatModel;
+    storageModel;
+    settingsViewModel;
+    chatListViewModel;
+    calendarViewModel;
+    taskPageViewModel;
+    messagePageViewModel;
+    settingsPageViewModel;
+    // state
+    displayedColor = new State("standard" /* Standard */);
+    selectedPage = new State(
+      "messages" /* Messages */
+    );
+    index = new State(0);
+    hasUnreadMessages = new State(false);
+    // view
+    open = () => {
+      this.chatListViewModel.openChat(this);
+      this.markUnread();
+    };
+    close = () => {
+      this.chatListViewModel.closeChat();
+    };
+    closeSubPages = () => {
+    };
+    setColor = (color) => {
+      this.setDisplayedColor(color);
+      this.chatModel.setColor(color);
+    };
+    setDisplayedColor = (color) => {
+      this.displayedColor.value = color;
+    };
+    resetColor = () => {
+      this.displayedColor.value = this.settingsPageViewModel.color.value;
+    };
+    updateIndex = () => {
+      const index = this.chatListViewModel.chatIndexManager.getIndex(this);
+      this.index.value = index;
+    };
+    markUnread = () => {
+      this.hasUnreadMessages.value = false;
+      this.chatModel.markUnread();
+    };
+    // load
+    loadPageSelection = () => {
+      const path = StorageModel.getPath(
+        "chat" /* Chat */,
+        filePaths.chat.lastUsedPage(this.chatModel.id)
+      );
+      const lastUsedPage = this.storageModel.read(path);
+      if (lastUsedPage != null) {
+        this.selectedPage.value = lastUsedPage;
+      }
+      this.selectedPage.subscribeSilent((newPage) => {
+        this.storageModel.write(path, newPage);
+        this.resetColor();
+      });
+    };
+    loadInfo = () => {
+      this.hasUnreadMessages.value = this.chatModel.info.hasUnreadMessages;
+    };
+  };
+
+  // src/ViewModel/Chat/chatListViewModel.ts
+  var ChatListViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2, chatListModel2, settingsViewModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.chatListModel = chatListModel2;
+      this.settingsViewModel = settingsViewModel2;
+      this.loadChats();
+    }
+    storageModel;
+    chatListModel;
+    settingsViewModel;
+    // data
+    chatIndexManager = new IndexManager(
+      (chatViewModel) => chatViewModel.settingsPageViewModel.primaryChannel.value
+    );
+    // state
+    newChatPrimaryChannel = new State("");
+    chatViewModels = new ListState();
+    selectedChat = new State(
+      void 0
+    );
+    // guards
+    cannotCreateChat = createProxyState(
+      [this.newChatPrimaryChannel],
+      () => this.newChatPrimaryChannel.value == ""
+    );
+    // methods
+    createChat = () => {
+      const chatModel = this.chatListModel.createChat(
+        this.newChatPrimaryChannel.value
+      );
+      this.newChatPrimaryChannel.value = "";
+      const chatViewModel = this.createChatViewModel(chatModel);
+      this.trackChat(chatViewModel);
+      this.updateIndices();
+    };
+    trackChat = (chatViewModel) => {
+      this.chatViewModels.add(chatViewModel);
+    };
+    untrackChat = (chatViewModel) => {
+      this.chatListModel.untrackChat(chatViewModel.chatModel);
+      this.chatViewModels.remove(chatViewModel);
+    };
+    createChatViewModel = (chatModel) => {
+      return new ChatViewModel(
+        this.coreViewModel,
+        this.storageModel,
+        chatModel,
+        this.settingsViewModel,
+        this
+      );
+    };
+    updateIndices = () => {
+      this.chatIndexManager.update([...this.chatViewModels.value.values()]);
+      for (const chatViewModel of this.chatViewModels.value) {
+        chatViewModel.updateIndex();
+      }
+    };
+    // view
+    openChat = (chatViewModel) => {
+      this.selectedChat.value = chatViewModel;
+    };
+    closeChat = () => {
+      this.selectedChat.value = void 0;
+    };
+    // load
+    loadChats = () => {
+      this.chatViewModels.clear();
+      for (const chatModel of this.chatListModel.chatModels.values()) {
+        const chatViewModel = this.createChatViewModel(chatModel);
+        this.trackChat(chatViewModel);
+      }
+      this.updateIndices();
+    };
+  };
+
+  // src/View/translations.ts
+  var englishTranslations = {
+    updater: {
+      migrated: "Migrated"
+    },
+    general: {
+      deleteItemButtonAudioLabel: "delete item",
+      searchButtonAudioLabel: "search",
+      abortButton: "Abort",
+      cancelButton: "Cancel",
+      closeButton: "Close",
+      backButton: "Back",
+      continueButton: "Continue",
+      confirmButton: "Confirm",
+      saveButton: "Save",
+      setButton: "Set",
+      reloadAppButton: "Reload App",
+      fileVersionLabel: "Version",
+      searchLabel: "Search"
+    },
+    regional: {
+      weekdays: {
+        full: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        abbreviated: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+      }
+    },
+    homePage: {
+      appName: "Comms",
+      ///
+      overviewHeadline: "Overview",
+      serverAddress: "Server address",
+      serverAddressPlaceholder: "wss://192.168.0.69:3000",
+      connectAudioLabel: "connect to server",
+      disconnectAudioLabel: "disconnect from server",
+      manageConnectionsAudioLabel: "manage connections",
+      yourNameLabel: "Your name",
+      yourNamePlaceholder: "Jane Doe",
+      setNameButtonAudioLabel: "set name",
+      firstDayOfWeekLabel: "First day of week",
+      manageStorageButton: "Manage storage",
+      transferDataButton: "Data Transfer",
+      scrollToChatButton: "Chats",
+      ///
+      backToOverviewAudioLabel: "go back to overview",
+      chatsHeadline: "Chats",
+      addChatAudioLabel: "name of new chat",
+      addChatPlaceholder: "Add chat",
+      addChatButton: "Add chat"
+    },
+    connectionModal: {
+      connectionModalHeadline: "Manage Connections",
+      ///
+      connectButtonAudioLabel: "connect"
+    },
+    dataTransferModal: {
+      transferDataHeadline: "Data Transfer",
+      selectionDescription: "Select the data that you want to transfer.",
+      dataEntryDescription: "Enter this data on the other device.",
+      dataEntryInputDescription: "Enter the data displayed on the other device.",
+      readyToReceiveDescription: "Click 'send' on the other device.",
+      ///
+      fromThisDeviceButton: "From this device",
+      toThisDeviceButton: "To this device",
+      ///
+      generalHeadline: "General",
+      connectionData: "Connection Data",
+      settingsData: "Settings Data",
+      chatsHeadline: "Chats",
+      ///
+      transferChannelHeadline: "Transfer Chanel",
+      transferKeyHeadline: "Transfer Encryption Key",
+      sendButton: "Send",
+      ///
+      filesSentCount: (count) => `Files sent: ${count}.`,
+      allFilesSent: "Done.",
+      filesReceivedCount: (count) => `Files received: ${count}.`
+    },
+    storage: {
+      noItemSelected: "No item selected",
+      notAFile: "(not a file)",
+      contentEmpty: "(empty)",
+      path: "Path",
+      content: "Content",
+      deleteItem: "Delete item"
+    },
+    chatPage: {
+      closeChatAudioLabe: "close chat",
+      chatSettingsAudioLabel: "chat settings",
+      pages: {
+        settings: "Settings",
+        messages: "Messages",
+        tasks: "Tasks",
+        calendar: "Calendar"
+      },
+      settings: {
+        settingsHeadline: "Settings",
+        primaryChannelLabel: "Primary channel",
+        setPrimaryChannelButtonAudioLabel: "set primary channel",
+        newSecondaryChannelPlaceholder: "Add secondary channel",
+        newSecondaryChannelAudioLabel: "name of new secondary channel",
+        addSecondaryChannelButtonAudioLabel: "add secondary channel",
+        encryptionKeyLabel: "Encryption key",
+        setEncryptionKeyButtonAudioLabel: "set encryption key",
+        showEncryptionKey: "Show encryption key",
+        deleteChatButton: "Delete entire chat"
+      },
+      message: {
+        messagesHeadline: "Messages",
+        ///
+        composerInputPlaceholder: "Type a message...",
+        sendMessageButtonAudioLabel: "send message",
+        ///
+        showMessageInfoButtonAudioLabel: "show message info",
+        messageInfoHeadline: "Message Info",
+        sentBy: "Sent by",
+        timeSent: "Time sent",
+        channel: "Channel",
+        messageContent: "Message content",
+        copyMessageButton: "Copy message",
+        resendMessageButton: "Resend message",
+        decryptMessageButton: "Decrypt message",
+        deleteMessageButton: "Delete message"
+      },
+      task: {
+        newBoardNamePlaceholder: "Create a board",
+        createBoardButtonAudioLabel: "create board",
+        ///
+        noBoardSelected: "No board selected",
+        boardNotFound: "Board not found",
+        ///
+        closeBoard: "close board",
+        showBoardSettingsButtonAudioLabel: "show board settigns",
+        listViewButtonAudioLabel: "list view",
+        kanbanViewButtonAudioLabel: "kanban view",
+        statusViewButtonAudioLabel: "status grid view",
+        filterTasksButtonAudioLabel: "filter tasks",
+        createTaskButtonAudioLabel: "create new task",
+        ///
+        boardSettingsHeadline: "Board Settings",
+        boardNameInputLabel: "Board name",
+        deleteBoardButton: "Delete board and all tasks",
+        ///
+        taskSettingsHeadline: "Edit Task",
+        taskNameLabel: "Title",
+        taskCategoryLabel: "Category",
+        taskStatusLabel: "Status",
+        taskPriorityLabel: "Priority",
+        taskDescriptionLabel: "Description",
+        taskDateLabel: "Date",
+        taskTimeLabel: "Time",
+        deleteTaskButton: "Delete task",
+        ///
+        filterTasksHeadline: "Filter Tasks",
+        ///
+        renameCategoryInputPlaceholder: "Rename category,"
+      },
+      calendar: {
+        todayButtonAudioLabel: "go to today",
+        previousMonthButtonAudioLabel: "previous month",
+        nextMonthButtonAudioLabel: "next month",
+        yearInputAudioLabel: "year",
+        monthInputAudioLabel: "month",
+        yearInputPlaceholder: "2000",
+        monthInputPlaceholder: "01",
+        ///
+        searchEventsHeadline: "Search Events",
+        ///
+        events: "Events",
+        noEvents: "No events"
+      }
+    }
+  };
+  var allTranslations = {
+    en: englishTranslations
+  };
+  var language = navigator.language.substring(0, 2);
+  var translations = allTranslations[language] || allTranslations.en;
+
+  // src/View/Components/monthGrid.tsx
+  function MonthGrid2(monthGrid, selectedDate, handleDrop) {
+    const dayLabels = [];
+    let currentWeekday = monthGrid.firstDayOfWeek;
+    while (dayLabels.length < 7) {
+      dayLabels.push(
+        /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.regional.weekdays.abbreviated[currentWeekday])
+      );
+      currentWeekday++;
+      if (currentWeekday == 7) currentWeekday = 0;
+    }
+    const offsetElements = [];
+    for (let i = 0; i < monthGrid.offset; i++) {
+      offsetElements.push(/* @__PURE__ */ createElement("div", null));
+    }
+    const converter = (taskViewModel) => {
+      const view = /* @__PURE__ */ createElement("span", { class: "ellipsis secondary" }, taskViewModel.task.name);
+      taskViewModel.index.subscribe((newIndex) => {
+        view.style.order = newIndex;
+      });
+      return view;
+    };
+    return /* @__PURE__ */ createElement("div", { class: "month-grid-wrapper" }, /* @__PURE__ */ createElement("div", { class: "day-labels" }, ...dayLabels), /* @__PURE__ */ createElement("div", { class: "month-grid" }, ...offsetElements, ...Object.entries(monthGrid.days).sort((a, b) => localeCompare(a[0], b[0])).map((entry) => {
+      const [date, mapState] = entry;
+      const isSelected = createProxyState(
+        [selectedDate],
+        () => selectedDate.value == parseInt(date)
+      );
+      const isToday = monthGrid.isCurrentMonth == true && parseInt(date) == (/* @__PURE__ */ new Date()).getDate();
+      function select() {
+        selectedDate.value = parseInt(date);
+      }
+      function drop() {
+        handleDrop(date);
+      }
+      return /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "tile",
+          "on:click": select,
+          "toggle:selected": isSelected,
+          "toggle:today": isToday,
+          "on:dragover": allowDrop,
+          "on:drop": drop
+        },
+        /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "flex-column gap clip",
+            "children:append": [mapState, converter]
+          }
+        ))
+      );
+    })));
+  }
+
+  // src/View/Components/option.tsx
+  function Option(text, value, selectedOnCreate) {
+    return /* @__PURE__ */ createElement("option", { value, "toggle:selected": selectedOnCreate }, text);
+  }
+  var StringToOption = (string) => {
+    return Option(string, string, false);
+  };
+  var VersionIdToOption = (versionId) => {
+    const [date, rest] = versionId.split("T");
+    const [time] = rest.split(".");
+    const readableName = `${date} ${time}`;
+    return Option(readableName, versionId, false);
+  };
+
+  // src/View/Components/dangerousActionButton.tsx
+  function DangerousActionButton(label, icon, action) {
+    const isActionRequested = new State(false);
+    const cannotConfirm = createProxyState(
+      [isActionRequested],
+      () => isActionRequested.value == false
+    );
+    function requestAction() {
+      isActionRequested.value = true;
+    }
+    function abort() {
+      isActionRequested.value = false;
+    }
+    return /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": abort, "toggle:hidden": cannotConfirm }, translations.general.abortButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": requestAction,
+        "toggle:hidden": isActionRequested
+      },
+      label,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger flex",
+        "on:click": action,
+        "toggle:hidden": cannotConfirm
+      },
+      translations.general.confirmButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "warning")
+    ));
+  }
+
+  // src/View/Modals/taskSettingsModal.tsx
+  function TaskSettingsModal(taskViewModel) {
+    const categorySuggestionId = v4_default();
+    const statusSuggestionId = v4_default();
+    return /* @__PURE__ */ createElement("div", { class: "modal", open: true }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.taskSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.general.fileVersionLabel), /* @__PURE__ */ createElement(
+      "select",
+      {
+        "bind:value": taskViewModel.selectedVersionId,
+        "children:append": [taskViewModel.versionIds, VersionIdToOption]
+      }
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskNameLabel), /* @__PURE__ */ createElement("input", { "bind:value": taskViewModel.name }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDescriptionLabel), /* @__PURE__ */ createElement(
+      "textarea",
+      {
+        rows: "10",
+        "bind:value": taskViewModel.description
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "category"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskCategoryLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": taskViewModel.category,
+        list: categorySuggestionId
+      }
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: categorySuggestionId,
+        "children:append": [
+          taskViewModel.coreViewModel.taskCategorySuggestions,
+          StringToOption
+        ]
+      }
+    ), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "clock_loader_40"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskStatusLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": taskViewModel.status,
+        list: statusSuggestionId
+      }
+    ))), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: statusSuggestionId,
+        "children:append": [
+          taskViewModel.coreViewModel.taskStatusSuggestions,
+          StringToOption
+        ]
+      }
+    ), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "priority_high"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskPriorityLabel), /* @__PURE__ */ createElement("input", { type: "number", "bind:value": taskViewModel.priority }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskDateLabel), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": taskViewModel.date }))), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.taskTimeLabel), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": taskViewModel.time }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+      translations.chatPage.task.deleteTaskButton,
+      "delete_forever",
+      taskViewModel.deleteTask
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+  }
+
+  // src/View/Components/taskEntry.tsx
+  function TaskEntry(taskViewModel) {
+    const details = {
+      description: taskViewModel.description.value || "---",
+      priority_high: taskViewModel.priority.value || "---",
+      category: taskViewModel.category.value || "---",
+      clock_loader_40: taskViewModel.status.value || "---",
+      calendar_month: taskViewModel.date.value || "---",
+      schedule: taskViewModel.time.value || "---"
+    };
+    const view = /* @__PURE__ */ createElement(
+      "button",
+      {
+        draggable: "true",
+        class: "tile flex-no",
+        style: "user-select: none; -webkit-user-select: none",
+        "on:click": taskViewModel.open,
+        "on:dragstart": taskViewModel.dragStart
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": taskViewModel.name }), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid secondary",
+          style: "grid-template-columns: repeat(2, 1fr); column-gap: 1rem;  row-gap: .5rem"
+        },
+        ...Object.entries(details).map((entry) => /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "flex-row align-center width-100 flex-no clip",
+            style: "gap: 1rem"
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon", style: "font-size: 1.1rem" }, entry[0]),
+          /* @__PURE__ */ createElement("span", { class: "ellipsis" }, entry[1])
+        ))
+      ))
+    );
+    taskViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  var TaskViewModelToEntry = (taskViewModel) => {
+    return TaskEntry(taskViewModel);
+  };
+
+  // src/View/ChatPages/calendarPage.tsx
+  function CalendarPage(calendarPageViewModel) {
+    calendarPageViewModel.loadData();
+    const mainContent = createProxyState(
+      [calendarPageViewModel.monthGrid],
+      () => {
+        const monthGrid = calendarPageViewModel.monthGrid.value;
+        if (monthGrid == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          let drop = function(date) {
+            calendarPageViewModel.handleDrop(
+              monthGrid.year.toString(),
+              monthGrid.month.toString(),
+              date
+            );
+          };
+          return MonthGrid2(monthGrid, calendarPageViewModel.selectedDate, drop);
+        }
+      }
+    );
+    const sidePaneContentWrapper = createProxyState(
+      [
+        calendarPageViewModel.selectedYear,
+        calendarPageViewModel.selectedMonth,
+        calendarPageViewModel.selectedDate
+      ],
+      () => {
+        const listState = calendarPageViewModel.getEventsForDate();
+        if (listState == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          const sidePaneContent = createProxyState([listState], () => {
+            if (listState.value.size == 0) {
+              return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column justify-center align-center" }, /* @__PURE__ */ createElement("span", { class: "secondary slide-up" }, translations.chatPage.calendar.noEvents));
+            } else {
+              return /* @__PURE__ */ createElement(
+                "div",
+                {
+                  class: "flex-column gap slide-up padding-bottom",
+                  "children:append": [listState, TaskViewModelToEntry]
+                }
+              );
+            }
+          });
+          return /* @__PURE__ */ createElement(
+            "div",
+            {
+              class: "width-100 height-100",
+              "children:set": sidePaneContent
+            }
+          );
+        }
+      }
+    );
+    const taskSettingsModal = createProxyState(
+      [calendarPageViewModel.selectedTaskViewModel],
+      () => {
+        if (calendarPageViewModel.selectedTaskViewModel.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return TaskSettingsModal(
+            calendarPageViewModel.selectedTaskViewModel.value
+          );
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement("div", { id: "calendar-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper grid-pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.todayButtonAudioLabel,
+        "on:click": calendarPageViewModel.showToday
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "today")
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.previousMonthButtonAudioLabel,
+        "on:click": calendarPageViewModel.showPreviousMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement("span", { class: "input-wrapper" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "year-input",
+        type: "number",
+        "aria-label": translations.chatPage.calendar.yearInputAudioLabel,
+        placeholder: translations.chatPage.calendar.yearInputPlaceholder,
+        "bind:value": calendarPageViewModel.selectedYear
+      }
+    ), /* @__PURE__ */ createElement(
+      "input",
+      {
+        class: "month-input",
+        type: "number",
+        "aria-label": translations.chatPage.calendar.monthInputAudioLabel,
+        placeholder: translations.chatPage.calendar.monthInputPlaceholder,
+        "bind:value": calendarPageViewModel.selectedMonth
+      }
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.calendar.nextMonthButtonAudioLabel,
+        "on:click": calendarPageViewModel.showNextMonth
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
+        "on:click": calendarPageViewModel.createEvent
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "pane-wrapper side background",
+        "set:color": calendarPageViewModel.chatViewModel.displayedColor
+      },
+      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "content", "children:set": sidePaneContentWrapper }))
+    ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
+  }
+
+  // src/View/Components/ribbonButton.tsx
+  function RibbonButton(label, icon, isSelected, select) {
+    return /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ribbon-button",
+        "aria-label": label,
+        "toggle:selected": isSelected,
+        "on:click": select
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, icon)
+    );
+  }
+
+  // src/View/Components/chatViewToggleButton.tsx
+  function ChatViewToggleButton(label, icon, page, chatViewModel) {
+    function select() {
+      chatViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [chatViewModel.selectedPage],
+      () => chatViewModel.selectedPage.value == page
+    );
+    return RibbonButton(label, icon, isSelected, select);
+  }
+
+  // src/View/Modals/chatMessageInfoModal.tsx
+  function ChatMessageInfoModal(chatMessageViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": chatMessageViewModel.isPresentingInfoModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.message.messageInfoHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.sentBy), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.sender))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "schedule"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.timeSent), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.dateSent))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.channel), /* @__PURE__ */ createElement("b", { class: "break-word" }, chatMessageViewModel.channel))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "description"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.message.messageContent), /* @__PURE__ */ createElement(
+      "b",
+      {
+        class: "break-word",
+        "subscribe:innerText": chatMessageViewModel.body
+      }
+    )))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.copyMessage }, translations.chatPage.message.copyMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.resendMessage }, translations.chatPage.message.resendMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "redo")), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.decryptMessage }, translations.chatPage.message.decryptMessageButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "key")))), /* @__PURE__ */ createElement("button", { "on:click": chatMessageViewModel.hideInfoModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/View/Components/chatMessage.tsx
+  function ChatMessage2(chatMessageViewModel) {
+    const statusIcon = createProxyState(
+      [chatMessageViewModel.status],
+      () => {
+        switch (chatMessageViewModel.status.value) {
+          case "outbox" /* Outbox */:
+            return "hourglass_top";
+          case "sent" /* Sent */:
+            return "check";
+          case "received" /* Received */:
+            return "done_all";
+          default:
+            return "warning";
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "message-bubble",
+        "toggle:sentbyuser": chatMessageViewModel.sentByUser
+      },
+      /* @__PURE__ */ createElement("div", { class: "main tile" }, /* @__PURE__ */ createElement("div", { class: "text-container" }, /* @__PURE__ */ createElement("span", { class: "sender-name ellipsis" }, chatMessageViewModel.sender), /* @__PURE__ */ createElement(
+        "span",
+        {
+          class: "body",
+          "subscribe:innerText": chatMessageViewModel.body
+        }
+      ), /* @__PURE__ */ createElement("span", { class: "timestamp ellipsis" }, /* @__PURE__ */ createElement("span", { class: "icon", "subscribe:innerText": statusIcon }), chatMessageViewModel.dateSent)), /* @__PURE__ */ createElement("div", { class: "button-container" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          "on:click": chatMessageViewModel.showInfoModal,
+          "aria-label": translations.chatPage.message.showMessageInfoButtonAudioLabel
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "info")
+      ))),
+      ChatMessageInfoModal(chatMessageViewModel)
+    );
+  }
+  var ChatMessageViewModelToView = (chatMessageViewModel) => {
+    return ChatMessage2(chatMessageViewModel);
+  };
+
+  // src/View/ChatPages/messagePage.tsx
+  function MessagePage(messagePageViewModel) {
+    messagePageViewModel.loadData();
+    const messageContainer = /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "message-container",
+        "children:append": [
+          messagePageViewModel.chatMessageViewModels,
+          ChatMessageViewModelToView
+        ]
+      }
+    );
+    function scrollDown() {
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+    function scrollDownIfApplicable() {
+      const scrollFromBottom = messageContainer.scrollHeight - (messageContainer.scrollTop + messageContainer.offsetHeight);
+      if (scrollFromBottom > 400) return;
+      scrollDown();
+    }
+    messagePageViewModel.chatMessageViewModels.subscribeSilent(
+      scrollDownIfApplicable
+    );
+    setTimeout(() => scrollDown(), 100);
+    return /* @__PURE__ */ createElement("div", { id: "message-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { class: "title" }, translations.chatPage.message.messagesHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, messageContainer, /* @__PURE__ */ createElement("div", { id: "composer" }, /* @__PURE__ */ createElement("div", { class: "content-width-constraint" }, /* @__PURE__ */ createElement("div", { class: "input-width-constraint" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": messagePageViewModel.composingMessage,
+        "on:enter": messagePageViewModel.sendMessage,
+        placeholder: translations.chatPage.message.composerInputPlaceholder
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.message.sendMessageButtonAudioLabel,
+        "on:click": messagePageViewModel.sendMessage,
+        "toggle:disabled": messagePageViewModel.cannotSendMessage
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
+    ))))))));
+  }
+
+  // src/View/Components/colorPicker.tsx
+  function ColorPicker(selectedColor) {
+    return /* @__PURE__ */ createElement("div", { class: "flex-row gap width-input" }, ...Object.values(Color).map((color) => {
+      const isSelected = createProxyState(
+        [selectedColor],
+        () => selectedColor.value == color
+      );
+      function setColor() {
+        selectedColor.value = color;
+      }
+      return /* @__PURE__ */ createElement(
+        "button",
+        {
+          color,
+          class: "fill-color width-100 flex",
+          style: "height: 2rem",
+          "toggle:selected": isSelected,
+          "on:click": setColor
+        }
+      );
+    }));
+  }
+
+  // src/View/Components/deletableListItem.tsx
+  function DeletableListItem(text, primaryButton, ondelete) {
+    return /* @__PURE__ */ createElement("div", { class: "tile flex-row justify-apart align-center padding-0" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, text), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, primaryButton, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "danger",
+        "aria-label": translations.general.deleteItemButtonAudioLabel,
+        "on:click": ondelete
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
+    )));
+  }
+
+  // src/View/ChatPages/settingsPage.tsx
+  function SettingsPage(settingsPageViewModel) {
+    settingsPageViewModel.loadData();
+    const secondaryChannelConverter = (secondaryChannel) => {
+      return DeletableListItem(secondaryChannel, /* @__PURE__ */ createElement("span", null), () => {
+        settingsPageViewModel.removeSecondaryChannel(secondaryChannel);
+      });
+    };
+    return /* @__PURE__ */ createElement("div", { id: "settings-page" }, /* @__PURE__ */ createElement("div", { class: "pane-wrapper" }, /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", { class: "title" }, translations.chatPage.settings.settingsHeadline)), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.primaryChannelLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": settingsPageViewModel.primaryChannelInput,
+        "on:enter": settingsPageViewModel.setPrimaryChannel
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50",
+        "aria-label": translations.chatPage.settings.setPrimaryChannelButtonAudioLabel,
+        "on:click": settingsPageViewModel.setPrimaryChannel,
+        "toggle:disabled": settingsPageViewModel.cannotSetPrimaryChannel
+      },
+      translations.general.setButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input margin-bottom" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        "aria-label": translations.chatPage.settings.newSecondaryChannelAudioLabel,
+        placeholder: translations.chatPage.settings.newSecondaryChannelPlaceholder,
+        "bind:value": settingsPageViewModel.newSecondaryChannelInput,
+        "on:enter": settingsPageViewModel.addSecondaryChannel
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.chatPage.settings.addSecondaryChannelButtonAudioLabel,
+        "on:click": settingsPageViewModel.addSecondaryChannel,
+        "toggle:disabled": settingsPageViewModel.cannotAddSecondaryChannel
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    )), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column gap width-input",
+        "children:append": [
+          settingsPageViewModel.secondaryChannels,
+          secondaryChannelConverter
+        ]
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.settings.encryptionKeyLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": settingsPageViewModel.encryptionKeyInput,
+        "on:enter": settingsPageViewModel.setEncryptionKey,
+        "set:type": settingsPageViewModel.encryptionKeyInputType
+      }
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end width-input" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-50",
+        "aria-label": translations.chatPage.settings.setEncryptionKeyButtonAudioLabel,
+        "on:click": settingsPageViewModel.setEncryptionKey,
+        "toggle:disabled": settingsPageViewModel.cannotSetEncryptionKey
+      },
+      translations.general.setButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )), /* @__PURE__ */ createElement("label", { class: "inline" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        type: "checkbox",
+        "bind:checked": settingsPageViewModel.shouldShowEncryptionKey
+      }
+    ), translations.chatPage.settings.showEncryptionKey), /* @__PURE__ */ createElement("hr", null), ColorPicker(settingsPageViewModel.color), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+      translations.chatPage.settings.deleteChatButton,
+      "chat_error",
+      settingsPageViewModel.remove
+    ))))));
+  }
+
+  // src/View/Components/propertyValueList.tsx
+  function PropertyValueList(propertyKey, stringEntryObjectConverter, objects, viewBuilder) {
+    const propertyValues = new ListState();
+    const sortedPropertyValues = createSortedPropertyValueState(propertyValues);
+    objects.subscribe(() => {
+      collectPropertyValuesToState(
+        propertyKey,
+        stringEntryObjectConverter,
+        objects,
+        propertyValues
+      );
+    });
+    return viewBuilder(propertyValues, sortedPropertyValues);
+  }
+  function collectPropertyValuesToState(propertyKey, stringEntryObjectConverter, objects, propertyValues) {
+    const values = collectObjectValuesForKey(
+      propertyKey,
+      stringEntryObjectConverter,
+      [...objects.value.values()]
+    );
+    for (const existingValue of values) {
+      if (propertyValues.value.has(existingValue)) continue;
+      propertyValues.add(existingValue);
+    }
+    for (const displayedValue of propertyValues.value.values()) {
+      if (values.includes(displayedValue) == false) {
+        propertyValues.remove(displayedValue);
+      }
+    }
+  }
+  function createSortedPropertyValueState(propertyValues) {
+    return createProxyState(
+      [propertyValues],
+      () => [...propertyValues.value.values()].sort(localeCompare)
+    );
+  }
+  function createPropertyValueIndexState(sortedKeys, key) {
+    return createProxyState(
+      [sortedKeys],
+      () => sortedKeys.value.indexOf(key)
+    );
+  }
+
+  // src/View/Components/filteredList.tsx
+  function FilteredList(reference, stringEntryObjectConverter, objects, viewBuilder) {
+    const matchingObjects = new ListState();
+    objects.handleAddition((newObject) => {
+      const doesMatch = checkDoesObjectMatchReference(
+        reference,
+        stringEntryObjectConverter(newObject)
+      );
+      if (doesMatch == false) return;
+      matchingObjects.add(newObject);
+      objects.handleRemoval(newObject, () => {
+        matchingObjects.remove(newObject);
+      });
+    });
+    return viewBuilder(matchingObjects);
+  }
+
+  // src/ViewModel/Utility/taskPropertyBulkChangeViewModel.ts
+  var TaskPropertyBulkChangeViewModel = class {
+    taskViewModels;
+    // state
+    inputValue = new State("");
+    // guards
+    cannotSet;
+    // methods
+    set = () => {
+      if (this.cannotSet.value == true) return;
+      this.taskViewModels.value.forEach((taskViewModel) => {
+        this.setValue(this.inputValue.value, taskViewModel);
+      });
+    };
+    setValue;
+    // init
+    constructor(taskViewModels, valueSetter, initialValue) {
+      this.taskViewModels = taskViewModels;
+      this.inputValue.value = initialValue;
+      this.setValue = valueSetter;
+      this.cannotSet = createProxyState(
+        [this.inputValue],
+        () => this.inputValue.value == "" || this.inputValue.value == initialValue
+      );
+    }
+  };
+  var TaskCategoryBulkChangeViewModel = class extends TaskPropertyBulkChangeViewModel {
+    constructor(taskViewModels, initialValue) {
+      super(
+        taskViewModels,
+        (newCategory, taskViewModel) => {
+          taskViewModel.category.value = newCategory;
+          taskViewModel.save();
+        },
+        initialValue
+      );
+    }
+  };
+  var TaskStatusBulkChangeViewModel = class extends TaskPropertyBulkChangeViewModel {
+    constructor(taskViewModels, initialValue) {
+      super(
+        taskViewModels,
+        (newStatus, taskViewModel) => {
+          taskViewModel.status.value = newStatus;
+          taskViewModel.save();
+        },
+        initialValue
+      );
+    }
+  };
+
+  // src/View/ChatPages/boardKanbanPage.tsx
+  function BoardKanbanPage(boardViewModel) {
+    return PropertyValueList(
+      "category",
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.taskViewModels,
+      (categories, sortedCategories) => {
+        const categoryNameConverter = (categoryName) => {
+          const index = createPropertyValueIndexState(
+            sortedCategories,
+            categoryName
+          );
+          return KanbanBoard(categoryName, index, boardViewModel);
+        };
+        return /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "kanban-board-wrapper",
+            "children:append": [categories, categoryNameConverter]
+          }
+        );
+      }
+    );
+  }
+  function KanbanBoard(categoryName, index, boardViewModel) {
+    return FilteredList(
+      { category: categoryName },
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.filteredTaskViewModels,
+      (taskViewModels) => {
+        const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
+        function drop() {
+          boardViewModel.handleDropWithinBoard(categoryName);
+        }
+        const view = /* @__PURE__ */ createElement("div", { class: "flex-column flex-no", "on:dragover": allowDrop, "on:drop": drop }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+          "input",
+          {
+            placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+            "bind:value": viewModel.inputValue,
+            "on:enter": viewModel.set
+          }
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": viewModel.set,
+            "toggle:disabled": viewModel.cannotSet
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+        )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "kanban-column",
+            "children:append": [taskViewModels, TaskViewModelToEntry]
+          }
+        ));
+        index.subscribe((newIndex) => {
+          view.style.order = newIndex;
+        });
+        return view;
+      }
+    );
+  }
+
+  // src/View/Modals/boardSettingsModal.tsx
+  function BoardSettingsModal(boardViewModel) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": boardViewModel.isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.chatPage.task.boardSettingsHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "label"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.chatPage.task.boardNameInputLabel), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "on:enter": boardViewModel.saveSettings,
+        "bind:value": boardViewModel.name
+      }
+    ))), /* @__PURE__ */ createElement("hr", null), ColorPicker(boardViewModel.color), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "width-input" }, DangerousActionButton(
+      translations.chatPage.task.deleteBoardButton,
+      "delete_forever",
+      boardViewModel.deleteBoard
+    ))), /* @__PURE__ */ createElement("button", { "on:click": boardViewModel.hideSettings }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/View/ChatPages/boardStatusGridPage.tsx
+  function BoardStatusGridPage(boardViewModel) {
+    const statuses = new ListState();
+    const sortedStatuses = createSortedPropertyValueState(statuses);
+    boardViewModel.taskViewModels.subscribe(() => {
+      collectPropertyValuesToState(
+        "status",
+        (taskViewModel) => taskViewModel.task,
+        boardViewModel.taskViewModels,
+        statuses
+      );
+    });
+    const statusNameCellConverter = (statusName) => {
+      const index = createPropertyValueIndexState(sortedStatuses, statusName);
+      return StatusNameCell(statusName, index, boardViewModel);
+    };
+    return /* @__PURE__ */ createElement("div", { class: "status-page-content" }, /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "status-name-row",
+        "children:append": [statuses, statusNameCellConverter]
+      }
+    ), PropertyValueList(
+      "category",
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.filteredTaskViewModels,
+      (categories, sortedCategories) => {
+        const categoryRowConverter = (categoryName) => {
+          const index = createPropertyValueIndexState(
+            sortedCategories,
+            categoryName
+          );
+          return CategoryRow(
+            categoryName,
+            index,
+            statuses,
+            sortedStatuses,
+            boardViewModel
+          );
+        };
+        return /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "status-grid-wrapper",
+            "children:append": [categories, categoryRowConverter]
+          }
+        );
+      }
+    ));
+  }
+  function StatusNameCell(statusName, index, boardViewModel) {
+    const taskViewModelsWithMatchingStatus = new ListState();
+    boardViewModel.filteredTaskViewModels.handleAddition(
+      (taskViewModel) => {
+        const doesMatchStatus = taskViewModel.task.status == statusName;
+        if (doesMatchStatus == false) return;
+        taskViewModelsWithMatchingStatus.add(taskViewModel);
+        boardViewModel.filteredTaskViewModels.handleRemoval(taskViewModel, () => {
+          taskViewModelsWithMatchingStatus.remove(taskViewModel);
+        });
+      }
+    );
+    const viewModel = new TaskStatusBulkChangeViewModel(
+      taskViewModelsWithMatchingStatus,
+      statusName
+    );
+    const view = /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+        "bind:value": viewModel.inputValue,
+        "on:enter": viewModel.set
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "on:click": viewModel.set,
+        "toggle:disabled": viewModel.cannotSet
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )));
+    index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  function CategoryRow(categoryName, index, allStatuses, sortedStatuses, boardViewModel) {
+    return FilteredList(
+      { category: categoryName },
+      (taskViewModel) => taskViewModel.task,
+      boardViewModel.filteredTaskViewModels,
+      (taskViewModels) => {
+        const statusNameConverter = (statusName) => {
+          const index2 = createPropertyValueIndexState(sortedStatuses, statusName);
+          return CategoryStatusColumn(
+            categoryName,
+            statusName,
+            index2,
+            boardViewModel,
+            taskViewModels
+          );
+        };
+        const viewModel = new TaskCategoryBulkChangeViewModel(taskViewModels, categoryName);
+        const view = /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "property-input-wrapper" }, /* @__PURE__ */ createElement(
+          "input",
+          {
+            placeholder: translations.chatPage.task.renameCategoryInputPlaceholder,
+            "bind:value": viewModel.inputValue,
+            "on:enter": viewModel.set
+          }
+        ), /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": viewModel.set,
+            "toggle:disabled": viewModel.cannotSet
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+        )), /* @__PURE__ */ createElement(
+          "div",
+          {
+            class: "flex-row large-gap padding-right",
+            "children:append": [allStatuses, statusNameConverter]
+          }
+        ));
+        index.subscribe((newIndex) => {
+          view.style.order = newIndex;
+        });
+        return view;
+      }
+    );
+  }
+  function CategoryStatusColumn(categoryName, statusName, index, boardViewModel, taskViewModelsWithMatchingCategory) {
+    const taskViewModels = new ListState();
+    taskViewModelsWithMatchingCategory.handleAddition((taskViewModel) => {
+      const doesMatchStatus = taskViewModel.status.value == statusName;
+      if (doesMatchStatus == false) return;
+      taskViewModels.add(taskViewModel);
+      taskViewModelsWithMatchingCategory.handleRemoval(taskViewModel, () => {
+        taskViewModels.remove(taskViewModel);
+      });
+    });
+    function drop() {
+      boardViewModel.handleDropWithinBoard(categoryName, statusName);
+    }
+    const view = /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "status-column gap",
+        "on:dragover": allowDrop,
+        "on:drop": drop,
+        "children:append": [taskViewModels, TaskViewModelToEntry]
+      }
+    );
+    index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+
+  // src/View/Components/boardViewToggleButton.tsx
+  function BoardViewToggleButton(label, icon, page, boardViewModel) {
+    function select() {
+      boardViewModel.selectedPage.value = page;
+    }
+    const isSelected = createProxyState(
+      [boardViewModel.selectedPage],
+      () => boardViewModel.selectedPage.value == page
+    );
+    return RibbonButton(label, icon, isSelected, select);
+  }
+
+  // src/View/Modals/searchModal.tsx
+  function SearchModal(searchViewModel, headline, converter, isOpen) {
+    function close() {
+      isOpen.value = false;
+    }
+    const suggestionId = v4_default();
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isOpen }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, headline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.general.searchLabel,
+        "bind:value": searchViewModel.searchInput,
+        "on:enter": searchViewModel.applySearch,
+        list: suggestionId
+      }
+    ), /* @__PURE__ */ createElement(
+      "datalist",
+      {
+        hidden: true,
+        id: suggestionId,
+        "children:append": [searchViewModel.suggestions, StringToOption]
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.general.searchButtonAudioLabel,
+        "on:click": searchViewModel.applySearch,
+        "toggle:disabled": searchViewModel.cannotApplySearch
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "search")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "grid gap",
+        style: "grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr))",
+        "children:append": [searchViewModel.matchingObjects, converter]
+      }
+    )), /* @__PURE__ */ createElement("button", { "on:click": close }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+
+  // src/View/ChatPages/boardPage.tsx
+  function BoardPage(boardViewModel) {
+    boardViewModel.loadData();
+    const mainContent = createProxyState(
+      [boardViewModel.selectedPage],
+      () => {
+        switch (boardViewModel.selectedPage.value) {
+          case "kanban" /* Kanban */: {
+            return BoardKanbanPage(boardViewModel);
+          }
+          case "status-grid" /* StatusGrid */: {
+            return BoardStatusGridPage(boardViewModel);
+          }
+          default: {
+            return /* @__PURE__ */ createElement(
+              "div",
+              {
+                class: "task-grid",
+                "children:append": [
+                  boardViewModel.filteredTaskViewModels,
+                  TaskViewModelToEntry
+                ]
+              }
+            );
+          }
+        }
+      }
+    );
+    const taskSettingsModal = createProxyState(
+      [boardViewModel.selectedTaskViewModel],
+      () => {
+        if (boardViewModel.selectedTaskViewModel.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return TaskSettingsModal(boardViewModel.selectedTaskViewModel.value);
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.closeBoard,
+        "on:click": boardViewModel.close
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.boardSettingsHeadline,
+        "on:click": boardViewModel.showSettings
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "settings")
+    )), /* @__PURE__ */ createElement("span", { class: "scroll-h ribbon" }, BoardViewToggleButton(
+      translations.chatPage.task.listViewButtonAudioLabel,
+      "view_list",
+      "list" /* List */,
+      boardViewModel
+    ), BoardViewToggleButton(
+      translations.chatPage.task.kanbanViewButtonAudioLabel,
+      "view_kanban",
+      "kanban" /* Kanban */,
+      boardViewModel
+    ), BoardViewToggleButton(
+      translations.chatPage.task.statusViewButtonAudioLabel,
+      "grid_view",
+      "status-grid" /* StatusGrid */,
+      boardViewModel
+    )), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.filterTasksButtonAudioLabel,
+        "on:click": boardViewModel.showFilterModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "filter_alt")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "ghost",
+        "aria-label": translations.chatPage.task.createTaskButtonAudioLabel,
+        "on:click": boardViewModel.createTask
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+    ))), /* @__PURE__ */ createElement("div", { class: "content main-content", "children:set": mainContent }), BoardSettingsModal(boardViewModel), SearchModal(
+      boardViewModel.searchViewModel,
+      translations.chatPage.task.filterTasksHeadline,
+      TaskViewModelToEntry,
+      boardViewModel.isPresentingFilterModal
+    ), /* @__PURE__ */ createElement("div", { "children:set": taskSettingsModal }));
+  }
+
+  // src/View/Components/boardEntry.tsx
+  function BoardEntry(boardViewModel) {
+    const view = /* @__PURE__ */ createElement(
+      "button",
+      {
+        "set:color": boardViewModel.color,
+        class: "tile colored-tile",
+        "toggle:selected": boardViewModel.isSelected,
+        "on:click": boardViewModel.select,
+        "on:dragover": allowDrop,
+        "on:drop": boardViewModel.handleDropBetweenBoards
+      },
+      /* @__PURE__ */ createElement("span", { class: "shadow", "subscribe:innerText": boardViewModel.name }),
+      /* @__PURE__ */ createElement("b", { "subscribe:innerText": boardViewModel.name })
+    );
+    boardViewModel.index.subscribe((newIndex) => {
+      view.style.order = newIndex;
+    });
+    return view;
+  }
+  var BoardViewModelToEntry = (boardViewModel) => {
+    return BoardEntry(boardViewModel);
+  };
+
+  // src/View/ChatPages/taskPage.tsx
+  function TaskPage(taskPageViewModel) {
+    taskPageViewModel.loadData();
+    const isShowingBoard = createProxyState(
+      [taskPageViewModel.selectedBoardId],
+      () => taskPageViewModel.selectedBoardId.value != void 0
+    );
+    const paneContent = createProxyState(
+      [taskPageViewModel.selectedBoardId],
+      () => {
+        const selectedBoardId = taskPageViewModel.selectedBoardId.value;
+        if (selectedBoardId == void 0) {
+          return /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.noBoardSelected));
+        }
+        const selectedBoard = taskPageViewModel.boardViewModels.value.get(selectedBoardId);
+        if (selectedBoard == void 0) {
+          return /* @__PURE__ */ createElement("div", { class: "pane align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.chatPage.task.boardNotFound));
+        }
+        return BoardPage(selectedBoard);
+      }
+    );
+    return /* @__PURE__ */ createElement("div", { id: "task-page", "toggle:isshowingboard": isShowingBoard }, /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "board-list",
+        class: "pane-wrapper side background",
+        "set:color": taskPageViewModel.chatViewModel.displayedColor
+      },
+      /* @__PURE__ */ createElement("div", { class: "pane" }, /* @__PURE__ */ createElement("div", { class: "toolbar" }, /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+        "input",
+        {
+          "bind:value": taskPageViewModel.newBoardNameInput,
+          "on:enter": taskPageViewModel.createBoard,
+          placeholder: translations.chatPage.task.newBoardNamePlaceholder
+        }
+      ), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "primary",
+          "aria-label": translations.chatPage.task.createBoardButtonAudioLabel,
+          "on:click": taskPageViewModel.createBoard,
+          "toggle:disabled": taskPageViewModel.cannotCreateBoard
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
+      ))), /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "grid gap",
+          style: "grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr))",
+          "children:append": [
+            taskPageViewModel.boardViewModels,
+            BoardViewModelToEntry
+          ]
+        }
+      )))
+    ), /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "board-content",
+        class: "pane-wrapper",
+        "children:set": paneContent
+      }
+    ));
+  }
+
+  // src/View/chatPage.tsx
+  function ChatPage(chatViewModel) {
+    const mainContent = createProxyState(
+      [chatViewModel.selectedPage],
+      () => {
+        chatViewModel.closeSubPages();
+        switch (chatViewModel.selectedPage.value) {
+          case "settings" /* Settings */: {
+            return SettingsPage(chatViewModel.settingsPageViewModel);
+          }
+          case "tasks" /* Tasks */: {
+            return TaskPage(chatViewModel.taskPageViewModel);
+          }
+          case "calendar" /* Calendar */: {
+            return CalendarPage(chatViewModel.calendarViewModel);
+          }
+          default: {
+            return MessagePage(chatViewModel.messagePageViewModel);
+          }
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement(
+      "article",
+      {
+        id: "chat-page",
+        "set:color": chatViewModel.displayedColor,
+        class: "subtle-background"
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { id: "ribbon" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "ghost",
+          "aria-label": translations.chatPage.closeChatAudioLabe,
+          "on:click": chatViewModel.close
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+      ), /* @__PURE__ */ createElement("span", null, ChatViewToggleButton(
+        translations.chatPage.pages.calendar,
+        "calendar_month",
+        "calendar" /* Calendar */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.tasks,
+        "task_alt",
+        "tasks" /* Tasks */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.messages,
+        "forum",
+        "messages" /* Messages */,
+        chatViewModel
+      ), ChatViewToggleButton(
+        translations.chatPage.pages.settings,
+        "settings",
+        "settings" /* Settings */,
+        chatViewModel
+      ))), /* @__PURE__ */ createElement("div", { id: "main", "children:set": mainContent }))
+    );
+  }
+
+  // src/View/chatPageWrapper.tsx
+  function ChatPageWrapper(chatListViewModel2) {
+    const chatPageContent = createProxyState(
+      [chatListViewModel2.selectedChat],
+      () => {
+        if (chatListViewModel2.selectedChat.value == void 0) {
+          return /* @__PURE__ */ createElement("div", null);
+        } else {
+          return ChatPage(chatListViewModel2.selectedChat.value);
+        }
+      }
+    );
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        id: "chat-page-wrapper",
+        "children:set": chatPageContent
+      }
+    );
+  }
+
+  // src/View/Modals/connectionModal.tsx
+  function ConnectionModal(connectionViewModel2) {
+    const previousAddressConverter = (address) => {
+      function connnect() {
+        connectionViewModel2.connectToAddress(address);
+      }
+      const cannotConnect = createProxyState(
+        [connectionViewModel2.isConnected],
+        () => connectionViewModel2.isConnected.value == true && connectionViewModel2.connectionModel.address == address
+      );
+      return DeletableListItem(
+        address,
+        /* @__PURE__ */ createElement(
+          "button",
+          {
+            class: "primary",
+            "on:click": connnect,
+            "toggle:disabled": cannotConnect,
+            "aria-label": translations.connectionModal.connectButtonAudioLabel
+          },
+          /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
+        ),
+        () => {
+          connectionViewModel2.removePreviousAddress(address);
+        }
+      );
+    };
+    return /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "modal",
+        "toggle:open": connectionViewModel2.isShowingConnectionModal
+      },
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.connectionModal.connectionModalHeadline), /* @__PURE__ */ createElement(
+        "div",
+        {
+          class: "flex-column gap",
+          "children:append": [
+            connectionViewModel2.previousAddresses,
+            previousAddressConverter
+          ]
+        }
+      )), /* @__PURE__ */ createElement("button", { "on:click": connectionViewModel2.hideConnectionModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))
+    );
   }
 
   // node_modules/udn-frontend/index.ts
@@ -1123,11 +4076,11 @@
     };
     messageHandler = (data) => {
     };
-    mailboxHandler = (mailboxId2) => {
+    mailboxHandler = (mailboxId) => {
     };
-    mailboxConnectionHandler = (mailboxId2) => {
+    mailboxConnectionHandler = (mailboxId) => {
     };
-    mailboxDeleteHandler = (mailboxId2) => {
+    mailboxDeleteHandler = (mailboxId) => {
     };
     // INIT
     set onconnect(handler) {
@@ -1151,6 +4104,7 @@
     // UTILITY METHODS
     send(messageObject) {
       if (this.ws == void 0) return false;
+      if (this.ws.readyState != 1) return false;
       const messageString = JSON.stringify(messageObject);
       this.ws.send(messageString);
       return true;
@@ -1211,1580 +4165,1335 @@
       };
       return this.send(messageObject);
     }
-    connectMailbox(mailboxId2) {
+    connectMailbox(mailboxId) {
       const messageObject = {
-        requestedMailbox: mailboxId2
+        requestedMailbox: mailboxId
       };
       return this.send(messageObject);
     }
-    deleteMailbox(mailboxId2) {
+    deleteMailbox(mailboxId) {
       const messageObject = {
-        deletingMailbox: mailboxId2
+        deletingMailbox: mailboxId
       };
       return this.send(messageObject);
     }
   };
 
-  // src/Model/model.ts
-  var UDN = new UDNFrontend();
-  var isConnected = new State(false);
-  var serverAddressInput = restoreState("socket-address", "");
-  var didRequestConnection = restoreState(
-    "did-request-connection",
-    false
-  );
-  var currentAddress = restoreState("current-address", "");
-  var previousAddresses = restoreListState("previous-addresses");
-  var cannotDisonnect = createProxyState(
-    [isConnected],
-    () => isConnected.value == false
-  );
-  var cannotConnect = createProxyState(
-    [serverAddressInput, currentAddress, isConnected],
-    () => serverAddressInput.value == "" || currentAddress.value == serverAddressInput.value && isConnected.value == true
-  );
-  var cannotResetAddress = createProxyState(
-    [serverAddressInput, currentAddress],
-    () => serverAddressInput.value == currentAddress.value
-  );
-  function connect() {
-    if (cannotConnect.value == true) return;
-    serverAddressInput.value = serverAddressInput.value.toLowerCase();
-    currentAddress.value = serverAddressInput.value;
-    isConnected.value = false;
-    didRequestConnection.value = true;
-    UDN.connect(serverAddressInput.value);
-    isMailboxActive.value = false;
-  }
-  function disconnect() {
-    didRequestConnection.value = false;
-    if (cannotDisonnect.value == true) return;
-    UDN.disconnect();
-  }
-  function resetAddressInput() {
-    serverAddressInput.value = currentAddress.value;
-  }
-  function subscribeChannels() {
-    chats.value.forEach((chat) => {
-      UDN.subscribe(chat.primaryChannel.value);
-    });
-  }
-  UDN.onconnect = () => {
-    isConnected.value = true;
-    const lowerCasedAddress = currentAddress.value.toLowerCase();
-    if (!previousAddresses.value.has(lowerCasedAddress)) {
-      previousAddresses.add(lowerCasedAddress);
+  // src/Model/Global/connectionModel.ts
+  var ConnectionModel = class {
+    udn;
+    storageModel;
+    // data
+    get isConnected() {
+      return this.udn.ws != void 0 && this.udn.ws.readyState == 1;
     }
-    subscribeChannels();
-    if (mailboxId.value != "") UDN.connectMailbox(mailboxId.value);
-  };
-  UDN.onmessage = (data) => {
-    chats.value.forEach((chat) => {
-      chat.onmessage(data);
-    });
-  };
-  UDN.ondisconnect = () => {
-    isConnected.value = false;
-  };
-  var mailboxId = restoreState("mailbox-id", "");
-  var isMailboxActive = new State(false);
-  var cannotDeleteMailbox = createProxyState(
-    [mailboxId, isMailboxActive, isConnected],
-    () => mailboxId.value == "" || isMailboxActive.value == false || isConnected.value == false
-  );
-  var cannotRequestMailbox = createProxyState(
-    [isConnected, isMailboxActive],
-    () => isConnected.value == false || isMailboxActive.value == true
-  );
-  function requestMailbox() {
-    if (cannotRequestMailbox.value == true) return;
-    UDN.requestMailbox();
-  }
-  function deleteMailbox() {
-    if (cannotDeleteMailbox.value == true) return;
-    UDN.deleteMailbox(mailboxId.value);
-  }
-  function updateMailbox() {
-    if (isMailboxActive.value == false) return;
-    deleteMailbox();
-    setTimeout(() => requestMailbox(), 10);
-  }
-  UDN.onmailboxcreate = (id) => {
-    mailboxId.value = id;
-    UDN.connectMailbox(id);
-  };
-  UDN.onmailboxconnect = (id) => {
-    isMailboxActive.value = true;
-  };
-  UDN.onmailboxdelete = () => {
-    isMailboxActive.value = false;
-    mailboxId.value = "";
-    subscribeChannels();
-  };
-  var outboxItemCount = new State(0);
-  var outboxText = createProxyState(
-    [outboxItemCount],
-    () => translation.outboxText(outboxItemCount.value)
-  );
-  var outboxTextStyle = createProxyState(
-    [outboxItemCount],
-    () => outboxItemCount.value == 0 ? "success" : "warning"
-  );
-  var isPresentingSettingsModal = new State(false);
-  var isEncryptionAvailable = window.crypto.subtle != void 0;
-  var senderName = restoreState("sender-name", "");
-  var pageZoom = restoreState("page-zoom", 100);
-  var objectFilterInput = restoreState("object-filter", "");
-  var firstDayOfWeek = restoreState("first-day-of-week", 0);
-  var dayInCalendar = restoreState("calendar-day", (/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
-  pageZoom.subscribe(() => {
-    document.body.style.zoom = `${pageZoom.value}%`;
-    document.body.style.webkitTextSizeAdjust = `${pageZoom.value}%`;
-  });
-  var usedObjectCategories = restoreListState("object-categories");
-  var usedObjectStatuses = restoreListState("object-statuses");
-  var previousObjectSearches = restoreListState("object-searches");
-  function toggleSettings() {
-    isPresentingSettingsModal.value = !isPresentingSettingsModal.value;
-  }
-  function repairApp() {
-    mapSetToLowercase(previousAddresses);
-    removeSetDuplicates(previousAddresses);
-    removeSetDuplicates(usedObjectCategories);
-    removeSetDuplicates(usedObjectStatuses);
-    removeSetDuplicates(previousObjectSearches);
-  }
-  function mapSetToLowercase(listState) {
-    const lowerCased = [...listState.value].map((x) => x.toLowerCase());
-    listState.clear();
-    listState.add(...lowerCased);
-  }
-  function removeSetDuplicates(listState) {
-    const values = [...listState.value];
-    listState.clear();
-    listState.add(...values);
-  }
-  function clearAddresses() {
-    previousAddresses.clear();
-  }
-  function clearCategories() {
-    usedObjectCategories.clear();
-  }
-  function clearStatuses() {
-    usedObjectStatuses.clear();
-  }
-  function clearObjectSearches() {
-    previousObjectSearches.clear();
-  }
-  var zoomStep = 10;
-  function zoomOut() {
-    pageZoom.value -= zoomStep;
-  }
-  function zoomIn() {
-    pageZoom.value += zoomStep;
-  }
-  var chats = new ListState();
-  var chatIds = restoreListState("chat-ids");
-  var selectedChat = new State(void 0);
-  var isShowingObjects = restoreState("showing-objects", false);
-  var isShowingChatInSplit = restoreState(
-    "showing-chat-split",
-    false
-  );
-  var isChatOpen = createProxyState(
-    [selectedChat],
-    () => selectedChat.value != void 0
-  );
-  var isChatVisible = createProxyState(
-    [isShowingObjects, isShowingChatInSplit],
-    () => isShowingObjects.value == false || isShowingChatInSplit.value == true
-  );
-  isShowingObjects.subscribeSilent(() => {
-    setTimeout(() => scrollToChat("instant"), 1);
-  });
-  var newChatName = new State("");
-  var cannotCreateChat = createProxyState(
-    [newChatName],
-    () => newChatName.value == ""
-  );
-  function createChat() {
-    if (cannotCreateChat.value == true) return;
-    createChatWithName(newChatName.value);
-    newChatName.value = "";
-  }
-  function closeChatView() {
-    selectedChat.value = void 0;
-    document.getElementById("settings-tab")?.scrollIntoView();
-  }
-  function selectChat(chat) {
-    selectedChat.value = chat;
-    chat.hasUnreadMessages.value = false;
-    scrollToChat();
-  }
-  function scrollToChat(behavior = "smooth") {
-    document.getElementById("message-tab")?.scrollIntoView({ behavior });
-  }
-  function toggleObjects() {
-    isShowingObjects.value = !isShowingObjects.value;
-  }
-  function toggleChat() {
-    isShowingChatInSplit.value = !isShowingChatInSplit.value;
-  }
-  chatIds.value.forEach((id) => chats.add(new Chat(id)));
-  if (serverAddressInput.value != "" && didRequestConnection.value == true) {
-    connect();
-  }
-
-  // src/Views/Chat/chatOptionModal.tsx
-  function ChatOptionModal(chat, isPresented) {
-    function closeModal() {
-      isPresented.value = false;
+    get address() {
+      return this.udn.ws?.url;
     }
-    function deleteChat() {
-      chat.deleteSelf();
-      closeModal();
-      closeChatView();
-    }
-    const shouldShowKey = new State(false);
-    const inputType = createProxyState(
-      [shouldShowKey],
-      () => shouldShowKey.value == true ? "text" : "password"
-    );
-    const secondaryChannelConverter = (secondaryChannel) => {
-      function remove() {
-        chat.removeSecondaryChannel(secondaryChannel);
-      }
-      return /* @__PURE__ */ createElement("div", { class: "tile width-input padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "padding-h" }, secondaryChannel), /* @__PURE__ */ createElement(
-        "button",
-        {
-          class: "danger",
-          "aria-label": translation.removeSecondaryChannel,
-          "on:click": remove
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")
-      )));
+    connectionChangeHandlerManager = new HandlerManager();
+    messageHandlerManager = new HandlerManager();
+    messageSentHandlerManager = new HandlerManager();
+    channelsToSubscribe = /* @__PURE__ */ new Set();
+    // handlers
+    handleMessage = (data) => {
+      this.messageHandlerManager.trigger(data);
     };
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.configureChatTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": chat.primaryChannelInput,
-        placeholder: translation.primaryChannelPlaceholder,
-        "on:enter": chat.setChannel
+    handleConnectionChange = () => {
+      console.log("connection status:", this.isConnected, this.address);
+      this.connectionChangeHandlerManager.trigger();
+      if (this.isConnected == false) return;
+      if (this.address == void 0) return;
+      this.storeAddress(this.address);
+      this.sendSubscriptionRequest();
+      this.sendMessagesInOutbox();
+    };
+    // connection
+    connect = (address) => {
+      this.udn.connect(address);
+    };
+    disconnect = () => {
+      this.udn.disconnect();
+      const reconnectAddressPath = StorageModel.getPath(
+        "connection" /* ConnectionModel */,
+        filePaths.connectionModel.reconnectAddress
+      );
+      this.storageModel.remove(reconnectAddressPath);
+    };
+    // mailbox
+    getMailboxPath = (address) => {
+      const mailboxDirPath = StorageModel.getPath(
+        "connection" /* ConnectionModel */,
+        filePaths.connectionModel.mailboxes
+      );
+      const mailboxFilePath = [...mailboxDirPath, address];
+      return mailboxFilePath;
+    };
+    requestNewMailbox = () => {
+      console.log("requesting new mailbox");
+      this.udn.requestMailbox();
+    };
+    connectMailbox = () => {
+      if (this.address == void 0) return;
+      const mailboxId = this.storageModel.read(this.getMailboxPath(this.address));
+      console.log("connecting mailbox", mailboxId);
+      if (mailboxId == null) return this.requestNewMailbox();
+      this.udn.connectMailbox(mailboxId);
+    };
+    storeMailbox = (mailboxId) => {
+      if (this.address == void 0) return;
+      this.storageModel.write(this.getMailboxPath(this.address), mailboxId);
+    };
+    // subscription
+    addChannel = (channel) => {
+      this.channelsToSubscribe.add(channel);
+      this.sendSubscriptionRequest();
+    };
+    sendSubscriptionRequest = () => {
+      if (this.isConnected == false) return;
+      for (const channel of this.channelsToSubscribe) {
+        this.udn.subscribe(channel);
       }
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      this.connectMailbox();
+    };
+    // outbox
+    getOutboxPath = () => {
+      return StorageModel.getPath(
+        "connection" /* ConnectionModel */,
+        filePaths.connectionModel.outbox
+      );
+    };
+    getOutboxMessags = () => {
+      const outboxPath = this.getOutboxPath();
+      const messageIds = this.storageModel.list(outboxPath);
+      let chatMessages = [];
+      for (const messageId of messageIds) {
+        const chatMessage = this.storageModel.readStringifiable(
+          [...outboxPath, messageId],
+          ChatMessageReference
+        );
+        if (chatMessage == null) continue;
+        chatMessages.push(chatMessage);
+      }
+      return chatMessages;
+    };
+    addToOutbox = (chatMessage) => {
+      const messagePath = [...this.getOutboxPath(), chatMessage.id];
+      this.storageModel.writeStringifiable(messagePath, chatMessage);
+    };
+    removeFromOutbox = (chatMessage) => {
+      const messagePath = [...this.getOutboxPath(), chatMessage.id];
+      this.storageModel.remove(messagePath);
+    };
+    sendMessagesInOutbox = () => {
+      const messages = this.getOutboxMessags();
+      for (const message of messages) {
+        const isSent = this.tryToSendMessage(message);
+        if (isSent == false) return;
+        this.removeFromOutbox(message);
+      }
+    };
+    // messaging
+    sendMessageOrStore = (chatMessage) => {
+      const isSent = this.tryToSendMessage(chatMessage);
+      if (isSent == true) return;
+      this.addToOutbox(chatMessage);
+    };
+    tryToSendMessage = (chatMessage) => {
+      const stringifiedBody = stringify(chatMessage);
+      const isSent = this.sendPlainMessage(
+        chatMessage.channel,
+        stringifiedBody
+      );
+      if (isSent) this.messageSentHandlerManager.trigger(chatMessage);
+      return isSent;
+    };
+    sendPlainMessage = (channel, body) => {
+      return this.udn.sendMessage(channel, body);
+    };
+    // storage
+    getPreviousAddressPath = () => {
+      return StorageModel.getPath(
+        "connection" /* ConnectionModel */,
+        filePaths.connectionModel.previousAddresses
+      );
+    };
+    getAddressPath = (address) => {
+      const dirPath = this.getPreviousAddressPath();
+      return [...dirPath, address];
+    };
+    getReconnectAddressPath = () => {
+      return StorageModel.getPath(
+        "connection" /* ConnectionModel */,
+        filePaths.connectionModel.reconnectAddress
+      );
+    };
+    storeAddress = (address) => {
+      const addressPath = this.getAddressPath(address);
+      this.storageModel.write(addressPath, "");
+      const reconnectAddressPath = this.getReconnectAddressPath();
+      this.storageModel.write(reconnectAddressPath, address);
+    };
+    removeAddress = (address) => {
+      const addressPath = this.getAddressPath(address);
+      this.storageModel.remove(addressPath);
+    };
+    get addresses() {
+      const dirPath = this.getPreviousAddressPath();
+      return this.storageModel.list(dirPath);
+    }
+    // init
+    constructor(storageModel2) {
+      this.udn = new UDNFrontend();
+      this.storageModel = storageModel2;
+      this.udn.onmessage = (data) => {
+        this.handleMessage(data);
+      };
+      this.udn.onconnect = () => {
+        this.handleConnectionChange();
+      };
+      this.udn.ondisconnect = () => {
+        this.handleConnectionChange();
+      };
+      this.udn.onmailboxcreate = (mailboxId) => {
+        console.log("created mailbox", mailboxId);
+        this.storeMailbox(mailboxId);
+        this.connectMailbox();
+      };
+      this.udn.onmailboxdelete = (mailboxId) => {
+        console.log(`mailbox ${mailboxId} deleted`);
+        this.requestNewMailbox();
+      };
+      this.udn.onmailboxconnect = (mailboxId) => {
+        console.log(`using mailbox ${mailboxId}`);
+      };
+      const reconnectAddressPath = this.getReconnectAddressPath();
+      const reconnectAddress = storageModel2.read(reconnectAddressPath);
+      if (reconnectAddress != null) {
+        this.connect(reconnectAddress);
+      }
+    }
+  };
+
+  // src/ViewModel/Global/connectionViewModel.ts
+  var ConnectionViewModel = class {
+    // init
+    constructor(coreViewModel, connectionModel2) {
+      this.coreViewModel = coreViewModel;
+      this.connectionModel = connectionModel2;
+      this.updatePreviousAddresses();
+      connectionModel2.connectionChangeHandlerManager.addHandler(
+        this.connectionChangeHandler
+      );
+    }
+    connectionModel;
+    // state
+    serverAddressInput = new State("");
+    isConnected = new State(false);
+    isShowingConnectionModal = new State(false);
+    previousAddresses = new ListState();
+    // guards
+    cannotConnect = createProxyState(
+      [this.serverAddressInput, this.isConnected],
+      () => this.isConnected.value == true && this.serverAddressInput.value == this.connectionModel.address || this.serverAddressInput.value == ""
+    );
+    cannotDisonnect = createProxyState(
+      [this.isConnected],
+      () => this.isConnected.value == false
+    );
+    hasNoPreviousConnections = createProxyState(
+      [this.previousAddresses],
+      () => this.previousAddresses.value.size == 0
+    );
+    // handlers
+    connectionChangeHandler = () => {
+      this.isConnected.value = this.connectionModel.isConnected;
+      if (this.connectionModel.isConnected == false) return;
+      if (this.connectionModel.address == void 0) return;
+      this.serverAddressInput.value = this.connectionModel.address;
+      if (!this.previousAddresses.value.has(this.connectionModel.address)) {
+        this.previousAddresses.add(this.connectionModel.address);
+      }
+    };
+    // methods
+    connect = () => {
+      this.connectToAddress(this.serverAddressInput.value);
+    };
+    connectToAddress = (address) => {
+      this.connectionModel.connect(address);
+    };
+    disconnect = () => {
+      this.connectionModel.disconnect();
+    };
+    removePreviousAddress = (address) => {
+      this.connectionModel.removeAddress(address);
+      this.updatePreviousAddresses();
+    };
+    // view
+    showConnectionModal = () => {
+      this.isShowingConnectionModal.value = true;
+    };
+    hideConnectionModal = () => {
+      this.isShowingConnectionModal.value = false;
+    };
+    updatePreviousAddresses = () => {
+      this.previousAddresses.clear();
+      this.previousAddresses.add(...this.connectionModel.addresses);
+    };
+  };
+
+  // src/ViewModel/Global/coreViewModel.ts
+  var CoreViewModel = class {
+    // drag&drop
+    draggedObject = new State(void 0);
+    // suggestions
+    boardSearchSuggestions = new ListState();
+    taskCategorySuggestions = new ListState();
+    taskStatusSuggestions = new ListState();
+  };
+
+  // src/ViewModel/Global/fileTransferViewModel.ts
+  var FileTransferViewModel = class {
+    fileTransferModel;
+    chatListModel;
+    // state
+    presentedModal = new State(void 0);
+    generalFileOptions = new ListState();
+    chatFileOptions = new ListState();
+    selectedPaths = new ListState();
+    transferChannel = new State("");
+    transferKey = new State("");
+    receivingTransferChannel = new State("");
+    receivingTransferKey = new State("");
+    filePathsSent = new ListState();
+    filesSentCount = createProxyState(
+      [this.filePathsSent],
+      () => this.filePathsSent.value.size
+    );
+    filesSentText = createProxyState(
+      [this.filesSentCount],
+      () => translations.dataTransferModal.filesSentCount(this.filesSentCount.value)
+    );
+    filePathsReceived = new ListState();
+    filesReceivedCount = createProxyState(
+      [this.filePathsReceived],
+      () => this.filePathsReceived.value.size
+    );
+    filesReceivedText = createProxyState(
+      [this.filesReceivedCount],
+      () => translations.dataTransferModal.filesReceivedCount(
+        this.filesReceivedCount.value
+      )
+    );
+    // guards
+    hasNoPathsSelected = createProxyState(
+      [this.selectedPaths],
+      () => this.selectedPaths.value.size == 0
+    );
+    didNotFinishSending = new State(true);
+    cannotPrepareToReceive = createProxyState(
+      [this.receivingTransferChannel, this.receivingTransferKey],
+      () => this.receivingTransferChannel.value == "" || this.receivingTransferKey.value == ""
+    );
+    // handlers
+    handleReceivedFile = (path) => {
+      this.filePathsReceived.add(path);
+    };
+    // methods
+    getOptions = () => {
+      this.generalFileOptions.clear();
+      this.chatFileOptions.clear();
+      this.selectedPaths.clear();
+      this.generalFileOptions.add(
+        {
+          label: translations.dataTransferModal.connectionData,
+          path: StorageModel.getPath(
+            "connection" /* ConnectionModel */,
+            filePaths.connectionModel.previousAddresses
+          )
+        },
+        {
+          label: translations.dataTransferModal.settingsData,
+          path: StorageModel.getPath("settings" /* SettingsModel */, [])
+        }
+      );
+      const chatModels = this.chatListModel.chatModels;
+      for (const chatModel of chatModels) {
+        this.chatFileOptions.add({
+          label: chatModel.info.primaryChannel,
+          path: chatModel.getBasePath()
+        });
+      }
+    };
+    getTransferData = () => {
+      const transferData = this.fileTransferModel.generateTransferData();
+      this.transferChannel.value = transferData.channel;
+      this.transferKey.value = transferData.key;
+    };
+    // view
+    showDirectionSelectionModal = () => {
+      this.presentedModal.value = 0 /* DirectionSelection */;
+      this.getOptions();
+    };
+    showFileSelectionModal = () => {
+      this.presentedModal.value = 1 /* FileSelection */;
+    };
+    showTransferDataModal = () => {
+      this.presentedModal.value = 2 /* TransferDataDisplay */;
+      this.getTransferData();
+    };
+    initiateTransfer = () => {
+      this.presentedModal.value = 3 /* TransferDisplay */;
+      this.didNotFinishSending.value = true;
+      this.filePathsSent.clear();
+      this.fileTransferModel.sendFiles(
+        this.selectedPaths.value.values(),
+        (path) => {
+          console.log(path);
+          this.filePathsSent.add(path);
+        }
+      );
+      this.didNotFinishSending.value = false;
+    };
+    showTransferDataInputModal = () => {
+      this.presentedModal.value = 4 /* TransferDataInput */;
+    };
+    prepareReceivingData = () => {
+      this.presentedModal.value = 5 /* ReceptionDisplay */;
+      this.filePathsReceived.clear();
+      const transferData = {
+        channel: this.receivingTransferChannel.value,
+        key: this.receivingTransferKey.value
+      };
+      this.fileTransferModel.prepareToReceive(transferData);
+    };
+    hideModal = () => {
+      this.presentedModal.value = void 0;
+    };
+    // init
+    constructor(fileTransferModel2, chatListModel2) {
+      this.fileTransferModel = fileTransferModel2;
+      this.chatListModel = chatListModel2;
+      this.fileTransferModel.fileHandlerManager.addHandler(
+        this.handleReceivedFile
+      );
+    }
+  };
+
+  // src/View/Components/textSpan.tsx
+  var StringToTextSpan = (string) => {
+    return /* @__PURE__ */ createElement("span", { class: "ellipsis" }, string);
+  };
+
+  // src/View/Modals/dataTransferModal.tsx
+  function DataTransferModalWrapper(fileTransferViewModel2) {
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2), TransferDataInputModal(fileTransferViewModel2), DataReceptionModal(fileTransferViewModel2));
+  }
+  function DirectionSelectionModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 0 /* DirectionSelection */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement(
       "button",
       {
-        "aria-label": translation.undoChanges,
-        class: "flex justify-center",
-        "on:click": chat.undoChannelChange,
-        "toggle:disabled": chat.cannotUndoChannel
+        class: "tile",
+        "on:click": fileTransferViewModel2.showFileSelectionModal
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "upload"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.fromThisDeviceButton)),
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        "aria-label": translation.set,
-        class: "flex justify-center primary",
-        "on:click": chat.setChannel,
-        "toggle:disabled": chat.cannotSetChannel
+        class: "tile",
+        "on:click": fileTransferViewModel2.showTransferDataInputModal
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row margin-bottom width-input" }, /* @__PURE__ */ createElement(
-      "input",
-      {
-        "aria-label": translation.secondaryChannel,
-        placeholder: translation.secondaryChannelPlaceholder,
-        "bind:value": chat.newSecondaryChannelName,
-        "on:enter": chat.addSecondaryChannel
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "download"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)),
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+  }
+  function FileSelectionModal(fileTransferViewModel2) {
+    const OptionConverter = (fileOption) => {
+      return OptionEntry(fileOption, fileTransferViewModel2);
+    };
+    function OptionEntry(fileOption, fileTransferViewModel3) {
+      const isSelected = new State(false);
+      if (fileTransferViewModel3.selectedPaths.value.has(fileOption.path)) {
+        isSelected.value = true;
       }
-    ), /* @__PURE__ */ createElement(
-      "button",
+      isSelected.subscribeSilent((isSelected2) => {
+        if (isSelected2 == true) {
+          fileTransferViewModel3.selectedPaths.add(fileOption.path);
+        } else {
+          fileTransferViewModel3.selectedPaths.remove(fileOption.path);
+        }
+      });
+      function toggle() {
+        isSelected.value = !isSelected.value;
+      }
+      return /* @__PURE__ */ createElement("button", { class: "tile", "toggle:selected": isSelected, "on:click": toggle }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, fileOption.label), /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, StorageModel.pathComponentsToString(...fileOption.path))));
+    }
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 1 /* FileSelection */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.selectionDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.generalHeadline), /* @__PURE__ */ createElement(
+      "div",
       {
-        class: "primary",
-        "toggle:disabled": chat.cannotAddSecondaryChannel,
-        "aria-label": translation.addSecondaryChannel,
-        "on:click": chat.addSecondaryChannel
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement(
+        class: "flex-column gap content-margin-bottom",
+        "children:append": [
+          fileTransferViewModel2.generalFileOptions,
+          OptionConverter
+        ]
+      }
+    ), /* @__PURE__ */ createElement("h3", null, translations.dataTransferModal.chatsHeadline), /* @__PURE__ */ createElement(
       "div",
       {
         class: "flex-column gap",
-        "children:prepend": [
-          chat.secondaryChannels,
-          secondaryChannelConverter
+        "children:append": [
+          fileTransferViewModel2.chatFileOptions,
+          OptionConverter
         ]
       }
-    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.encryptionKey), /* @__PURE__ */ createElement(
-      "input",
-      {
-        placeholder: translation.encryptionKeyPlaceholder,
-        "bind:value": chat.encryptionKey,
-        "set:type": inputType
-      }
-    ))), /* @__PURE__ */ createElement("label", { class: "inline margin-0" }, /* @__PURE__ */ createElement("input", { type: "checkbox", "bind:checked": shouldShowKey }), translation.showKey)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement("button", { "on:click": chat.resendObjects }, translation.resendObjects, /* @__PURE__ */ createElement("span", { class: "icon" }, "replay"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap width-input" }, /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "danger",
-        "on:click": chat.clearObjects,
-        "toggle:disabled": chat.cannotClearObjects
+        class: "flex",
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
       },
-      translation.clearObjects,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
+      translations.general.backButton
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "danger",
-        "on:click": chat.clearMessages,
-        "toggle:disabled": chat.cannotClearMessages
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.showTransferDataModal,
+        "toggle:disabled": fileTransferViewModel2.hasNoPathsSelected
       },
-      translation.clearChatMessages,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "chat_error")
-    ), /* @__PURE__ */ createElement("button", { class: "danger", "on:click": deleteChat }, translation.removeChat, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete_forever")))), /* @__PURE__ */ createElement("button", { "on:click": closeModal }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+      translations.general.continueButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
   }
-
-  // src/Views/Chat/messageComposer.tsx
-  function MessageComposer(chat) {
-    return /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, " ", /* @__PURE__ */ createElement(
-      "input",
+  function TransferDataDisplayModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 2 /* TransferDataDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.dataEntryDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
+      "b",
       {
-        class: "width-100 flex-1",
-        style: "max-width: unset",
-        placeholder: translation.composerPlaceholder,
-        "bind:value": chat.composingMessage,
-        "on:enter": chat.sendMessageFromComposer
+        "subscribe:innerText": fileTransferViewModel2.transferChannel
       }
+    ))), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferKeyHeadline), /* @__PURE__ */ createElement("b", { "subscribe:innerText": fileTransferViewModel2.transferKey }))))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
+        "on:click": fileTransferViewModel2.showFileSelectionModal
+      },
+      translations.general.backButton
     ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary",
-        "on:click": chat.sendMessageFromComposer,
-        "toggle:disabled": chat.cannotSendMessage
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.initiateTransfer
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "send")
-    ));
+      translations.dataTransferModal.sendButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
+  }
+  function TransferDisplayModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 3 /* TransferDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "subscribe:innerText": fileTransferViewModel2.filesSentText
+      }
+    ), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "toggle:hidden": fileTransferViewModel2.didNotFinishSending
+      },
+      translations.dataTransferModal.allFilesSent
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "tile flex-column align-start",
+        "children:append": [
+          fileTransferViewModel2.filePathsSent,
+          StringToTextSpan
+        ]
+      }
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": fileTransferViewModel2.hideModal,
+        "toggle:disabled": fileTransferViewModel2.didNotFinishSending
+      },
+      translations.general.closeButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+    )));
+  }
+  function TransferDataInputModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 4 /* TransferDataInput */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.dataEntryInputDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": fileTransferViewModel2.receivingTransferChannel
+      }
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferKeyHeadline), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": fileTransferViewModel2.receivingTransferKey
+      }
+    ))))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
+      },
+      translations.general.backButton
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.prepareReceivingData,
+        "toggle:disabled": fileTransferViewModel2.cannotPrepareToReceive
+      },
+      translations.general.continueButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
+  }
+  function DataReceptionModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 5 /* ReceptionDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("p", { class: "secondary" }, translations.dataTransferModal.readyToReceiveDescription), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "subscribe:innerText": fileTransferViewModel2.filesReceivedText
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "tile flex-column align-start",
+        "children:append": [
+          fileTransferViewModel2.filePathsReceived,
+          StringToTextSpan
+        ]
+      }
+    )), /* @__PURE__ */ createElement("button", { "on:click": reload }, translations.general.reloadAppButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "refresh"))));
   }
 
-  // src/icons.ts
-  var icons = {
-    objectTitle: "label",
-    objectHistory: "history",
-    noteContent: "sticky_note_2",
-    categoryName: "category",
-    status: "trending_up",
-    priority: "priority_high",
-    date: "calendar_month",
-    time: "schedule"
+  // src/Model/Global/fileTransferModel.ts
+  var FileTransferModel = class {
+    storageModel;
+    connectionModel;
+    // data
+    transferData;
+    fileHandlerManager = new HandlerManager();
+    // general
+    generateTransferData = () => {
+      const transferData = {
+        channel: generateRandomToken(2).substring(0, 4),
+        key: generateRandomToken(3).substring(0, 6)
+      };
+      this.transferData = transferData;
+      return transferData;
+    };
+    prepareToReceive = (transferData) => {
+      this.connectionModel.addChannel(transferData.channel);
+      this.transferData = transferData;
+    };
+    // handlers
+    handleMessage = (data) => {
+      if (this.transferData == void 0) return;
+      if (data.messageBody == void 0) return;
+      if (data.messageChannel != this.transferData.channel) return;
+      this.handleFile(data.messageBody);
+    };
+    handleFile = async (encryptedFileData) => {
+      if (this.transferData == void 0) return;
+      const decrypted = await decryptString(
+        encryptedFileData,
+        this.transferData.key
+      );
+      console.log(decrypted);
+      const parsed = parse(decrypted);
+      const isFileData = checkMatchesObjectStructure(
+        parsed,
+        FileDataReference
+      );
+      if (isFileData == false) return;
+      const fileData = parsed;
+      this.storageModel.write(fileData.path, fileData.body);
+      const pathString = StorageModel.pathComponentsToString(
+        ...fileData.path
+      );
+      this.fileHandlerManager.trigger(pathString);
+    };
+    // sending
+    sendFiles = (directoryPaths, callback) => {
+      for (const directoryPath of directoryPaths) {
+        this.storageModel.recurse(directoryPath, (filePath) => {
+          this.sendFile(filePath);
+          const pathString = StorageModel.pathComponentsToString(
+            ...filePath
+          );
+          callback(pathString);
+        });
+      }
+    };
+    sendFile = async (filePath) => {
+      if (this.transferData == void 0) return;
+      const fileContent = this.storageModel.read(filePath);
+      if (fileContent == null) return;
+      const fileData = {
+        path: filePath,
+        body: fileContent
+      };
+      const stringifiedFileData = stringify(fileData);
+      const encryptedFileData = await encryptString(
+        stringifiedFileData,
+        this.transferData.key
+      );
+      this.connectionModel.sendPlainMessage(
+        this.transferData.channel,
+        encryptedFileData
+      );
+    };
+    // init
+    constructor(storageModel2, connectionModel2) {
+      this.storageModel = storageModel2;
+      this.connectionModel = connectionModel2;
+      this.connectionModel.messageHandlerManager.addHandler(this.handleMessage);
+    }
+  };
+  var FileDataReference = {
+    path: [""],
+    body: ""
   };
 
-  // src/Views/Objects/objectEntryView.tsx
-  function ObjectEntryView(chat, messageObject, selectedObject, isShowingObjectModal) {
-    const latest = chat.getMostRecentContent(messageObject);
-    function select() {
-      selectedObject.value = messageObject;
-      isShowingObjectModal.value = true;
-    }
-    function dragStart(event) {
-      event.dataTransfer?.setData("text", messageObject.id);
-    }
-    const fields = {
-      [icons.noteContent]: "---",
-      [icons.priority]: "---",
-      [icons.categoryName]: "---",
-      [icons.status]: "---",
-      [icons.date]: "---",
-      [icons.time]: "---"
-    };
-    Object.entries(latest).forEach((entry) => {
-      let [key, value] = entry;
-      if (!value) return;
-      const icon = icons[key];
-      if (!icon) return;
-      if (!fields[icon]) return;
-      fields[icon] = value;
-    });
-    const fieldElements = Object.entries(fields).map((field) => {
-      const [icon, value] = field;
-      return /* @__PURE__ */ createElement("span", { class: "flex-row control-gap flex align-center padding-right ellipsis" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon), /* @__PURE__ */ createElement("span", { class: "ellipsis" }, value));
-    });
+  // src/View/Components/chatEntry.tsx
+  function ChatEntry(chatViewModel) {
     const view = /* @__PURE__ */ createElement(
       "button",
       {
-        class: "tile flex-no",
-        "on:click": select,
-        draggable: "true",
-        "on:dragstart": dragStart
+        class: "tile colored-tile chat-entry",
+        "set:color": chatViewModel.settingsPageViewModel.color,
+        style: "height: 8rem",
+        "on:click": chatViewModel.open,
+        "toggle:unread": chatViewModel.hasUnreadMessages
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis" }, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement(
         "span",
         {
-          class: "grid height-100 flex secondary",
-          style: "grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1.7rem)"
-        },
-        ...fieldElements
-      ))
+          class: "shadow",
+          "subscribe:innerText": chatViewModel.settingsPageViewModel.primaryChannel
+        }
+      ),
+      /* @__PURE__ */ createElement(
+        "h2",
+        {
+          "subscribe:innerText": chatViewModel.settingsPageViewModel.primaryChannel
+        }
+      )
     );
-    messageObject.index.subscribe((newIndex) => {
+    chatViewModel.index.subscribe((newIndex) => {
       view.style.order = newIndex;
     });
     return view;
   }
-
-  // src/Views/Objects/objectGridView.tsx
-  function ObjectGridView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const objectConverter = (messageObject) => {
-      return ObjectEntryView(
-        chat,
-        messageObject,
-        selectedObject,
-        isShowingObjectModal
-      );
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "grid gap",
-        style: "grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));",
-        "children:prepend": [messageObjects, objectConverter]
-      }
-    );
-  }
-
-  // src/Views/Objects/allObjectsView.tsx
-  function AllObjectsView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const objectCount = createProxyState(
-      [chat.objects],
-      () => chat.objects.value.size
-    );
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding flex-column gap" }, /* @__PURE__ */ createElement("b", { class: "secondary" }, translation.objectsInTotal, " ", /* @__PURE__ */ createElement("span", { "subscribe:innerText": objectCount })), ObjectGridView(
-      chat,
-      messageObjects,
-      selectedObject,
-      isShowingObjectModal
-    ));
-  }
-
-  // src/Views/Objects/dayView.tsx
-  function DayView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const objectsForDayView = new ListState();
-    function processObject(messageObject) {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.date || latest.date != dayInCalendar.value) return;
-      objectsForDayView.add(messageObject);
-      messageObjects.handleRemoval(messageObject, () => {
-        objectsForDayView.remove(messageObject);
-      });
-    }
-    messageObjects.handleAddition(processObject);
-    dayInCalendar.subscribeSilent(() => {
-      objectsForDayView.clear();
-      messageObjects.value.forEach(processObject);
-    });
-    const objectConverter = (messageObject) => {
-      return ObjectEntryView(
-        chat,
-        messageObject,
-        selectedObject,
-        isShowingObjectModal
-      );
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "day-view padding flex-column gap scroll-v",
-        "children:append": [objectsForDayView, objectConverter]
-      }
-    );
-  }
-
-  // src/Views/Objects/monthGridCell.tsx
-  function MonthGridCell(chat, messageObjects, dateObject) {
-    const objectsForDayView = new ListState();
-    const dateString = dateObject.toISOString().split("T")[0];
-    function processObject(messageObject) {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.date || latest.date != dateString) return;
-      objectsForDayView.add(messageObject);
-      messageObjects.handleRemoval(messageObject, () => {
-        objectsForDayView.remove(messageObject);
-      });
-    }
-    function select() {
-      dayInCalendar.value = dateString;
-    }
-    const isSelected = createProxyState(
-      [dayInCalendar],
-      () => dayInCalendar.value == dateString
-    );
-    const today = /* @__PURE__ */ new Date();
-    const isToday = today.getDate() == dateObject.getUTCDate() && today.getMonth() == dateObject.getUTCMonth() && today.getFullYear() == dateObject.getUTCFullYear();
-    messageObjects.handleAddition(processObject);
-    const objectConverter = (messageObject) => {
-      const view = /* @__PURE__ */ createElement("span", { class: "secondary ellipsis" }, chat.getObjectTitle(messageObject));
-      messageObject.index.subscribe((newIndex) => {
-        view.style.order = newIndex;
-      });
-      return view;
-    };
-    function dragOver(event) {
-      event.preventDefault();
-    }
-    function drop(event) {
-      event.preventDefault();
-      var id = event.dataTransfer?.getData("text");
-      if (!id) return;
-      const messageObject = chat.objects.value.get(id);
-      if (!messageObject) return;
-      const newContent = chat.createObjectContent();
-      newContent.date = dateString;
-      chat.updateObjectContent(messageObject, newContent);
-      chat.addObjectAndSend(messageObject);
-    }
-    return /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": select,
-        "on:dragover": dragOver,
-        "on:drop": drop,
-        "toggle:selected": isSelected,
-        "toggle:today": isToday,
-        class: "day-miniature tile flex-column align-start",
-        style: "aspect-ratio: 1/1; overflow: hidden"
-      },
-      /* @__PURE__ */ createElement("h3", { class: "margin-0" }, dateObject.getUTCDate()),
-      /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap",
-          "children:append": [objectsForDayView, objectConverter]
-        }
-      )
-    );
-  }
-
-  // src/Views/Objects/calendarView.tsx
-  function CalendarView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    let selectedDate = new Date(dayInCalendar.value);
-    const selectedMonth = new State(selectedDate.getUTCMonth() + 1);
-    const selectedYear = new State(selectedDate.getUTCFullYear());
-    bulkSubscribe(
-      [selectedMonth, selectedYear],
-      () => updateSelectedDate()
-    );
-    dayInCalendar.subscribeSilent(() => {
-      selectedDate = new Date(dayInCalendar.value);
-    });
-    updateSelectedDate();
-    function updateSelectedDate() {
-      selectedDate.setUTCMonth(selectedMonth.value - 1);
-      selectedDate.setUTCFullYear(selectedYear.value);
-      dayInCalendar.value = selectedDate.toISOString().split("T")[0];
-    }
-    function previousMonth() {
-      if (selectedMonth.value <= 1) {
-        selectedMonth.value = 12;
-        selectedYear.value -= 1;
-        return;
-      }
-      selectedMonth.value -= 1;
-    }
-    function nextMonth() {
-      if (selectedMonth.value >= 12) {
-        selectedMonth.value = 1;
-        selectedYear.value += 1;
-        return;
-      }
-      selectedMonth.value += 1;
-    }
-    let monthGridCells = new State([]);
-    bulkSubscribe([dayInCalendar, firstDayOfWeek], updateMonthGrid);
-    updateMonthGrid();
-    function updateMonthGrid() {
-      const newSelectedDate = new Date(dayInCalendar.value);
-      const currentDate = /* @__PURE__ */ new Date();
-      monthGridCells.value = [];
-      currentDate.setUTCDate(1);
-      currentDate.setUTCMonth(newSelectedDate.getMonth());
-      let currentLabelIndex = firstDayOfWeek.value;
-      for (let i = 0; i < 7; i++) {
-        monthGridCells.value.push(
-          /* @__PURE__ */ createElement("b", { class: "secondary ellipsis width-100" }, translation.weekdays[currentLabelIndex])
-        );
-        currentLabelIndex++;
-        if (currentLabelIndex >= 7) currentLabelIndex = 0;
-      }
-      const monthOffset = currentDate.getDay() - firstDayOfWeek.value;
-      for (let i = 0; i < monthOffset; i++) {
-        monthGridCells.value.push(/* @__PURE__ */ createElement("div", null));
-      }
-      while (currentDate.getUTCMonth() == newSelectedDate.getUTCMonth()) {
-        monthGridCells.value.push(
-          MonthGridCell(chat, messageObjects, currentDate)
-        );
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      monthGridCells.callSubscriptions();
-    }
-    return /* @__PURE__ */ createElement("div", { class: "calendar-wrapper" }, /* @__PURE__ */ createElement("div", { class: "month-grid padding scroll-v" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-center gap" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        "on:click": previousMonth,
-        "aria-label": translation.previousMonth
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")
-    ), /* @__PURE__ */ createElement(
-      "input",
-      {
-        style: "width: 90px",
-        type: "number",
-        "bind:value": selectedMonth
-      }
-    ), /* @__PURE__ */ createElement(
-      "input",
-      {
-        style: "width: 110px",
-        type: "number",
-        "bind:value": selectedYear
-      }
-    ), /* @__PURE__ */ createElement("button", { "on:click": nextMonth, "aria-label": translation.nextMonth }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "grid gap",
-        style: "grid-template-columns: repeat(7, 1fr)",
-        "children:set": monthGridCells
-      }
-    )), DayView(chat, messageObjects, selectedObject, isShowingObjectModal));
-  }
-
-  // src/Views/renameView.tsx
-  function RenameView(editingName, initialName, rename) {
-    const cannotRename = createProxyState(
-      [editingName],
-      () => editingName.value == initialName || editingName.value == ""
-    );
-    return /* @__PURE__ */ createElement("div", { class: "flex-row align-center justify-apart object-entry-wide" }, /* @__PURE__ */ createElement("input", { "bind:value": editingName, "on:enter": rename }), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary",
-        "aria-label": translation.rename,
-        "on:click": rename,
-        "toggle:disabled": cannotRename
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "edit")
-    ));
-  }
-
-  // src/Views/Objects/kanbanView.tsx
-  function KanbanView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const boards = new MapState();
-    const sortedBoardNames = createProxyState(
-      [boards],
-      () => [...boards.value.values()].map((board) => board.category).sort((a, b) => a.localeCompare(b))
-    );
-    messageObjects.handleAddition((messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.categoryName) return;
-      const categoryName = latest.categoryName;
-      if (!boards.value.has(categoryName)) {
-        const listState = new ListState();
-        listState.subscribeSilent(() => {
-          if (listState.value.size != 0) return;
-          boards.remove(categoryName);
-        });
-        boards.set(categoryName, {
-          category: categoryName,
-          items: listState
-        });
-      }
-      const boardItem = {
-        priority: latest.priority ?? 0,
-        messageObject
-      };
-      boards.value.get(categoryName)?.items.add(boardItem);
-      messageObjects.handleRemoval(messageObject, () => {
-        boards.value.get(categoryName)?.items.remove(boardItem);
-      });
-    });
-    const boardToBoardView = (board) => {
-      const view = KanbanBoardView(
-        chat,
-        board,
-        selectedObject,
-        isShowingObjectModal
-      );
-      sortedBoardNames.subscribe((sortedBoardNames2) => {
-        view.style.order = sortedBoardNames2.indexOf(board.category);
-      });
-      return view;
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-row large-gap width-100 height-100 scroll-v scroll-h padding",
-        "children:append": [boards, boardToBoardView]
-      }
-    );
-  }
-  function KanbanBoardView(chat, kanbanBoard, selectedObject, isShowingObjectModal) {
-    const editingCategory = new State(kanbanBoard.category);
-    function renameBoard() {
-      kanbanBoard.items.value.forEach((kanbanBoardItem) => {
-        const { messageObject } = kanbanBoardItem;
-        const latest = chat.getMostRecentContent(messageObject);
-        latest.categoryName = editingCategory.value;
-        chat.addObjectAndSend(messageObject);
-      });
-    }
-    function dragOver(event) {
-      event.preventDefault();
-    }
-    function drop(event) {
-      event.preventDefault();
-      var id = event.dataTransfer?.getData("text");
-      if (!id) return;
-      const messageObject = chat.objects.value.get(id);
-      if (!messageObject) return;
-      const newContent = chat.createObjectContent();
-      newContent.categoryName = kanbanBoard.category;
-      chat.updateObjectContent(messageObject, newContent);
-      chat.addObjectAndSend(messageObject);
-    }
-    const itemToViewEntry = (kanbanBoardItem) => {
-      return ObjectEntryView(
-        chat,
-        kanbanBoardItem.messageObject,
-        selectedObject,
-        isShowingObjectModal
-      );
-    };
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column flex-no object-entry-wide",
-        "on:dragover": dragOver,
-        "on:drop": drop
-      },
-      RenameView(editingCategory, kanbanBoard.category, renameBoard),
-      /* @__PURE__ */ createElement("hr", null),
-      /* @__PURE__ */ createElement(
-        "div",
-        {
-          class: "flex-column gap padding-bottom",
-          "children:append": [kanbanBoard.items, itemToViewEntry]
-        }
-      )
-    );
-  }
-
-  // src/Views/Objects/noteObjectsView.tsx
-  function NoteObjectsView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const notes = new ListState();
-    messageObjects.handleAddition((messageObject) => {
-      const latest = chat.getMostRecentContent(messageObject);
-      if (!latest.noteContent) return;
-      notes.add(messageObject);
-      messageObjects.handleRemoval(
-        messageObject,
-        () => notes.remove(messageObject)
-      );
-    });
-    return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 scroll-v padding" }, ObjectGridView(chat, notes, selectedObject, isShowingObjectModal));
-  }
-
-  // src/Views/Objects/objectDetailModal.tsx
-  function ObjectDetailModal(chat, messageObject, isPresented) {
-    const editingTitle = new State(messageObject.title);
-    const selectedMessageObjectId = new State(
-      chat.getMostRecentContentId(messageObject)
-    );
-    const selectedMessageObject = createProxyState(
-      [selectedMessageObjectId],
-      () => chat.getObjectContentFromId(messageObject, selectedMessageObjectId.value)
-    );
-    const didEditContent = new State(false);
-    const editingNoteContent = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.noteContent ?? ""
-    );
-    const editingCategory = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.categoryName ?? ""
-    );
-    const editingStatus = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.status ?? ""
-    );
-    const editingDate = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.date ?? ""
-    );
-    const editingTime = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.time ?? ""
-    );
-    const editingPriority = createProxyState(
-      [selectedMessageObject],
-      () => selectedMessageObject.value.priority ?? 0
-    );
-    bulkSubscribe(
-      [
-        editingNoteContent,
-        editingCategory,
-        editingStatus,
-        editingDate,
-        editingTime,
-        editingPriority
-      ],
-      () => didEditContent.value = true
-    );
-    function handleKeyDown(e) {
-      if (!e.metaKey && !e.ctrlKey) return;
-      switch (e.key) {
-        case "s":
-          e.preventDefault();
-          saveAndClose();
-          break;
-      }
-    }
-    function closeModal() {
-      isPresented.value = false;
-    }
-    function saveAndClose() {
-      messageObject.title = editingTitle.value;
-      if (didEditContent.value == true) {
-        chat.addObjectContent(messageObject, {
-          isoDateVersionCreated: (/* @__PURE__ */ new Date()).toISOString(),
-          id: UUID(),
-          noteContent: editingNoteContent.value,
-          priority: editingPriority.value,
-          categoryName: editingCategory.value,
-          status: editingStatus.value,
-          date: editingDate.value,
-          time: editingTime.value
-        });
-      }
-      chat.addObjectAndSend(messageObject);
-      closeModal();
-    }
-    function deleteAndClose() {
-      chat.deleteObject(messageObject);
-      closeModal();
-    }
-    const input = /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": editingTitle,
-        placeholder: translation.objectTitlePlaceholder
-      }
-    );
-    isPresented.subscribe(() => setTimeout(() => input.focus(), 100));
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented, "on:keydown": handleKeyDown }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, chat.getObjectTitle(messageObject)), /* @__PURE__ */ createElement("span", { class: "secondary" }, messageObject.id), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.objectTitle), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectTitle), input)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.objectHistory), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.objectVersion), /* @__PURE__ */ createElement("select", { "bind:value": selectedMessageObjectId }, ...chat.getSortedContents(messageObject).map((content) => /* @__PURE__ */ createElement("option", { value: content.id }, new Date(
-      content.isoDateVersionCreated
-    ).toLocaleString()))), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.noteContent), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.note), /* @__PURE__ */ createElement(
-      "textarea",
-      {
-        rows: "10",
-        class: "height-auto",
-        "bind:value": editingNoteContent,
-        placeholder: translation.noteContentPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.category), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": editingCategory,
-        placeholder: translation.categoryPlaceholder,
-        list: "object-categories"
-      }
-    ))), /* @__PURE__ */ createElement(
-      "datalist",
-      {
-        hidden: true,
-        id: "object-categories",
-        "children:append": [usedObjectCategories, stringToOptionTag]
-      }
-    ), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.priority), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.priority), /* @__PURE__ */ createElement(
-      "input",
-      {
-        type: "number",
-        "bind:value": editingPriority,
-        placeholder: translation.priorityPlaceholder
-      }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.status), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": editingStatus,
-        placeholder: translation.statusPlaceholder,
-        list: "object-statuses"
-      }
-    ))), /* @__PURE__ */ createElement(
-      "datalist",
-      {
-        hidden: true,
-        id: "object-statuses",
-        "children:append": [usedObjectStatuses, stringToOptionTag]
-      }
-    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.date), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.date), /* @__PURE__ */ createElement("input", { type: "date", "bind:value": editingDate }))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.time), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.time), /* @__PURE__ */ createElement("input", { type: "time", "bind:value": editingTime }))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("button", { class: "danger width-input", "on:click": deleteAndClose }, translation.deleteObject, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 danger", "on:click": closeModal }, translation.discard), /* @__PURE__ */ createElement("button", { class: "flex-1 width-100 primary", "on:click": saveAndClose }, translation.save, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
-  }
-
-  // src/Views/Objects/statusView.tsx
-  function StatusView(chat, messageObjects, selectedObject, isShowingObjectModal) {
-    const rows = new MapState();
-    const statuses = new MapState();
-    const sortedStatuses = createProxyState(
-      [statuses],
-      () => [...statuses.value.values()].map((statusData) => statusData.title).sort((a, b) => a.localeCompare(b))
-    );
-    const sortedCategoryNames = createProxyState(
-      [rows],
-      () => [...rows.value.values()].map((row) => row.category).sort((a, b) => a.localeCompare(b))
-    );
-    messageObjects.subscribe(() => {
-      rows.clear();
-      statuses.clear();
-      messageObjects.value.forEach((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        if (!latest.categoryName || !latest.status) return;
-        const category = latest.categoryName;
-        const status = latest.status;
-        if (!statuses.value.has(status)) {
-          statuses.set(status, { title: status, items: [] });
-        }
-        statuses.value.get(status).items.push(messageObject);
-        if (!rows.value.has(category)) {
-          rows.set(category, {
-            category,
-            statusColumns: new MapState()
-          });
-        }
-        const row = rows.value.get(category);
-        if (!row.statusColumns.value.has(status)) {
-          row.statusColumns.set(status, {
-            status,
-            items: new ListState()
-          });
-        }
-        const column = row.statusColumns.value.get(status);
-        column.items.add({
-          priority: latest.priority ?? 0,
-          status,
-          messageObject
-        });
-      });
-      statuses.value.forEach((statusItemList) => {
-        rows.value.forEach((row) => {
-          if (row.statusColumns.value.has(statusItemList.title)) return;
-          row.statusColumns.set(statusItemList.title, {
-            status: statusItemList.title,
-            items: new ListState()
-          });
-        });
-      });
-    });
-    const statusDataToHeaderView = (statusData) => {
-      const view = StatusHeaderView(chat, statusData);
-      sortedStatuses.subscribe(
-        () => view.style.order = sortedStatuses.value.indexOf(statusData.title)
-      );
-      return view;
-    };
-    const categoryRowToView = (row) => {
-      const view = KanbanRowView(
-        chat,
-        row,
-        sortedStatuses,
-        selectedObject,
-        isShowingObjectModal
-      );
-      sortedCategoryNames.subscribe(
-        () => view.style.order = sortedCategoryNames.value.indexOf(row.category)
-      );
-      return view;
-    };
-    return /* @__PURE__ */ createElement("div", { class: "flex-column large-gap width-100 height-100 scroll-v scroll-h padding" }, /* @__PURE__ */ createElement("div", { class: "flex-row large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-column object-entry-wide" }), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-row large-gap",
-        "children:append": [statuses, statusDataToHeaderView]
-      }
-    )), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column large-gap",
-        "children:append": [rows, categoryRowToView]
-      }
-    ));
-  }
-  function StatusHeaderView(chat, status) {
-    const editingStatus = new State(status.title);
-    function rename() {
-      status.items.forEach((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        latest.status = editingStatus.value;
-        chat.addObject(messageObject);
-      });
-    }
-    return /* @__PURE__ */ createElement("div", { class: "object-entry-wide" }, RenameView(editingStatus, status.title, rename), /* @__PURE__ */ createElement("hr", null));
-  }
-  function KanbanRowView(chat, kanbanRow, sortedStatuses, selectedObject, isShowingObjectModal) {
-    const editingCategory = new State(kanbanRow.category);
-    function renameCategory() {
-      kanbanRow.statusColumns.value.forEach((statusColumns) => {
-        statusColumns.items.value.forEach((statusCellItem) => {
-          const { messageObject } = statusCellItem;
-          const latest = chat.getMostRecentContent(messageObject);
-          latest.categoryName = editingCategory.value;
-          chat.addObjectAndSend(messageObject);
-        });
-      });
-    }
-    const statusColumnToEntryView = (statusColumn) => {
-      const view = StatusColumnView(
-        chat,
-        statusColumn.items,
-        kanbanRow.category,
-        statusColumn.status,
-        selectedObject,
-        isShowingObjectModal
-      );
-      sortedStatuses.subscribe(
-        () => view.style.order = sortedStatuses.value.indexOf(statusColumn.status)
-      );
-      return view;
-    };
-    return /* @__PURE__ */ createElement("div", { class: "flex-row flex-no large-gap" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-start" }, RenameView(editingCategory, kanbanRow.category, renameCategory)), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-row large-gap",
-        "children:append": [kanbanRow.statusColumns, statusColumnToEntryView]
-      }
-    ));
-  }
-  function StatusColumnView(chat, items, category, status, selectedObject, isShowingObjectModal) {
-    function dragOver(event) {
-      event.preventDefault();
-    }
-    function drop(event) {
-      event.preventDefault();
-      var id = event.dataTransfer?.getData("text");
-      if (!id) return;
-      const messageObject = chat.objects.value.get(id);
-      if (!messageObject) return;
-      const newContent = chat.createObjectContent();
-      newContent.categoryName = category;
-      newContent.status = status;
-      chat.updateObjectContent(messageObject, newContent);
-      chat.addObjectAndSend(messageObject);
-    }
-    const cellItemToEntryView = (cellItem) => ObjectEntryView(
-      chat,
-      cellItem.messageObject,
-      selectedObject,
-      isShowingObjectModal
-    );
-    return /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap object-entry-wide",
-        "on:dragover": dragOver,
-        "on:drop": drop,
-        "children:append": [items, cellItemToEntryView]
-      }
-    );
-  }
-
-  // src/Views/Objects/objectPane.tsx
-  var viewTypes = {
-    all: [translation.viewAll, "grid_view"],
-    notes: [translation.viewNotes, icons.noteContent],
-    calendar: [translation.viewCalendar, icons.date],
-    kanban: [translation.viewKanban, "view_kanban"],
-    status: [translation.viewStatus, icons.status]
+  var ChatViewModelToChatEntry = (chatViewModel) => {
+    return ChatEntry(chatViewModel);
   };
-  function ObjectPane(chat) {
-    const isShowingObjectModal = new State(false);
-    const isShowingFilterModel = new State(false);
-    const selectedObject = new State(void 0);
-    function createObject() {
-      const newObject = chat.createObjectFromTitle("");
-      chat.addObjectAndSend(newObject);
-      selectedObject.value = newObject;
-      isShowingObjectModal.value = true;
-    }
-    function showFilters() {
-      isShowingFilterModel.value = true;
-    }
-    function closeFilters() {
-      isShowingFilterModel.value = false;
-    }
-    const appliedFilter = new State("");
-    const resultCount = new State(0);
-    const resultText = createProxyState(
-      [appliedFilter, resultCount],
-      () => translation.searchTitleText(appliedFilter.value, resultCount.value)
-    );
-    const visibleMessageObjects = new MapState();
-    const isFilterEmpty = createProxyState(
-      [appliedFilter],
-      () => appliedFilter.value == ""
-    );
-    function resetFilter() {
-      objectFilterInput.value = "";
-      applyFilter();
-    }
-    function applyFilter() {
-      appliedFilter.value = objectFilterInput.value;
-      if (!previousObjectSearches.value.has(appliedFilter.value))
-        previousObjectSearches.add(appliedFilter.value);
-      const allObjects = [...chat.objects.value.values()];
-      allObjects.forEach((messageObject, i) => {
-        const doesMatch = checkIfMatchesFilter(messageObject);
-        if (doesMatch) {
-          visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
-        } else {
-          visibleMessageObjects.remove(messageObject.id);
-        }
-      });
-      resultCount.value = visibleMessageObjects.value.size;
-    }
-    chat.objects.handleAddition((messageObject) => {
-      if (checkIfMatchesFilter(messageObject) == false) return;
-      visibleMessageObjects.set(messageObject.id, new MessageObjectWithIndex(messageObject));
-      chat.objects.handleRemoval(messageObject, () => {
-        visibleMessageObjects.remove(messageObject.id);
-      });
-    });
-    function checkIfMatchesFilter(messageObject) {
-      if (isFilterEmpty.value == true) return true;
-      const stringsInObject = [];
-      const objectTitle = messageObject.title || translation.untitledObject;
-      stringsInObject.push(objectTitle);
-      const latest = chat.getMostRecentContent(messageObject);
-      if (latest) {
-        Object.values(latest).forEach((value) => {
-          if (typeof value != "string") return;
-          stringsInObject.push(value);
-        });
-      }
-      const wordsOfObject = stringsInObject.map((string) => string.toLowerCase().split(" ")).flat();
-      const wordsOfSearchTerm = appliedFilter.value.toLowerCase().split(" ");
-      for (const word of wordsOfSearchTerm) {
-        if (word[0] == "-") {
-          const wordContent = word.substring(1);
-          if (wordsOfObject.includes(wordContent)) return false;
-        } else {
-          return wordsOfObject.includes(word);
-        }
-      }
-      return true;
-    }
-    applyFilter();
-    visibleMessageObjects.subscribe((visibleMessageObjects2) => {
-      let indices = [...visibleMessageObjects2.values()].map((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        return getRawObjectIndex(latest);
-      }).sort();
-      visibleMessageObjects2.forEach((messageObject) => {
-        const latest = chat.getMostRecentContent(messageObject);
-        messageObject.index.value = indices.indexOf(getRawObjectIndex(latest));
-      });
-    });
-    const objectModal = createProxyState(
-      [chat.objects, selectedObject],
-      () => {
-        if (selectedObject.value == void 0) return /* @__PURE__ */ createElement("div", null);
-        return ObjectDetailModal(
-          chat,
-          selectedObject.value,
-          isShowingObjectModal
-        );
-      }
-    );
-    const mainView = createProxyState([chat.viewType], () => {
-      function getViewFunction() {
-        switch (chat.viewType.value) {
-          case "notes":
-            return NoteObjectsView;
-          case "kanban":
-            return KanbanView;
-          case "status":
-            return StatusView;
-          case "calendar":
-            return CalendarView;
-          default:
-            return AllObjectsView;
-        }
-      }
-      return getViewFunction()(
-        chat,
-        visibleMessageObjects,
-        selectedObject,
-        isShowingObjectModal
-      );
-    });
-    return /* @__PURE__ */ createElement("div", { class: "chat-object-view flex-column scroll-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-row align-center border-bottom" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary height-100",
-        "on:click": createObject,
-        "aria-label": translation.createObject
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ), /* @__PURE__ */ createElement("div", { class: "padding-sm flex flex-row gap justify-center scroll-h width-100" }, ...Object.keys(viewTypes).map(
-      (key) => ViewTypeToggle(key, chat.viewType)
-    )), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "height-100",
-        "aria-label": translation.filterObjects,
-        "on:click": showFilters
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "filter_list")
-    )), /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "object-content width-100 height-100 flex scroll-no",
-        "children:set": mainView
-      }
-    ), /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isShowingFilterModel }, /* @__PURE__ */ createElement("div", { style: "max-width: 2084px" }, /* @__PURE__ */ createElement("main", { class: "gap" }, /* @__PURE__ */ createElement("h2", null, translation.filterObjects), /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "search"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.searchTitle), /* @__PURE__ */ createElement(
+
+  // src/View/homePage.tsx
+  function HomePage(storageViewModel2, settingsViewModel2, connectionViewModel2, fileTransferViewModel2, chatListViewModel2) {
+    const overviewSection = /* @__PURE__ */ createElement("div", { id: "overview-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.overviewHeadline), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.serverAddress), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": objectFilterInput,
-        "on:enter": applyFilter,
-        placeholder: translation.searchPlaceholder,
-        list: "object-searches"
+        list: "previous-connection-list",
+        placeholder: translations.homePage.serverAddressPlaceholder,
+        "bind:value": connectionViewModel2.serverAddressInput,
+        "on:enter": connectionViewModel2.connect
       }
     ), /* @__PURE__ */ createElement(
       "datalist",
       {
         hidden: true,
-        id: "object-searches",
+        id: "previous-connection-list",
         "children:append": [
-          previousObjectSearches,
-          stringToOptionTag
+          connectionViewModel2.previousAddresses,
+          StringToOption
         ]
       }
-    )))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "width-50 flex",
-        "on:click": resetFilter,
-        "toggle:disabled": isFilterEmpty
+        class: "danger flex justify-center",
+        "aria-label": translations.homePage.disconnectAudioLabel,
+        "on:click": connectionViewModel2.disconnect,
+        "toggle:disabled": connectionViewModel2.cannotDisonnect
       },
-      translation.reset
-    ), /* @__PURE__ */ createElement("button", { class: "width-50 flex primary", "on:click": applyFilter }, translation.search, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("b", { class: "secondary", "subscribe:innerText": resultText }), ObjectGridView(
-      chat,
-      visibleMessageObjects,
-      selectedObject,
-      isShowingObjectModal
-    )), /* @__PURE__ */ createElement("button", { "on:click": closeFilters }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close")))), /* @__PURE__ */ createElement("div", { "children:set": objectModal }));
-  }
-  function ViewTypeToggle(key, selection) {
-    const [label, icon] = viewTypes[key];
-    function select() {
-      selection.value = key;
-    }
-    const isSelected = createProxyState(
-      [selection],
-      () => selection.value == key
-    );
-    return /* @__PURE__ */ createElement("button", { "aria-label": label, "on:click": select, "toggle:selected": isSelected }, /* @__PURE__ */ createElement("span", { class: "icon" }, icon));
-  }
-
-  // src/Views/Chat/threadView.tsx
-  function ThreadView(chat) {
-    const messageConverter = (message) => {
-      function resendMessage() {
-        chat.resendMessage(message);
-      }
-      function copyMessage() {
-        navigator.clipboard.writeText(message.body);
-      }
-      function decrypt2() {
-        chat.decryptReceivedMessage(message);
-      }
-      function remove() {
-        chat.deleteMessage(message);
-      }
-      const messageBody = createProxyState(
-        [chat.messages],
-        () => message.body
-      );
-      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center secondary" }, /* @__PURE__ */ createElement("span", { class: "padding-h ellipsis" }, /* @__PURE__ */ createElement("b", { class: "info" }, message.sender)), /* @__PURE__ */ createElement("span", { class: "flex-row" }, /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.resendMessage,
-          "on:click": resendMessage,
-          "toggle:disabled": chat.cannotResendMessage
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "replay")
-      ), /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.copyMessage,
-          "on:click": copyMessage
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "content_copy")
-      ), /* @__PURE__ */ createElement(
-        "button",
-        {
-          "aria-label": translation.decryptMessage,
-          "on:click": decrypt2
-        },
-        /* @__PURE__ */ createElement("span", { class: "icon" }, "key")
-      ), /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word", "subscribe:innerText": messageBody }), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), /* @__PURE__ */ createElement("br", null), message.channel))));
-    };
-    const outboxMessageConverter = (message) => {
-      function remove() {
-        chat.deleteOutboxMessage(message);
-      }
-      return /* @__PURE__ */ createElement("div", { class: "tile width-100 flex-no padding-0" }, /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("div", { class: "flex-row justify-apart align-center" }, /* @__PURE__ */ createElement("b", { class: "error padding-h" }, translation.messageInOutbox), /* @__PURE__ */ createElement("span", { class: "flex-row secondary" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.deleteMessage, "on:click": remove }, /* @__PURE__ */ createElement("span", { class: "icon" }, "delete")))), /* @__PURE__ */ createElement("div", { class: "flex-column padding-h padding-bottom" }, /* @__PURE__ */ createElement("b", { class: "break-word" }, message.body), /* @__PURE__ */ createElement("span", { class: "secondary" }, /* @__PURE__ */ createElement("b", null, new Date(message.isoDate).toLocaleString()), /* @__PURE__ */ createElement("br", null), message.channel))));
-    };
-    const messageList = /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "children:append": [chat.messages, messageConverter]
-      }
-    );
-    const outboxList = /* @__PURE__ */ createElement(
-      "div",
-      {
-        class: "flex-column gap",
-        "children:append": [chat.outbox, outboxMessageConverter]
-      }
-    );
-    const listWrapper = /* @__PURE__ */ createElement("div", { class: "thread-view flex-column gap" }, messageList, outboxList);
-    function scrollToBottom() {
-      listWrapper.scrollTop = listWrapper.scrollHeight;
-    }
-    function scrollToBottomIfAppropriate() {
-      const scrollFromBottom = listWrapper.scrollHeight - (listWrapper.scrollTop + listWrapper.offsetHeight);
-      if (scrollFromBottom > 400) return;
-      scrollToBottom();
-    }
-    chat.messages.handleAddition(scrollToBottomIfAppropriate);
-    chat.outbox.handleAddition(scrollToBottomIfAppropriate);
-    isShowingObjects.subscribe(() => scrollToBottom());
-    setTimeout(() => scrollToBottom(), 50);
-    return listWrapper;
-  }
-
-  // src/Tabs/messageTab.tsx
-  function MessageTab() {
-    const messageTabContent = createProxyState([selectedChat], () => {
-      if (selectedChat.value == void 0)
-        return /* @__PURE__ */ createElement("div", { class: "width-100 height-100 flex-column align-center justify-center" }, /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.noChatSelected));
-      const chat = selectedChat.value;
-      const isShowingOptions = new State(false);
-      function showOptions() {
-        isShowingOptions.value = true;
-      }
-      return [
-        /* @__PURE__ */ createElement("header", { class: "padding-0" }, /* @__PURE__ */ createElement("span", { class: "flex-row align-center" }, /* @__PURE__ */ createElement("button", { "aria-label": translation.back, "on:click": closeChatView }, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_back")), /* @__PURE__ */ createElement("span", { "subscribe:innerText": chat.primaryChannel })), /* @__PURE__ */ createElement("span", null, /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.showObjects,
-            "on:click": toggleObjects,
-            "toggle:selected": isShowingObjects
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "deployed_code")
-        ), /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.showObjects,
-            "on:click": toggleChat,
-            "toggle:selected": isChatVisible
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "forum")
-        ), /* @__PURE__ */ createElement(
-          "button",
-          {
-            "aria-label": translation.showChatOptions,
-            "on:click": showOptions
-          },
-          /* @__PURE__ */ createElement("span", { class: "icon" }, "tune")
-        ))),
-        ObjectPane(chat),
-        ThreadView(chat),
-        /* @__PURE__ */ createElement("footer", null, MessageComposer(chat)),
-        ChatOptionModal(chat, isShowingOptions)
-      ];
-    });
-    return /* @__PURE__ */ createElement(
-      "article",
-      {
-        id: "message-tab",
-        "children:set": messageTabContent,
-        "toggle:showingobjects": isShowingObjects,
-        "toggle:chatvisible": isChatVisible,
-        "toggle:chatopen": isChatOpen
-      }
-    );
-  }
-
-  // src/Views/Overview/chatListSection.tsx
-  var chatConverter = (chat) => {
-    function select() {
-      selectChat(chat);
-    }
-    const isSelected = createProxyState(
-      [selectedChat],
-      () => selectedChat.value == chat
-    );
-    return /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "link_off")
+    ), /* @__PURE__ */ createElement(
       "button",
       {
-        class: "tile",
-        "on:click": select,
-        "toggle:selected": isSelected,
-        "toggle:unread": chat.hasUnreadMessages
+        class: "flex justify-center",
+        "aria-label": translations.homePage.manageConnectionsAudioLabel,
+        "on:click": connectionViewModel2.showConnectionModal,
+        "toggle:disabled": connectionViewModel2.hasNoPreviousConnections
       },
-      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", { class: "ellipsis", "subscribe:innerText": chat.primaryChannel })),
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    );
-  };
-  function ChatListSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.chats), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.primaryChannel), /* @__PURE__ */ createElement(
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "history")
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex justify-center",
+        "aria-label": translations.homePage.connectAudioLabel,
+        "on:click": connectionViewModel2.connect,
+        "toggle:disabled": connectionViewModel2.cannotConnect
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "link")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.yourNameLabel), /* @__PURE__ */ createElement(
       "input",
       {
-        "bind:value": newChatName,
-        placeholder: translation.primaryChannelPlaceholder,
-        "on:enter": createChat
+        placeholder: translations.homePage.yourNamePlaceholder,
+        "bind:value": settingsViewModel2.usernameInput,
+        "on:enter": settingsViewModel2.setName
       }
     ))), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement(
       "button",
       {
-        class: "primary width-50",
-        "toggle:disabled": cannotCreateChat,
-        "on:click": createChat
+        class: "width-50",
+        "on:click": settingsViewModel2.setName,
+        "toggle:disabled": settingsViewModel2.cannotSetName,
+        "aria-label": translations.homePage.setNameButtonAudioLabel
       },
-      translation.addChat,
+      translations.general.setButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "check")
+    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("label", { class: "tile flex-no" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.firstDayOfWeekLabel), /* @__PURE__ */ createElement("select", { "bind:value": settingsViewModel2.firstDayOfWeekInput }, ...translations.regional.weekdays.full.map(
+      (weekdayName, i) => Option(
+        weekdayName,
+        i.toString(),
+        i.toString() == settingsViewModel2.firstDayOfWeekInput.value
+      )
+    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile flex-no",
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "sync_alt"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.transferDataButton))
+    ), /* @__PURE__ */ createElement("button", { class: "tile flex-no", "on:click": storageViewModel2.showStorageModal }, /* @__PURE__ */ createElement("span", { class: "icon" }, "hard_drive_2"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translations.homePage.manageStorageButton))), /* @__PURE__ */ createElement("div", { class: "mobile-only" }, /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row justify-end" }, /* @__PURE__ */ createElement("button", { class: "ghost width-50", "on:click": scrollToChat }, translations.homePage.scrollToChatButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    const chatSection = /* @__PURE__ */ createElement("div", { id: "chat-section" }, /* @__PURE__ */ createElement("h2", null, translations.homePage.chatsHeadline), /* @__PURE__ */ createElement("div", { class: "flex-row width-input" }, /* @__PURE__ */ createElement(
+      "input",
+      {
+        placeholder: translations.homePage.addChatPlaceholder,
+        "aria-label": translations.homePage.addChatAudioLabel,
+        "bind:value": chatListViewModel2.newChatPrimaryChannel,
+        "on:enter": chatListViewModel2.createChat
+      }
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary",
+        "aria-label": translations.homePage.addChatButton,
+        "on:click": chatListViewModel2.createChat,
+        "toggle:disabled": chatListViewModel2.cannotCreateChat
+      },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+    )), /* @__PURE__ */ createElement(
       "div",
       {
-        class: "flex-column gap",
-        "children:append": [chats, chatConverter]
+        id: "chat-grid",
+        "children:append": [
+          chatListViewModel2.chatViewModels,
+          ChatViewModelToChatEntry
+        ]
+      }
+    ));
+    function scrollToChat() {
+      chatSection.scrollIntoView();
+    }
+    return /* @__PURE__ */ createElement("article", { id: "home-page" }, /* @__PURE__ */ createElement("div", null, overviewSection, chatSection));
+  }
+
+  // src/Model/Global/settingsModel.ts
+  var SettingsModel = class {
+    storageModel;
+    // data
+    username;
+    firstDayOfWeek;
+    // storage
+    setName(newValue) {
+      this.username = newValue;
+      const path = StorageModel.getPath(
+        "settings" /* SettingsModel */,
+        filePaths.settingsModel.username
+      );
+      this.storageModel.write(path, newValue);
+    }
+    setFirstDayOfWeek(newValue) {
+      this.firstDayOfWeek = newValue;
+      const path = StorageModel.getPath(
+        "settings" /* SettingsModel */,
+        filePaths.settingsModel.firstDayOfWeek
+      );
+      this.storageModel.write(path, newValue);
+    }
+    // load
+    loadUsernam() {
+      const path = StorageModel.getPath(
+        "settings" /* SettingsModel */,
+        filePaths.settingsModel.username
+      );
+      const content = this.storageModel.read(path);
+      this.username = content ?? "";
+    }
+    loadFirstDayofWeek() {
+      const path = StorageModel.getPath(
+        "settings" /* SettingsModel */,
+        filePaths.settingsModel.firstDayOfWeek
+      );
+      const content = this.storageModel.read(path);
+      this.firstDayOfWeek = content ?? "0";
+    }
+    // init
+    constructor(storageModel2) {
+      this.storageModel = storageModel2;
+      this.loadUsernam();
+      this.loadFirstDayofWeek();
+    }
+  };
+
+  // src/ViewModel/Global/settingsViewModel.ts
+  var SettingsViewModel = class {
+    // init
+    constructor(coreViewModel, settingsModel2) {
+      this.coreViewModel = coreViewModel;
+      this.settingsModel = settingsModel2;
+      this.username.value = settingsModel2.username;
+      this.usernameInput.value = settingsModel2.username;
+      this.firstDayOfWeekInput.value = settingsModel2.firstDayOfWeek;
+      this.firstDayOfWeekInput.subscribe(this.setFirstDayofWeek);
+    }
+    settingsModel;
+    // state
+    username = new State("");
+    usernameInput = new State("");
+    firstDayOfWeekInput = new State("0");
+    // guards
+    cannotSetName = createProxyState(
+      [this.usernameInput],
+      () => this.usernameInput.value == "" || this.usernameInput.value == this.settingsModel.username
+    );
+    // methods
+    setName = () => {
+      this.settingsModel.setName(this.usernameInput.value);
+      this.username.value = this.settingsModel.username;
+      this.usernameInput.callSubscriptions();
+    };
+    setFirstDayofWeek = () => {
+      this.settingsModel.setFirstDayOfWeek(this.firstDayOfWeekInput.value);
+    };
+  };
+
+  // src/View/Components/directoryItemList.tsx
+  function DirectoryItemList(storageViewModel2, pathString = PATH_COMPONENT_SEPARATOR) {
+    const StringToDirectoryItemList = (pathString2) => DirectoryItemList(storageViewModel2, pathString2);
+    const path = StorageModel.stringToPathComponents(pathString);
+    const fileName = StorageModel.getFileName(path);
+    const items = new ListState();
+    const style = `text-indent: ${path.length}rem`;
+    function loadItems() {
+      items.clear();
+      const directoryItems = storageViewModel2.storageModel.list(path);
+      for (const directoryItem of directoryItems) {
+        const itemPath = [...path, directoryItem];
+        const pathString2 = StorageModel.pathComponentsToString(...itemPath);
+        items.add(pathString2);
+      }
+    }
+    function select() {
+      storageViewModel2.selectedPath.value = pathString;
+    }
+    storageViewModel2.lastDeletedItemPath.subscribe((lastDeletedItemPath) => {
+      if (!items.value.has(lastDeletedItemPath)) return;
+      select();
+      setTimeout(() => loadItems(), 50);
+    });
+    const isSelected = createProxyState(
+      [storageViewModel2.selectedPath],
+      () => storageViewModel2.selectedPath.value == pathString
+    );
+    isSelected.subscribe(() => {
+      if (isSelected.value == false) return;
+      loadItems();
+    });
+    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "width-100 flex-1 clip",
+        "toggle:selected": isSelected,
+        "on:click": select
+      },
+      /* @__PURE__ */ createElement("span", { class: "ellipsis width-100 flex-1", style }, fileName)
+    ), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "flex-column",
+        "children:append": [items, StringToDirectoryItemList]
       }
     ));
   }
 
-  // src/Views/Overview/connectionSection.tsx
-  function ConnectionSection() {
-    const stringToPreviouAddressOption = (value) => {
-      const isSelected = value == serverAddressInput.value;
-      return /* @__PURE__ */ createElement("option", { "toggle:selected": isSelected }, value);
-    };
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("h2", null, translation.connection), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.serverAddress), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": serverAddressInput,
-        "on:enter": connect,
-        placeholder: translation.serverAddressPlaceholder,
-        list: "previous-addresses"
+  // src/View/Components/fileBrowser.tsx
+  function FileBrowser(storageViewModel2) {
+    const detailView = createProxyState(
+      [storageViewModel2.selectedPath],
+      () => {
+        if (storageViewModel2.selectedPath.value == PATH_COMPONENT_SEPARATOR)
+          return /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.storage.noItemSelected);
+        return /* @__PURE__ */ createElement("div", { class: "flex-column gap" }, /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.storage.path), /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "break-all",
+            "subscribe:innerText": storageViewModel2.selectedPath
+          }
+        ))), /* @__PURE__ */ createElement("div", { class: "tile flex-no" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.storage.content), /* @__PURE__ */ createElement(
+          "code",
+          {
+            "subscribe:innerText": storageViewModel2.selectedFileContent
+          }
+        ))), DangerousActionButton(
+          translations.storage.deleteItem,
+          "delete_forever",
+          storageViewModel2.deleteSelectedItem
+        ));
       }
-    ), /* @__PURE__ */ createElement(
-      "datalist",
-      {
-        hidden: true,
-        id: "previous-addresses",
-        "children:append": [previousAddresses, stringToOptionTag]
-      }
-    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "history"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.previousConnections), /* @__PURE__ */ createElement(
-      "select",
-      {
-        "bind:value": serverAddressInput,
-        "children:append": [previousAddresses, stringToPreviouAddressOption]
-      }
-    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-100 flex-1 justify-center",
-        "aria-label": translation.disconnect,
-        "on:click": disconnect,
-        "toggle:disabled": cannotDisonnect
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "width-100 flex-1 justify-center",
-        "aria-label": translation.undoChanges,
-        "on:click": resetAddressInput,
-        "toggle:disabled": cannotResetAddress
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "undo")
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-100 flex-1 justify-center",
-        "aria-label": translation.connectToServer,
-        "on:click": connect,
-        "toggle:disabled": cannotConnect
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "inbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.mailbox), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.mailboxExplanation))), /* @__PURE__ */ createElement("div", { class: "flex-row width-input justify-end" }, /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "danger width-100 flex-1",
-        "on:click": deleteMailbox,
-        "toggle:disabled": cannotDeleteMailbox
-      },
-      translation.deleteMailbox
-    ), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "primary width-100 flex-1",
-        "on:click": requestMailbox,
-        "toggle:disabled": cannotRequestMailbox
-      },
-      translation.requestMailbox,
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    )), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "outbox"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.outbox), /* @__PURE__ */ createElement(
+    );
+    const view = /* @__PURE__ */ createElement("div", { class: "file-browser" }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "scroll-area" }, DirectoryItemList(storageViewModel2)), /* @__PURE__ */ createElement("div", { class: "detail-button-wrapper" }, /* @__PURE__ */ createElement("button", { class: "ghost", "on:click": scrollToDetails }, /* @__PURE__ */ createElement(
       "span",
       {
-        "set:class": outboxTextStyle,
-        "subscribe:innerText": outboxText
+        class: "ellipsis",
+        "subscribe:innerText": storageViewModel2.selectedFileName
       }
-    ))));
+    ), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("div", { class: "scroll-area", "children:set": detailView }));
+    function scrollToDetails() {
+      view.scrollLeft = view.scrollWidth;
+    }
+    return view;
   }
 
-  // src/Views/Overview/personalSection.tsx
-  function PersonalSection() {
-    return /* @__PURE__ */ createElement("div", { class: "flex-column" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "account_circle"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.yourName), /* @__PURE__ */ createElement(
-      "input",
-      {
-        "bind:value": senderName,
-        placeholder: translation.namePlaceholder
-      }
-    ))));
+  // src/View/Modals/storageModal.tsx
+  function StorageModal(storageViewModel2) {
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": storageViewModel2.isShowingStorageModal }, /* @__PURE__ */ createElement("div", { style: "max-width: 64rem" }, /* @__PURE__ */ createElement("main", { class: "padding-0" }, FileBrowser(storageViewModel2)), /* @__PURE__ */ createElement("button", { "on:click": storageViewModel2.hideStorageModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
 
-  // src/Tabs/overviewTab.tsx
-  function OverviewTab() {
-    return /* @__PURE__ */ createElement("article", { id: "settings-tab", "toggle:connected": isConnected }, /* @__PURE__ */ createElement("header", null, translation.overview, /* @__PURE__ */ createElement("button", { "aria-label": translation.showSettings, "on:click": toggleSettings }, /* @__PURE__ */ createElement("span", { class: "icon" }, "settings"))), /* @__PURE__ */ createElement("div", { class: "flex-column large-gap" }, /* @__PURE__ */ createElement("div", { class: "tile error flex-no", "toggle:hidden": isEncryptionAvailable }, /* @__PURE__ */ createElement("span", { class: "icon" }, "warning"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translation.encryptionUnavailableTitle), /* @__PURE__ */ createElement("span", { class: "secondary" }, translation.encryptionUnavailableMessage))), PersonalSection(), ConnectionSection(), ChatListSection()));
-  }
-
-  // src/Views/settingsModal.tsx
-  function SettingsModal() {
-    const stringToWeekdayOption = (value) => {
-      const isSelected = value == firstDayOfWeek.value;
-      return /* @__PURE__ */ createElement("option", { "toggle:selected": isSelected, value }, translation.weekdays[value]);
+  // src/ViewModel/Global/storageViewModel.ts
+  var StorageViewModel = class {
+    // init
+    constructor(coreViewModel, storageModel2) {
+      this.coreViewModel = coreViewModel;
+      this.storageModel = storageModel2;
+      this.selectedFileName = createProxyState(
+        [this.selectedPath],
+        () => StorageModel.getFileNameFromString(this.selectedPath.value)
+      );
+      this.selectedFileContent = createProxyState(
+        [this.selectedPath],
+        () => this.getSelectedItemContent()
+      );
+    }
+    storageModel;
+    // state
+    isShowingStorageModal = new State(false);
+    selectedPath = new State(PATH_COMPONENT_SEPARATOR);
+    didMakeChanges = new State(false);
+    selectedFileName;
+    selectedFileContent;
+    lastDeletedItemPath = new State("");
+    // methods
+    getSelectedItemContent = () => {
+      const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+      const content = this.storageModel.read(path);
+      return (content ?? translations.storage.notAFile) || translations.storage.contentEmpty;
     };
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresentingSettingsModal }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translation.settings), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "calendar_month"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", null, translation.firstDayOfWeek), /* @__PURE__ */ createElement("select", { "bind:value": firstDayOfWeek }, ...translation.weekdays.map(
-      (weekday, i) => stringToWeekdayOption(i)
-    )), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_drop_down"))), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-row width-input gap" }, /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomOut }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_out"), translation.zoomOut), /* @__PURE__ */ createElement("button", { class: "width-100 flex justify-start", "on:click": zoomIn }, /* @__PURE__ */ createElement("span", { class: "icon" }, "zoom_in"), translation.zoomIn)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": repairApp }, /* @__PURE__ */ createElement("span", { class: "icon" }, "handyman"), translation.repairApp)), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column width-input gap" }, /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearAddresses }, /* @__PURE__ */ createElement("span", { class: "icon" }, "cell_tower"), translation.clearAddresses), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearCategories }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.categoryName), translation.clearCategories), /* @__PURE__ */ createElement("button", { class: "tile width-100 flex-1", "on:click": clearStatuses }, /* @__PURE__ */ createElement("span", { class: "icon" }, icons.status), translation.clearStatuses), /* @__PURE__ */ createElement(
-      "button",
-      {
-        class: "tile width-100 flex-1",
-        "on:click": clearObjectSearches
-      },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "search"),
-      translation.clearObjectFilters
-    ))), /* @__PURE__ */ createElement("button", { class: "width-100", "on:click": toggleSettings }, translation.close, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    deleteSelectedItem = () => {
+      const path = StorageModel.stringToPathComponents(this.selectedPath.value);
+      this.lastDeletedItemPath.value = this.selectedPath.value;
+      this.storageModel.removeRecursively(path);
+      this.didMakeChanges.value = true;
+    };
+    // view
+    showStorageModal = () => {
+      this.isShowingStorageModal.value = true;
+    };
+    hideStorageModal = () => {
+      if (this.didMakeChanges.value == true) {
+        window.location.reload();
+        return;
+      }
+      this.isShowingStorageModal.value = false;
+    };
+  };
+
+  // src/Upgrader/v1.ts
+  var v1Upgrader = class {
+    // init
+    constructor(settingsModel2, connectionModel2, chatListModel2) {
+      this.settingsModel = settingsModel2;
+      this.connectionModel = connectionModel2;
+      this.chatListModel = chatListModel2;
+      this.migrateSettings();
+      this.migrateConnections();
+      this.migrateChats();
+    }
+    // general
+    migrateSettings = () => {
+      const name = getLocalStorageItemAndClear("sender-name");
+      if (name != null) {
+        const parsedName = parseOrFallback(name);
+        this.settingsModel.setName(parsedName);
+      }
+      const firstDayOfWeek = getLocalStorageItemAndClear("first-day-of-week");
+      if (firstDayOfWeek != null) {
+        const parsedFirstDayOfWeek = parseOrFallback(firstDayOfWeek);
+        this.settingsModel.setFirstDayOfWeek(parsedFirstDayOfWeek);
+      }
+    };
+    migrateConnections = () => {
+      const previousAddressString = getLocalStorageItemAndClear("previous-addresses");
+      if (previousAddressString == null) return;
+      const previousAddresses = parseArray(previousAddressString);
+      for (const address of previousAddresses) {
+        if (typeof address != "string") continue;
+        this.connectionModel.storeAddress(address);
+      }
+    };
+    // chats
+    migrateChats = () => {
+      const chatIdString = getLocalStorageItemAndClear("chat-ids");
+      if (chatIdString == null) return;
+      const chatIds = parseArray(chatIdString);
+      for (const chatId of chatIds) {
+        if (typeof chatId != "string") continue;
+        this.migrateChatById(chatId);
+      }
+    };
+    migrateChatById = (id) => {
+      const primaryChannel = getLocalStorageItemAndClear(
+        storageKeys.primaryChannel(id)
+      );
+      if (primaryChannel == null) return;
+      const parsedPriamryChannel = parseOrFallback(primaryChannel);
+      const chatModel = this.chatListModel.createChat(parsedPriamryChannel);
+      const secondaryChannelString = getLocalStorageItemAndClear(
+        storageKeys.secondaryChannels(id)
+      );
+      if (secondaryChannelString != null) {
+        const potentialSecondaryChannels = parseArray(
+          secondaryChannelString
+        );
+        const confirmedSecondaryChannels = [];
+        for (const secondaryChannel of potentialSecondaryChannels) {
+          if (typeof secondaryChannel != "string") continue;
+          confirmedSecondaryChannels.push(secondaryChannel);
+        }
+        chatModel.setSecondaryChannels(confirmedSecondaryChannels);
+      }
+      const encryptionKey = getLocalStorageItemAndClear(
+        storageKeys.encyptionKey(id)
+      );
+      if (encryptionKey != null) {
+        const parsedEncryptionKey = parseOrFallback(encryptionKey);
+        chatModel.setEncryptionKey(parsedEncryptionKey);
+      }
+      const messagesString = getLocalStorageItemAndClear(storageKeys.messages(id)) ?? "";
+      const messageOutboxString = getLocalStorageItemAndClear(storageKeys.outbox(id)) ?? "";
+      const potentialMessages = parseArray(messagesString);
+      const potentialMessagesInOutbox = parseArray(messageOutboxString);
+      const addMessages = (potentialMessages2, status) => {
+        for (const potentialMessage of potentialMessages2) {
+          const isV1ChatMessage = checkMatchesObjectStructure(
+            potentialMessage,
+            V1ChatMessageReference
+          );
+          if (isV1ChatMessage == false) continue;
+          const v1ChatMessage = potentialMessage;
+          const convertedChatMessage = {
+            dataVersion: "v2",
+            id: v4_default(),
+            channel: v1ChatMessage.channel,
+            sender: v1ChatMessage.sender,
+            body: v1ChatMessage.body,
+            dateSent: v1ChatMessage.isoDate,
+            status,
+            stringifiedFile: ""
+          };
+          chatModel.addMessage(convertedChatMessage);
+          if (status == "outbox" /* Outbox */) {
+            this.connectionModel.sendMessageOrStore(convertedChatMessage);
+          }
+        }
+      };
+      addMessages(potentialMessages, "received" /* Received */);
+      addMessages(potentialMessagesInOutbox, "outbox" /* Outbox */);
+      const objectsString = getLocalStorageItemAndClear(storageKeys.objects(id)) ?? "";
+      const objectOutboxString = getLocalStorageItemAndClear(storageKeys.itemOutbox(id)) ?? "";
+      const potentialObjects = parseArray(objectsString);
+      const potentialObjectsInOutbox = parseArray(objectOutboxString);
+      const addObjects = (potentialObjects2) => {
+        const board = chatModel.fileModel.boardsAndTasksModel.createBoard(
+          translations.updater.migrated
+        );
+        chatModel.fileModel.boardsAndTasksModel.updateBoard(board);
+        for (const potentialObjectEntry of potentialObjects2) {
+          const potentialObject = potentialObjectEntry[1];
+          const isV1MessageObject = checkIsV1MessageObject(potentialObject);
+          if (isV1MessageObject == false) continue;
+          const objectId = potentialObject.id;
+          const objectName = potentialObject.title;
+          const contentVersions = Object.values(
+            potentialObject.contentVersions
+          );
+          for (const potentialVersion of contentVersions) {
+            const isV1MessageObjectContent = checkIsV1MessageObjectContent(potentialVersion);
+            if (isV1MessageObjectContent == false) continue;
+            const convertedTaskFileContent = {
+              dataVersion: "v2",
+              fileId: objectId,
+              fileContentId: FileModel2.generateFileContentId(
+                potentialVersion.isoDateVersionCreated
+              ),
+              creationDate: potentialVersion.isoDateVersionCreated,
+              type: "task",
+              name: objectName ?? "",
+              boardId: board.fileId ?? "",
+              description: potentialVersion.noteContent ?? "",
+              category: potentialVersion.categoryName ?? "",
+              status: potentialVersion.status ?? "",
+              priority: potentialVersion.priority ?? "",
+              date: potentialVersion.date ?? "",
+              time: potentialVersion.time ?? ""
+            };
+            console.log(convertedTaskFileContent);
+            chatModel.fileModel.handleFileContent(convertedTaskFileContent);
+          }
+        }
+      };
+      addObjects([...potentialObjects, ...potentialObjectsInOutbox]);
+    };
+  };
+  var storageKeys = {
+    viewType(id) {
+      return id + "view-type";
+    },
+    hasUnread(id) {
+      return id + "has-unread-messages";
+    },
+    primaryChannel(id) {
+      return id + "primary-channel";
+    },
+    secondaryChannels(id) {
+      return id + "secondary-channels";
+    },
+    encyptionKey(id) {
+      return id + "encryption-key";
+    },
+    messages(id) {
+      return id + "messages";
+    },
+    objects(id) {
+      return id + "items";
+    },
+    outbox(id) {
+      return id + "outbox";
+    },
+    itemOutbox(id) {
+      return id + "item-outbox";
+    },
+    composingMessage(id) {
+      return id + "composing-message";
+    }
+  };
+  var V1ChatMessageReference = {
+    channel: "",
+    sender: "",
+    body: "",
+    isoDate: ""
+  };
+  function checkIsV1MessageObject(object) {
+    if (object.id == void 0) return false;
+    if (object.title == void 0) return false;
+    if (object.contentVersions == void 0) return false;
+    return true;
+  }
+  function checkIsV1MessageObjectContent(object) {
+    if (object.id == void 0) return false;
+    if (object.isoDateVersionCreated == void 0) return false;
+    return true;
   }
 
   // src/index.tsx
-  document.querySelector("main").append(OverviewTab(), MessageTab(), SettingsModal());
-  document.querySelector("main").classList.add("split");
+  var storageModel = new StorageModel();
+  var settingsModel = new SettingsModel(storageModel);
+  var connectionModel = new ConnectionModel(storageModel);
+  var chatListModel = new ChatListModel(
+    storageModel,
+    settingsModel,
+    connectionModel
+  );
+  var fileTransferModel = new FileTransferModel(storageModel, connectionModel);
+  new v1Upgrader(settingsModel, connectionModel, chatListModel);
+  var coreVieWModel = new CoreViewModel();
+  var storageViewModel = new StorageViewModel(coreVieWModel, storageModel);
+  var settingsViewModel = new SettingsViewModel(coreVieWModel, settingsModel);
+  var connectionViewModel = new ConnectionViewModel(
+    coreVieWModel,
+    connectionModel
+  );
+  var chatListViewModel = new ChatListViewModel(
+    coreVieWModel,
+    storageModel,
+    chatListModel,
+    settingsViewModel
+  );
+  var fileTransferViewModel = new FileTransferViewModel(
+    fileTransferModel,
+    chatListModel
+  );
+  chatListViewModel.selectedChat.subscribe(() => {
+    document.body.toggleAttribute(
+      "showing-chat",
+      chatListViewModel.selectedChat.value != void 0
+    );
+  });
+  document.body.append(
+    /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
+  );
+  document.querySelector("main").append(
+    HomePage(
+      storageViewModel,
+      settingsViewModel,
+      connectionViewModel,
+      fileTransferViewModel,
+      chatListViewModel
+    ),
+    ChatPageWrapper(chatListViewModel),
+    ConnectionModal(connectionViewModel),
+    DataTransferModalWrapper(fileTransferViewModel),
+    StorageModal(storageViewModel)
+  );
 })();

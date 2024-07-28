@@ -14,21 +14,40 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 
+ANIMATION
+*/
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+}
+
+:root {
+  --animation-duration: 0.5s;
+}
+
+.slide-up {
+  animation: slide-up var(--animation-duration)
+}
+
 /*
 COLORS
  */
 /* definition */
 :root {
   --background: hsla(0, 0%, 100%, 100%);
-  --background-transparent: hsla(0, 0%, 100%, 60%);
+  --background-glass: hsla(0, 0%, 100%, 5%);
+  --background-transparent: hsla(0, 0%, 0%, 5%);
   --background-hover: hsla(0, 0%, 55%, 12%);
   --background-active: hsla(0, 0%, 55%, 12%);
 
   --layer: hsla(0, 0%, 96%, 60%);
 
-  --surface: #f4f4f4;
-  --surface-hover: #e8e8e8;
-  --surface-active: #c6c6c6;
+  --surface: hsla(0, 0%, 0%, 5%);
+  --surface-hover: hsla(0, 0%, 5%, 10%);
+  --surface-active: hsla(0, 0%, 5%, 15%);
 
   --border: hsla(0, 0%, 0%, 10%);
   --surface-border: #8d8d8d;
@@ -57,15 +76,16 @@ COLORS
 @media (prefers-color-scheme: dark) {
   :root {
     --background: hsla(0, 0%, 9%, 100%);
-    --background-transparent: hsla(0, 0%, 9%, 60%);
+    --background-glass: hsla(0, 0%, 9%, 20%);
+    --background-transparent: hsla(0, 0%, 100%, 5%);
     --background-hover: hsla(0, 0%, 55%, 16%);
     --background-active: hsla(0, 0%, 55%, 40%);
 
     --layer: hsla(0, 0%, 15%, 60%);
 
-    --surface: #262626;
-    --surface-hover: #333333;
-    --surface-active: #6f6f6f;
+    --surface: hsla(0, 0%, 100%, 5%);
+    --surface-hover: hsla(0, 0%, 100%, 10%);
+    --surface-active: hsla(0, 0%, 100%, 15%);
 
     --border: hsla(0, 0%, 100%, 10%);
     --surface-border: #6f6f6f;
@@ -93,7 +113,11 @@ COLORS
 
 /* basic */
 html {
-  background-color: var(--background);
+  background: var(--background);
+  color: var(--text-normal);
+}
+
+.tile {
   color: var(--text-normal);
 }
 
@@ -102,12 +126,12 @@ html {
 }
 
 .modal > div {
-  background-color: var(--background);
+  background: var(--background-glass);
 }
 
 menu,
 header {
-  background-color: var(--background-transparent);
+  background: var(--background-transparent);
 }
 
 * {
@@ -138,59 +162,62 @@ a {
 }
 
 /* controls */
-button,
-footer,
-input,
-textarea,
-select,
+button:not(.tile *),
+footer:not(.tile *),
+input:not(.tile *),
+textarea:not(.tile *),
+select:not(.tile *),
 .surface,
 .tile {
-  background-color: var(--surface);
+  background: var(--surface);
+}
+[selected] {
+  background: var(--background);
 }
 @media (hover: hover) {
   button:hover,
   select:hover,
   button.tile.ghost:hover {
-    background-color: var(--surface-hover);
+    background: var(--surface-hover);
   }
   [selected]:hover {
-    background-color: var(--surface);
+    background: var(--surface);
   }
 }
 button:active,
 select:active,
-button.tile.ghost:active,
-[selected] {
-  background-color: var(--surface-active);
+button.tile.ghost:active {
+  background: var(--surface-active);
 }
 [selected]:active {
-  background-color: var(--surface-hover);
+  background: var(--surface-hover);
 }
+.tile *,
 header button {
-  background-color: transparent;
+  background: transparent;
 }
 
 input:checked {
-  background-color: var(--primary);
+  background: var(--primary);
 }
 
 /* primary button */
 button.primary {
-  background-color: var(--primary);
+  background: var(--primary);
   color: var(--text-on-color);
 }
 @media (hover: hover) {
   button.primary:hover {
-    background-color: var(--primary-hover);
+    background: var(--primary-hover);
   }
 }
 button.primary:active {
-  background-color: var(--primary-active);
+  background: var(--primary-active);
 }
 
 /* ghost button */
 button.ghost:not(.tile) {
-  background-color: transparent;
+  background: transparent;
 }
 button.ghost {
   color: var(--link);
@@ -200,25 +227,25 @@ button.ghost {
 }
 @media (hover: hover) {
   button.ghost:hover {
-    background-color: var(--background-hover);
+    background: var(--background-hover);
   }
 }
 button.ghost:active {
-  background-color: var(--background-active);
+  background: var(--background-active);
 }
 
 /* danger button */
 button.danger {
-  background-color: var(--danger);
-  color: var(--text-on-color);
+  background: var(--danger);
+  color: white;
 }
 @media (hover: hover) {
   button.danger:hover {
-    background-color: var(--danger-hover);
+    background: var(--danger-hover);
   }
 }
 button.danger:active {
-  background-color: var(--danger-active);
+  background: var(--danger-active);
 }
 
 /*
@@ -230,6 +257,9 @@ SIZES
   --gap-in-tab-links: 1rem;
   --gap-in-controls: 1.2rem;
   --large-gap: 2rem;
+
+  /* outline */
+  --outline-width: var(--gap-between-tiles);
 
   /* margin */
   --label-top-padding: 0.25rem;
@@ -292,6 +322,13 @@ TYPE
 /*
 MAIN
  */
+/* animation */
+@media (max-width: 640px) {
+  .modal > div {
+    animation: slide-up var(--animation-duration);
+  }
+}
+
 /* appearance */
 input[type="checkbox"],
 input[type="radio"],
@@ -302,8 +339,15 @@ select {
 }
 
 /* backdrop-filter */
+.tile,
+.surface {
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+}
+
 header,
-menu {
+menu,
+.modal > div {
   backdrop-filter: blur(70px);
   -webkit-backdrop-filter: blur(70px);
 }
@@ -344,7 +388,7 @@ label.tile:has(input:focus),
 label.tile:has(textarea:focus),
 textarea:focus:not(label.tile *),
 [selected] {
-  outline: var(--gap-between-tiles) solid var(--primary);
+  outline: var(--outline-width) solid var(--primary);
 }
 
 /* border-radius */
@@ -422,9 +466,12 @@ textarea {
   display: inline-flex;
 }
 
-.modal,
-[hidden] {
+.modal {
   display: none;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 main,
@@ -544,6 +591,10 @@ hr {
   margin-bottom: var(--content-margin);
 }
 
+.content-margin-bottom {
+  margin-bottom: var(--content-margin) !important;
+}
+
 label:not(.tile) {
   margin-bottom: var(--label-margin-bottom);
 }
@@ -632,6 +683,10 @@ label.tile:has(> span.icon) {
 
 label.tile:has(> span.icon) :is(input, select, textarea) {
   padding-left: 0px;
+}
+
+select {
+  padding-right: 2.5rem;
 }
 
 .padding-right {
@@ -787,6 +842,10 @@ header button {
   max-height: 100% !important;
 }
 
+button:not(.tile):not(header *),
+footer,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
 .modal > div > :is(button, div.flex-row) {
   min-height: var(--control-height);
 }
@@ -863,7 +922,9 @@ code {
 .secondary,
 .secondary *,
 .helper-text,
-.error-text,
+.error,
+.warning,
+.success,
 label.tile > div > span:not(.icon) {
   font-size: 0.9rem;
 }
@@ -900,7 +961,7 @@ input[type="checkbox"]:checked::before {
 input[type="radio"]:checked::before {
   content: "";
 
-  background-color: var(--text-on-color);
+  background: var(--text-on-color);
   border-radius: 100%;
 
   --inset: 4px;
@@ -920,7 +981,7 @@ input[type="radio"]:checked::before {
   right: 0px;
   bottom: 0px;
 
-  background-color: var(--background);
+  background: var(--background);
   opacity: 0.6;
 }
 
@@ -994,6 +1055,7 @@ menu {
 article,
 body,
 main,
+.clip,
 .ellipsis {
   overflow: hidden;
 }
@@ -1037,6 +1099,11 @@ main {
 
 .ellipsis {
   white-space: nowrap;
+}
+
+code {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* scrolling */
