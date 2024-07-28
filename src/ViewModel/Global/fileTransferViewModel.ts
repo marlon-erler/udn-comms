@@ -27,6 +27,15 @@ export default class FileTransferViewModel {
   transferChannel: React.State<string> = new React.State("");
   transferKey: React.State<string> = new React.State("");
 
+  filesSentCount: React.State<number> = new React.State(0);
+  filePathsSent: React.ListState<string> = new React.ListState();
+  didNotFinishSending: React.State<boolean> = new React.State(true);
+  filesSentText: React.State<string> = React.createProxyState(
+    [this.filesSentCount],
+    () =>
+      translations.dataTransferModal.filesSentCount(this.filesSentCount.value)
+  );
+
   // guards
   hasNoPathsSelected: React.State<boolean> = React.createProxyState(
     [this.selectedPaths],
@@ -78,6 +87,24 @@ export default class FileTransferViewModel {
   showTransferDataModal = (): void => {
     this.presentedModal.value = FileTransferModal.TransferDataDisplay;
     this.getTransferData();
+  };
+
+  initiateTransfer = (): void => {
+    this.presentedModal.value = FileTransferModal.TransferDisplay;
+    this.didNotFinishSending.value = true;
+    this.filesSentCount.value = 0;
+    this.filePathsSent.clear();
+
+    this.fileTransferModel.sendFiles(
+      this.selectedPaths.value.values(),
+      (path: string) => {
+        console.log(path);
+        this.filePathsSent.add(path);
+        this.filesSentCount.value++;
+      }
+    );
+
+    this.didNotFinishSending.value = false;
   };
 
   hideModal = (): void => {

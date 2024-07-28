@@ -6,6 +6,7 @@ import FileTransferViewModel, {
 } from "../../ViewModel/Global/fileTransferViewModel";
 
 import StorageModel from "../../Model/Global/storageModel";
+import { StringToTextSpan } from "../Components/textSpan";
 import { translations } from "../translations";
 
 export function DataTransferModalWrapper(
@@ -16,6 +17,7 @@ export function DataTransferModalWrapper(
       {DirectionSelectionModal(fileTransferViewModel)}
       {FileSelectionModal(fileTransferViewModel)}
       {TransferDataDisplayModal(fileTransferViewModel)}
+      {TransferDisplayModal(fileTransferViewModel)}
     </div>
   );
 }
@@ -176,6 +178,12 @@ function TransferDataDisplayModal(
         <main>
           <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
 
+          <span class="secondary">
+            {translations.dataTransferModal.dataEntryDescription}
+          </span>
+
+          <hr></hr>
+
           <div class="flex-column gap content-margin-bottom">
             <div class="tile">
               <span class="icon">forum</span>
@@ -206,11 +214,55 @@ function TransferDataDisplayModal(
           >
             {translations.general.backButton}
           </button>
-          <button class="primary flex">
-            {translations.general.continueButton}
+          <button
+            class="primary flex"
+            on:click={fileTransferViewModel.initiateTransfer}
+          >
+            {translations.dataTransferModal.sendButton}
             <span class="icon">arrow_forward</span>
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TransferDisplayModal(fileTransferViewModel: FileTransferViewModel) {
+  const isPresented = React.createProxyState(
+    [fileTransferViewModel.presentedModal],
+    () =>
+      fileTransferViewModel.presentedModal.value ==
+      FileTransferModal.TransferDisplay
+  );
+
+  return (
+    <div class="modal" toggle:open={isPresented}>
+      <div>
+        <main>
+          <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
+
+          <p>{translations.dataTransferModal.sendingFiles}</p>
+
+          <p
+            class="secondary"
+            subscribe:innerText={fileTransferViewModel.filesSentText}
+          ></p>
+
+          <div
+            class="tile flex-column align-start"
+            children:append={[
+              fileTransferViewModel.filePathsSent,
+              StringToTextSpan,
+            ]}
+          ></div>
+        </main>
+        <button
+          on:click={fileTransferViewModel.hideModal}
+          toggle:disabled={fileTransferViewModel.didNotFinishSending}
+        >
+          {translations.general.closeButton}
+          <span class="icon">close</span>
+        </button>
       </div>
     </div>
   );

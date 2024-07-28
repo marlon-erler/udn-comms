@@ -2655,6 +2655,7 @@
     dataTransferModal: {
       transferDataHeadline: "Transfer Data",
       selectionDescription: "Select the data that you want to transfer.",
+      dataEntryDescription: "Enter this data on the other device.",
       ///
       fromThisDeviceButton: "From this device",
       toThisDeviceButton: "To this device",
@@ -2662,11 +2663,14 @@
       generalHeadline: "General",
       connectionData: "Connection Data",
       settingsData: "Settings Data",
-      ///
       chatsHeadline: "Chats",
       ///
       transferChannelHeadline: "Transfer Chanel",
-      transferKeyHeadline: "Transfer Encryption Key"
+      transferKeyHeadline: "Transfer Encryption Key",
+      sendButton: "Send",
+      ///
+      sendingFiles: "Sending files...",
+      filesSentCount: (count) => `Files sent: ${count}`
     },
     storage: {
       noItemSelected: "No item selected",
@@ -4450,6 +4454,13 @@
     selectedPaths = new ListState();
     transferChannel = new State("");
     transferKey = new State("");
+    filesSentCount = new State(0);
+    filePathsSent = new ListState();
+    didNotFinishSending = new State(true);
+    filesSentText = createProxyState(
+      [this.filesSentCount],
+      () => translations.dataTransferModal.filesSentCount(this.filesSentCount.value)
+    );
     // guards
     hasNoPathsSelected = createProxyState(
       [this.selectedPaths],
@@ -4494,6 +4505,21 @@
       this.presentedModal.value = 2 /* TransferDataDisplay */;
       this.getTransferData();
     };
+    initiateTransfer = () => {
+      this.presentedModal.value = 3 /* TransferDisplay */;
+      this.didNotFinishSending.value = true;
+      this.filesSentCount.value = 0;
+      this.filePathsSent.clear();
+      this.fileTransferModel.sendFiles(
+        this.selectedPaths.value.values(),
+        (path) => {
+          console.log(path);
+          this.filePathsSent.add(path);
+          this.filesSentCount.value++;
+        }
+      );
+      this.didNotFinishSending.value = false;
+    };
     hideModal = () => {
       this.presentedModal.value = void 0;
     };
@@ -4504,9 +4530,14 @@
     }
   };
 
+  // src/View/Components/textSpan.tsx
+  var StringToTextSpan = (string) => {
+    return /* @__PURE__ */ createElement("span", { class: "ellipsis" }, string);
+  };
+
   // src/View/Modals/dataTransferModal.tsx
   function DataTransferModalWrapper(fileTransferViewModel2) {
-    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2));
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2));
   }
   function DirectionSelectionModal(fileTransferViewModel2) {
     const isPresented = createProxyState(
@@ -4590,7 +4621,7 @@
       [fileTransferViewModel2.presentedModal],
       () => fileTransferViewModel2.presentedModal.value == 2 /* TransferDataDisplay */
     );
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.dataEntryDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("div", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
       "b",
       {
         "subscribe:innerText": fileTransferViewModel2.transferChannel
@@ -4602,7 +4633,45 @@
         "on:click": fileTransferViewModel2.showFileSelectionModal
       },
       translations.general.backButton
-    ), /* @__PURE__ */ createElement("button", { class: "primary flex" }, translations.general.continueButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))));
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.initiateTransfer
+      },
+      translations.dataTransferModal.sendButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
+  }
+  function TransferDisplayModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 3 /* TransferDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("p", null, translations.dataTransferModal.sendingFiles), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "subscribe:innerText": fileTransferViewModel2.filesSentText
+      }
+    ), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "tile flex-column align-start",
+        "children:append": [
+          fileTransferViewModel2.filePathsSent,
+          StringToTextSpan
+        ]
+      }
+    )), /* @__PURE__ */ createElement(
+      "button",
+      {
+        "on:click": fileTransferViewModel2.hideModal,
+        "toggle:disabled": fileTransferViewModel2.didNotFinishSending
+      },
+      translations.general.closeButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
+    )));
   }
 
   // src/Model/Global/fileTransferModel.ts
@@ -4645,10 +4714,14 @@
       this.storageModel.write(fileData.path, fileData.body);
     };
     // sending
-    sendFiles = (...directoryPaths) => {
+    sendFiles = (directoryPaths, callback) => {
       for (const directoryPath of directoryPaths) {
         this.storageModel.recurse(directoryPath, (filePath) => {
           this.sendFile(filePath);
+          const pathString = StorageModel.pathComponentsToString(
+            ...filePath
+          );
+          callback(pathString);
         });
       }
     };

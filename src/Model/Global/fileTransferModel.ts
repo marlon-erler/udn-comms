@@ -56,10 +56,17 @@ export default class FileTransferModel {
   };
 
   // sending
-  sendFiles = (...directoryPaths: string[][]): void => {
+  sendFiles = (
+    directoryPaths: BuiltinIterator<string[]>,
+    callback: (path: string) => void
+  ): void => {
     for (const directoryPath of directoryPaths) {
       this.storageModel.recurse(directoryPath, (filePath: string[]) => {
         this.sendFile(filePath);
+        const pathString: string = StorageModel.pathComponentsToString(
+          ...filePath
+        );
+        callback(pathString);
       });
     }
   };

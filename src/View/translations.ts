@@ -82,6 +82,7 @@ const englishTranslations = {
   dataTransferModal: {
     transferDataHeadline: "Transfer Data",
     selectionDescription: "Select the data that you want to transfer.",
+    dataEntryDescription: "Enter this data on the other device.",
 
     ///
 
@@ -94,15 +95,20 @@ const englishTranslations = {
     
     connectionData: "Connection Data",
     settingsData: "Settings Data",
-
-    ///
-
+    
     chatsHeadline: "Chats",
 
     ///
 
     transferChannelHeadline: "Transfer Chanel",
     transferKeyHeadline: "Transfer Encryption Key",
+
+    sendButton: "Send",
+
+    ///
+
+    sendingFiles: "Sending files...",
+    filesSentCount: (count: number) => `Files sent: ${count}`
   },
 
   storage: {
