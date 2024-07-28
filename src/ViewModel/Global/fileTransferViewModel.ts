@@ -5,6 +5,7 @@ import FileTransferModel, {
 } from "../../Model/Global/fileTransferModel";
 import StorageModel, {
   StorageModelSubPath,
+  filePaths,
 } from "../../Model/Global/storageModel";
 
 import ChatListModel from "../../Model/Chat/chatListModel";
@@ -27,13 +28,31 @@ export default class FileTransferViewModel {
   transferChannel: React.State<string> = new React.State("");
   transferKey: React.State<string> = new React.State("");
 
-  filesSentCount: React.State<number> = new React.State(0);
+  receivingTransferChannel: React.State<string> = new React.State("");
+  receivingTransferKey: React.State<string> = new React.State("");
+
   filePathsSent: React.ListState<string> = new React.ListState();
-  didNotFinishSending: React.State<boolean> = new React.State(true);
+  filesSentCount: React.State<number> = React.createProxyState(
+    [this.filePathsSent],
+    () => this.filePathsSent.value.size
+  );
   filesSentText: React.State<string> = React.createProxyState(
     [this.filesSentCount],
     () =>
       translations.dataTransferModal.filesSentCount(this.filesSentCount.value)
+  );
+
+  filePathsReceived: React.ListState<string> = new React.ListState();
+  filesReceivedCount: React.State<number> = React.createProxyState(
+    [this.filePathsReceived],
+    () => this.filePathsReceived.value.size
+  );
+  filesReceivedText: React.State<string> = React.createProxyState(
+    [this.filesReceivedCount],
+    () =>
+      translations.dataTransferModal.filesReceivedCount(
+        this.filesReceivedCount.value
+      )
   );
 
   // guards
@@ -41,16 +60,32 @@ export default class FileTransferViewModel {
     [this.selectedPaths],
     () => this.selectedPaths.value.size == 0
   );
+  didNotFinishSending: React.State<boolean> = new React.State(true);
+  cannotPrepareToReceive: React.State<boolean> = React.createProxyState(
+    [this.receivingTransferChannel, this.receivingTransferKey],
+    () =>
+      this.receivingTransferChannel.value == "" ||
+      this.receivingTransferKey.value == ""
+  );
+
+  // handlers
+  handleReceivedFile = (path: string): void => {
+    this.filePathsReceived.add(path);
+  };
 
   // methods
   getOptions = (): void => {
     this.generalFileOptions.clear();
     this.chatFileOptions.clear();
+    this.selectedPaths.clear();
 
     this.generalFileOptions.add(
       {
         label: translations.dataTransferModal.connectionData,
-        path: StorageModel.getPath(StorageModelSubPath.ConnectionModel, []),
+        path: StorageModel.getPath(
+          StorageModelSubPath.ConnectionModel,
+          filePaths.connectionModel.previousAddresses
+        ),
       },
       {
         label: translations.dataTransferModal.settingsData,
@@ -92,7 +127,6 @@ export default class FileTransferViewModel {
   initiateTransfer = (): void => {
     this.presentedModal.value = FileTransferModal.TransferDisplay;
     this.didNotFinishSending.value = true;
-    this.filesSentCount.value = 0;
     this.filePathsSent.clear();
 
     this.fileTransferModel.sendFiles(
@@ -100,11 +134,25 @@ export default class FileTransferViewModel {
       (path: string) => {
         console.log(path);
         this.filePathsSent.add(path);
-        this.filesSentCount.value++;
       }
     );
 
     this.didNotFinishSending.value = false;
+  };
+
+  showTransferDataInputModal = (): void => {
+    this.presentedModal.value = FileTransferModal.TransferDataInput;
+  };
+
+  prepareReceivingData = (): void => {
+    this.presentedModal.value = FileTransferModal.ReceptionDisplay;
+    this.filePathsReceived.clear();
+
+    const transferData: TransferData = {
+      channel: this.receivingTransferChannel.value,
+      key: this.receivingTransferKey.value,
+    };
+    this.fileTransferModel.prepareToReceive(transferData);
   };
 
   hideModal = (): void => {
@@ -118,6 +166,10 @@ export default class FileTransferViewModel {
   ) {
     this.fileTransferModel = fileTransferModel;
     this.chatListModel = chatListModel;
+
+    this.fileTransferModel.fileHandlerManager.addHandler(
+      this.handleReceivedFile
+    );
   }
 }
 

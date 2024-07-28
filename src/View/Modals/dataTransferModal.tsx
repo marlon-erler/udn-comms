@@ -7,6 +7,7 @@ import FileTransferViewModel, {
 
 import StorageModel from "../../Model/Global/storageModel";
 import { StringToTextSpan } from "../Components/textSpan";
+import { reload } from "../utility";
 import { translations } from "../translations";
 
 export function DataTransferModalWrapper(
@@ -18,6 +19,8 @@ export function DataTransferModalWrapper(
       {FileSelectionModal(fileTransferViewModel)}
       {TransferDataDisplayModal(fileTransferViewModel)}
       {TransferDisplayModal(fileTransferViewModel)}
+      {TransferDataInputModal(fileTransferViewModel)}
+      {DataReceptionModal(fileTransferViewModel)}
     </div>
   );
 }
@@ -47,7 +50,10 @@ function DirectionSelectionModal(fileTransferViewModel: FileTransferViewModel) {
               </div>
               <span class="icon">arrow_forward</span>
             </button>
-            <button class="tile">
+            <button
+              class="tile"
+              on:click={fileTransferViewModel.showTransferDataInputModal}
+            >
               <span class="icon">download</span>
               <div>
                 <b>{translations.dataTransferModal.toThisDeviceButton}</b>
@@ -241,12 +247,19 @@ function TransferDisplayModal(fileTransferViewModel: FileTransferViewModel) {
         <main>
           <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
 
-          <p>{translations.dataTransferModal.sendingFiles}</p>
-
           <p
             class="secondary"
             subscribe:innerText={fileTransferViewModel.filesSentText}
           ></p>
+
+          <p
+            class="secondary"
+            toggle:hidden={fileTransferViewModel.didNotFinishSending}
+          >
+            {translations.dataTransferModal.allFilesSent}
+          </p>
+
+          <hr></hr>
 
           <div
             class="tile flex-column align-start"
@@ -262,6 +275,114 @@ function TransferDisplayModal(fileTransferViewModel: FileTransferViewModel) {
         >
           {translations.general.closeButton}
           <span class="icon">close</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TransferDataInputModal(fileTransferViewModel: FileTransferViewModel) {
+  const isPresented = React.createProxyState(
+    [fileTransferViewModel.presentedModal],
+    () =>
+      fileTransferViewModel.presentedModal.value ==
+      FileTransferModal.TransferDataInput
+  );
+
+  return (
+    <div class="modal" toggle:open={isPresented}>
+      <div>
+        <main>
+          <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
+
+          <span class="secondary">
+            {translations.dataTransferModal.dataEntryInputDescription}
+          </span>
+
+          <hr></hr>
+
+          <div class="flex-column gap content-margin-bottom">
+            <label class="tile">
+              <span class="icon">forum</span>
+              <div>
+                <span class="secondary">
+                  {translations.dataTransferModal.transferChannelHeadline}
+                </span>
+                <input
+                  bind:value={fileTransferViewModel.receivingTransferChannel}
+                ></input>
+              </div>
+            </label>
+            <label class="tile">
+              <span class="icon">key</span>
+              <div>
+                <span class="secondary">
+                  {translations.dataTransferModal.transferKeyHeadline}
+                </span>
+                <input
+                  bind:value={fileTransferViewModel.receivingTransferKey}
+                ></input>
+              </div>
+            </label>
+          </div>
+        </main>
+        <div class="flex-row width-100">
+          <button
+            class="flex"
+            on:click={fileTransferViewModel.showDirectionSelectionModal}
+          >
+            {translations.general.backButton}
+          </button>
+          <button
+            class="primary flex"
+            on:click={fileTransferViewModel.prepareReceivingData}
+            toggle:disabled={fileTransferViewModel.cannotPrepareToReceive}
+          >
+            {translations.general.continueButton}
+            <span class="icon">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DataReceptionModal(fileTransferViewModel: FileTransferViewModel) {
+  const isPresented = React.createProxyState(
+    [fileTransferViewModel.presentedModal],
+    () =>
+      fileTransferViewModel.presentedModal.value ==
+      FileTransferModal.ReceptionDisplay
+  );
+
+  return (
+    <div class="modal" toggle:open={isPresented}>
+      <div>
+        <main>
+          <h2>{translations.dataTransferModal.transferDataHeadline}</h2>
+
+          <p class="secondary">
+            {translations.dataTransferModal.readyToReceiveDescription}
+          </p>
+
+          <p
+            class="secondary"
+            subscribe:innerText={fileTransferViewModel.filesReceivedText}
+          ></p>
+
+          <hr></hr>
+
+          <div
+            class="tile flex-column align-start"
+            children:append={[
+              fileTransferViewModel.filePathsReceived,
+              StringToTextSpan,
+            ]}
+          ></div>
+        </main>
+        <button on:click={reload}>
+          {translations.general.reloadAppButton}
+          <span class="icon">refresh</span>
         </button>
       </div>
     </div>

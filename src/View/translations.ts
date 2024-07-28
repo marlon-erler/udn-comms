@@ -17,6 +17,8 @@ const englishTranslations = {
     saveButton: "Save",
     setButton: "Set",
 
+    reloadAppButton: "Reload App",
+
     fileVersionLabel: "Version",
     searchLabel: "Search",
   },
@@ -57,7 +59,7 @@ const englishTranslations = {
 
     manageStorageButton: "Manage storage",
 
-    transferDataButton: "Transfer Data",
+    transferDataButton: "Data Transfer",
 
     scrollToChatButton: "Chats",
 
@@ -80,9 +82,11 @@ const englishTranslations = {
   },
 
   dataTransferModal: {
-    transferDataHeadline: "Transfer Data",
+    transferDataHeadline: "Data Transfer",
     selectionDescription: "Select the data that you want to transfer.",
     dataEntryDescription: "Enter this data on the other device.",
+    dataEntryInputDescription: "Enter the data displayed on the other device.",
+    readyToReceiveDescription: "Click 'send' on the other device.",
 
     ///
 
@@ -107,8 +111,10 @@ const englishTranslations = {
 
     ///
 
-    sendingFiles: "Sending files...",
-    filesSentCount: (count: number) => `Files sent: ${count}`
+    filesSentCount: (count: number) => `Files sent: ${count}.`,
+    allFilesSent: "Done.",
+
+    filesReceivedCount: (count: number) => `Files received: ${count}.`,
   },
 
   storage: {

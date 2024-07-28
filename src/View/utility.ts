@@ -5,3 +5,7 @@ export function allowDrop(event: DragEvent) {
 export function allowDrag(event: DragEvent) {
   event.dataTransfer?.setData("text", "")
 }
+
+export function reload() {
+  window.location.reload();
+}

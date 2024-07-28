@@ -1469,6 +1469,9 @@
   function allowDrag(event) {
     event.dataTransfer?.setData("text", "");
   }
+  function reload() {
+    window.location.reload();
+  }
 
   // src/ViewModel/Pages/taskViewModel.ts
   var TaskViewModel = class {
@@ -2607,6 +2610,7 @@
       confirmButton: "Confirm",
       saveButton: "Save",
       setButton: "Set",
+      reloadAppButton: "Reload App",
       fileVersionLabel: "Version",
       searchLabel: "Search"
     },
@@ -2638,7 +2642,7 @@
       setNameButtonAudioLabel: "set name",
       firstDayOfWeekLabel: "First day of week",
       manageStorageButton: "Manage storage",
-      transferDataButton: "Transfer Data",
+      transferDataButton: "Data Transfer",
       scrollToChatButton: "Chats",
       ///
       backToOverviewAudioLabel: "go back to overview",
@@ -2653,9 +2657,11 @@
       connectButtonAudioLabel: "connect"
     },
     dataTransferModal: {
-      transferDataHeadline: "Transfer Data",
+      transferDataHeadline: "Data Transfer",
       selectionDescription: "Select the data that you want to transfer.",
       dataEntryDescription: "Enter this data on the other device.",
+      dataEntryInputDescription: "Enter the data displayed on the other device.",
+      readyToReceiveDescription: "Click 'send' on the other device.",
       ///
       fromThisDeviceButton: "From this device",
       toThisDeviceButton: "To this device",
@@ -2669,8 +2675,9 @@
       transferKeyHeadline: "Transfer Encryption Key",
       sendButton: "Send",
       ///
-      sendingFiles: "Sending files...",
-      filesSentCount: (count) => `Files sent: ${count}`
+      filesSentCount: (count) => `Files sent: ${count}.`,
+      allFilesSent: "Done.",
+      filesReceivedCount: (count) => `Files received: ${count}.`
     },
     storage: {
       noItemSelected: "No item selected",
@@ -4454,26 +4461,54 @@
     selectedPaths = new ListState();
     transferChannel = new State("");
     transferKey = new State("");
-    filesSentCount = new State(0);
+    receivingTransferChannel = new State("");
+    receivingTransferKey = new State("");
     filePathsSent = new ListState();
-    didNotFinishSending = new State(true);
+    filesSentCount = createProxyState(
+      [this.filePathsSent],
+      () => this.filePathsSent.value.size
+    );
     filesSentText = createProxyState(
       [this.filesSentCount],
       () => translations.dataTransferModal.filesSentCount(this.filesSentCount.value)
+    );
+    filePathsReceived = new ListState();
+    filesReceivedCount = createProxyState(
+      [this.filePathsReceived],
+      () => this.filePathsReceived.value.size
+    );
+    filesReceivedText = createProxyState(
+      [this.filesReceivedCount],
+      () => translations.dataTransferModal.filesReceivedCount(
+        this.filesReceivedCount.value
+      )
     );
     // guards
     hasNoPathsSelected = createProxyState(
       [this.selectedPaths],
       () => this.selectedPaths.value.size == 0
     );
+    didNotFinishSending = new State(true);
+    cannotPrepareToReceive = createProxyState(
+      [this.receivingTransferChannel, this.receivingTransferKey],
+      () => this.receivingTransferChannel.value == "" || this.receivingTransferKey.value == ""
+    );
+    // handlers
+    handleReceivedFile = (path) => {
+      this.filePathsReceived.add(path);
+    };
     // methods
     getOptions = () => {
       this.generalFileOptions.clear();
       this.chatFileOptions.clear();
+      this.selectedPaths.clear();
       this.generalFileOptions.add(
         {
           label: translations.dataTransferModal.connectionData,
-          path: StorageModel.getPath("connection" /* ConnectionModel */, [])
+          path: StorageModel.getPath(
+            "connection" /* ConnectionModel */,
+            filePaths.connectionModel.previousAddresses
+          )
         },
         {
           label: translations.dataTransferModal.settingsData,
@@ -4508,17 +4543,27 @@
     initiateTransfer = () => {
       this.presentedModal.value = 3 /* TransferDisplay */;
       this.didNotFinishSending.value = true;
-      this.filesSentCount.value = 0;
       this.filePathsSent.clear();
       this.fileTransferModel.sendFiles(
         this.selectedPaths.value.values(),
         (path) => {
           console.log(path);
           this.filePathsSent.add(path);
-          this.filesSentCount.value++;
         }
       );
       this.didNotFinishSending.value = false;
+    };
+    showTransferDataInputModal = () => {
+      this.presentedModal.value = 4 /* TransferDataInput */;
+    };
+    prepareReceivingData = () => {
+      this.presentedModal.value = 5 /* ReceptionDisplay */;
+      this.filePathsReceived.clear();
+      const transferData = {
+        channel: this.receivingTransferChannel.value,
+        key: this.receivingTransferKey.value
+      };
+      this.fileTransferModel.prepareToReceive(transferData);
     };
     hideModal = () => {
       this.presentedModal.value = void 0;
@@ -4527,6 +4572,9 @@
     constructor(fileTransferModel2, chatListModel2) {
       this.fileTransferModel = fileTransferModel2;
       this.chatListModel = chatListModel2;
+      this.fileTransferModel.fileHandlerManager.addHandler(
+        this.handleReceivedFile
+      );
     }
   };
 
@@ -4537,7 +4585,7 @@
 
   // src/View/Modals/dataTransferModal.tsx
   function DataTransferModalWrapper(fileTransferViewModel2) {
-    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2));
+    return /* @__PURE__ */ createElement("div", null, DirectionSelectionModal(fileTransferViewModel2), FileSelectionModal(fileTransferViewModel2), TransferDataDisplayModal(fileTransferViewModel2), TransferDisplayModal(fileTransferViewModel2), TransferDataInputModal(fileTransferViewModel2), DataReceptionModal(fileTransferViewModel2));
   }
   function DirectionSelectionModal(fileTransferViewModel2) {
     const isPresented = createProxyState(
@@ -4553,7 +4601,16 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "upload"),
       /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.fromThisDeviceButton)),
       /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
-    ), /* @__PURE__ */ createElement("button", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "download"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)), /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")))), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "tile",
+        "on:click": fileTransferViewModel2.showTransferDataInputModal
+      },
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "download"),
+      /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, translations.dataTransferModal.toThisDeviceButton)),
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))), /* @__PURE__ */ createElement("button", { "on:click": fileTransferViewModel2.hideModal }, translations.general.closeButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
   }
   function FileSelectionModal(fileTransferViewModel2) {
     const OptionConverter = (fileOption) => {
@@ -4648,13 +4705,20 @@
       [fileTransferViewModel2.presentedModal],
       () => fileTransferViewModel2.presentedModal.value == 3 /* TransferDisplay */
     );
-    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("p", null, translations.dataTransferModal.sendingFiles), /* @__PURE__ */ createElement(
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement(
       "p",
       {
         class: "secondary",
         "subscribe:innerText": fileTransferViewModel2.filesSentText
       }
     ), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "toggle:hidden": fileTransferViewModel2.didNotFinishSending
+      },
+      translations.dataTransferModal.allFilesSent
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
       "div",
       {
         class: "tile flex-column align-start",
@@ -4673,6 +4737,61 @@
       /* @__PURE__ */ createElement("span", { class: "icon" }, "close")
     )));
   }
+  function TransferDataInputModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 4 /* TransferDataInput */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.dataEntryInputDescription), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement("div", { class: "flex-column gap content-margin-bottom" }, /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "forum"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferChannelHeadline), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": fileTransferViewModel2.receivingTransferChannel
+      }
+    ))), /* @__PURE__ */ createElement("label", { class: "tile" }, /* @__PURE__ */ createElement("span", { class: "icon" }, "key"), /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("span", { class: "secondary" }, translations.dataTransferModal.transferKeyHeadline), /* @__PURE__ */ createElement(
+      "input",
+      {
+        "bind:value": fileTransferViewModel2.receivingTransferKey
+      }
+    ))))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "flex",
+        "on:click": fileTransferViewModel2.showDirectionSelectionModal
+      },
+      translations.general.backButton
+    ), /* @__PURE__ */ createElement(
+      "button",
+      {
+        class: "primary flex",
+        "on:click": fileTransferViewModel2.prepareReceivingData,
+        "toggle:disabled": fileTransferViewModel2.cannotPrepareToReceive
+      },
+      translations.general.continueButton,
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "arrow_forward")
+    ))));
+  }
+  function DataReceptionModal(fileTransferViewModel2) {
+    const isPresented = createProxyState(
+      [fileTransferViewModel2.presentedModal],
+      () => fileTransferViewModel2.presentedModal.value == 5 /* ReceptionDisplay */
+    );
+    return /* @__PURE__ */ createElement("div", { class: "modal", "toggle:open": isPresented }, /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("h2", null, translations.dataTransferModal.transferDataHeadline), /* @__PURE__ */ createElement("p", { class: "secondary" }, translations.dataTransferModal.readyToReceiveDescription), /* @__PURE__ */ createElement(
+      "p",
+      {
+        class: "secondary",
+        "subscribe:innerText": fileTransferViewModel2.filesReceivedText
+      }
+    ), /* @__PURE__ */ createElement("hr", null), /* @__PURE__ */ createElement(
+      "div",
+      {
+        class: "tile flex-column align-start",
+        "children:append": [
+          fileTransferViewModel2.filePathsReceived,
+          StringToTextSpan
+        ]
+      }
+    )), /* @__PURE__ */ createElement("button", { "on:click": reload }, translations.general.reloadAppButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "refresh"))));
+  }
 
   // src/Model/Global/fileTransferModel.ts
   var FileTransferModel = class {
@@ -4680,11 +4799,12 @@
     connectionModel;
     // data
     transferData;
+    fileHandlerManager = new HandlerManager();
     // general
     generateTransferData = () => {
       const transferData = {
-        channel: generateRandomToken(2),
-        key: generateRandomToken(3)
+        channel: generateRandomToken(2).substring(0, 4),
+        key: generateRandomToken(3).substring(0, 6)
       };
       this.transferData = transferData;
       return transferData;
@@ -4696,7 +4816,9 @@
     // handlers
     handleMessage = (data) => {
       if (this.transferData == void 0) return;
+      if (data.messageBody == void 0) return;
       if (data.messageChannel != this.transferData.channel) return;
+      this.handleFile(data.messageBody);
     };
     handleFile = async (encryptedFileData) => {
       if (this.transferData == void 0) return;
@@ -4704,6 +4826,7 @@
         encryptedFileData,
         this.transferData.key
       );
+      console.log(decrypted);
       const parsed = parse(decrypted);
       const isFileData = checkMatchesObjectStructure(
         parsed,
@@ -4712,6 +4835,10 @@
       if (isFileData == false) return;
       const fileData = parsed;
       this.storageModel.write(fileData.path, fileData.body);
+      const pathString = StorageModel.pathComponentsToString(
+        ...fileData.path
+      );
+      this.fileHandlerManager.trigger(pathString);
     };
     // sending
     sendFiles = (directoryPaths, callback) => {
@@ -4735,8 +4862,8 @@
       };
       const stringifiedFileData = stringify(fileData);
       const encryptedFileData = await encryptString(
-        fileContent,
-        stringifiedFileData
+        stringifiedFileData,
+        this.transferData.key
       );
       this.connectionModel.sendPlainMessage(
         this.transferData.channel,

@@ -1,7 +1,12 @@
 // this file is responsible for sending and handling files.
 
+import {
+  HandlerManager,
+  generateRandomToken,
+  parse,
+  stringify,
+} from "../Utility/utility";
 import { decryptString, encryptString } from "../Utility/crypto";
-import { generateRandomToken, parse, stringify } from "../Utility/utility";
 
 import ConnectionModel from "./connectionModel";
 import { Message } from "udn-frontend";
@@ -14,12 +19,13 @@ export default class FileTransferModel {
 
   // data
   transferData: TransferData | undefined;
+  fileHandlerManager: HandlerManager<string> = new HandlerManager();
 
   // general
   generateTransferData = (): TransferData => {
     const transferData: TransferData = {
-      channel: generateRandomToken(2),
-      key: generateRandomToken(3),
+      channel: generateRandomToken(2).substring(0, 4),
+      key: generateRandomToken(3).substring(0, 6),
     };
     this.transferData = transferData;
     return transferData;
@@ -33,7 +39,10 @@ export default class FileTransferModel {
   // handlers
   handleMessage = (data: Message): void => {
     if (this.transferData == undefined) return;
+    if (data.messageBody == undefined) return;
     if (data.messageChannel != this.transferData.channel) return;
+
+    this.handleFile(data.messageBody);
   };
 
   handleFile = async (encryptedFileData: string): Promise<void> => {
@@ -43,6 +52,7 @@ export default class FileTransferModel {
       encryptedFileData,
       this.transferData.key
     );
+    console.log(decrypted);
 
     const parsed: any = parse(decrypted);
     const isFileData: boolean = checkMatchesObjectStructure(
@@ -53,6 +63,11 @@ export default class FileTransferModel {
 
     const fileData: FileData = parsed;
     this.storageModel.write(fileData.path, fileData.body);
+
+    const pathString: string = StorageModel.pathComponentsToString(
+      ...fileData.path
+    );
+    this.fileHandlerManager.trigger(pathString);
   };
 
   // sending
@@ -82,8 +97,8 @@ export default class FileTransferModel {
     };
     const stringifiedFileData: string = stringify(fileData);
     const encryptedFileData: string = await encryptString(
-      fileContent,
-      stringifiedFileData
+      stringifiedFileData,
+      this.transferData.key
     );
     this.connectionModel.sendPlainMessage(
       this.transferData.channel,
