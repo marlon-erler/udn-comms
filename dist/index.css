@@ -145,7 +145,7 @@ main {
 }
 [color]:not([color=standard]).subtle-background {
   --luma: var(--subtle-luma);
-  background: hsl(var(--hue), 30%, var(--luma));
+  background: hsl(var(--hue), 100%, var(--luma), 50%);
 }
 @media (prefers-color-scheme: dark) {
   [color]:not([color=standard]).subtle-background {
@@ -164,7 +164,7 @@ main {
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
   --background-luma: 90%;
-  --background-luma-dark: 10%;
+  --background-luma-dark: 11%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -175,7 +175,7 @@ main {
   --accent-text-luma: 0%;
   --accent-text-luma-dark: 0%;
   --background-luma: 85%;
-  --background-luma-dark: 10%;
+  --background-luma-dark: 11%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -186,7 +186,7 @@ main {
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 0%;
   --background-luma: 85%;
-  --background-luma-dark: 9%;
+  --background-luma-dark: 12%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -197,7 +197,7 @@ main {
   --accent-text-luma: 0%;
   --accent-text-luma-dark: 0%;
   --background-luma: 85%;
-  --background-luma-dark: 8%;
+  --background-luma-dark: 12%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -208,7 +208,7 @@ main {
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
   --background-luma: 90%;
-  --background-luma-dark: 10%;
+  --background-luma-dark: 12%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -219,7 +219,7 @@ main {
   --accent-text-luma: 100%;
   --accent-text-luma-dark: 100%;
   --background-luma: 90%;
-  --background-luma-dark: 12%;
+  --background-luma-dark: 11%;
   --subtle-luma: 95%;
   --subtle-luma-dark: 5%;
 }
@@ -258,7 +258,7 @@ body[showing-chat] #chat-page-wrapper {
   left: 0px;
   right: 0px;
   bottom: 0px;
-  background-color: var(--background);
+  background-color: var(--background-glass);
   z-index: 2;
 }
 #chat-page {
