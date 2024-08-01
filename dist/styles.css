@@ -83,7 +83,7 @@ COLORS
 
     --layer: hsla(0, 0%, 15%, 60%);
 
-    --surface: hsla(0, 0%, 100%, 5%);
+    --surface: hsla(0, 0%, 100%, 4%);
     --surface-hover: hsla(0, 0%, 100%, 10%);
     --surface-active: hsla(0, 0%, 100%, 15%);
 
@@ -339,17 +339,10 @@ select {
 }
 
 /* backdrop-filter */
-.tile,
-.surface {
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
-}
-
 header,
 menu,
 .modal > div {
   backdrop-filter: blur(70px);
-  -webkit-backdrop-filter: blur(70px);
 }
 
 /* border, outline, etc */

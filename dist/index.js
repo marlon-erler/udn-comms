@@ -4202,7 +4202,7 @@
         "on:click": boardViewModel.taskPageViewModel.toggleBoardList,
         "toggle:selected": boardViewModel.taskPageViewModel.isShowingBoadList
       },
-      /* @__PURE__ */ createElement("span", { class: "icon" }, "dock_to_left")
+      /* @__PURE__ */ createElement("span", { class: "icon" }, "dock_to_right")
     ), /* @__PURE__ */ createElement(
       "button",
       {

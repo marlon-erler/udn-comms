@@ -71,7 +71,7 @@ export function BoardPage(boardViewModel: BoardViewModel) {
             on:click={boardViewModel.taskPageViewModel.toggleBoardList}
             toggle:selected={boardViewModel.taskPageViewModel.isShowingBoadList}
           >
-            <span class="icon">dock_to_left</span>
+            <span class="icon">dock_to_right</span>
           </button>
           <button
             class="ghost"
