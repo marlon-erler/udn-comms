@@ -1,38 +1,31 @@
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event));
+});
 
 async function handleRequest(event) {
-  const responsePromise = getResponse(event);
-  event.respondWith(responsePromise);
-}
-
-async function getResponse(event) {
-  try {
-    return await fetchAndCache(event);
-  } catch {
-    return await getFromCache(event);
+  const response = await getFromCache(event);
+  if (response) {
+    fetchAndCache(event); // Call this but don't await, allowing the cache to update in the background
+    return response;
   }
-}
-
-async function fetchAndCache(event) {
-  const request = event.request;
-
-  const response = await fetch(request);
-
-  const cache = await caches.open(CACHE_VERSION);
-  await cache.put(request, response.clone());
-
-  return response;
+  return fetchAndCache(event);
 }
 
 async function getFromCache(event) {
   const request = event.request;
-
   const cache = await caches.open(CACHE_VERSION);
   const response = await cache.match(request);
-
   return response;
 }
 
-self.addEventListener("fetch", (event) => {
-  handleRequest(event);
-});
+async function fetchAndCache(event) {
+  const request = event.request;
+  const response = await fetch(request);
+  if (response.status === 200) { // Only cache successful responses
+    const cache = await caches.open(CACHE_VERSION);
+    cache.put(request, response.clone());
+  }
+  return response;
+}

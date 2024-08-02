@@ -21,6 +21,7 @@ async function registerServiceWorker() {
         setTimeout(() => window.location.reload(), 500);
       } else if (registration.active) {
         console.log("Service worker active");
+        registration.update();
       }
     } catch (error) {
       console.error(`Could not install service worker: ${error}`);
