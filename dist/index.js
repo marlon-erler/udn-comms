@@ -4367,8 +4367,5 @@
   function openWindow() {
     showWindow(new State("Untitled"), windowManager);
   }
-  document.body.append(
-    /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
-  );
   document.body.append(root);
 })();

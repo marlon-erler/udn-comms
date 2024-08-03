@@ -1,4 +1,3 @@
-import "./base.css";
 import "./colors.css";
 import "./coloredTile.css";
 
@@ -66,11 +65,4 @@ function openWindow() {
   showWindow(new React.State("Untitled"), windowManager);
 }
 
-document.body.append(
-  <div id="background-wrapper">
-    <div id="sky"></div>
-    <div id="grass-1"></div>
-    <div id="grass-2"></div>
-  </div>
-);
 document.body.append(root);
