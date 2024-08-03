@@ -182,8 +182,7 @@ function getCursorPosition(
 ): number {
   if (e instanceof MouseEvent) {
     return e[key];
-  } else if (e instanceof TouchEvent) {
-    if (e.touches.length == 0) return 0;
+  } else if (e instanceof TouchEvent && e.touches.length > 0) {
     return e.touches[0][key];
   }
 
