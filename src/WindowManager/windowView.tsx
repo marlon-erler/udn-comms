@@ -7,7 +7,40 @@ export function showWindow(
   windowManager: WindowManager
 ) {
   const window: Window = new Window(windowManager, (window: Window) => {
+    // handles
     const dragger = <div class="dragger" subscribe:innerText={title}></div>;
+
+    const leftHandle = <div class="left-resize-handle"></div>;
+    const rightHandle = <div class="right-resize-handle"></div>;
+    const topHandle = <div class="top-resize-handle"></div>;
+    const bottomHandle = <div class="bottom-resize-handle"></div>;
+
+    const topLeftHandle = <div class="top-left-resize-handle"></div>;
+    const topRightHandle = <div class="top-right-resize-handle"></div>;
+    const bottomLeftHandle = <div class="bottom-left-resize-handle"></div>;
+    const bottomRightHandle = <div class="bottom-right-resize-handle"></div>;
+
+    window.registerHandle(dragger, { drag: true });
+
+    window.registerHandle(leftHandle, { resizeLeft: true });
+    window.registerHandle(rightHandle, { resizeRight: true });
+    window.registerHandle(topHandle, { resizeTop: true });
+    window.registerHandle(bottomHandle, { resizeBottom: true });
+
+    window.registerHandle(topLeftHandle, { resizeTop: true, resizeLeft: true });
+    window.registerHandle(topRightHandle, {
+      resizeTop: true,
+      resizeRight: true,
+    });
+    window.registerHandle(bottomLeftHandle, {
+      resizeBottom: true,
+      resizeLeft: true,
+    });
+    window.registerHandle(bottomRightHandle, {
+      resizeBottom: true,
+      resizeRight: true,
+    });
+
     const titlebar = (
       <div class="titlebar">
         {dragger}
@@ -33,7 +66,6 @@ export function showWindow(
         </div>
       </div>
     );
-    window.registerDragger(dragger);
 
     return (
       <div>
@@ -44,6 +76,16 @@ export function showWindow(
             <input bind:value={title}></input>
           </main>
         </div>
+
+        {leftHandle}
+        {rightHandle}
+        {topHandle}
+        {bottomHandle}
+
+        {topLeftHandle}
+        {topRightHandle}
+        {bottomLeftHandle}
+        {bottomRightHandle}
       </div>
     );
   });

@@ -287,6 +287,7 @@
     highestZIndex = 0;
     // dragging & resizing
     draggedOrResizedWindow = void 0;
+    lastClickLocation = void 0;
     // dimentions
     get leftEdge() {
       return this.root.offsetLeft;
@@ -324,17 +325,47 @@
       previouslyFocusedWindow?.updateFocus();
     };
     // pointer
+    captureClickLocation = (e) => {
+      this.lastClickLocation = this.getRelativeCursorPosition(e);
+    };
     handlePointerMove = (e) => {
       if (this.draggedOrResizedWindow == void 0) return;
+      if (this.lastClickLocation == void 0) return;
+      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = this.getRelativeCursorPosition(e);
+      const [lastClickX, lastClickY] = this.lastClickLocation;
+      const xDifference = lastClickX - cursorFromLeftCanvasEdge;
+      const yDifference = lastClickY - cursorFromUpperCanvasEdge;
       if (this.draggedOrResizedWindow.movingOffset != void 0) {
-        const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = this.getRelativeCursorPosition(e);
         const [offsetX, offsetY] = this.draggedOrResizedWindow.movingOffset;
         const newX = cursorFromLeftCanvasEdge - offsetX;
         const newY = cursorFromUpperCanvasEdge - offsetY;
         this.draggedOrResizedWindow.setPosition(newX, newY);
       }
+      if (this.draggedOrResizedWindow.initialWidth != void 0) {
+        if (this.draggedOrResizedWindow.initialLeft != void 0) {
+          const newLeft = this.draggedOrResizedWindow.initialLeft - xDifference;
+          this.draggedOrResizedWindow.setLeft(newLeft);
+          const newWidth = this.draggedOrResizedWindow.initialWidth + xDifference;
+          this.draggedOrResizedWindow.setWidth(newWidth);
+        } else {
+          const newWidth = this.draggedOrResizedWindow.initialWidth - xDifference;
+          this.draggedOrResizedWindow.setWidth(newWidth);
+        }
+      }
+      if (this.draggedOrResizedWindow.initialHeight != void 0) {
+        if (this.draggedOrResizedWindow.initialTop != void 0) {
+          const newTop = this.draggedOrResizedWindow.initialTop - yDifference;
+          this.draggedOrResizedWindow.setTop(newTop);
+          const newHeight = this.draggedOrResizedWindow.initialHeight + yDifference;
+          this.draggedOrResizedWindow.setHeight(newHeight);
+        } else {
+          const newHeight = this.draggedOrResizedWindow.initialHeight - yDifference;
+          this.draggedOrResizedWindow.setHeight(newHeight);
+        }
+      }
     };
     stopPointerAction = () => {
+      this.draggedOrResizedWindow?.resetAction();
       this.draggedOrResizedWindow = void 0;
     };
     // utility
@@ -349,6 +380,8 @@
     constructor(root2) {
       this.root = root2;
       root2.classList.add("window-manager");
+      root2.addEventListener("mousedown", (e) => this.captureClickLocation(e));
+      root2.addEventListener("touchstart", (e) => this.captureClickLocation(e));
       root2.addEventListener("mousemove", (e) => this.handlePointerMove(e));
       root2.addEventListener("touchmove", (e) => this.handlePointerMove(e));
       root2.addEventListener("mouseup", () => this.stopPointerAction());
@@ -360,10 +393,10 @@
     windowManager;
     // action
     movingOffset = void 0;
-    isResizingLeft = false;
-    isResizingRight = false;
-    isResizingTop = false;
-    isResizingBottom = false;
+    initialLeft = void 0;
+    initialTop = void 0;
+    initialWidth = void 0;
+    initialHeight = void 0;
     // position etc
     positionX = 50;
     positionY = 50;
@@ -398,8 +431,15 @@
     };
     // dimentions
     setPosition = (x, y) => {
-      this.positionX = x;
-      this.positionY = y;
+      this.setLeft(x);
+      this.setTop(y);
+    };
+    setLeft = (left) => {
+      this.positionX = left;
+      this.updatePosition();
+    };
+    setTop = (top) => {
+      this.positionY = top;
       this.updatePosition();
     };
     setWidth = (width) => {
@@ -428,12 +468,35 @@
     updateFocus = () => {
       this.view.toggleAttribute("focused", this.isFocused);
     };
-    // dragging
-    registerDragger = (dragger) => {
+    // actions
+    resetAction = () => {
+      this.movingOffset = void 0;
+      this.initialLeft = void 0;
+      this.initialTop = void 0;
+      this.initialWidth = void 0;
+      this.initialHeight = void 0;
+    };
+    registerHandle = (dragger, action) => {
       const handleDragStart = (e) => {
         e.preventDefault();
-        this.movingOffset = this.getWindowOffset(e);
         this.windowManager.draggedOrResizedWindow = this;
+        if (action.drag == true) {
+          this.movingOffset = this.getWindowOffset(e);
+        }
+        if (action.resizeLeft == true) {
+          this.initialLeft = this.view.offsetLeft;
+          this.initialWidth = this.view.offsetWidth;
+        }
+        if (action.resizeRight == true) {
+          this.initialWidth = this.view.offsetWidth;
+        }
+        if (action.resizeTop == true) {
+          this.initialTop = this.view.offsetTop;
+          this.initialHeight = this.view.offsetHeight;
+        }
+        if (action.resizeBottom == true) {
+          this.initialHeight = this.view.offsetHeight;
+        }
       };
       dragger.addEventListener("mousedown", handleDragStart);
       dragger.addEventListener("touchstart", handleDragStart);
@@ -4028,6 +4091,32 @@
   function showWindow(title, windowManager2) {
     const window2 = new Window(windowManager2, (window3) => {
       const dragger = /* @__PURE__ */ createElement("div", { class: "dragger", "subscribe:innerText": title });
+      const leftHandle = /* @__PURE__ */ createElement("div", { class: "left-resize-handle" });
+      const rightHandle = /* @__PURE__ */ createElement("div", { class: "right-resize-handle" });
+      const topHandle = /* @__PURE__ */ createElement("div", { class: "top-resize-handle" });
+      const bottomHandle = /* @__PURE__ */ createElement("div", { class: "bottom-resize-handle" });
+      const topLeftHandle = /* @__PURE__ */ createElement("div", { class: "top-left-resize-handle" });
+      const topRightHandle = /* @__PURE__ */ createElement("div", { class: "top-right-resize-handle" });
+      const bottomLeftHandle = /* @__PURE__ */ createElement("div", { class: "bottom-left-resize-handle" });
+      const bottomRightHandle = /* @__PURE__ */ createElement("div", { class: "bottom-right-resize-handle" });
+      window3.registerHandle(dragger, { drag: true });
+      window3.registerHandle(leftHandle, { resizeLeft: true });
+      window3.registerHandle(rightHandle, { resizeRight: true });
+      window3.registerHandle(topHandle, { resizeTop: true });
+      window3.registerHandle(bottomHandle, { resizeBottom: true });
+      window3.registerHandle(topLeftHandle, { resizeTop: true, resizeLeft: true });
+      window3.registerHandle(topRightHandle, {
+        resizeTop: true,
+        resizeRight: true
+      });
+      window3.registerHandle(bottomLeftHandle, {
+        resizeBottom: true,
+        resizeLeft: true
+      });
+      window3.registerHandle(bottomRightHandle, {
+        resizeBottom: true,
+        resizeRight: true
+      });
       const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement(
         "button",
         {
@@ -4043,8 +4132,7 @@
         },
         /* @__PURE__ */ createElement("span", { class: "icon" }, "collapse_content")
       ), /* @__PURE__ */ createElement("button", { class: "close-button danger", "on:click": window3.close }, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-      window3.registerDragger(dragger);
-      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))));
+      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))), leftHandle, rightHandle, topHandle, bottomHandle, topLeftHandle, topRightHandle, bottomLeftHandle, bottomRightHandle);
     });
     window2.show();
   }

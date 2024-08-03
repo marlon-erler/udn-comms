@@ -9,6 +9,8 @@ export default class WindowManager {
   // dragging & resizing
   draggedOrResizedWindow: Window | undefined = undefined;
 
+  lastClickLocation: [number, number] | undefined = undefined;
+
   // dimentions
   get leftEdge(): number {
     return this.root.offsetLeft;
@@ -57,17 +59,65 @@ export default class WindowManager {
   };
 
   // pointer
+  captureClickLocation = (e: MouseEvent | TouchEvent): void => {
+    this.lastClickLocation = this.getRelativeCursorPosition(e);
+  };
+
   handlePointerMove = (e: MouseEvent | TouchEvent): void => {
     if (this.draggedOrResizedWindow == undefined) return;
+    if (this.lastClickLocation == undefined) return;
 
+    const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge]: [
+      number,
+      number
+    ] = this.getRelativeCursorPosition(e);
+    const [lastClickX, lastClickY] = this.lastClickLocation;
+    const xDifference: number = lastClickX - cursorFromLeftCanvasEdge;
+    const yDifference: number = lastClickY - cursorFromUpperCanvasEdge;
+
+    // move
     if (this.draggedOrResizedWindow.movingOffset != undefined) {
-      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] =
-        this.getRelativeCursorPosition(e);
       const [offsetX, offsetY] = this.draggedOrResizedWindow.movingOffset;
 
       const newX = cursorFromLeftCanvasEdge - offsetX;
       const newY = cursorFromUpperCanvasEdge - offsetY;
       this.draggedOrResizedWindow.setPosition(newX, newY);
+    }
+    // resize width
+    if (this.draggedOrResizedWindow.initialWidth != undefined) {
+      if (this.draggedOrResizedWindow.initialLeft != undefined) {
+        // left edge
+        const newLeft: number =
+          this.draggedOrResizedWindow.initialLeft - xDifference;
+        this.draggedOrResizedWindow.setLeft(newLeft);
+
+        const newWidth: number =
+          this.draggedOrResizedWindow.initialWidth + xDifference;
+        this.draggedOrResizedWindow.setWidth(newWidth);
+      } else {
+        // right edge
+        const newWidth: number =
+          this.draggedOrResizedWindow.initialWidth - xDifference;
+        this.draggedOrResizedWindow.setWidth(newWidth);
+      }
+    }
+    // resize height
+    if (this.draggedOrResizedWindow.initialHeight != undefined) {
+      if (this.draggedOrResizedWindow.initialTop != undefined) {
+        // top edge
+        const newTop: number =
+          this.draggedOrResizedWindow.initialTop - yDifference;
+        this.draggedOrResizedWindow.setTop(newTop);
+
+        const newHeight: number =
+          this.draggedOrResizedWindow.initialHeight + yDifference;
+        this.draggedOrResizedWindow.setHeight(newHeight);
+      } else {
+        // bottom edge
+        const newHeight: number =
+          this.draggedOrResizedWindow.initialHeight - yDifference;
+        this.draggedOrResizedWindow.setHeight(newHeight);
+      }
     }
   };
 
@@ -96,6 +146,9 @@ export default class WindowManager {
     this.root = root;
     root.classList.add("window-manager");
 
+    root.addEventListener("mousedown", (e) => this.captureClickLocation(e));
+    root.addEventListener("touchstart", (e) => this.captureClickLocation(e));
+
     root.addEventListener("mousemove", (e) => this.handlePointerMove(e));
     root.addEventListener("touchmove", (e) => this.handlePointerMove(e));
 
@@ -111,10 +164,11 @@ export class Window {
   // action
   movingOffset: [number, number] | undefined = undefined;
 
-  isResizingLeft: boolean = false;
-  isResizingRight: boolean = false;
-  isResizingTop: boolean = false;
-  isResizingBottom: boolean = false;
+  initialLeft: number | undefined = undefined;
+  initialTop: number | undefined = undefined;
+
+  initialWidth: number | undefined = undefined;
+  initialHeight: number | undefined = undefined;
 
   // position etc
   positionX: number = 50;
@@ -158,8 +212,17 @@ export class Window {
 
   // dimentions
   setPosition = (x: number, y: number): void => {
-    this.positionX = x;
-    this.positionY = y;
+    this.setLeft(x);
+    this.setTop(y);
+  };
+
+  setLeft = (left: number): void => {
+    this.positionX = left;
+    this.updatePosition();
+  };
+
+  setTop = (top: number): void => {
+    this.positionY = top;
     this.updatePosition();
   };
 
@@ -199,21 +262,34 @@ export class Window {
   // actions
   resetAction = (): void => {
     this.movingOffset = undefined;
-    this.isResizingLeft = false;
-    this.isResizingRight = false;
-    this.isResizingTop = false;
-    this.isResizingBottom = false;
+    this.initialLeft = undefined;
+    this.initialTop = undefined;
+    this.initialWidth = undefined;
+    this.initialHeight = undefined;
   };
 
-  registerDragger = (dragger: HTMLElement): void => {
+  registerHandle = (dragger: HTMLElement, action: WindowAction): void => {
     const handleDragStart = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
-
-      // get offset
-      this.movingOffset = this.getWindowOffset(e);
-
-      // initiate drag
       this.windowManager.draggedOrResizedWindow = this;
+
+      if (action.drag == true) {
+        this.movingOffset = this.getWindowOffset(e);
+      }
+      if (action.resizeLeft == true) {
+        this.initialLeft = this.view.offsetLeft;
+        this.initialWidth = this.view.offsetWidth;
+      }
+      if (action.resizeRight == true) {
+        this.initialWidth = this.view.offsetWidth;
+      }
+      if (action.resizeTop == true) {
+        this.initialTop = this.view.offsetTop;
+        this.initialHeight = this.view.offsetHeight;
+      }
+      if (action.resizeBottom == true) {
+        this.initialHeight = this.view.offsetHeight;
+      }
     };
 
     // start
@@ -263,4 +339,13 @@ function getCursorPosition(
   }
 
   return 0;
+}
+
+// types
+export interface WindowAction {
+  drag?: boolean;
+  resizeLeft?: boolean;
+  resizeRight?: boolean;
+  resizeTop?: boolean;
+  resizeBottom?: boolean;
 }

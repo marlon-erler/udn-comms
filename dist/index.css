@@ -249,7 +249,7 @@ main {
 }
 .window {
   position: absolute;
-  overflow: hidden;
+  overflow: visible;
 }
 .window[maximized] {
   top: 0px !important;
@@ -296,16 +296,6 @@ main {
   display: flex;
   top: 0px;
   height: var(--title-bar-height);
-}
-.window .titlebar .dragger {
-  display: flex;
-  align-items: center;
-  padding: 0px 4px;
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  font-size: var(--control-font-size);
-  cursor: default;
 }
 .window .titlebar .button-row {
   display: flex;
@@ -362,4 +352,73 @@ main {
 }
 .window[maximized] .titlebar .unmaximize-button {
   display: flex;
+}
+.window .titlebar .dragger {
+  display: flex;
+  align-items: center;
+  padding: 0px 4px;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  font-size: var(--control-font-size);
+  cursor: default;
+}
+.window .left-resize-handle,
+.window .right-resize-handle,
+.window .top-resize-handle,
+.window .bottom-resize-handle,
+.window .top-left-resize-handle,
+.window .top-right-resize-handle,
+.window .bottom-left-resize-handle,
+.window .bottom-right-resize-handle {
+  position: absolute;
+  --size: 5px;
+  --distance: -5px;
+  width: var(--size);
+  height: var(--size);
+}
+.window .left-resize-handle,
+.window .right-resize-handle {
+  top: var(--distance);
+  bottom: var(--distance);
+  height: unset;
+  cursor: ew-resize !important;
+}
+.window .left-resize-handle {
+  left: var(--distance);
+}
+.window .right-resize-handle {
+  left: unset;
+  right: var(--distance);
+}
+.window .top-resize-handle,
+.window .bottom-resize-handle {
+  left: var(--distance);
+  right: var(--distance);
+  width: unset;
+  cursor: ns-resize !important;
+}
+.window .top-resize-handle {
+  top: var(--distance);
+}
+.window .bottom-resize-handle {
+  bottom: var(--distance);
+}
+.window .top-left-resize-handle {
+  top: var(--distance);
+  left: var(--distance);
+}
+.window .top-right-resize-handle {
+  top: var(--distance);
+  left: unset;
+  right: var(--distance);
+}
+.window .bottom-left-resize-handle {
+  bottom: var(--distance);
+  left: var(--distance);
+}
+.window .bottom-right-resize-handle {
+  bottom: var(--distance);
+  left: unset;
+  right: var(--distance);
 }
