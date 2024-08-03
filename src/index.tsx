@@ -4,6 +4,8 @@ import "./coloredTile.css";
 
 import * as React from "bloatless-react";
 
+import WindowManager, { Window } from "./WindowManager/windowManager";
+
 import ChatListModel from "./Model/Chat/chatListModel";
 import ChatListViewModel from "./ViewModel/Chat/chatListViewModel";
 import ConnectionModel from "./Model/Global/connectionModel";
@@ -51,13 +53,28 @@ const fileTransferViewModel = new FileTransferViewModel(
   chatListModel
 );
 
-// view
-chatListViewModel.selectedChat.subscribe(() => {
-  document.body.toggleAttribute(
-    "showing-chat",
-    chatListViewModel.selectedChat.value != undefined
-  );
-});
+// windows
+const root = <div></div>;
+const windowManager = new WindowManager(root);
+
+function openWindow() {
+  const window = new Window((window: Window) => {
+    const dragger = <div>DRAG HERE</div>;
+    window.registerDragger(dragger);
+
+    return (
+      <div>
+        {dragger}
+
+        <button on:click={window.close}>x</button>
+      </div>
+    );
+  });
+  window.show(windowManager);
+}
+
+openWindow();
+openWindow();
 
 document.body.append(
   <div id="background-wrapper">
@@ -66,4 +83,4 @@ document.body.append(
     <div id="grass-2"></div>
   </div>
 );
-document.body.append();
+document.body.append(root);

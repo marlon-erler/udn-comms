@@ -279,6 +279,141 @@
     return element;
   }
 
+  // src/WindowManager/windowManager.ts
+  var WindowManager = class {
+    root;
+    windows = /* @__PURE__ */ new Set();
+    // dimentions
+    get leftEdge() {
+      return this.root.offsetLeft;
+    }
+    get upperEdge() {
+      return this.root.offsetTop;
+    }
+    // methods
+    showWindow = (window2) => {
+      this.windows.add(window2);
+      this.root.append(window2.view);
+    };
+    closeWindow = (window2) => {
+      this.windows.delete(window2);
+      window2.view.remove();
+    };
+    // init
+    constructor(root2) {
+      this.root = root2;
+      root2.classList.add("window-manager");
+    }
+  };
+  var Window = class {
+    view;
+    windowManager = void 0;
+    // position & size
+    positionX = 0;
+    positionY = 0;
+    width = 0;
+    height = 0;
+    // methods
+    show = (windowManager2) => {
+      this.windowManager = windowManager2;
+      windowManager2.showWindow(this);
+    };
+    close = () => {
+      if (this.windowManager == void 0) return;
+      this.windowManager.closeWindow(this);
+    };
+    // view
+    setPosition = (x, y) => {
+      this.positionX = x;
+      this.positionY = y;
+      this.updatePosition();
+    };
+    setWidth = (width) => {
+      this.width = width;
+      this.updateSize();
+    };
+    setHeight = (height) => {
+      this.height = height;
+      this.updateSize();
+    };
+    maximize = () => {
+      this.view.toggleAttribute("maximized", true);
+    };
+    unmaximize = () => {
+      this.view.toggleAttribute("maximized", false);
+    };
+    updatePosition = () => {
+      this.view.style.left = toPx(this.positionX);
+      this.view.style.top = toPx(this.positionY);
+    };
+    updateSize = () => {
+      this.view.style.width = toPx(this.width);
+      this.view.style.height = toPx(this.height);
+    };
+    // moving
+    getRelativeCursorPosition = (e) => {
+      if (this.windowManager == void 0) return;
+      const cursorFromLeftScreenEdge = getCursorPosition(e, "clientX");
+      const cursorFromLeftCanvasEdge = cursorFromLeftScreenEdge - this.windowManager.leftEdge;
+      const cursorFromUpperScreenEdge = getCursorPosition(e, "clientY");
+      const cursorFromUpperCanvasEdge = cursorFromUpperScreenEdge - this.windowManager.upperEdge;
+      return [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge];
+    };
+    getWindowOffset = (e) => {
+      const cursorPosition = this.getRelativeCursorPosition(e);
+      if (cursorPosition == void 0) return;
+      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = cursorPosition;
+      const leftWindowEdge = this.view.offsetLeft;
+      const leftOffset = cursorFromLeftCanvasEdge - leftWindowEdge;
+      const upperWindowEdge = this.view.offsetTop;
+      const topOffset = cursorFromUpperCanvasEdge - upperWindowEdge;
+      return [leftOffset, topOffset];
+    };
+    registerDragger = (dragger) => {
+      let leftWindowOffset = 0;
+      let topWindowOffset = 0;
+      const handleStart = (e) => {
+        e.preventDefault();
+        const windowOffset = this.getWindowOffset(e);
+        if (windowOffset == void 0) return;
+        [leftWindowOffset, topWindowOffset] = windowOffset;
+        document.body.addEventListener("mousemove", handleDrag);
+        document.body.addEventListener("touchmove", handleDrag);
+        document.body.addEventListener("mouseup", handleEnd, { once: true });
+        document.body.addEventListener("touchend", handleEnd, { once: true });
+      };
+      const handleDrag = (e) => {
+        const cursorPosition = this.getRelativeCursorPosition(e);
+        if (cursorPosition == void 0) return;
+        const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = cursorPosition;
+        const newLeftEdge = cursorFromLeftCanvasEdge - leftWindowOffset;
+        const newUpperEdge = cursorFromUpperCanvasEdge - topWindowOffset;
+        this.setPosition(newLeftEdge, newUpperEdge);
+      };
+      const handleEnd = () => {
+        document.body.removeEventListener("mousemove", handleDrag);
+        document.body.removeEventListener("touchmove", handleDrag);
+      };
+      dragger.addEventListener("mousedown", handleStart);
+      dragger.addEventListener("touchstart", handleStart);
+    };
+    // init
+    constructor(viewBuilder) {
+      this.view = viewBuilder(this);
+      this.view.classList.add("window");
+    }
+  };
+  var toPx = (number) => `${number}px`;
+  function getCursorPosition(e, key) {
+    if (e instanceof MouseEvent) {
+      return e[key];
+    } else if (e instanceof TouchEvent) {
+      if (e.touches.length == 0) return 0;
+      return e.touches[0][key];
+    }
+    return 0;
+  }
+
   // src/Model/Utility/typeSafety.ts
   var DATA_VERSION = "v2";
   function checkIsValidObject(object) {
@@ -4063,14 +4198,20 @@
     fileTransferModel,
     chatListModel
   );
-  chatListViewModel.selectedChat.subscribe(() => {
-    document.body.toggleAttribute(
-      "showing-chat",
-      chatListViewModel.selectedChat.value != void 0
-    );
-  });
+  var root = /* @__PURE__ */ createElement("div", null);
+  var windowManager = new WindowManager(root);
+  function openWindow() {
+    const window2 = new Window((window3) => {
+      const dragger = /* @__PURE__ */ createElement("div", null, "DRAG HERE");
+      window3.registerDragger(dragger);
+      return /* @__PURE__ */ createElement("div", null, dragger, /* @__PURE__ */ createElement("button", { "on:click": window3.close }, "x"));
+    });
+    window2.show(windowManager);
+  }
+  openWindow();
+  openWindow();
   document.body.append(
     /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
   );
-  document.body.append();
+  document.body.append(root);
 })();
