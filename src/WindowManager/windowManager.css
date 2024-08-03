@@ -71,6 +71,7 @@
   bottom: 0px;
 
   background: var(--overlay-background);
+  border-radius: var(--overlay-corner-radius);
 }
 
 .window .titlebar {
@@ -117,6 +118,7 @@
 
 .window[maximized] .background {
   background: var(--base-background);
+  border-radius: 0px;
 }
 
 .window[maximized] .content-wrapper {

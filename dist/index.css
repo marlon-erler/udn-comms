@@ -291,6 +291,7 @@ main {
   top: 0px;
   bottom: 0px;
   background: var(--overlay-background);
+  border-radius: var(--overlay-corner-radius);
 }
 .window .titlebar {
   display: flex;
@@ -325,6 +326,7 @@ main {
 }
 .window[maximized] .background {
   background: var(--base-background);
+  border-radius: 0px;
 }
 .window[maximized] .content-wrapper {
   padding: 0px;
