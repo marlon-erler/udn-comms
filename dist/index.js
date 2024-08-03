@@ -285,6 +285,8 @@
     windows = /* @__PURE__ */ new Set();
     focusedWindow = void 0;
     highestZIndex = 0;
+    // dragging & resizing
+    draggedOrResizedWindow = void 0;
     // dimentions
     get leftEdge() {
       return this.root.offsetLeft;
@@ -321,15 +323,47 @@
       window2.updateFocus();
       previouslyFocusedWindow?.updateFocus();
     };
+    // pointer
+    handlePointerMove = (e) => {
+      if (this.draggedOrResizedWindow == void 0) return;
+      if (this.draggedOrResizedWindow.movingOffset != void 0) {
+        const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = this.getRelativeCursorPosition(e);
+        const [offsetX, offsetY] = this.draggedOrResizedWindow.movingOffset;
+        const newX = cursorFromLeftCanvasEdge - offsetX;
+        const newY = cursorFromUpperCanvasEdge - offsetY;
+        this.draggedOrResizedWindow.setPosition(newX, newY);
+      }
+    };
+    stopPointerAction = () => {
+      this.draggedOrResizedWindow = void 0;
+    };
+    // utility
+    getRelativeCursorPosition = (e) => {
+      const cursorFromLeftScreenEdge = getCursorPosition(e, "clientX");
+      const cursorFromLeftCanvasEdge = cursorFromLeftScreenEdge - this.leftEdge;
+      const cursorFromUpperScreenEdge = getCursorPosition(e, "clientY");
+      const cursorFromUpperCanvasEdge = cursorFromUpperScreenEdge - this.upperEdge;
+      return [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge];
+    };
     // init
     constructor(root2) {
       this.root = root2;
       root2.classList.add("window-manager");
+      root2.addEventListener("mousemove", (e) => this.handlePointerMove(e));
+      root2.addEventListener("touchmove", (e) => this.handlePointerMove(e));
+      root2.addEventListener("mouseup", () => this.stopPointerAction());
+      root2.addEventListener("touchend", () => this.stopPointerAction());
     }
   };
   var Window = class {
     view;
-    windowManager = void 0;
+    windowManager;
+    // action
+    movingOffset = void 0;
+    isResizingLeft = false;
+    isResizingRight = false;
+    isResizingTop = false;
+    isResizingBottom = false;
     // position etc
     positionX = 50;
     positionY = 50;
@@ -337,11 +371,6 @@
     width = 300;
     // focus
     get isFocused() {
-      console.log(
-        this.windowManager,
-        this.windowManager.focusedWindow,
-        this.windowManager.focusedWindow == this
-      );
       if (this.windowManager == void 0) return false;
       return this.windowManager.focusedWindow == this;
     }
@@ -354,9 +383,8 @@
       this.view.style.zIndex = newValue.toString();
     }
     // methods
-    show = (windowManager2) => {
-      this.windowManager = windowManager2;
-      windowManager2.showWindow(this);
+    show = () => {
+      this.windowManager.showWindow(this);
       this.updatePosition();
       this.updateSize();
     };
@@ -368,7 +396,7 @@
       if (this.windowManager == void 0) return;
       this.windowManager.focusWindow(this);
     };
-    // view
+    // dimentions
     setPosition = (x, y) => {
       this.positionX = x;
       this.positionY = y;
@@ -388,6 +416,7 @@
     unmaximize = () => {
       this.view.toggleAttribute("maximized", false);
     };
+    // update
     updatePosition = () => {
       this.view.style.left = toPx(this.positionX);
       this.view.style.top = toPx(this.positionY);
@@ -399,55 +428,27 @@
     updateFocus = () => {
       this.view.toggleAttribute("focused", this.isFocused);
     };
-    // moving
-    getRelativeCursorPosition = (e) => {
-      if (this.windowManager == void 0) return;
-      const cursorFromLeftScreenEdge = getCursorPosition(e, "clientX");
-      const cursorFromLeftCanvasEdge = cursorFromLeftScreenEdge - this.windowManager.leftEdge;
-      const cursorFromUpperScreenEdge = getCursorPosition(e, "clientY");
-      const cursorFromUpperCanvasEdge = cursorFromUpperScreenEdge - this.windowManager.upperEdge;
-      return [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge];
+    // dragging
+    registerDragger = (dragger) => {
+      const handleDragStart = (e) => {
+        e.preventDefault();
+        this.movingOffset = this.getWindowOffset(e);
+        this.windowManager.draggedOrResizedWindow = this;
+      };
+      dragger.addEventListener("mousedown", handleDragStart);
+      dragger.addEventListener("touchstart", handleDragStart);
     };
     getWindowOffset = (e) => {
-      const cursorPosition = this.getRelativeCursorPosition(e);
-      if (cursorPosition == void 0) return;
-      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = cursorPosition;
+      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = this.windowManager.getRelativeCursorPosition(e);
       const leftWindowEdge = this.view.offsetLeft;
       const leftOffset = cursorFromLeftCanvasEdge - leftWindowEdge;
       const upperWindowEdge = this.view.offsetTop;
       const topOffset = cursorFromUpperCanvasEdge - upperWindowEdge;
       return [leftOffset, topOffset];
     };
-    registerDragger = (dragger) => {
-      let leftWindowOffset = 0;
-      let topWindowOffset = 0;
-      const handleStart = (e) => {
-        e.preventDefault();
-        const windowOffset = this.getWindowOffset(e);
-        if (windowOffset == void 0) return;
-        [leftWindowOffset, topWindowOffset] = windowOffset;
-        document.body.addEventListener("mousemove", handleDrag);
-        document.body.addEventListener("touchmove", handleDrag);
-        document.body.addEventListener("mouseup", handleEnd, { once: true });
-        document.body.addEventListener("touchend", handleEnd, { once: true });
-      };
-      const handleDrag = (e) => {
-        const cursorPosition = this.getRelativeCursorPosition(e);
-        if (cursorPosition == void 0) return;
-        const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] = cursorPosition;
-        const newLeftEdge = cursorFromLeftCanvasEdge - leftWindowOffset;
-        const newUpperEdge = cursorFromUpperCanvasEdge - topWindowOffset;
-        this.setPosition(newLeftEdge, newUpperEdge);
-      };
-      const handleEnd = () => {
-        document.body.removeEventListener("mousemove", handleDrag);
-        document.body.removeEventListener("touchmove", handleDrag);
-      };
-      dragger.addEventListener("mousedown", handleStart);
-      dragger.addEventListener("touchstart", handleStart);
-    };
     // init
-    constructor(viewBuilder) {
+    constructor(windowManager2, viewBuilder) {
+      this.windowManager = windowManager2;
       this.view = viewBuilder(this);
       this.view.classList.add("window");
       this.view.addEventListener("mousedown", () => this.focus());
@@ -4025,9 +4026,16 @@
 
   // src/WindowManager/windowView.tsx
   function showWindow(title, windowManager2) {
-    const window2 = new Window((window3) => {
+    const window2 = new Window(windowManager2, (window3) => {
       const dragger = /* @__PURE__ */ createElement("div", { class: "dragger", "subscribe:innerText": title });
-      const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement("button", { class: "more-options-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "more_horiz")), /* @__PURE__ */ createElement("button", { class: "maximize-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "expand_content")), /* @__PURE__ */ createElement(
+      const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "more-options-button standard",
+          "on:click": window3.maximize
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "more_horiz")
+      ), /* @__PURE__ */ createElement("button", { class: "maximize-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "expand_content")), /* @__PURE__ */ createElement(
         "button",
         {
           class: "unmaximize-button standard",
@@ -4038,7 +4046,7 @@
       window3.registerDragger(dragger);
       return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))));
     });
-    window2.show(windowManager2);
+    window2.show();
   }
 
   // src/Upgrader/v1.ts

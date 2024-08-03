@@ -6,13 +6,16 @@ export function showWindow(
   title: React.State<string>,
   windowManager: WindowManager
 ) {
-  const window: Window = new Window((window: Window) => {
+  const window: Window = new Window(windowManager, (window: Window) => {
     const dragger = <div class="dragger" subscribe:innerText={title}></div>;
     const titlebar = (
       <div class="titlebar">
         {dragger}
         <div class="button-row">
-        <button class="more-options-button standard" on:click={window.maximize}>
+          <button
+            class="more-options-button standard"
+            on:click={window.maximize}
+          >
             <span class="icon">more_horiz</span>
           </button>
           <button class="maximize-button standard" on:click={window.maximize}>
@@ -45,5 +48,5 @@ export function showWindow(
     );
   });
 
-  window.show(windowManager);
+  window.show();
 }

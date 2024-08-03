@@ -6,6 +6,9 @@ export default class WindowManager {
   focusedWindow: Window | undefined = undefined;
   highestZIndex: number = 0;
 
+  // dragging & resizing
+  draggedOrResizedWindow: Window | undefined = undefined;
+
   // dimentions
   get leftEdge(): number {
     return this.root.offsetLeft;
@@ -27,7 +30,7 @@ export default class WindowManager {
     window.view.toggleAttribute("closing", true);
     window.view.addEventListener("transitionend", () => {
       window.view.remove();
-    })
+    });
 
     this.windows.delete(window);
 
@@ -53,16 +56,64 @@ export default class WindowManager {
     previouslyFocusedWindow?.updateFocus();
   };
 
+  // pointer
+  handlePointerMove = (e: MouseEvent | TouchEvent): void => {
+    if (this.draggedOrResizedWindow == undefined) return;
+
+    if (this.draggedOrResizedWindow.movingOffset != undefined) {
+      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] =
+        this.getRelativeCursorPosition(e);
+      const [offsetX, offsetY] = this.draggedOrResizedWindow.movingOffset;
+
+      const newX = cursorFromLeftCanvasEdge - offsetX;
+      const newY = cursorFromUpperCanvasEdge - offsetY;
+      this.draggedOrResizedWindow.setPosition(newX, newY);
+    }
+  };
+
+  stopPointerAction = (): void => {
+    this.draggedOrResizedWindow = undefined;
+  };
+
+  // utility
+  getRelativeCursorPosition = (
+    e: MouseEvent | TouchEvent
+  ): [number, number] => {
+    const cursorFromLeftScreenEdge: number = getCursorPosition(e, "clientX");
+    const cursorFromLeftCanvasEdge: number =
+      cursorFromLeftScreenEdge - this.leftEdge;
+
+    const cursorFromUpperScreenEdge: number = getCursorPosition(e, "clientY");
+    const cursorFromUpperCanvasEdge: number =
+      cursorFromUpperScreenEdge - this.upperEdge;
+
+    return [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge];
+  };
+
   // init
   constructor(root: HTMLElement) {
     this.root = root;
     root.classList.add("window-manager");
+
+    root.addEventListener("mousemove", (e) => this.handlePointerMove(e));
+    root.addEventListener("touchmove", (e) => this.handlePointerMove(e));
+
+    root.addEventListener("mouseup", () => this.stopPointerAction());
+    root.addEventListener("touchend", () => this.stopPointerAction());
   }
 }
 
 export class Window {
   view: HTMLElement;
-  windowManager: WindowManager | undefined = undefined;
+  windowManager: WindowManager;
+
+  // action
+  movingOffset: [number, number] | undefined = undefined;
+
+  isResizingLeft: boolean = false;
+  isResizingRight: boolean = false;
+  isResizingTop: boolean = false;
+  isResizingBottom: boolean = false;
 
   // position etc
   positionX: number = 50;
@@ -73,11 +124,6 @@ export class Window {
 
   // focus
   get isFocused(): boolean {
-    console.log(
-      this.windowManager,
-      this.windowManager!.focusedWindow,
-      this.windowManager!.focusedWindow == this
-    );
     if (this.windowManager == undefined) return false;
     return this.windowManager.focusedWindow == this;
   }
@@ -92,9 +138,8 @@ export class Window {
   }
 
   // methods
-  show = (windowManager: WindowManager): void => {
-    this.windowManager = windowManager;
-    windowManager.showWindow(this);
+  show = (): void => {
+    this.windowManager.showWindow(this);
 
     this.updatePosition();
     this.updateSize();
@@ -110,7 +155,7 @@ export class Window {
     this.windowManager.focusWindow(this);
   };
 
-  // view
+  // dimentions
   setPosition = (x: number, y: number): void => {
     this.positionX = x;
     this.positionY = y;
@@ -135,6 +180,7 @@ export class Window {
     this.view.toggleAttribute("maximized", false);
   };
 
+  // update
   updatePosition = (): void => {
     this.view.style.left = toPx(this.positionX);
     this.view.style.top = toPx(this.positionY);
@@ -149,31 +195,26 @@ export class Window {
     this.view.toggleAttribute("focused", this.isFocused);
   };
 
-  // moving
-  getRelativeCursorPosition = (
-    e: MouseEvent | TouchEvent
-  ): [number, number] | undefined => {
-    if (this.windowManager == undefined) return;
+  // dragging
+  registerDragger = (dragger: HTMLElement): void => {
+    const handleDragStart = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
 
-    const cursorFromLeftScreenEdge: number = getCursorPosition(e, "clientX");
-    const cursorFromLeftCanvasEdge: number =
-      cursorFromLeftScreenEdge - this.windowManager.leftEdge;
+      // get offset
+      this.movingOffset = this.getWindowOffset(e);
 
-    const cursorFromUpperScreenEdge: number = getCursorPosition(e, "clientY");
-    const cursorFromUpperCanvasEdge: number =
-      cursorFromUpperScreenEdge - this.windowManager.upperEdge;
+      // initiate drag
+      this.windowManager.draggedOrResizedWindow = this;
+    };
 
-    return [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge];
+    // start
+    dragger.addEventListener("mousedown", handleDragStart);
+    dragger.addEventListener("touchstart", handleDragStart);
   };
 
-  getWindowOffset = (
-    e: MouseEvent | TouchEvent
-  ): [number, number] | undefined => {
-    const cursorPosition: [number, number] | undefined =
-      this.getRelativeCursorPosition(e);
-    if (cursorPosition == undefined) return;
+  getWindowOffset = (e: MouseEvent | TouchEvent): [number, number] => {
     const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] =
-      cursorPosition;
+      this.windowManager.getRelativeCursorPosition(e);
 
     const leftWindowEdge: number = this.view.offsetLeft;
     const leftOffset: number = cursorFromLeftCanvasEdge - leftWindowEdge;
@@ -184,53 +225,13 @@ export class Window {
     return [leftOffset, topOffset];
   };
 
-  registerDragger = (dragger: HTMLElement): void => {
-    let leftWindowOffset: number = 0;
-    let topWindowOffset: number = 0;
-
-    const handleStart = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-
-      // get offset
-      const windowOffset: [number, number] | undefined =
-        this.getWindowOffset(e);
-      if (windowOffset == undefined) return;
-      [leftWindowOffset, topWindowOffset] = windowOffset;
-
-      // handle drag
-      document.body.addEventListener("mousemove", handleDrag);
-      document.body.addEventListener("touchmove", handleDrag);
-
-      // end
-      document.body.addEventListener("mouseup", handleEnd, { once: true });
-      document.body.addEventListener("touchend", handleEnd, { once: true });
-    };
-
-    const handleDrag = (e: MouseEvent | TouchEvent): void => {
-      const cursorPosition: [number, number] | undefined =
-        this.getRelativeCursorPosition(e);
-      if (cursorPosition == undefined) return;
-      const [cursorFromLeftCanvasEdge, cursorFromUpperCanvasEdge] =
-        cursorPosition;
-
-      const newLeftEdge = cursorFromLeftCanvasEdge - leftWindowOffset;
-      const newUpperEdge = cursorFromUpperCanvasEdge - topWindowOffset;
-
-      this.setPosition(newLeftEdge, newUpperEdge);
-    };
-
-    const handleEnd = () => {
-      document.body.removeEventListener("mousemove", handleDrag);
-      document.body.removeEventListener("touchmove", handleDrag);
-    };
-
-    // start
-    dragger.addEventListener("mousedown", handleStart);
-    dragger.addEventListener("touchstart", handleStart);
-  };
-
   // init
-  constructor(viewBuilder: (window: Window) => HTMLElement) {
+  constructor(
+    windowManager: WindowManager,
+    viewBuilder: (window: Window) => HTMLElement
+  ) {
+    this.windowManager = windowManager;
+
     this.view = viewBuilder(this);
     this.view.classList.add("window");
 
