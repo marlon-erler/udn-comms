@@ -5,7 +5,7 @@
   /* COLORS */
   /* background */
   --base-background: hsla(0, 0%, 100%, 100%);
-  --overlay-background: hsla(0, 0%, 100%, 10%);
+  --overlay-background: hsla(0, 0%, 100%, 50%);
 
   --transparent-background: transparent;
   --transparent-hover: hsla(0, 0%, 0%, 6%);
@@ -91,7 +91,7 @@
 
   /* corners */
   --control-corner-radius: 3px;
-  --overlay-corner-radius: 6px;
+  --overlay-corner-radius: 4px;
 
   /* FONTS */
   --font-main: IBM Plex Sans;

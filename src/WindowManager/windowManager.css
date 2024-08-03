@@ -28,7 +28,7 @@
 @keyframes window {
   0% {
     opacity: 0;
-  transform: scale(0.95);
+    transform: scale(0.95);
   }
 }
 
@@ -45,7 +45,8 @@
   flex-direction: column;
 
   animation: window var(--animation-duration);
-  transition: opacity var(--animation-duration), transform var(--animation-duration);
+  transition: opacity var(--animation-duration),
+    transform var(--animation-duration);
 
   border: var(--border-width) solid var(--overlay-border-color);
   box-shadow: var(--overlay-shadow);
@@ -122,8 +123,18 @@
   height: 100%;
 }
 
-.window[maximized] {
+.window[maximized],
+.window[maximized] main {
   border-radius: 0px;
+  border: none;
+}
+
+.window[maximized] .background {
+  background: var(--base-background);
+}
+
+.window[maximized] .content-wrapper {
+  padding: 0px;
 }
 
 .window:not([focused]) .background {
