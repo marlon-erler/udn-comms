@@ -101,10 +101,6 @@
   gap: var(--gap-in-control-row);
 }
 
-.window:not([focused]) .background {
-  opacity: 0.3;
-}
-
 .window .content-wrapper {
   display: flex;
 
@@ -124,6 +120,18 @@
 
   width: 100%;
   height: 100%;
+}
+
+.window[maximized] {
+  border-radius: 0px;
+}
+
+.window:not([focused]) .background {
+  opacity: 0.3;
+}
+
+.window:not([focused]) .dragger {
+  opacity: 0.6;
 }
 
 /* buttons */

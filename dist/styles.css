@@ -192,10 +192,6 @@ progress {
     MARGIN & PADDING
 */
 
-body {
-  padding: var(--content-padding);
-}
-
 button,
 input,
 select,
