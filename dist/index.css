@@ -1,10 +1,4 @@
 /* src/base.css */
-#home-page,
-#home-page #chat-section,
-#chat-page,
-#chat-page #main > div {
-  animation: slide-up var(--animation-duration) ease;
-}
 #background-wrapper {
   position: fixed;
   top: 0px;
@@ -255,11 +249,85 @@ main {
 }
 .window {
   position: absolute;
-  border: 1px solid red;
+  overflow: hidden;
 }
 .window[maximized] {
   top: 0px !important;
   left: 0px !important;
   width: 100% !important;
   height: 100% !important;
+}
+@keyframes window {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+:root {
+  --title-bar-height: 24px;
+  --window-button-size: calc( var(--title-bar-height) - 2 * var(--gap-in-control-row) );
+  --window-button-icon-size: 0.8rem;
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  background: var(--overlay-background);
+  border: var(--border-width) solid var(--overlay-border-color);
+  box-shadow: var(--overlay-shadow);
+  backdrop-filter: blur(var(--overlay-backdrop-blur));
+  border-radius: var(--overlay-corner-radius);
+  animation: window var(--animation-duration);
+}
+.window .titlebar {
+  display: flex;
+  width: 100%;
+  height: var(--title-bar-height);
+}
+.window .titlebar .dragger {
+  display: flex;
+  align-items: center;
+  padding: 0px 4px;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  font-size: var(--control-font-size);
+}
+.window .titlebar .button-row {
+  display: flex;
+  height: 100%;
+  padding: var(--gap-in-control-row);
+  gap: var(--gap-in-control-row);
+}
+.window .content-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: var(--gap-in-control-row);
+  padding-top: 0px;
+}
+.window main {
+  background: var(--base-background);
+  border-radius: var(--overlay-corner-radius);
+  border: var(--border-width) solid var(--standard-border-color);
+  padding: var(--content-padding);
+  width: 100%;
+  height: 100%;
+}
+.window .titlebar .button-row button {
+  height: var(--window-button-size);
+  width: var(--window-button-size);
+  padding: 0px;
+  justify-content: center;
+}
+.window .titlebar .button-row button .icon {
+  font-size: var(--window-button-icon-size);
+}
+.window .titlebar .unmaximize-button {
+  display: none;
+}
+.window[maximized] .titlebar .maximize-button {
+  display: none;
+}
+.window[maximized] .titlebar .unmaximize-button {
+  display: flex;
 }

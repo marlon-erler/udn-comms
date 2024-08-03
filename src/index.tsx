@@ -17,6 +17,7 @@ import SettingsModel from "./Model/Global/settingsModel";
 import SettingsViewModel from "./ViewModel/Global/settingsViewModel";
 import StorageModel from "./Model/Global/storageModel";
 import StorageViewModel from "./ViewModel/Global/storageViewModel";
+import { showWindow } from "./WindowManager/windowView";
 import v1Upgrader from "./Upgrader/v1";
 
 // models
@@ -53,6 +54,18 @@ const fileTransferViewModel = new FileTransferViewModel(
   chatListModel
 );
 
+// windows
+const root = (
+  <div>
+    <button class="primary" on:click={openWindow}>+</button>
+  </div>
+);
+const windowManager = new WindowManager(root);
+
+function openWindow() {
+  showWindow(new React.State("Untitled"), windowManager);
+}
+
 document.body.append(
   <div id="background-wrapper">
     <div id="sky"></div>
@@ -60,4 +73,4 @@ document.body.append(
     <div id="grass-2"></div>
   </div>
 );
-document.body.append();
+document.body.append(root);

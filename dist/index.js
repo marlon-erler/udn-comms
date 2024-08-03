@@ -309,14 +309,16 @@
     view;
     windowManager = void 0;
     // position & size
-    positionX = 0;
-    positionY = 0;
-    width = 0;
-    height = 0;
+    positionX = 50;
+    positionY = 50;
+    height = 200;
+    width = 300;
     // methods
     show = (windowManager2) => {
       this.windowManager = windowManager2;
       windowManager2.showWindow(this);
+      this.updatePosition();
+      this.updateSize();
     };
     close = () => {
       if (this.windowManager == void 0) return;
@@ -3972,6 +3974,24 @@
     };
   };
 
+  // src/WindowManager/windowView.tsx
+  function showWindow(title, windowManager2) {
+    const window2 = new Window((window3) => {
+      const dragger = /* @__PURE__ */ createElement("div", { class: "dragger", "subscribe:innerText": title });
+      const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement("button", { class: "maximize-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "expand_content")), /* @__PURE__ */ createElement(
+        "button",
+        {
+          class: "unmaximize-button standard",
+          "on:click": window3.unmaximize
+        },
+        /* @__PURE__ */ createElement("span", { class: "icon" }, "collapse_content")
+      ), /* @__PURE__ */ createElement("button", { class: "close-button danger", "on:click": window3.close }, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
+      window3.registerDragger(dragger);
+      return /* @__PURE__ */ createElement("div", null, titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))));
+    });
+    window2.show(windowManager2);
+  }
+
   // src/Upgrader/v1.ts
   var v1Upgrader = class {
     // init
@@ -4197,18 +4217,11 @@
     fileTransferModel,
     chatListModel
   );
-  var root = /* @__PURE__ */ createElement("div", null);
+  var root = /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("button", { class: "primary", "on:click": openWindow }, "+"));
   var windowManager = new WindowManager(root);
   function openWindow() {
-    const window2 = new Window((window3) => {
-      const dragger = /* @__PURE__ */ createElement("div", null, "DRAG HERE");
-      window3.registerDragger(dragger);
-      return /* @__PURE__ */ createElement("div", null, dragger, /* @__PURE__ */ createElement("button", { "on:click": window3.maximize }, "+"), /* @__PURE__ */ createElement("button", { "on:click": window3.unmaximize }, "-"), /* @__PURE__ */ createElement("button", { "on:click": window3.close }, "x"));
-    });
-    window2.show(windowManager);
+    showWindow(new State("Untitled"), windowManager);
   }
-  openWindow();
-  openWindow();
   document.body.append(
     /* @__PURE__ */ createElement("div", { id: "background-wrapper" }, /* @__PURE__ */ createElement("div", { id: "sky" }), /* @__PURE__ */ createElement("div", { id: "grass-1" }), /* @__PURE__ */ createElement("div", { id: "grass-2" }))
   );

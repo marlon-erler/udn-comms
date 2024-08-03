@@ -36,15 +36,18 @@ export class Window {
   windowManager: WindowManager | undefined = undefined;
 
   // position & size
-  positionX: number = 0;
-  positionY: number = 0;
-  width: number = 0;
-  height: number = 0;
+  positionX: number = 50;
+  positionY: number = 50;
+  height: number = 200;
+  width: number = 300;
 
   // methods
   show = (windowManager: WindowManager): void => {
     this.windowManager = windowManager;
     windowManager.showWindow(this);
+    
+    this.updatePosition();
+    this.updateSize();
   };
 
   close = (): void => {

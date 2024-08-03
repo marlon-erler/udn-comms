@@ -35,10 +35,10 @@
   --progress-value-background: hsl(219, 99%, 53%);
 
   /* border */
-  --standard-border-color: hsla(0, 0%, 0%, 0%);
-  --input-border-color: hsla(0, 0%, 0%, 0%);
+  --standard-border-color: hsla(0, 0%, 0%, 2%);
+  --input-border-color: hsla(0, 0%, 0%, 3%);
   --input-bottom-border-color: hsla(0, 0%, 0%, 20%);
-  --overlay-border-color: hsla(0, 0%, 0%, 20%);
+  --overlay-border-color: hsla(0, 0%, 0%, 15%);
   --outline-color: hsl(219, 99%, 53%);
   --hr-color: hsla(0, 0%, 0%, 10%);
 

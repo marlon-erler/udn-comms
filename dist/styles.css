@@ -18,7 +18,8 @@
   -moz-appearance: none;
 }
 
-html, body {
+html,
+body {
   margin: 0px;
   width: 100%;
   height: 100%;
@@ -616,6 +617,7 @@ input[type="checkbox"]::after {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   pointer-events: none;
+  color: inherit;
 }
 
 @font-face {
