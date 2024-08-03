@@ -7,16 +7,16 @@
   --base-background: hsla(205, 40%, 97%, 100%);
   --overlay-background: linear-gradient(
     175deg,
-    hsla(205, 35%, 95%, 70%) 0px,
-    hsla(205, 35%, 80%, 70%) 14px,
-    hsla(205, 35%, 75%, 70%) 18px,
-    hsla(205, 35%, 85%, 70%) 60px,
-    hsla(205, 35%, 80%, 70%) 80px,
-    hsla(205, 35%, 90%, 70%) 50%,
-    hsla(205, 35%, 80%, 70%) 51%,
-    hsla(205, 35%, 95%, 70%) 60%,
-    hsla(205, 35%, 90%, 70%) 63%,
-    hsla(205, 35%, 95%, 70%) 100%
+    hsla(205, 50%, 95%, 70%) 0px,
+    hsla(205, 50%, 80%, 70%) 14px,
+    hsla(205, 50%, 75%, 70%) 18px,
+    hsla(205, 50%, 85%, 70%) 60px,
+    hsla(205, 50%, 80%, 70%) 80px,
+    hsla(205, 50%, 90%, 70%) 50%,
+    hsla(205, 50%, 80%, 70%) 51%,
+    hsla(205, 50%, 95%, 70%) 60%,
+    hsla(205, 50%, 90%, 70%) 63%,
+    hsla(205, 50%, 95%, 70%) 100%
   );
 
   --transparent-background: transparent;
@@ -149,7 +149,7 @@
 
   /* spacing */
   --gap-in-grid: 4px;
-  --gap-in-control-row: 3px;
+  --gap-in-control-row: 2px;
   --gap-in-controls: 25px;
 
   --x-padding-in-controls: 12px;
