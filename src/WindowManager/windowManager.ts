@@ -72,6 +72,7 @@ export default class WindowManager {
   };
 
   stopPointerAction = (): void => {
+    this.draggedOrResizedWindow?.resetAction();
     this.draggedOrResizedWindow = undefined;
   };
 
@@ -195,7 +196,15 @@ export class Window {
     this.view.toggleAttribute("focused", this.isFocused);
   };
 
-  // dragging
+  // actions
+  resetAction = (): void => {
+    this.movingOffset = undefined;
+    this.isResizingLeft = false;
+    this.isResizingRight = false;
+    this.isResizingTop = false;
+    this.isResizingBottom = false;
+  };
+
   registerDragger = (dragger: HTMLElement): void => {
     const handleDragStart = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
