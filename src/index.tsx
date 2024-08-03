@@ -53,29 +53,6 @@ const fileTransferViewModel = new FileTransferViewModel(
   chatListModel
 );
 
-// windows
-const root = <div></div>;
-const windowManager = new WindowManager(root);
-
-function openWindow() {
-  const window = new Window((window: Window) => {
-    const dragger = <div>DRAG HERE</div>;
-    window.registerDragger(dragger);
-
-    return (
-      <div>
-        {dragger}
-
-        <button on:click={window.close}>x</button>
-      </div>
-    );
-  });
-  window.show(windowManager);
-}
-
-openWindow();
-openWindow();
-
 document.body.append(
   <div id="background-wrapper">
     <div id="sky"></div>
@@ -83,4 +60,4 @@ document.body.append(
     <div id="grass-2"></div>
   </div>
 );
-document.body.append(root);
+document.body.append();

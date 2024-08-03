@@ -257,3 +257,9 @@ main {
   position: absolute;
   border: 1px solid red;
 }
+.window[maximized] {
+  top: 0px !important;
+  left: 0px !important;
+  width: 100% !important;
+  height: 100% !important;
+}

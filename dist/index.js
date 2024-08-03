@@ -407,8 +407,7 @@
   function getCursorPosition(e, key) {
     if (e instanceof MouseEvent) {
       return e[key];
-    } else if (e instanceof TouchEvent) {
-      if (e.touches.length == 0) return 0;
+    } else if (e instanceof TouchEvent && e.touches.length > 0) {
       return e.touches[0][key];
     }
     return 0;
@@ -4204,7 +4203,7 @@
     const window2 = new Window((window3) => {
       const dragger = /* @__PURE__ */ createElement("div", null, "DRAG HERE");
       window3.registerDragger(dragger);
-      return /* @__PURE__ */ createElement("div", null, dragger, /* @__PURE__ */ createElement("button", { "on:click": window3.close }, "x"));
+      return /* @__PURE__ */ createElement("div", null, dragger, /* @__PURE__ */ createElement("button", { "on:click": window3.maximize }, "+"), /* @__PURE__ */ createElement("button", { "on:click": window3.unmaximize }, "-"), /* @__PURE__ */ createElement("button", { "on:click": window3.close }, "x"));
     });
     window2.show(windowManager);
   }
