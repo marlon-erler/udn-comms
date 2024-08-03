@@ -240,6 +240,7 @@ export class Window {
   }
 }
 
+// utility
 const toPx = (number: number): string => `${number}px`;
 
 function getCursorPosition(
