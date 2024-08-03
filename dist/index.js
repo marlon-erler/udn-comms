@@ -284,6 +284,7 @@
     root;
     windows = /* @__PURE__ */ new Set();
     focusedWindow = void 0;
+    highestZIndex = 0;
     // dimentions
     get leftEdge() {
       return this.root.offsetLeft;
@@ -313,9 +314,10 @@
       if (previouslyFocusedWindow != void 0) {
         window2.zIndex = previouslyFocusedWindow.zIndex + 1;
       } else {
-        window2.zIndex = this.windows.size + 1;
+        window2.zIndex = this.highestZIndex + 1;
       }
       this.focusedWindow = window2;
+      this.highestZIndex = window2.zIndex;
       window2.updateFocus();
       previouslyFocusedWindow?.updateFocus();
     };

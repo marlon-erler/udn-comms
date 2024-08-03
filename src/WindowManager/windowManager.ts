@@ -4,6 +4,7 @@ export default class WindowManager {
   root: HTMLElement;
   windows: Set<Window> = new Set();
   focusedWindow: Window | undefined = undefined;
+  highestZIndex: number = 0;
 
   // dimentions
   get leftEdge(): number {
@@ -42,10 +43,11 @@ export default class WindowManager {
     if (previouslyFocusedWindow != undefined) {
       window.zIndex = previouslyFocusedWindow.zIndex + 1;
     } else {
-      window.zIndex = this.windows.size + 1;
+      window.zIndex = this.highestZIndex + 1;
     }
 
     this.focusedWindow = window;
+    this.highestZIndex = window.zIndex;
 
     window.updateFocus();
     previouslyFocusedWindow?.updateFocus();
