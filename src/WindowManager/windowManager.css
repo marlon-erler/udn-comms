@@ -16,6 +16,16 @@
   overflow: visible;
 }
 
+.window .titlebar .dragger {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.window .content-wrapper {
+  overflow: hidden;
+}
+
 .window[maximized] {
   top: 0px !important;
   left: 0px !important;

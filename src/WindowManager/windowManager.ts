@@ -227,11 +227,13 @@ export class Window {
   };
 
   setWidth = (width: number): void => {
+    if (width < 100) return;
     this.width = width;
     this.updateSize();
   };
 
   setHeight = (height: number): void => {
+    if (height < 50) return;
     this.height = height;
     this.updateSize();
   };

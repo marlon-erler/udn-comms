@@ -443,10 +443,12 @@
       this.updatePosition();
     };
     setWidth = (width) => {
+      if (width < 100) return;
       this.width = width;
       this.updateSize();
     };
     setHeight = (height) => {
+      if (height < 50) return;
       this.height = height;
       this.updateSize();
     };
