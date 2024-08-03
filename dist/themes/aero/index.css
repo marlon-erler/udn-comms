@@ -1,0 +1,171 @@
+:root {
+  /* COLORS */
+  /* animation */
+  --animation-duration: 0.3s;
+
+  /* background */
+  --base-background: hsla(205, 40%, 97%, 100%);
+  --overlay-background: linear-gradient(
+    to bottom,
+    hsla(0, 0%, 90%, 80%),
+    hsla(0, 0%, 100%, 80%)
+  );
+
+  --transparent-background: transparent;
+  --transparent-hover: transparent;
+  --transparent-active: transparent;
+
+  --input-background: white;
+  --surface-background: hsla(0, 0%, 0%, 5%);
+  --checkbox-background: linear-gradient(to bottom, #f6f6f6 0%, #eaeaea 100%);
+  --checkbox-checked-background: linear-gradient(
+    to bottom,
+    #c2dbff 0%,
+    #7baaff 100%
+  );
+  --radio-checked-foreground: linear-gradient(
+    to bottom,
+    #f6f6f6 0%,
+    #eaeaea 100%
+  );
+
+  --focus-outline-color: hsl(219, 99%, 53%);
+
+  --button-background: linear-gradient(
+    to bottom,
+    hsl(205, 35%, 95%) 0%,
+    hsl(205, 35%, 90%) 50%,
+    hsl(205, 35%, 85%) 51%,
+    hsl(205, 35%, 95%) 100%
+  );
+  --button-hover: linear-gradient(
+    to bottom,
+    hsl(205, 35%, 90%) 0%,
+    hsl(205, 35%, 85%) 50%,
+    hsl(205, 35%, 80%) 51%,
+    hsl(205, 35%, 90%) 100%
+  );
+  --button-active: linear-gradient(
+    to bottom,
+    hsl(205, 35%, 85%) 0%,
+    hsl(205, 35%, 80%) 50%,
+    hsl(205, 35%, 75%) 51%,
+    hsl(205, 35%, 85%) 100%
+  );
+  --button-disabled: linear-gradient(to bottom, #e9e9e9 0%, #d9d9d9 100%);
+
+  --primary-button-background: linear-gradient(
+    to bottom,
+    hsl(205, 50%, 90%) 0%,
+    hsl(205, 50%, 85%) 50%,
+    hsl(205, 50%, 80%) 51%,
+    hsl(205, 50%, 90%) 100%
+  );
+  --primary-button-hover: linear-gradient(
+    to bottom,
+    hsl(205, 50%, 85%) 0%,
+    hsl(205, 50%, 80%) 50%,
+    hsl(205, 50%, 75%) 51%,
+    hsl(205, 50%, 85%) 100%
+  );
+  --primary-button-active: linear-gradient(
+    to bottom,
+    hsl(205, 50%, 80%) 0%,
+    hsl(205, 50%, 75%) 50%,
+    hsl(205, 50%, 70%) 51%,
+    hsl(205, 50%, 80%) 100%
+  );
+
+  --danger-button-background: linear-gradient(
+    to bottom,
+    hsl(0, 80%, 90%) 0%,
+    hsl(0, 80%, 85%) 50%,
+    hsl(0, 80%, 80%) 51%,
+    hsl(0, 80%, 90%) 100%
+  );
+  --danger-button-hover: linear-gradient(
+    to bottom,
+    hsl(0, 80%, 85%) 0%,
+    hsl(0, 80%, 80%) 50%,
+    hsl(0, 80%, 75%) 51%,
+    hsl(0, 80%, 85%) 100%
+  );
+  --danger-button-active: linear-gradient(
+    to bottom,
+    hsl(0, 80%, 80%) 0%,
+    hsl(0, 80%, 75%) 50%,
+    hsl(0, 80%, 70%) 51%,
+    hsl(0, 80%, 80%) 100%
+  );
+
+  --progress-value-background: linear-gradient(
+    to bottom,
+    hsl(130, 80%, 70%) 0%,
+    hsl(130, 80%, 65%) 50%,
+    hsl(130, 80%, 50%) 51%,
+    hsl(130, 80%, 70%) 100%
+  );
+
+  /* border */
+  --standard-border-color: #a9a9a9;
+  --input-border-color: #a9a9a9;
+  --input-bottom-border-color: #a9a9a9;
+  --overlay-border-color: hsla(0, 0%, 0%, 20%);
+  --outline-color: hsl(219, 99%, 53%);
+  --hr-color: hsla(0, 0%, 0%, 10%);
+
+  /* text */
+  --text-normal: #161616;
+  --text-placeholder: hsla(0, 0%, 0%, 30%);
+  --text-on-color: var(--text-normal);
+
+  --text-success: #24a148;
+  --text-warning: #f1c21b;
+  --text-error: #da1e28;
+  --text-info: #0043ce;
+
+  --link: hsl(219, 99%, 53%);
+  --link-hover: hsl(220, 100%, 40%);
+
+  /* DEPTH */
+  --button-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  --input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  --overlay-shadow: 0px 0px 20px hsla(0, 0%, 0%, 10%);
+
+  --overlay-backdrop-blur: 3px;
+
+  /* DIMENTIONS */
+  /* text */
+  --control-font-size: 0.8rem;
+  --icon-size: 1rem;
+
+  /* spacing */
+  --gap-in-grid: 4px;
+  --gap-in-control-row: 2px;
+  --gap-in-controls: 25px;
+
+  --x-padding-in-controls: 12px;
+  --y-padding-in-controls: 6px;
+  --content-padding: 16px;
+
+  --hr-margin: 4px;
+
+  /* sizes */
+  --control-height: 24px;
+  --checkbox-size: 16px;
+
+  --max-input-width: 24rem;
+  --max-content-width: 38rem;
+
+  /* borders & lines */
+  --border-width: 1px;
+  --outline-width: 1px;
+
+  /* corners */
+  --control-corner-radius: 5px;
+  --overlay-corner-radius: 6px;
+
+  /* FONTS */
+  --font-main: Arial, sans;
+  --font-mono: monospace;
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>My App</title>
+
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+
+    <meta
+      name="theme-color"
+      content="hsla(0, 0%, 100%, 100%)"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="black"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <link rel="stylesheet" href="/themes/standard/index.css" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/index.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icon.png" />
+    <script src="/support.js" defer></script>
+
+    <script src="/index.js" defer></script>
+
+    <script defer>
+      function toggleModal() {
+        document.querySelector("#modal").toggleAttribute("open");
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="control-row">
+      <button class="transparent">Transparent button</button>
+      <button class="standard">Standard button</button>
+      <button onclick="toggleModal()" class="primary">Primary button</button>
+      <button class="danger">Danger button</button>
+      <button disabled>Disabled button</button>
+    </div>
+
+    <hr />
+
+    <button class="standard">
+      Standard button<span class="icon">image</span>
+    </button>
+
+    <hr />
+
+    <div class="select-wrapper">
+      <select>
+        <option>Select</option>
+      </select>
+
+      <span class="icon">arrow_drop_down</span>
+    </div>
+
+    <hr />
+
+    <input placeholder="type here" />
+
+    <hr />
+
+    <input type="checkbox" />
+
+    <input name="a" type="radio" />
+    <input name="a" type="radio" />
+
+    <hr />
+
+    <progress max="100"></progress>
+
+    <progress max="100" value="69"></progress>
+
+    <hr />
+
+    <div class="flex-column grid-gap">
+      <div class="surface width-100 max-width-input">Surface</div>
+      <div class="surface width-100 max-width-input">Surface</div>
+      <div selected class="surface width-100 max-width-input">Surface</div>
+    </div>
+
+    <div class="flex-column grid-gap">
+      <div class="surface width-100 max-width-input">
+        <span class="icon">favorite</span>
+        <div>
+          Surface
+          <span class="secondary">This is a card</span>
+        </div>
+        <span class="icon">favorite</span>
+      </div>
+      <div class="surface width-100 max-width-input">
+        <span class="icon">arrow_back</span>
+        <div>Surface</div>
+        <span class="icon">arrow_forward</span>
+      </div>
+      <div selected class="surface width-100 max-width-input">
+        <span class="icon">arrow_back</span>
+        <div>Surface</div>
+        <span class="icon">arrow_forward</span>
+      </div>
+    </div>
+
+    <div class="modal-wrapper" id="modal">
+      <div class="modal-window">
+        <main>Modal</main>
+        <div class="control-row">
+          <button class="standard" onclick="toggleModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
