@@ -72,9 +72,9 @@ export function showWindow(
         <div class="background"></div>
         {titlebar}
         <div class="content-wrapper">
-          <main>
+          <div class="content">
             <input bind:value={title}></input>
-          </main>
+          </div>
         </div>
 
         {leftHandle}

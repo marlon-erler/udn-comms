@@ -4132,7 +4132,7 @@
         },
         /* @__PURE__ */ createElement("span", { class: "icon" }, "collapse_content")
       ), /* @__PURE__ */ createElement("button", { class: "close-button danger", "on:click": window3.close }, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
-      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))), leftHandle, rightHandle, topHandle, bottomHandle, topLeftHandle, topRightHandle, bottomLeftHandle, bottomRightHandle);
+      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("div", { class: "content" }, /* @__PURE__ */ createElement("input", { "bind:value": title }))), leftHandle, rightHandle, topHandle, bottomHandle, topLeftHandle, topRightHandle, bottomLeftHandle, bottomRightHandle);
     });
     window2.show();
   }

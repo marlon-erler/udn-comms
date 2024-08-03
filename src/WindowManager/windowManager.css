@@ -98,7 +98,7 @@
   padding-top: 0px;
 }
 
-.window main {
+.window .content {
   background: var(--base-background);
   border-radius: var(--overlay-corner-radius);
   border: var(--border-width) solid var(--standard-border-color);
@@ -110,7 +110,7 @@
 }
 
 .window[maximized],
-.window[maximized] main {
+.window[maximized] .content {
   border-radius: 0px;
   border: none;
 }
@@ -181,8 +181,8 @@
 .window .bottom-right-resize-handle {
   position: absolute;
 
-  --size: 5px;
-  --distance: -5px;
+  --size: 8px;
+  --distance-to-frame: -4px;
 
   width: var(--size);
   height: var(--size);
@@ -190,54 +190,58 @@
 
 .window .left-resize-handle,
 .window .right-resize-handle {
-  top: var(--distance);
-  bottom: var(--distance);
+  top: calc(var(--size) + var(--distance-to-frame));
+  bottom: calc(var(--size) + var(--distance-to-frame));
   height: unset;
 
   cursor: ew-resize !important;
 }
 
 .window .left-resize-handle {
-  left: var(--distance);
+  left: var(--distance-to-frame);
 }
 
 .window .right-resize-handle {
   left: unset;
-  right: var(--distance);
+  right: var(--distance-to-frame);
 }
 
 .window .top-resize-handle,
 .window .bottom-resize-handle {
-  left: var(--distance);
-  right: var(--distance);
+  left: calc(var(--size) + var(--distance-to-frame));
+  right: calc(var(--size) + var(--distance-to-frame));
   width: unset;
 
   cursor: ns-resize !important;
 }
 
 .window .top-resize-handle {
-  top: var(--distance);
+  top: var(--distance-to-frame);
 }
 
 .window .bottom-resize-handle {
-  bottom: var(--distance);
+  bottom: var(--distance-to-frame);
 }
 
 .window .top-left-resize-handle {
-  top: var(--distance);
-  left: var(--distance);
+  top: var(--distance-to-frame);
+  left: var(--distance-to-frame);
+  cursor: nwse-resize !important;
 }
 .window .top-right-resize-handle {
-  top: var(--distance);
+  top: var(--distance-to-frame);
   left: unset;
-  right: var(--distance);
+  right: var(--distance-to-frame);
+  cursor: nesw-resize !important;
 }
 .window .bottom-left-resize-handle {
-  bottom: var(--distance);
-  left: var(--distance);
+  bottom: var(--distance-to-frame);
+  left: var(--distance-to-frame);
+  cursor: nesw-resize !important;
 }
 .window .bottom-right-resize-handle {
-  bottom: var(--distance);
+  bottom: var(--distance-to-frame);
   left: unset;
-  right: var(--distance);
+  right: var(--distance-to-frame);
+  cursor: nwse-resize !important;
 }
