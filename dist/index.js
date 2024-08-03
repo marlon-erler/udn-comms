@@ -298,8 +298,11 @@
       this.root.append(window2.view);
     };
     closeWindow = (window2) => {
+      window2.view.toggleAttribute("closing", true);
+      window2.view.addEventListener("transitionend", () => {
+        window2.view.remove();
+      });
       this.windows.delete(window2);
-      window2.view.remove();
       if (this.focusedWindow == window2) {
         this.focusedWindow = void 0;
       }

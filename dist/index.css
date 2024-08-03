@@ -272,10 +272,15 @@ main {
   display: flex;
   flex-direction: column;
   animation: window var(--animation-duration);
+  transition: opacity var(--animation-duration), transform var(--animation-duration);
   border: var(--border-width) solid var(--overlay-border-color);
   box-shadow: var(--overlay-shadow);
   backdrop-filter: blur(var(--overlay-backdrop-blur));
   border-radius: var(--overlay-corner-radius);
+}
+.window[closing] {
+  opacity: 0;
+  transform: scale(0.95);
 }
 .window > * {
   position: absolute;

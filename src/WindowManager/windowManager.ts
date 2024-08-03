@@ -23,8 +23,12 @@ export default class WindowManager {
   };
 
   closeWindow = (window: Window): void => {
+    window.view.toggleAttribute("closing", true);
+    window.view.addEventListener("transitionend", () => {
+      window.view.remove();
+    })
+
     this.windows.delete(window);
-    window.view.remove();
 
     if (this.focusedWindow == window) {
       this.focusedWindow = undefined;
