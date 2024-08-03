@@ -31,6 +31,7 @@ export function showWindow(
 
     return (
       <div>
+        <div class="background"></div>
         {titlebar}
         <div class="content-wrapper">
           <main>

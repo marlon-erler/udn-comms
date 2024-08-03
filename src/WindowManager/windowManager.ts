@@ -3,6 +3,7 @@ import "./windowManager.css";
 export default class WindowManager {
   root: HTMLElement;
   windows: Set<Window> = new Set();
+  focusedWindow: Window | undefined = undefined;
 
   // dimentions
   get leftEdge(): number {
@@ -15,6 +16,8 @@ export default class WindowManager {
 
   // methods
   showWindow = (window: Window): void => {
+    this.focusWindow(window);
+
     this.windows.add(window);
     this.root.append(window.view);
   };
@@ -22,6 +25,26 @@ export default class WindowManager {
   closeWindow = (window: Window): void => {
     this.windows.delete(window);
     window.view.remove();
+
+    if (this.focusedWindow == window) {
+      this.focusedWindow = undefined;
+    }
+  };
+
+  focusWindow = (window: Window): void => {
+    if (window == this.focusedWindow) return;
+    const previouslyFocusedWindow: Window | undefined = this.focusedWindow;
+
+    if (previouslyFocusedWindow != undefined) {
+      window.zIndex = previouslyFocusedWindow.zIndex + 1;
+    } else {
+      window.zIndex = this.windows.size + 1;
+    }
+
+    this.focusedWindow = window;
+
+    window.updateFocus();
+    previouslyFocusedWindow?.updateFocus();
   };
 
   // init
@@ -35,17 +58,38 @@ export class Window {
   view: HTMLElement;
   windowManager: WindowManager | undefined = undefined;
 
-  // position & size
+  // position etc
   positionX: number = 50;
   positionY: number = 50;
+
   height: number = 200;
   width: number = 300;
+
+  // focus
+  get isFocused(): boolean {
+    console.log(
+      this.windowManager,
+      this.windowManager!.focusedWindow,
+      this.windowManager!.focusedWindow == this
+    );
+    if (this.windowManager == undefined) return false;
+    return this.windowManager.focusedWindow == this;
+  }
+
+  private _zIndex: number = 1;
+  get zIndex(): number {
+    return this._zIndex;
+  }
+  set zIndex(newValue: number) {
+    this._zIndex = newValue;
+    this.view.style.zIndex = newValue.toString();
+  }
 
   // methods
   show = (windowManager: WindowManager): void => {
     this.windowManager = windowManager;
     windowManager.showWindow(this);
-    
+
     this.updatePosition();
     this.updateSize();
   };
@@ -53,6 +97,11 @@ export class Window {
   close = (): void => {
     if (this.windowManager == undefined) return;
     this.windowManager.closeWindow(this);
+  };
+
+  focus = (): void => {
+    if (this.windowManager == undefined) return;
+    this.windowManager.focusWindow(this);
   };
 
   // view
@@ -88,6 +137,10 @@ export class Window {
   updateSize = (): void => {
     this.view.style.width = toPx(this.width);
     this.view.style.height = toPx(this.height);
+  };
+
+  updateFocus = (): void => {
+    this.view.toggleAttribute("focused", this.isFocused);
   };
 
   // moving
@@ -174,6 +227,9 @@ export class Window {
   constructor(viewBuilder: (window: Window) => HTMLElement) {
     this.view = viewBuilder(this);
     this.view.classList.add("window");
+
+    this.view.addEventListener("mousedown", () => this.focus());
+    this.view.addEventListener("touchstart", () => this.focus());
   }
 }
 

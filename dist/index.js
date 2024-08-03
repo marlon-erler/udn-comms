@@ -283,6 +283,7 @@
   var WindowManager = class {
     root;
     windows = /* @__PURE__ */ new Set();
+    focusedWindow = void 0;
     // dimentions
     get leftEdge() {
       return this.root.offsetLeft;
@@ -292,12 +293,28 @@
     }
     // methods
     showWindow = (window2) => {
+      this.focusWindow(window2);
       this.windows.add(window2);
       this.root.append(window2.view);
     };
     closeWindow = (window2) => {
       this.windows.delete(window2);
       window2.view.remove();
+      if (this.focusedWindow == window2) {
+        this.focusedWindow = void 0;
+      }
+    };
+    focusWindow = (window2) => {
+      if (window2 == this.focusedWindow) return;
+      const previouslyFocusedWindow = this.focusedWindow;
+      if (previouslyFocusedWindow != void 0) {
+        window2.zIndex = previouslyFocusedWindow.zIndex + 1;
+      } else {
+        window2.zIndex = this.windows.size + 1;
+      }
+      this.focusedWindow = window2;
+      window2.updateFocus();
+      previouslyFocusedWindow?.updateFocus();
     };
     // init
     constructor(root2) {
@@ -308,11 +325,29 @@
   var Window = class {
     view;
     windowManager = void 0;
-    // position & size
+    // position etc
     positionX = 50;
     positionY = 50;
     height = 200;
     width = 300;
+    // focus
+    get isFocused() {
+      console.log(
+        this.windowManager,
+        this.windowManager.focusedWindow,
+        this.windowManager.focusedWindow == this
+      );
+      if (this.windowManager == void 0) return false;
+      return this.windowManager.focusedWindow == this;
+    }
+    _zIndex = 1;
+    get zIndex() {
+      return this._zIndex;
+    }
+    set zIndex(newValue) {
+      this._zIndex = newValue;
+      this.view.style.zIndex = newValue.toString();
+    }
     // methods
     show = (windowManager2) => {
       this.windowManager = windowManager2;
@@ -323,6 +358,10 @@
     close = () => {
       if (this.windowManager == void 0) return;
       this.windowManager.closeWindow(this);
+    };
+    focus = () => {
+      if (this.windowManager == void 0) return;
+      this.windowManager.focusWindow(this);
     };
     // view
     setPosition = (x, y) => {
@@ -351,6 +390,9 @@
     updateSize = () => {
       this.view.style.width = toPx(this.width);
       this.view.style.height = toPx(this.height);
+    };
+    updateFocus = () => {
+      this.view.toggleAttribute("focused", this.isFocused);
     };
     // moving
     getRelativeCursorPosition = (e) => {
@@ -403,6 +445,8 @@
     constructor(viewBuilder) {
       this.view = viewBuilder(this);
       this.view.classList.add("window");
+      this.view.addEventListener("mousedown", () => this.focus());
+      this.view.addEventListener("touchstart", () => this.focus());
     }
   };
   var toPx = (number) => `${number}px`;
@@ -3987,7 +4031,7 @@
         /* @__PURE__ */ createElement("span", { class: "icon" }, "collapse_content")
       ), /* @__PURE__ */ createElement("button", { class: "close-button danger", "on:click": window3.close }, /* @__PURE__ */ createElement("span", { class: "icon" }, "close"))));
       window3.registerDragger(dragger);
-      return /* @__PURE__ */ createElement("div", null, titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))));
+      return /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("div", { class: "background" }), titlebar, /* @__PURE__ */ createElement("div", { class: "content-wrapper" }, /* @__PURE__ */ createElement("main", null, /* @__PURE__ */ createElement("input", { "bind:value": title }))));
     });
     window2.show(windowManager2);
   }
