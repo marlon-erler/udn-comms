@@ -35,7 +35,7 @@
   --progress-value-background: hsl(219, 99%, 53%);
 
   /* border */
-  --standard-border-color: hsla(0, 0%, 0%, 2%);
+  --standard-border-color: hsla(0, 0%, 0%, 0%);
   --input-border-color: hsla(0, 0%, 0%, 3%);
   --input-bottom-border-color: hsla(0, 0%, 0%, 20%);
   --overlay-border-color: hsla(0, 0%, 0%, 15%);
@@ -69,7 +69,7 @@
 
   /* spacing */
   --gap-in-grid: 4px;
-  --gap-in-control-row: 2px;
+  --gap-in-control-row: 0px;
   --gap-in-controls: 25px;
 
   --x-padding-in-controls: 16px;
@@ -90,8 +90,8 @@
   --outline-width: 2px;
 
   /* corners */
-  --control-corner-radius: 3px;
-  --overlay-corner-radius: 4px;
+  --control-corner-radius: 0px;
+  --overlay-corner-radius: 0px;
 
   /* FONTS */
   --font-main: IBM Plex Sans;

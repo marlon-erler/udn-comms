@@ -12,6 +12,9 @@ export function showWindow(
       <div class="titlebar">
         {dragger}
         <div class="button-row">
+        <button class="more-options-button standard" on:click={window.maximize}>
+            <span class="icon">more_horiz</span>
+          </button>
           <button class="maximize-button standard" on:click={window.maximize}>
             <span class="icon">expand_content</span>
           </button>

@@ -4027,7 +4027,7 @@
   function showWindow(title, windowManager2) {
     const window2 = new Window((window3) => {
       const dragger = /* @__PURE__ */ createElement("div", { class: "dragger", "subscribe:innerText": title });
-      const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement("button", { class: "maximize-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "expand_content")), /* @__PURE__ */ createElement(
+      const titlebar = /* @__PURE__ */ createElement("div", { class: "titlebar" }, dragger, /* @__PURE__ */ createElement("div", { class: "button-row" }, /* @__PURE__ */ createElement("button", { class: "more-options-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "more_horiz")), /* @__PURE__ */ createElement("button", { class: "maximize-button standard", "on:click": window3.maximize }, /* @__PURE__ */ createElement("span", { class: "icon" }, "expand_content")), /* @__PURE__ */ createElement(
         "button",
         {
           class: "unmaximize-button standard",
