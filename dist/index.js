@@ -1556,6 +1556,10 @@
     close = () => {
       this.containingModel.closeTask();
     };
+    closeAndDiscard = () => {
+      this.close();
+      this.loadTaskData();
+    };
     closeAndSave = () => {
       this.close();
       this.save();
@@ -3329,7 +3333,7 @@
       translations.chatPage.task.deleteTaskButton,
       "delete_forever",
       taskViewModel.deleteTask
-    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.close }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
+    ))), /* @__PURE__ */ createElement("div", { class: "flex-row width-100" }, /* @__PURE__ */ createElement("button", { class: "flex", "on:click": taskViewModel.closeAndDiscard }, translations.general.closeButton), /* @__PURE__ */ createElement("button", { class: "flex primary", "on:click": taskViewModel.closeAndSave }, translations.general.saveButton, /* @__PURE__ */ createElement("span", { class: "icon" }, "save")))));
   }
 
   // src/View/Components/taskEntry.tsx

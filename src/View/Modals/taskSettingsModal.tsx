@@ -155,7 +155,7 @@ export function TaskSettingsModal(taskViewModel: TaskViewModel) {
           </div>
         </main>
         <div class="flex-row width-100">
-          <button class="flex" on:click={taskViewModel.close}>
+          <button class="flex" on:click={taskViewModel.closeAndDiscard}>
             {translations.general.closeButton}
           </button>
           <button class="flex primary" on:click={taskViewModel.closeAndSave}>
