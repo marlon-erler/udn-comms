@@ -3498,7 +3498,7 @@
         "on:click": calendarPageViewModel.createEvent
       },
       /* @__PURE__ */ createElement("span", { class: "icon" }, "add")
-    ))), /* @__PURE__ */ createElement("div", { class: "content", "children:set": mainContent }))), /* @__PURE__ */ createElement(
+    ))), /* @__PURE__ */ createElement("div", { class: "content padding-0", "children:set": mainContent }))), /* @__PURE__ */ createElement(
       "div",
       {
         class: "pane-wrapper side background",

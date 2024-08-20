@@ -9,7 +9,10 @@
 }
 
 .month-grid-wrapper .day-labels {
-    flex: 0;
+  flex: 0;
+
+  padding: var(--content-padding);
+  padding-bottom: 0px;
 }
 
 .month-grid-wrapper > div {
@@ -26,6 +29,9 @@
 
 .month-grid {
   overflow: hidden;
+
+  padding: var(--content-padding);
+  padding-top: 0px;
 }
 
 .month-grid .tile {
@@ -34,7 +40,7 @@
 }
 
 .month-grid .tile[today] b {
-    color: var(--primary)
+  color: var(--primary);
 }
 
 .month-grid .tile > div {

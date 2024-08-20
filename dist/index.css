@@ -502,6 +502,8 @@ body[showing-chat] #chat-page-wrapper {
 }
 .month-grid-wrapper .day-labels {
   flex: 0;
+  padding: var(--content-padding);
+  padding-bottom: 0px;
 }
 .month-grid-wrapper > div {
   display: grid;
@@ -513,6 +515,8 @@ body[showing-chat] #chat-page-wrapper {
 }
 .month-grid {
   overflow: hidden;
+  padding: var(--content-padding);
+  padding-top: 0px;
 }
 .month-grid .tile {
   animation: slide-up var(--animation-duration);

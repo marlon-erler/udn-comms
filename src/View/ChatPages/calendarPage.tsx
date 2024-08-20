@@ -159,7 +159,7 @@ export function CalendarPage(calendarPageViewModel: CalendarPageViewModel) {
               </button>
             </span>
           </div>
-          <div class="content" children:set={mainContent}></div>
+          <div class="content padding-0" children:set={mainContent}></div>
         </div>
       </div>
       <div
