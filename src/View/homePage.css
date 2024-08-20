@@ -24,7 +24,7 @@
   width: 100%;
   min-width: 100%;
   height: 100%;
-  overflow: scroll;
+  overflow-y: auto;
 
   scroll-snap-align: center;
 }
@@ -55,6 +55,10 @@
 }
 
 @media (min-width: 640px) {
+  #home-page > div { 
+    overflow-x: hidden;
+  }
+
   #home-page #overview-section {
     width: 20rem;
     min-width: 20rem;

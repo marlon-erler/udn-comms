@@ -45,10 +45,6 @@ body[showing-chat] #chat-page-wrapper {
 
 #chat-page > div > #main {
   width: calc(100% - var(--ribbon-size) - 1px);
-
-  overflow-x: scroll;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
 }
 
 #chat-page #main > div,
