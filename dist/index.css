@@ -487,9 +487,6 @@ body[showing-chat] #chat-page-wrapper {
   #chat-page > div > #main > #calendar-page {
     flex-direction: column;
   }
-  #chat-page > div > #main > #calendar-page .month-grid-wrapper {
-    height: unset;
-  }
   #chat-page > div > #main > #calendar-page .grid-pane-wrapper {
     border-bottom: 1px solid var(--border);
   }
@@ -501,6 +498,7 @@ body[showing-chat] #chat-page-wrapper {
   flex-direction: column;
   gap: var(--gap-between-tiles);
   height: 100%;
+  overflow: hidden;
 }
 .month-grid-wrapper .day-labels {
   flex: 0;
@@ -513,8 +511,12 @@ body[showing-chat] #chat-page-wrapper {
   grid-template-columns: repeat(7, minmax(0px, 1fr));
   grid-auto-rows: 1fr;
 }
+.month-grid {
+  overflow: hidden;
+}
 .month-grid .tile {
   animation: slide-up var(--animation-duration);
+  overflow: hidden;
 }
 .month-grid .tile[today] b {
   color: var(--primary);

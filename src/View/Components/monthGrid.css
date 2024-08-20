@@ -5,6 +5,7 @@
   gap: var(--gap-between-tiles);
 
   height: 100%;
+  overflow: hidden;
 }
 
 .month-grid-wrapper .day-labels {
@@ -23,8 +24,13 @@
   grid-auto-rows: 1fr;
 }
 
+.month-grid {
+  overflow: hidden;
+}
+
 .month-grid .tile {
   animation: slide-up var(--animation-duration);
+  overflow: hidden;
 }
 
 .month-grid .tile[today] b {

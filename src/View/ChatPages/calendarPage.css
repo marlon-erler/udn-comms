@@ -68,10 +68,6 @@
     flex-direction: column;
   }
 
-  #chat-page > div > #main > #calendar-page .month-grid-wrapper {
-    height: unset;
-  }
-
   #chat-page > div > #main > #calendar-page .grid-pane-wrapper {
     border-bottom: 1px solid var(--border);
   }
