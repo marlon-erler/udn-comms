@@ -469,6 +469,7 @@ body[showing-chat] #chat-page-wrapper {
   height: calc(var(--control-height) - 2 * var(--gap-between-tiles));
   appearance: textfield;
   -moz-appearance: textfield;
+  padding-right: 0px;
 }
 #calendar-page .input-wrapper > input::-webkit-outer-spin-button,
 #calendar-page .input-wrapper > input::-webkit-innner-spin-button {

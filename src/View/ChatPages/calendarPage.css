@@ -26,6 +26,8 @@
 
   appearance: textfield;
   -moz-appearance: textfield;
+
+  padding-right: 0px;
 }
 
 #calendar-page .input-wrapper > input::-webkit-outer-spin-button,
