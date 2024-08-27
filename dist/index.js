@@ -3193,6 +3193,14 @@
         () => selectedDate.value == parseInt(date)
       );
       const isToday = monthGrid.isCurrentMonth == true && parseInt(date) == (/* @__PURE__ */ new Date()).getDate();
+      const eventCount = createProxyState(
+        [mapState],
+        () => mapState.value.size
+      );
+      const hasEvents = createProxyState(
+        [eventCount],
+        () => eventCount.value != 0
+      );
       function select() {
         selectedDate.value = parseInt(date);
       }
@@ -3210,9 +3218,16 @@
           "on:drop": drop
         },
         /* @__PURE__ */ createElement("div", null, /* @__PURE__ */ createElement("b", null, date), /* @__PURE__ */ createElement(
+          "span",
+          {
+            class: "event-count",
+            "toggle:has-events": hasEvents,
+            "subscribe:innerText": eventCount
+          }
+        ), /* @__PURE__ */ createElement(
           "div",
           {
-            class: "flex-column gap clip",
+            class: "event-list",
             "children:append": [mapState, converter]
           }
         ))

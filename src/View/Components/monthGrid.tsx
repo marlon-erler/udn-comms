@@ -62,6 +62,16 @@ export function MonthGrid<T>(
               monthGrid.isCurrentMonth == true &&
               parseInt(date) == new Date().getDate();
 
+            const eventCount: React.State<number> = React.createProxyState(
+              [mapState],
+              () => mapState.value.size
+            );
+
+            const hasEvents: React.State<boolean> = React.createProxyState(
+              [eventCount],
+              () => eventCount.value != 0
+            );
+
             function select() {
               selectedDate.value = parseInt(date);
             }
@@ -81,8 +91,13 @@ export function MonthGrid<T>(
               >
                 <div>
                   <b>{date}</b>
+                  <span
+                    class="event-count"
+                    toggle:has-events={hasEvents}
+                    subscribe:innerText={eventCount}
+                  ></span>
                   <div
-                    class="flex-column gap clip"
+                    class="event-list"
                     children:append={[mapState, converter]}
                   ></div>
                 </div>
