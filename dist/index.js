@@ -689,7 +689,7 @@
         this.settingsModel.firstDayOfWeek
       );
       console.log(firstWeekdayOfMonth, firstDayOfWeekSetting);
-      const offset = firstWeekdayOfMonth == 0 ? 7 - firstDayOfWeekSetting : firstWeekdayOfMonth - firstDayOfWeekSetting;
+      const offset = firstWeekdayOfMonth < firstDayOfWeekSetting ? 7 - firstDayOfWeekSetting : firstWeekdayOfMonth - firstDayOfWeekSetting;
       date.setMonth(month);
       date.setDate(-1);
       const daysInMonth = date.getDate() + 1;

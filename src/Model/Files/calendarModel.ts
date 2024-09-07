@@ -77,7 +77,7 @@ export default class CalendarModel {
     console.log(firstWeekdayOfMonth, firstDayOfWeekSetting);
 
     const offset: number =
-      firstWeekdayOfMonth == 0
+      firstWeekdayOfMonth < firstDayOfWeekSetting
         ? 7 - firstDayOfWeekSetting
         : firstWeekdayOfMonth - firstDayOfWeekSetting;
 
