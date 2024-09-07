@@ -64,14 +64,22 @@ export default class CalendarModel {
     const isCurrentMonth: boolean =
       year == date.getFullYear() && month == date.getMonth() + 1;
 
-    // get first day of month
+    // get data for offset
     date.setFullYear(year);
     date.setMonth(month - 1);
     date.setDate(1);
 
-    // get offset
+    const firstWeekdayOfMonth = date.getDay();
+    const firstDayOfWeekSetting: number = parseInt(
+      this.settingsModel.firstDayOfWeek
+    );
+
+    console.log(firstWeekdayOfMonth, firstDayOfWeekSetting);
+
     const offset: number =
-      date.getDay() - parseInt(this.settingsModel.firstDayOfWeek);
+      firstWeekdayOfMonth == 0
+        ? 7 - firstDayOfWeekSetting
+        : firstWeekdayOfMonth - firstDayOfWeekSetting;
 
     // get total day count
     date.setMonth(month);

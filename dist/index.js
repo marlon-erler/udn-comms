@@ -684,7 +684,12 @@
       date.setFullYear(year);
       date.setMonth(month - 1);
       date.setDate(1);
-      const offset = date.getDay() - parseInt(this.settingsModel.firstDayOfWeek);
+      const firstWeekdayOfMonth = date.getDay();
+      const firstDayOfWeekSetting = parseInt(
+        this.settingsModel.firstDayOfWeek
+      );
+      console.log(firstWeekdayOfMonth, firstDayOfWeekSetting);
+      const offset = firstWeekdayOfMonth == 0 ? 7 - firstDayOfWeekSetting : firstWeekdayOfMonth - firstDayOfWeekSetting;
       date.setMonth(month);
       date.setDate(-1);
       const daysInMonth = date.getDate() + 1;
@@ -3176,6 +3181,7 @@
       if (currentWeekday == 7) currentWeekday = 0;
     }
     const offsetElements = [];
+    console.log(monthGrid.offset);
     for (let i = 0; i < monthGrid.offset; i++) {
       offsetElements.push(/* @__PURE__ */ createElement("div", null));
     }

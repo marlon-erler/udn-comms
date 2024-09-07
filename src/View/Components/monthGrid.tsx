@@ -25,6 +25,7 @@ export function MonthGrid<T>(
   }
 
   const offsetElements: HTMLElement[] = [];
+  console.log(monthGrid.offset);
   for (let i = 0; i < monthGrid.offset; i++) {
     offsetElements.push(<div></div>);
   }
